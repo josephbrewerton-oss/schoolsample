@@ -2,42 +2,30 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
 const config: Config = {
   title: 'School AI Portal',
   tagline: 'Interactive Learning Powered by Local AI',
   favicon: 'img/favicon.ico',
 
-  // Load the WebRTC client script across all pages
+  // Load the WebRTC client script across all pages (prefixed with baseUrl)
   scripts: [
     {
-      src: '/js/webrtc-agent.js',
+      src: '/schoolsample/js/webrtc-agent.js',
       async: true,
     },
   ],
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
-  future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
-  },
+  // Set the production url and baseUrl for GitHub Pages
+  url: 'https://josephbrewerton-oss.github.io',
+  baseUrl: '/schoolsample/',
 
-  // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  // GitHub Pages deployment config
+  organizationName: 'josephbrewerton-oss',
+  projectName: 'schoolsample',
+  trailingSlash: false,
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  onBrokenLinks: 'warn',
 
-  onBrokenLinks: 'throw',
-
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -49,10 +37,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         blog: {
           showReadingTime: true,
@@ -60,11 +44,6 @@ const config: Config = {
             type: ['rss', 'atom'],
             xslt: true,
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-          // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
@@ -77,7 +56,6 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
       respectPrefersColorScheme: true,
@@ -85,7 +63,7 @@ const config: Config = {
     navbar: {
       title: 'School AI Portal',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'School AI Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -97,7 +75,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'News', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/josephbrewerton-oss/schoolsample',
           label: 'GitHub',
           position: 'right',
         },
@@ -107,34 +85,25 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Curriculum',
           items: [
             {
-              label: 'Tutorial',
-              to: '/docs/intro',
+              label: 'Primary Years 1-6',
+              to: '/docs/primary-years-1-6/ks2-science',
             },
           ],
         },
         {
-          title: 'Community',
+          title: 'Project',
           items: [
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'Blog',
-              to: '/blog',
+              label: 'GitHub Repository',
+              href: 'https://github.com/josephbrewerton-oss/schoolsample',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} School AI. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} School AI Portal. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,
