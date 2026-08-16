@@ -1,0 +1,23 @@
+[
+  {
+    "id": "thermodynamics",
+    "label": "?? Gibbs Free Energy",
+    "topic": "thermodynamics",
+    "color": "#8b5cf6",
+    "prompt": "Derive the relationship between enthalpy, entropy, and Gibbs Free Energy (?G = ?H - T?S) and predict reaction spontaneity."
+  },
+  {
+    "id": "neural-nets",
+    "label": "?? Deep Learning Backprop",
+    "topic": "neural-nets",
+    "color": "#ec4899",
+    "prompt": "Explain the chain rule mechanism in stochastic gradient descent and backpropagation for multi-layer perceptrons."
+  },
+  {
+    "id": "relativity",
+    "label": "?? Special Relativity",
+    "topic": "relativity",
+    "color": "#6366f1",
+    "prompt": "Detail Lorentz transformations and explain time dilation and length contraction at relativistic velocities."
+  }
+]

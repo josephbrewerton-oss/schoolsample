@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="rss.xsl"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel>
+        <title>School AI Portal Blog</title>
+        <link>https://josephbrewerton-oss.github.io/schoolsample/blog</link>
+        <description>School AI Portal Blog</description>
+        <lastBuildDate>Sun, 16 Aug 2026 00:00:00 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <language>en</language>
+        <item>
+            <title><![CDATA[Sovereign In-Browser AI Tutoring Architecture]]></title>
+            <link>https://josephbrewerton-oss.github.io/schoolsample/blog/sovereign-school-ai-breakthrough</link>
+            <guid>https://josephbrewerton-oss.github.io/schoolsample/blog/sovereign-school-ai-breakthrough</guid>
+            <pubDate>Sun, 16 Aug 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[This live demonstration introduces a decoupled, zero-cloud architecture designed to deliver sub-second, interactive AI tutoring directly inside school curriculum materials while ensuring complete student data sovereignty.]]></description>
+            <content:encoded><![CDATA[<p>This live demonstration introduces a decoupled, zero-cloud architecture designed to deliver sub-second, interactive AI tutoring directly inside school curriculum materials while ensuring complete student data sovereignty.</p>
+<!-- -->
+<hr>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="core-architectural-breakthroughs">Core Architectural Breakthroughs<a href="https://josephbrewerton-oss.github.io/schoolsample/blog/sovereign-school-ai-breakthrough#core-architectural-breakthroughs" class="hash-link" aria-label="Direct link to Core Architectural Breakthroughs" title="Direct link to Core Architectural Breakthroughs" translate="no">​</a></h3>
+<ul>
+<li class=""><strong>Zero-CORS Transport Layer:</strong> By establishing an in-memory WebRTC loopback operating over SCTP and DTLS, the application eliminates standard HTTP preflight latency, reverse-proxy bottlenecks, and cross-origin security restrictions.</li>
+<li class=""><strong>100% Data Sovereignty:</strong> Student prompts, telemetry, and speech synthesis pipelines execute locally without routing unencrypted PII to third-party cloud LLM providers.</li>
+<li class=""><strong>DOM-Decoupled Execution:</strong> The AI networking and streaming engine runs independently from UI rendering cycles, preventing main-thread layout lag and dropped audio frames.</li>
+<li class=""><strong>Universal Embeddability:</strong> A single self-defending JavaScript bundle turns any static documentation platform (Docusaurus, CMS, or LMS) into an interactive AI terminal.</li>
+</ul>
+<hr>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="institutional-value-proposition">Institutional Value Proposition<a href="https://josephbrewerton-oss.github.io/schoolsample/blog/sovereign-school-ai-breakthrough#institutional-value-proposition" class="hash-link" aria-label="Direct link to Institutional Value Proposition" title="Direct link to Institutional Value Proposition" translate="no">​</a></h3>
+<table><thead><tr><th style="text-align:left">Metric</th><th style="text-align:left">Traditional Cloud AI SaaS</th><th style="text-align:left">In-Browser Sovereign Loopback</th></tr></thead><tbody><tr><td style="text-align:left"><strong>Data Privacy &amp; GDPR</strong></td><td style="text-align:left">High risk (Cloud API egress)</td><td style="text-align:left"><strong>Zero cloud leakage (Local subnet)</strong></td></tr><tr><td style="text-align:left"><strong>Annual Licensing Cost</strong></td><td style="text-align:left">£15 – £30 per student/month</td><td style="text-align:left"><strong>£0 API fees (Self-hosted hardware)</strong></td></tr><tr><td style="text-align:left"><strong>Response Latency</strong></td><td style="text-align:left">800 ms – 2,500 ms</td><td style="text-align:left"><strong>&lt; 20 ms in-memory transport</strong></td></tr><tr><td style="text-align:left"><strong>Voice Synthesis</strong></td><td style="text-align:left">Cloud TTS billing tiers</td><td style="text-align:left"><strong>Native zero-latency Web Speech</strong></td></tr></tbody></table>
+<hr>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-to-test-the-demo">How to Test the Demo<a href="https://josephbrewerton-oss.github.io/schoolsample/blog/sovereign-school-ai-breakthrough#how-to-test-the-demo" class="hash-link" aria-label="Direct link to How to Test the Demo" title="Direct link to How to Test the Demo" translate="no">​</a></h3>
+<ol>
+<li class="">Navigate to the <strong>Lessons</strong> tab in the top navigation bar.</li>
+<li class="">Select any curriculum topic or enter a custom student prompt.</li>
+<li class="">Observe real-time frame streaming, live RTT transport counters, and native spoken feedback.</li>
+</ol>]]></content:encoded>
+            <category>webrtc</category>
+            <category>edtech</category>
+            <category>privacy</category>
+            <category>ai</category>
+            <category>zero-cors</category>
+        </item>
+    </channel>
+</rss>

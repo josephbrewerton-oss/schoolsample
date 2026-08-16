@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkschool_portal||=[]).push([[903],{1912(o){o.exports=JSON.parse('{"blogBasePath":"/schoolsample/blog","blogTitle":"Blog","authorsListPath":"/schoolsample/blog/authors"}')}}]);
