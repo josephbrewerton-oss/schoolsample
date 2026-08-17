@@ -9,6 +9,8 @@ sidebar_label: Primary Discovery & Inquiry
 sidebar_position: 1
 ---
 
+import InteractiveEdgeSandbox from '@site/src/components/InteractiveEdgeSandbox';
+
 # Primary Discovery & Inquiry Lab 🌿
 
 Explore science, numbers, storytelling, and logical thinking with your voice tutor.
@@ -38,6 +40,8 @@ Explore science, numbers, storytelling, and logical thinking with your voice tut
     Enable Voice Tutor Output 🔊
   </label>
 </div>
+
+<InteractiveEdgeSandbox />
 
 ### 1. Foundations (STEM & Maths)
 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
