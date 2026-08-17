@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2026 Joseph Brewerton
+ * Licensed under the MIT License.
+ */
 // High-Performance WebRTC Loopback with IndexedDB Quiz Context, SPA Navigation & Socratic Guard
 (function () {
   let pc1 = null;

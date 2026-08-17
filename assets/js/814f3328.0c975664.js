@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkschool_portal||=[]).push([[472],{5513(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Sovereign In-Browser AI Tutoring Architecture","permalink":"/schoolsample/blog/sovereign-school-ai-breakthrough","unlisted":false,"date":"2026-08-16T00:00:00.000Z"}]}')}}]);
