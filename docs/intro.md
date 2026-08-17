@@ -11,6 +11,7 @@ Licensed under the MIT License.
 -->
 
 import InteractiveEdgeSandbox from '@site/src/components/InteractiveEdgeSandbox';
+import questions from './questions.json';
 
 # School AI Interactive Terminal
 
