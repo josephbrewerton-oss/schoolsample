@@ -60,13 +60,18 @@ const config: Config = {
     colorMode: {
       respectPrefersColorScheme: true,
     },
-    navbar: {
+navbar: {
       title: 'School AI Portal',
       logo: {
         alt: 'School AI Logo',
         src: 'img/logo.svg',
       },
       items: [
+        {
+          to: '/settings',
+          label: '⚙ AI Settings',
+          position: 'right',
+        },
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
@@ -80,8 +85,8 @@ const config: Config = {
           position: 'right',
         },
       ],
-    },
-    footer: {
+    },    
+	footer: {
       style: 'dark',
       links: [
         {

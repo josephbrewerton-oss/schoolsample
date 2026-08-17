@@ -2,27 +2,32 @@
   "name": "school-portal",
   "version": "0.0.0",
   "private": true,
-  "scripts": {
+"scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build",
-    "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "obfuscate": "javascript-obfuscator static/js/webrtc-agent.js --output static/js/webrtc-agent.js --compact true --control-flow-flattening true --dead-code-injection true",
+    "deploy": "docusaurus build && npx gh-pages -d build -b gh-pages"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
     "@docusaurus/faster": "3.10.2",
     "@docusaurus/preset-classic": "3.10.2",
     "@mdx-js/react": "^3.0.0",
+    "@mlc-ai/web-llm": "^0.2.84",
     "clsx": "^2.0.0",
     "prism-react-renderer": "^2.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@types/react": "^19.0.0",
+    "gh-pages": "^6.3.0",
+    "javascript-obfuscator": "^5.5.0",
+    "typescript": "~6.0.2"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",
@@ -46,11 +51,5 @@
   },
   "engines": {
     "node": ">=20.0"
-  },
-  "scripts": {
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build",
-    "obfuscate": "javascript-obfuscator static/js/webrtc-agent.js --output static/js/webrtc-agent.js --compact true --control-flow-flattening true --self-defending true --string-array true --string-array-encoding base64"
   }
 }
