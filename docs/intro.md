@@ -1,11 +1,14 @@
+---
+id: intro
+title: AI Laboratory HUD
+sidebar_label: 🚀 Portal Overview
+sidebar_position: 1
+---
+
 <!--
 Copyright (c) 2026 Joseph Brewerton
 Licensed under the MIT License.
 -->
----
-sidebar_position: 1
-title: AI Laboratory HUD
----
 
 import questions from './questions.json';
 
