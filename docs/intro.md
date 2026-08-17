@@ -10,13 +10,11 @@ Copyright (c) 2026 Joseph Brewerton
 Licensed under the MIT License.
 -->
 
-import questions from './questions.json';
+import InteractiveEdgeSandbox from '@site/src/components/InteractiveEdgeSandbox';
 
 # School AI Interactive Terminal
 
 Experience deterministic, in-browser AI tutoring powered by an isolated WebRTC loopback stream.
-
----
 
 ### Live WebRTC Telemetry HUD
 
