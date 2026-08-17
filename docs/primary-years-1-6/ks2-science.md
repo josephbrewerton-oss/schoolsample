@@ -1,8 +1,9 @@
 ---
 id: ks2-science
-title: Primary Discovery & Inquiry (Years 1 - 6)
+title: Primary Discovery & Inquiry
 sidebar_label: Primary Discovery & Inquiry
 sidebar_position: 1
+hide_title: true
 ---
 
 <!--
@@ -10,10 +11,6 @@ Copyright (c) 2026 Joseph Brewerton
 Licensed under the MIT License.
 -->
 
-import InteractiveEdgeSandbox from '@site/src/components/InteractiveEdgeSandbox';
+import DynamicLessonViewer from '@site/src/components/DynamicLessonViewer';
 
-# Primary Discovery & Inquiry Lab 🌿
-
-Explore science, numbers, storytelling, and logical thinking with your voice tutor.
-
-<InteractiveEdgeSandbox />
+<DynamicLessonViewer defaultCode="Y4-SCI-01" />
