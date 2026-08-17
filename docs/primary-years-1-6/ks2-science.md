@@ -67,6 +67,20 @@ Explore science, numbers, storytelling, and logical thinking with your voice tut
 </div>
 
 ### In-Browser Peer Stream Terminal
-<div id="ai-output-box" style={{ background: '#030712', border: '1px solid #1f2937', borderRadius: '8px', padding: '18px', minHeight: '110px', fontFamily: 'monospace', color: '#4ade80', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+<div 
+  id="ai-output-box" 
+  suppressHydrationWarning={true}
+  style={{ 
+    background: '#030712', 
+    border: '1px solid #1f2937', 
+    borderRadius: '8px', 
+    padding: '18px', 
+    minHeight: '110px', 
+    fontFamily: 'monospace', 
+    color: '#4ade80', 
+    whiteSpace: 'pre-wrap', 
+    lineHeight: 1.6 
+  }}
+>
   Ready. Select a module above.
 </div>
