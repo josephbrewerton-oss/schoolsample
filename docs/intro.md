@@ -17,8 +17,6 @@ import questions from './questions.json';
 
 Experience deterministic, in-browser AI tutoring powered by an isolated WebRTC loopback stream.
 
-### Live WebRTC Telemetry HUD
-
 <div style={{
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
