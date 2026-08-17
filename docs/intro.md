@@ -101,12 +101,22 @@ Experience deterministic, in-browser AI tutoring powered by an isolated WebRTC l
 
 ### In-Browser Peer Stream Terminal
 
-<pre id="ai-output-box" style={{
-  background: '#020617',
-  color: '#4ade80',
-  padding: '1.25rem',
-  ### In-Browser Peer Stream Terminal
+### In-Browser Peer Stream Terminal
 
+<pre
+  id="ai-output-box"
+  suppressHydrationWarning={true}
+  style={{
+    background: '#020617',
+    color: '#4ade80',
+    padding: '1.25rem',
+    borderRadius: '0.5rem',
+    fontFamily: 'monospace',
+    minHeight: '120px',
+    whiteSpace: 'pre-wrap'
+  }}>
+  Waiting for peer stream connection...
+</pre>
 <pre 
   id="ai-output-box" 
   suppressHydrationWarning={true}

@@ -2,7 +2,7 @@
   "name": "school-portal",
   "version": "0.0.0",
   "private": true,
-"scripts": {
+  "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build",
@@ -29,5 +29,12 @@
   },
   "engines": {
     "node": ">=20.0"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.10.2",
+    "@docusaurus/preset-classic": "^3.10.2",
+    "@mlc-ai/web-llm": "^0.2.84",
+    "@school-ai/edge-runtime": "file:packages/edge-runtime",
+    "edge-runtime": "^4.0.1"
   }
 }
