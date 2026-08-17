@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 import { EdgeCognitiveEngine, SandboxedEvaluator } from '@school-ai/edge-runtime';
 
-export default function InteractiveEdgeSandbox() {
-  const [mounted, setMounted] = useState(false);
+function SandboxComponent() {
   const [engine, setEngine] = useState<EdgeCognitiveEngine | null>(null);
   const [status, setStatus] = useState('Initializing Edge Runtime...');
   const [output, setOutput] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-
     const initSdk = async () => {
       try {
         const edgeEngine = new EdgeCognitiveEngine({
@@ -31,16 +29,6 @@ export default function InteractiveEdgeSandbox() {
 
     initSdk();
   }, []);
-
-  // Prevent server-side rendering mismatch during static build
-  if (!mounted) {
-    return (
-      <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '1.25rem', margin: '1.5rem 0', background: '#0f172a' }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc' }}>⚡ Neuro-Symbolic Edge Runtime</h4>
-        <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Loading runtime environment...</p>
-      </div>
-    );
-  }
 
   const runEvaluation = async () => {
     if (!engine) return;
@@ -77,5 +65,13 @@ export default function InteractiveEdgeSandbox() {
         </pre>
       )}
     </div>
+  );
+}
+
+export default function InteractiveEdgeSandbox() {
+  return (
+    <BrowserOnly fallback={<div>Loading runtime environment...</div>}>
+      {() => <SandboxComponent />}
+    </BrowserOnly>
   );
 }
