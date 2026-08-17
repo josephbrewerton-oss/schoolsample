@@ -37,6 +37,9 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+		  routeBasePath: '/',
+		  editUrl:
+          'https://github.com/josephbrewerton-oss/schoolsample/tree/main/',
         },
         blog: {
           showReadingTime: true,
