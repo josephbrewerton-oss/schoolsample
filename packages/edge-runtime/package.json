@@ -1,0 +1,30 @@
+{
+  "name": "@school-ai/edge-runtime",
+  "version": "1.0.0",
+  "description": "Client-side neuro-symbolic inference and deterministic verification SDK",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "@mlc-ai/web-llm": "^0.2.78"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.4.0"
+  },
+  "license": "MIT"
+}
