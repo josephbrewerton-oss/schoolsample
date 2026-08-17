@@ -99,8 +99,6 @@ Experience deterministic, in-browser AI tutoring powered by an isolated WebRTC l
 
 ### In-Browser Peer Stream Terminal
 
-### In-Browser Peer Stream Terminal
-
 <pre
   id="ai-output-box"
   suppressHydrationWarning={true}
