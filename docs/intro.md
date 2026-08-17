@@ -105,12 +105,26 @@ Experience deterministic, in-browser AI tutoring powered by an isolated WebRTC l
   background: '#020617',
   color: '#4ade80',
   padding: '1.25rem',
-  borderRadius: '8px',
-  minHeight: '110px',
-  whiteSpace: 'pre-wrap',
-  fontSize: '1rem',
-  fontFamily: 'Consolas, Monaco, monospace',
-  border: '1px solid #1e293b'
-}}>
+  ### In-Browser Peer Stream Terminal
+
+<pre 
+  id="ai-output-box" 
+  suppressHydrationWarning={true}
+  style={{
+    background: '#020617',
+    color: '#4ade80',
+    padding: '1.25rem',
+    borderRadius: '8px',
+    minHeight: '110px',
+    whiteSpace: 'pre-wrap',
+    fontSize: '1rem',
+    fontFamily: 'Consolas, Monaco, monospace',
+    border: '1px solid #1e293b'
+  }}
+>
 Ready. Select an experiment above or type a custom prompt.
 </pre>
+
+---
+
+<InteractiveEdgeSandbox />
