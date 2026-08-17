@@ -1,4 +1,8 @@
-﻿---
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
+---
 id: biology-cell-respiration
 title: GCSE Biology - Cellular Respiration & ATP
 sidebar_label: 🌿 Cellular Respiration

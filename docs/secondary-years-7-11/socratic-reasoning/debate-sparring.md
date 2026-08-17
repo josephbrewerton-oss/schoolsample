@@ -1,4 +1,8 @@
-﻿---
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
+---
 id: debate-sparring
 title: Socratic Sparring & Dialectical Debate
 sidebar_label: ⚔️ Socratic Debate Arena

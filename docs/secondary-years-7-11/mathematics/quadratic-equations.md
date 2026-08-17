@@ -1,4 +1,8 @@
-﻿---
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
+---
 id: quadratic-equations
 title: GCSE Mathematics - Quadratic Equations
 sidebar_label: Quadratic Equations

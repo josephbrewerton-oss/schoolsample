@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
 # Website
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.

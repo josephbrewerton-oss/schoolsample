@@ -1,0 +1,19 @@
+# School AI Portal
+
+> Deterministic, privacy-first, on-device AI educational portal running via in-browser WebRTC loopback channels and localized model runtimes.
+
+## Overview
+- Architecture: Zero-backend, zero-cost edge deployment via GitHub Pages and Docusaurus.
+- Inference: In-browser WebRTC data channels (DTLS/SCTP) communicating with local inference endpoints (Ollama / Chrome Prompt API / WebLLM).
+- Data Privacy: Zero telemetry, zero cloud logging; user state persists exclusively in local IndexedDB.
+
+## Curriculum Core Links
+- Portal Overview: https://josephbrewerton-oss.github.io/schoolsample/docs/intro
+- Primary Discovery (Years 1-6): https://josephbrewerton-oss.github.io/schoolsample/docs/primary-years-1-6/ks2-science
+- Secondary Core (Years 7-11): https://josephbrewerton-oss.github.io/schoolsample/docs/secondary-years-7-11/sciences/biology-cell-respiration
+- Sixth Form & Ethics (Years 12-14): https://josephbrewerton-oss.github.io/schoolsample/docs/sixth-form-years-12-14/alevel-advanced
+
+## Structured Question Datasets
+- Primary Question Bank: https://josephbrewerton-oss.github.io/schoolsample/data/questions-primary.json
+- Secondary Question Bank: https://josephbrewerton-oss.github.io/schoolsample/data/questions-secondary.json
+- Sixth Form Question Bank: https://josephbrewerton-oss.github.io/schoolsample/data/questions-sixthform.json

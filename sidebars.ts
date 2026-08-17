@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2026 Joseph Brewerton
+ * Licensed under the MIT License.
+ */
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {

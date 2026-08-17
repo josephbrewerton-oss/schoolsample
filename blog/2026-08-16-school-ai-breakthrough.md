@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
 ---
 slug: sovereign-school-ai-breakthrough
 title: Sovereign In-Browser AI Tutoring Architecture

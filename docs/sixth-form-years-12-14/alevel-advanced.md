@@ -1,4 +1,8 @@
-﻿---
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
+---
 id: alevel-advanced
 title: Sixth Form Higher Analysis & Ethics (Years 12 - 14)
 sidebar_label: Higher Analysis & Ethics

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
 ---
 id: ks2-science
 title: Primary Discovery & Inquiry (Years 1 - 6)

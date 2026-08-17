@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2026 Joseph Brewerton
+ * Licensed under the MIT License.
+ */
 import React from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';

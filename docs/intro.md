@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Joseph Brewerton
+Licensed under the MIT License.
+-->
 ---
 sidebar_position: 1
 title: AI Laboratory HUD
