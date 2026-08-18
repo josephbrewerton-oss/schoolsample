@@ -7,7 +7,7 @@ const config: Config = {
   tagline: 'Interactive Learning Powered by Local AI',
   favicon: 'img/favicon.ico',
 
-  // Load the WebRTC client script across all pages (prefixed with baseUrl)
+  // Load WebRTC client script across all pages
   scripts: [
     {
       src: '/schoolsample/js/webrtc-agent.js',
@@ -15,7 +15,7 @@ const config: Config = {
     },
   ],
 
-  // Set the production url and baseUrl for GitHub Pages
+  // Production URL and baseUrl for GitHub Pages
   url: 'https://josephbrewerton-oss.github.io',
   baseUrl: '/schoolsample/',
 
@@ -37,9 +37,8 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-		  routeBasePath: '/',
-		  editUrl:
-          'https://github.com/josephbrewerton-oss/schoolsample/tree/main/',
+          routeBasePath: '/',
+          editUrl: 'https://github.com/josephbrewerton-oss/schoolsample/tree/main/',
         },
         blog: {
           showReadingTime: true,
@@ -63,7 +62,7 @@ const config: Config = {
     colorMode: {
       respectPrefersColorScheme: true,
     },
-navbar: {
+    navbar: {
       title: 'School AI Portal',
       logo: {
         alt: 'School AI Logo',
@@ -71,33 +70,37 @@ navbar: {
       },
       items: [
         {
+          type: 'docSidebar',
+          sidebarId: 'tutorialSidebar',
+          position: 'left',
+          label: 'Practice Lab',
+        },
+        {
+          to: '/blog',
+          label: 'News',
+          position: 'left',
+        },
+        {
           to: '/settings',
           label: '⚙ AI Settings',
           position: 'right',
         },
-        {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
-          position: 'left',
-          label: 'Lessons',
-        },
-        {to: '/blog', label: 'News', position: 'left'},
         {
           href: 'https://github.com/josephbrewerton-oss/schoolsample',
           label: 'GitHub',
           position: 'right',
         },
       ],
-    },    
-	footer: {
+    },
+    footer: {
       style: 'dark',
       links: [
         {
-          title: 'Curriculum',
+          title: 'Workspace',
           items: [
             {
-              label: 'Primary Years 1-6',
-              to: '/docs/primary-years-1-6/ks2-science',
+              label: 'Interactive Practice Lab',
+              to: '/practice-lab',
             },
           ],
         },

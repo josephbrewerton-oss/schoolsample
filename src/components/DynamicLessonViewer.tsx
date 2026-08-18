@@ -1,295 +1,314 @@
-import React, { useState } from 'react';
-import { LESSON_REGISTRY, resolveLessonByCode, LessonASTNode } from '../data/lessons';
+import React, { useState, useEffect, useRef } from 'react';
+import { DomainManifest } from '../types/learning-ast';
+import { SCHOOL_MANIFEST } from '../manifests/school';
+import { COMMUNION_MANIFEST } from '../manifests/communion';
 
-interface ViewerProps {
-  defaultCode?: string;
-}
+// Swappable Manifest Registry
+const MANIFEST_REGISTRY: Record<string, DomainManifest> = {
+  school: SCHOOL_MANIFEST,
+  communion: COMMUNION_MANIFEST,
+};
 
-export default function DynamicLessonViewer({ defaultCode = 'Y4-SCI-01' }: ViewerProps): React.JSX.Element {
-  const [activeCode, setActiveCode] = useState<string>(defaultCode);
-  const [searchInput, setSearchInput] = useState<string>('');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+export default function UniversalLearningEngine({ activeManifestId = 'school' }: { activeManifestId?: string }): React.JSX.Element {
+  const [manifestKey, setManifestKey] = useState<string>(activeManifestId);
+  const manifest = MANIFEST_REGISTRY[manifestKey] ?? SCHOOL_MANIFEST;
 
-  // Active Lesson Node
-  const activeNode: LessonASTNode = resolveLessonByCode(activeCode) ?? LESSON_REGISTRY[0];
+  const [selectedCohort, setSelectedCohort] = useState<string | null>(null);
+  const [activeCodeInput, setActiveCodeInput] = useState<string>('');
+  const [challengeIdx, setChallengeIdx] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
 
-  // Interactive Answer Box State
-  const [studentAnswer, setStudentAnswer] = useState<string>('');
-  const [answerFeedback, setAnswerFeedback] = useState<{ status: 'correct' | 'incorrect'; message: string } | null>(null);
-  const [showHint, setShowHint] = useState<boolean>(false);
+  // Filter challenges for active cohort
+  const cohortChallenges = selectedCohort
+    ? manifest.challenges.filter((c) => c.cohortCode === selectedCohort)
+    : manifest.challenges;
 
-  // Terminal & Query State
-  const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    `⚡ WebGPU/Edge runtime active [${activeNode.code}]`,
-    `🤖 [Tutor]: ${activeNode.runtime.starterPrompt}`
-  ]);
-  const [queryInput, setQueryInput] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const currentChallenge = cohortChallenges[challengeIdx % cohortChallenges.length] ?? manifest.challenges[0];
 
-  const switchLesson = (code: string) => {
-    setActiveCode(code);
-    setErrorMsg(null);
-    setStudentAnswer('');
-    setAnswerFeedback(null);
-    setShowHint(false);
+  const [studentAnswer, setStudentAnswer] = useState('');
+  const [feedback, setFeedback] = useState<{ status: 'correct' | 'incorrect'; message: string } | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-    const node = resolveLessonByCode(code) ?? LESSON_REGISTRY[0];
-    setTerminalLogs([
-      `⚡ Switched context to [${node.code}] - ${node.stage} ${node.subject}`,
-      `🤖 [Tutor]: ${node.runtime.starterPrompt}`
-    ]);
+  const [terminalLogs, setTerminalLogs] = useState<Array<{ role: 'system' | 'student' | 'tutor'; text: string }>>([]);
+  const [queryInput, setQueryInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const terminalEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [terminalLogs]);
+
+  const speakText = (text: string) => {
+    if (!isVoiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const clean = text.replace(/[*_#`~[\]]/g, '').replace(/[^\x00-\x7F]/g, '');
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.pitch = manifest.tutorPersona.voicePitch;
+    utterance.rate = manifest.tutorPersona.voiceRate;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const matched = resolveLessonByCode(searchInput);
-    if (matched) {
-      switchLesson(matched.code);
-      setSearchInput('');
-      setErrorMsg(null);
-    } else {
-      setErrorMsg(`No lesson found matching "${searchInput}". Try "Y4", "Y10", "Maths", or "Ethics".`);
-    }
+  const selectCohort = (code: string) => {
+    window.speechSynthesis?.cancel();
+    setSelectedCohort(code);
+    setChallengeIdx(0);
+    setStudentAnswer('');
+    setFeedback(null);
+    setShowHint(false);
+
+    const relevant = manifest.challenges.filter((c) => c.cohortCode === code);
+    const initial = relevant[0] ?? manifest.challenges[0];
+
+    setTerminalLogs([
+      { role: 'system', text: `Session initialized for cohort [${code}].` },
+      { role: 'tutor', text: initial.starterTutorPrompt },
+    ]);
+    speakText(initial.starterTutorPrompt);
   };
 
   const checkAnswer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentAnswer.trim()) return;
 
-    const isMatch = studentAnswer.trim().toLowerCase().includes(activeNode.exercise.expectedAnswer.toLowerCase());
-    if (isMatch) {
-      setAnswerFeedback({
-        status: 'correct',
-        message: `✅ Correct! ${activeNode.exercise.explanation}`
-      });
+    const isCorrect = studentAnswer.trim().toLowerCase().includes(currentChallenge.expectedAnswer.toLowerCase());
+    if (isCorrect) {
+      const msg = `Correct! ${currentChallenge.explanation}`;
+      setFeedback({ status: 'correct', message: msg });
+      setStreak((s) => s + 1);
+      speakText(msg);
     } else {
-      setAnswerFeedback({
-        status: 'incorrect',
-        message: `❌ Not quite. Check your steps or click 'Need a hint?' below.`
-      });
+      const msg = `Not quite. Review the question or view the hint.`;
+      setFeedback({ status: 'incorrect', message: msg });
+      setStreak(0);
+      speakText(msg);
     }
   };
 
-  const streamToTerminal = (promptText: string) => {
-    setIsProcessing(true);
-    setTerminalLogs((prev) => [...prev, `\n> Student: ${promptText}`, '⏳ Processing through client-side AST runtime...']);
+  const nextChallenge = () => {
+    window.speechSynthesis?.cancel();
+    const nextIdx = (challengeIdx + 1) % cohortChallenges.length;
+    setChallengeIdx(nextIdx);
+    setStudentAnswer('');
+    setFeedback(null);
+    setShowHint(false);
 
-    setTimeout(() => {
-      setTerminalLogs((prev) => [
-        ...prev,
-        `🤖 [Tutor (${activeNode.runtime.mode})]: Exploring "${promptText}"`,
-        `💡 [Guidance]: In ${activeNode.subject} (${activeNode.stage}), consider how the core variables interact. What is your next conclusion?`
-      ]);
-      setIsProcessing(false);
-    }, 450);
+    const nextQ = cohortChallenges[nextIdx];
+    setTerminalLogs([
+      { role: 'system', text: `Loaded challenge ${nextIdx + 1} of ${cohortChallenges.length}` },
+      { role: 'tutor', text: nextQ.starterTutorPrompt },
+    ]);
+    speakText(nextQ.starterTutorPrompt);
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontFamily: 'inherit' }}>
-      
-      {/* Top Search & Preset Navigation */}
-      <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '6px', flex: '1 1 240px' }}>
-            <input
-              type="text"
-              placeholder="Search code or subject (e.g. Y4, Y10, Maths, GCSE)..."
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                if (errorMsg) setErrorMsg(null);
-              }}
-              style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', width: '100%' }}
-            />
-            <button
-              type="submit"
-              style={{ padding: '7px 14px', borderRadius: '6px', background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-            >
-              Load
-            </button>
-          </form>
+  const handleQuery = (promptText: string) => {
+    window.speechSynthesis?.cancel();
+    setIsProcessing(true);
+    setTerminalLogs((prev) => [...prev, { role: 'student', text: promptText }]);
 
-          {/* Quick Dropdown */}
-          <select
-            value={activeNode.code}
-            onChange={(e) => switchLesson(e.target.value)}
-            style={{ padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff' }}
-          >
-            {LESSON_REGISTRY.map((node) => (
-              <option key={node.code} value={node.code}>
-                {node.code} — {node.stage} {node.subject}
-              </option>
-            ))}
-          </select>
-        </div>
+    setTimeout(() => {
+      const p = promptText.toLowerCase();
+      const matched = currentChallenge.semanticRules.find((r) => r.keywords.some((k) => p.includes(k)));
+      const res = matched
+        ? matched.response
+        : `Reflecting on "${promptText}" regarding ${currentChallenge.topic}. How does this guide your reasoning?`;
 
-        {/* Quick Presets */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Presets:</span>
-          {LESSON_REGISTRY.map((node) => (
+      setTerminalLogs((prev) => [...prev, { role: 'tutor', text: res }]);
+      setIsProcessing(false);
+      speakText(res);
+    }, 350);
+  };
+
+  // 1. Onboarding Screen
+  if (!selectedCohort) {
+    return (
+      <div style={{ maxWidth: '500px', margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
+        
+        {/* Quick Manifest Switcher */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '1.25rem' }}>
+          {Object.keys(MANIFEST_REGISTRY).map((key) => (
             <button
-              key={node.code}
-              onClick={() => switchLesson(node.code)}
+              key={key}
+              onClick={() => { setManifestKey(key); }}
               style={{
                 padding: '4px 10px',
-                fontSize: '0.8rem',
-                borderRadius: '20px',
-                border: activeNode.code === node.code ? '1px solid #2563eb' : '1px solid #e2e8f0',
-                background: activeNode.code === node.code ? '#eff6ff' : '#fff',
-                color: activeNode.code === node.code ? '#1d4ed8' : '#475569',
+                borderRadius: '12px',
+                border: manifestKey === key ? `1px solid ${manifest.meta.themeColor}` : '1px solid #e2e8f0',
+                background: manifestKey === key ? manifest.meta.themeColor : '#f8fafc',
+                color: manifestKey === key ? '#fff' : '#64748b',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'capitalize',
                 cursor: 'pointer',
-                fontWeight: activeNode.code === node.code ? 600 : 400,
               }}
             >
-              {node.icon} {node.code} ({node.stage})
+              Preset: {key}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{manifest.meta.badgeIcon}</div>
+        <h2 style={{ margin: '0 0 0.5rem 0', color: '#0f172a' }}>{manifest.meta.portalName}</h2>
+        <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{manifest.meta.tagline}</p>
+
+        <form onSubmit={(e) => { e.preventDefault(); const c = manifest.cohorts.find(x => x.code.toLowerCase() === activeCodeInput.trim().toLowerCase()); if (c) selectCohort(c.code); else alert('Code not found.'); }} style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem' }}>
+          <input
+            type="text"
+            placeholder="Enter Code (e.g. 4B, FHC-A)"
+            value={activeCodeInput}
+            onChange={(e) => setActiveCodeInput(e.target.value)}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', textAlign: 'center', fontWeight: 600 }}
+          />
+          <button type="submit" style={{ padding: '10px 20px', borderRadius: '8px', background: manifest.meta.themeColor, color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+            Join ➔
+          </button>
+        </form>
+
+        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {manifest.cohorts.map((c) => (
+            <button
+              key={c.code}
+              onClick={() => selectCohort(c.code)}
+              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+            >
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9rem' }}>{c.name}</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{c.subtext}</div>
+              </div>
+              <span style={{ fontSize: '0.75rem', background: '#e2e8f0', padding: '2px 8px', borderRadius: '4px', color: '#475569' }}>Code: {c.code}</span>
             </button>
           ))}
         </div>
       </div>
+    );
+  }
 
-      {errorMsg && (
-        <div style={{ padding: '8px 12px', background: '#fef2f2', color: '#dc2626', borderRadius: '6px', fontSize: '0.9rem' }}>
-          {errorMsg}
+  // 2. Active Session Screen
+  const activeCohortMeta = manifest.cohorts.find((c) => c.code === selectedCohort);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
+      
+      {/* Session Top Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, background: '#f1f5f9', color: '#1e293b', padding: '4px 10px', borderRadius: '6px' }}>
+            {manifest.meta.badgeIcon} {activeCohortMeta?.name} ({selectedCohort})
+          </span>
+          <button
+            onClick={() => { window.speechSynthesis?.cancel(); setSelectedCohort(null); }}
+            style={{ fontSize: '0.8rem', color: '#64748b', background: 'transparent', border: '1px solid #cbd5e1', padding: '3px 8px', borderRadius: '6px', cursor: 'pointer' }}
+          >
+            Switch Cohort
+          </button>
         </div>
-      )}
 
-      {/* Lesson Header */}
-      <div>
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '0.5rem', alignItems: 'center' }}>
-          <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600 }}>
-            {activeNode.yearGroup}
-          </span>
-          <span style={{ background: '#f1f5f9', color: '#334155', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-            {activeNode.stage} · {activeNode.subject}
-          </span>
-          <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: '0.85rem' }}>
-            Code: <strong>{activeNode.code}</strong>
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>🔥 Streak: <strong style={{ color: '#ea580c' }}>{streak}</strong></span>
+          <button
+            type="button"
+            onClick={() => { if (isVoiceEnabled && isSpeaking) window.speechSynthesis?.cancel(); setIsVoiceEnabled(!isVoiceEnabled); }}
+            style={{ padding: '5px 10px', borderRadius: '16px', border: '1px solid #cbd5e1', background: isVoiceEnabled ? '#f0fdf4' : '#f8fafc', color: isVoiceEnabled ? '#166534' : '#64748b', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            {isVoiceEnabled ? (isSpeaking ? '🔊 Speaking...' : '🔊 Voice ON') : '🔇 Muted'}
+          </button>
         </div>
-
-        <h1 style={{ margin: '0.5rem 0' }}>{activeNode.title} {activeNode.icon}</h1>
-        <p style={{ fontSize: '1.05rem', color: '#475569' }}>{activeNode.description}</p>
       </div>
 
-      {/* Learning Objectives */}
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '1rem' }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#166534' }}>🎯 Key Learning Objectives</h4>
-        <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#15803d', fontSize: '0.95rem' }}>
-          {activeNode.objectives.map((obj, i) => (
-            <li key={i} style={{ marginBottom: '4px' }}>{obj}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Curriculum Breakdown */}
-      {activeNode.sections.map((sec, idx) => (
-        <div key={idx} style={{ padding: '1.25rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fff' }}>
-          <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>{sec.heading}</h3>
-          {sec.content.map((p, pIdx) => (
-            <p key={pIdx} style={{ margin: '0.5rem 0', color: '#334155', lineHeight: '1.5' }}>{p}</p>
-          ))}
+      {/* Challenge Card */}
+      <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <span style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#334155', fontSize: '0.8rem', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>
+            {currentChallenge.topic}
+          </span>
+          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Level {currentChallenge.level}</span>
         </div>
-      ))}
 
-      {/* Interactive Answer Box / Student Challenge */}
-      <div style={{ padding: '1.25rem', border: '1px solid #bfdbfe', background: '#eff6ff', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e40af' }}>✍️ Interactive Practice Challenge</h4>
-        <p style={{ margin: '0 0 1rem 0', color: '#1e3a8a', fontWeight: 500 }}>{activeNode.exercise.prompt}</p>
+        <h2 style={{ fontSize: '1.25rem', margin: '0 0 1rem 0', color: '#0f172a' }}>{currentChallenge.prompt}</h2>
 
         <form onSubmit={checkAnswer} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <input
             type="text"
-            placeholder="Type your answer here..."
+            placeholder="Type your response here..."
             value={studentAnswer}
             onChange={(e) => setStudentAnswer(e.target.value)}
-            style={{ flex: '1 1 200px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #93c5fd', background: '#fff' }}
+            style={{ flex: '1 1 240px', padding: '9px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
           />
-          <button
-            type="submit"
-            style={{ padding: '8px 16px', borderRadius: '6px', background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-          >
-            Check Answer
+          <button type="submit" style={{ padding: '9px 18px', borderRadius: '8px', background: manifest.meta.themeColor, color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+            Submit
           </button>
-          <button
-            type="button"
-            onClick={() => setShowHint(!showHint)}
-            style={{ padding: '8px 12px', borderRadius: '6px', background: 'transparent', color: '#1d4ed8', border: '1px dashed #93c5fd', cursor: 'pointer' }}
-          >
-            {showHint ? 'Hide Hint' : '💡 Need a hint?'}
+          <button type="button" onClick={() => setShowHint(!showHint)} style={{ padding: '9px 14px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '0.85rem', cursor: 'pointer' }}>
+            {showHint ? 'Hide Hint' : '💡 Hint'}
           </button>
         </form>
 
         {showHint && (
-          <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: '#1e40af', background: '#dbeafe', padding: '6px 10px', borderRadius: '6px' }}>
-            <strong>Hint:</strong> {activeNode.exercise.hint}
+          <div style={{ marginTop: '0.75rem', padding: '8px 12px', background: '#f8fafc', borderLeft: `3px solid ${manifest.meta.themeColor}`, borderRadius: '4px', fontSize: '0.85rem', color: '#475569' }}>
+            <strong>Hint:</strong> {currentChallenge.hint}
           </div>
         )}
 
-        {answerFeedback && (
+        {feedback && (
           <div style={{
-            marginTop: '0.75rem',
-            padding: '8px 12px',
-            borderRadius: '6px',
+            marginTop: '1rem',
+            padding: '10px 14px',
+            borderRadius: '8px',
             fontSize: '0.9rem',
             fontWeight: 500,
-            background: answerFeedback.status === 'correct' ? '#dcfce7' : '#fee2e2',
-            color: answerFeedback.status === 'correct' ? '#166534' : '#991b1b',
-            border: `1px solid ${answerFeedback.status === 'correct' ? '#86efac' : '#fca5a5'}`
+            background: feedback.status === 'correct' ? '#f0fdf4' : '#fef2f2',
+            color: feedback.status === 'correct' ? '#166534' : '#991b1b',
+            border: `1px solid ${feedback.status === 'correct' ? '#bbf7d0' : '#fecaca'}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            {answerFeedback.message}
+            <span>{feedback.status === 'correct' ? '✅ ' : '❌ '}{feedback.message}</span>
+            {feedback.status === 'correct' && (
+              <button onClick={nextChallenge} style={{ padding: '6px 12px', background: '#166534', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
+                Next ➔
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* AI Tutor Sandbox & Terminal */}
-      <div style={{ background: '#0f172a', borderRadius: '10px', padding: '1.25rem', color: '#fff' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>⚡</span>
-            <strong>Neuro-Symbolic Edge Runtime [{activeNode.runtime.mode}]</strong>
-          </div>
-          <span style={{ fontSize: '0.75rem', background: '#1e293b', padding: '3px 8px', borderRadius: '4px', color: '#38bdf8' }}>
-            100% Client-Side
+      {/* Persona Edge Terminal */}
+      <div style={{ background: '#0b1120', borderRadius: '12px', padding: '1.25rem', border: '1px solid #1e293b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.85rem' }}>
+            ⚡ {manifest.tutorPersona.name} [{manifest.tutorPersona.engineType}]
           </span>
+          <span style={{ fontSize: '0.75rem', background: '#1e293b', color: '#38bdf8', padding: '2px 8px', borderRadius: '10px' }}>100% Client-Side</span>
         </div>
 
-        {/* Dynamic Topic Prompt Pills */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-          {activeNode.runtime.samplePrompts.map((prompt, i) => (
-            <button
-              key={i}
-              onClick={() => streamToTerminal(prompt)}
-              style={{ background: '#1e293b', border: '1px solid #334155', color: '#cbd5e1', padding: '5px 10px', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
-            >
-              💬 {prompt}
-            </button>
+        <div style={{ background: '#030712', border: '1px solid #1e293b', borderRadius: '8px', padding: '0.85rem', minHeight: '110px', maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '0.75rem', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+          {terminalLogs.map((log, idx) => (
+            <div key={idx} style={{ color: log.role === 'student' ? '#38bdf8' : (log.role === 'tutor' ? '#4ade80' : '#64748b') }}>
+              {log.role === 'student' ? '> User: ' : (log.role === 'tutor' ? `🤖 ${manifest.tutorPersona.name}: ` : '⚡ ')}{log.text}
+            </div>
           ))}
+          {isProcessing && <div style={{ color: '#eab308' }}>⏳ Evaluating locally...</div>}
+          <div ref={terminalEndRef} />
         </div>
 
-        {/* Student Query Box */}
-        <form onSubmit={(e) => { e.preventDefault(); if (queryInput.trim()) { streamToTerminal(queryInput); setQueryInput(''); } }} style={{ display: 'flex', gap: '8px', marginBottom: '0.75rem' }}>
+        <form onSubmit={(e) => { e.preventDefault(); if (queryInput.trim()) { handleQuery(queryInput); setQueryInput(''); } }} style={{ display: 'flex', gap: '8px' }}>
           <input
             type="text"
-            placeholder="Ask your edge tutor a question about this topic..."
+            placeholder={`Ask ${manifest.tutorPersona.name} a question...`}
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
-            style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid #334155', background: '#020617', color: '#fff' }}
+            style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid #334155', background: '#030712', color: '#f8fafc', fontSize: '0.85rem' }}
           />
-          <button
-            type="submit"
-            disabled={isProcessing}
-            style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: 600, cursor: isProcessing ? 'wait' : 'pointer' }}
-          >
-            {isProcessing ? 'Thinking...' : 'Submit Query 🚀'}
+          <button type="submit" disabled={isProcessing} style={{ padding: '8px 16px', borderRadius: '6px', background: manifest.meta.themeColor, color: '#fff', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: isProcessing ? 'wait' : 'pointer' }}>
+            Ask
           </button>
         </form>
-
-        {/* Live Terminal Output Box */}
-        <div style={{ background: '#020617', border: '1px solid #1e293b', borderRadius: '6px', padding: '0.85rem', minHeight: '120px', fontFamily: 'monospace', fontSize: '0.85rem', color: '#38bdf8' }}>
-          {terminalLogs.map((log, idx) => (
-            <div key={idx} style={{ marginBottom: '4px', whiteSpace: 'pre-wrap' }}>{log}</div>
-          ))}
-        </div>
       </div>
 
     </div>
