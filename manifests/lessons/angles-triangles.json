@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "domainId": "angles-triangles",
+    "portalName": "Angles in Triangles and Polygons",
+    "badgeIcon": "📐",
+    "themeColor": "#2563eb",
+    "tagline": "Key Stage 3 • Maths"
+  },
+  "tutorPersona": {
+    "name": "Maths Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-MTH3",
+      "name": "Angles in Triangles and Polygons Cohort",
+      "subtext": "Key Stage 3 Maths",
+      "defaultTopicId": "angles-triangles-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "angles-triangles-q1",
+      "cohortCode": "OAK-MTH3",
+      "topic": "Geometry & Angles",
+      "level": 1,
+      "prompt": "What is the sum of interior angles in any Euclidean triangle?",
+      "expectedAnswer": "180",
+      "hint": "It equals a straight line in degrees.",
+      "explanation": "The interior angles of every standard triangle sum exactly to 180°.",
+      "starterTutorPrompt": "Let's tackle this concept from Angles in Triangles and Polygons: What is the sum of interior angles in any Euclidean triangle?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "360"
+          ],
+          "response": "360° is the sum of interior angles of a quadrilateral."
+        },
+        {
+          "keywords": [],
+          "response": "90° is a single right angle."
+        }
+      ]
+    },
+    {
+      "id": "angles-triangles-q2",
+      "cohortCode": "OAK-MTH3",
+      "topic": "Geometry & Angles",
+      "level": 2,
+      "prompt": "In an isosceles triangle, how many angles are guaranteed to be equal in measure?",
+      "expectedAnswer": "2",
+      "hint": "An equilateral has 3 equal angles, but an isosceles has fewer.",
+      "explanation": "An isosceles triangle has two equal sides and two equal base angles.",
+      "starterTutorPrompt": "Let's tackle this concept from Angles in Triangles and Polygons: In an isosceles triangle, how many angles are guaranteed to be equal in measure?",
+      "semanticRules": [
+        {
+          "keywords": [],
+          "response": "A triangle with 3 equal angles is an equilateral triangle."
+        },
+        {
+          "keywords": [],
+          "response": "A triangle with no equal angles is a scalene triangle."
+        }
+      ]
+    }
+  ]
+}

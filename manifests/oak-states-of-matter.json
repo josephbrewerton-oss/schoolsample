@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "domainId": "oak-states-of-matter",
+    "portalName": "States of Matter and Particle Arrangement",
+    "badgeIcon": "🧪",
+    "themeColor": "#059669",
+    "tagline": "Oak National Academy • Key Stage 3 Science"
+  },
+  "tutorPersona": {
+    "name": "Oak Science Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-SCI3",
+      "name": "States of Matter and Particle Arrangement Cohort",
+      "subtext": "Key Stage 3 Science",
+      "defaultTopicId": "oak-states-of-matter-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "oak-states-of-matter-q1",
+      "cohortCode": "OAK-SCI3",
+      "topic": "Matter & Solutions",
+      "level": 1,
+      "prompt": "In which state of matter are particles arranged in a regular, tightly packed lattice?",
+      "expectedAnswer": "solid",
+      "hint": "Particles vibrate about fixed positions and cannot easily move past one another.",
+      "explanation": "In solids, particles are tightly bound in fixed, regular structures.",
+      "starterTutorPrompt": "Let's work through this Oak challenge: In which state of matter are particles arranged in a regular, tightly packed lattice?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "liquid"
+          ],
+          "response": "Liquid particles are close together but move randomly over each other."
+        },
+        {
+          "keywords": [
+            "gas"
+          ],
+          "response": "Gas particles are widely spaced and move rapidly in all directions."
+        }
+      ]
+    },
+    {
+      "id": "oak-states-of-matter-q2",
+      "cohortCode": "OAK-SCI3",
+      "topic": "Matter & Solutions",
+      "level": 2,
+      "prompt": "What is the change of state from liquid to gas called?",
+      "expectedAnswer": "evaporation",
+      "hint": "Think of boiling or water vaporising from a surface.",
+      "explanation": "Evaporation (or boiling) describes liquid turning into gas.",
+      "starterTutorPrompt": "Let's work through this Oak challenge: What is the change of state from liquid to gas called?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "condensation"
+          ],
+          "response": "Condensation is gas transitioning back into liquid."
+        },
+        {
+          "keywords": [
+            "sublimation"
+          ],
+          "response": "Sublimation is a solid transitioning directly into gas."
+        }
+      ]
+    }
+  ]
+}

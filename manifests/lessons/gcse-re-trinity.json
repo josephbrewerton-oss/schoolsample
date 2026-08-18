@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "domainId": "gcse-re-trinity",
+    "portalName": "The Nature of God: The Holy Trinity",
+    "badgeIcon": "🎓",
+    "themeColor": "#1e293b",
+    "tagline": "GCSE Religious Studies • Catholic Christianity"
+  },
+  "tutorPersona": {
+    "name": "Catholic Christianity Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "RE-TRINITY",
+      "name": "The Nature of God: The Holy Trinity Cohort",
+      "subtext": "GCSE Religious Studies Catholic Christianity",
+      "defaultTopicId": "gcse-re-trinity-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "gcse-re-trinity-q1",
+      "cohortCode": "RE-TRINITY",
+      "topic": "Beliefs & Teachings",
+      "level": 1,
+      "prompt": "How does the Nicene Creed describe the relationship between God the Father and God the Son?",
+      "expectedAnswer": "consubstantial",
+      "hint": "It means \"of the same substance\" or essence.",
+      "explanation": "The Nicene Creed states the Son is consubstantial (homoousios) with the Father.",
+      "starterTutorPrompt": "Let's tackle this concept from The Nature of God: The Holy Trinity: How does the Nicene Creed describe the relationship between God the Father and God the Son?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "created"
+          ],
+          "response": "Catholic theology affirms the Son is \"begotten, not made\", avoiding the Arian heresy."
+        }
+      ]
+    }
+  ]
+}
