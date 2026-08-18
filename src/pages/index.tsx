@@ -13,7 +13,7 @@ export default function Home() {
         <h1>Welcome to School AI Portal</h1>
         <p>Interactive lessons powered by internal WebRTC AI.</p>
         <div style={{ marginTop: '2rem' }}>
-          <Link className="button button--primary button--lg" to="/docs/intro">
+          <Link className="button button--primary button--lg" to="/intro">
             Start Learning ??
           </Link>
         </div>
