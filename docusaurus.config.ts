@@ -7,14 +7,6 @@ const config: Config = {
   tagline: 'Interactive Learning Powered by Local AI',
   favicon: 'img/favicon.ico',
 
-  // Load WebRTC client script across all pages
-  scripts: [
-    {
-      src: '/schoolsample/js/webrtc-agent.js',
-      async: true,
-    },
-  ],
-
   // Production URL and baseUrl for GitHub Pages
   url: 'https://josephbrewerton-oss.github.io',
   baseUrl: '/schoolsample/',
@@ -22,7 +14,16 @@ const config: Config = {
   // GitHub Pages deployment config
   organizationName: 'josephbrewerton-oss',
   projectName: 'schoolsample',
+  deploymentBranch: 'gh-pages',
   trailingSlash: false,
+
+  // Load WebRTC client script across all pages using relative path
+  scripts: [
+    {
+      src: 'js/webrtc-agent.js',
+      async: true,
+    },
+  ],
 
   onBrokenLinks: 'warn',
 

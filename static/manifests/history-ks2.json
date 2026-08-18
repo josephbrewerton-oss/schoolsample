@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "domainId": "romans-ks2",
+    "portalName": "Roman Britain Mastery",
+    "badgeIcon": "🏛️",
+    "themeColor": "#991b1b",
+    "tagline": "Year 4 History: The Roman Empire & Britain"
+  },
+  "tutorPersona": {
+    "name": "Historian Marcus",
+    "engineType": "Socratic",
+    "voicePitch": 0.9,
+    "voiceRate": 1.0
+  },
+  "cohorts": [
+    {
+      "code": "4ROMAN",
+      "name": "Claudius Cohort",
+      "subtext": "AD 43 Invasion Unit",
+      "defaultTopicId": "rom-01"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "rom-01",
+      "cohortCode": "4ROMAN",
+      "topic": "Roman Conquest",
+      "level": 1,
+      "prompt": "Which Roman Emperor ordered the successful invasion of Britain in AD 43?",
+      "expectedAnswer": "claudius",
+      "hint": "His name starts with 'Cl' and he conquered Britain after Julius Caesar visited.",
+      "explanation": "Emperor Claudius ordered the invasion of Britain in AD 43.",
+      "starterTutorPrompt": "Ave! Let's explore Roman Britain. Who led the successful invasion in AD 43?",
+      "semanticRules": [
+        {
+          "keywords": ["caesar", "julius"],
+          "response": "Julius Caesar invaded earlier in 55 and 54 BC, but Claudius established permanent Roman rule in AD 43."
+        }
+      ]
+    }
+  ]
+}

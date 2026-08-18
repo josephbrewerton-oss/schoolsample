@@ -5,9 +5,10 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
-    "build": "docusaurus build",
     "obfuscate": "javascript-obfuscator static/js/webrtc-agent.js --output static/js/webrtc-agent.js --compact true --control-flow-flattening true --dead-code-injection true",
-    "deploy": "docusaurus build && npx gh-pages -d build -b gh-pages"
+    "ingest:oak": "npx tsx scripts/ingest-oak.ts",
+    "build": "npm run ingest:oak && docusaurus build",
+    "deploy": "docusaurus deploy"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",

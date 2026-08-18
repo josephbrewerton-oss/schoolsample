@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "domainId": "oak-angles-triangles",
+    "portalName": "Angles in Triangles and Polygons",
+    "badgeIcon": "📐",
+    "themeColor": "#2563eb",
+    "tagline": "Oak National Academy • Key Stage 3 Maths"
+  },
+  "tutorPersona": {
+    "name": "Oak Maths Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-MTH3",
+      "name": "Angles in Triangles and Polygons Cohort",
+      "subtext": "Key Stage 3 Maths",
+      "defaultTopicId": "oak-angles-triangles-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "oak-angles-triangles-q1",
+      "cohortCode": "OAK-MTH3",
+      "topic": "Geometry & Angles",
+      "level": 1,
+      "prompt": "What is the sum of interior angles in any Euclidean triangle?",
+      "expectedAnswer": "180",
+      "hint": "It equals a straight line angle in degrees.",
+      "explanation": "The interior angles of every standard triangle sum exactly to 180°.",
+      "starterTutorPrompt": "Let's work through this Oak challenge: What is the sum of interior angles in any Euclidean triangle?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "360"
+          ],
+          "response": "360° is the sum of interior angles of a quadrilateral."
+        },
+        {
+          "keywords": [],
+          "response": "90° is a single right angle."
+        }
+      ]
+    }
+  ]
+}

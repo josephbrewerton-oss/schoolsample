@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "domainId": "romans-britain",
+    "portalName": "Roman Britain & Boudicca’s Revolt",
+    "badgeIcon": "🏛️",
+    "themeColor": "#991b1b",
+    "tagline": "Key Stage 2 • History"
+  },
+  "tutorPersona": {
+    "name": "History Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-HIS2",
+      "name": "Roman Britain & Boudicca’s Revolt Cohort",
+      "subtext": "Key Stage 2 History",
+      "defaultTopicId": "romans-britain-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "romans-britain-q1",
+      "cohortCode": "OAK-HIS2",
+      "topic": "Roman Empire Impact",
+      "level": 1,
+      "prompt": "Which Iceni queen led a major rebellion against Roman rule in Britain in AD 60 or 61?",
+      "expectedAnswer": "boudicca",
+      "hint": "Her statues now stand near Westminster Pier in London.",
+      "explanation": "Queen Boudicca led the Iceni tribe against Roman occupation, burning Camulodunum (Colchester) and Londinium.",
+      "starterTutorPrompt": "Let's tackle this concept from Roman Britain & Boudicca’s Revolt: Which Iceni queen led a major rebellion against Roman rule in Britain in AD 60 or 61?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "cleopatra"
+          ],
+          "response": "Cleopatra was the last active ruler of the Ptolemaic Kingdom of Egypt."
+        },
+        {
+          "keywords": [
+            "cartimandua"
+          ],
+          "response": "Cartimandua was queen of the Brigantes who allied with Rome."
+        }
+      ]
+    }
+  ]
+}

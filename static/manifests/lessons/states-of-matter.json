@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "domainId": "states-of-matter",
+    "portalName": "States of Matter & Particle Arrangement",
+    "badgeIcon": "🧪",
+    "themeColor": "#059669",
+    "tagline": "Key Stage 3 • Science"
+  },
+  "tutorPersona": {
+    "name": "Science Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-SCI3",
+      "name": "States of Matter & Particle Arrangement Cohort",
+      "subtext": "Key Stage 3 Science",
+      "defaultTopicId": "states-of-matter-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "states-of-matter-q1",
+      "cohortCode": "OAK-SCI3",
+      "topic": "Matter & Solutions",
+      "level": 1,
+      "prompt": "In which state of matter are particles arranged in a regular, tightly packed lattice?",
+      "expectedAnswer": "solid",
+      "hint": "Particles vibrate about fixed positions and cannot move past one another.",
+      "explanation": "In solids, particles are tightly bound in fixed, regular structures.",
+      "starterTutorPrompt": "Let's tackle this concept from States of Matter & Particle Arrangement: In which state of matter are particles arranged in a regular, tightly packed lattice?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "liquid"
+          ],
+          "response": "Liquid particles are close together but move randomly over each other."
+        },
+        {
+          "keywords": [
+            "gas"
+          ],
+          "response": "Gas particles are widely spaced and move rapidly in all directions."
+        }
+      ]
+    },
+    {
+      "id": "states-of-matter-q2",
+      "cohortCode": "OAK-SCI3",
+      "topic": "Matter & Solutions",
+      "level": 2,
+      "prompt": "What process describes a solid turning directly into a gas without becoming a liquid?",
+      "expectedAnswer": "sublimation",
+      "hint": "Dry ice (solid CO2) is a famous example of this phase change.",
+      "explanation": "Sublimation occurs when thermal energy bypasses the liquid state entirely.",
+      "starterTutorPrompt": "Let's tackle this concept from States of Matter & Particle Arrangement: What process describes a solid turning directly into a gas without becoming a liquid?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "evaporation"
+          ],
+          "response": "Evaporation is the transition from liquid to gas at the surface."
+        },
+        {
+          "keywords": [
+            "condensation"
+          ],
+          "response": "Condensation is gas changing into a liquid."
+        }
+      ]
+    }
+  ]
+}

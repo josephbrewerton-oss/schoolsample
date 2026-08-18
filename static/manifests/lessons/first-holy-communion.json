@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "domainId": "first-holy-communion",
+    "portalName": "The Sacraments of Initiation: The Eucharist",
+    "badgeIcon": "⛪",
+    "themeColor": "#b45309",
+    "tagline": "Primary Preparation • Religious Formation"
+  },
+  "tutorPersona": {
+    "name": "Religious Formation Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "FHC-A",
+      "name": "The Sacraments of Initiation: The Eucharist Cohort",
+      "subtext": "Primary Preparation Religious Formation",
+      "defaultTopicId": "first-holy-communion-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "first-holy-communion-q1",
+      "cohortCode": "FHC-A",
+      "topic": "Sacramental Life",
+      "level": 1,
+      "prompt": "What is the outward sign and theological effect of Holy Communion?",
+      "expectedAnswer": "body and blood of christ",
+      "hint": "Think about the Last Supper and the words of consecration.",
+      "explanation": "The Eucharist is the source and summit of Christian life, representing the Real Presence (CCC 1324).",
+      "starterTutorPrompt": "Let's tackle this concept from The Sacraments of Initiation: The Eucharist: What is the outward sign and theological effect of Holy Communion?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "just",
+            "bread",
+            "and",
+            "wine"
+          ],
+          "response": "Catholic doctrine teaches transubstantiation—the bread and wine become the Real Presence of Christ."
+        }
+      ]
+    }
+  ]
+}

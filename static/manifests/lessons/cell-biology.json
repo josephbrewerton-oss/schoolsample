@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "domainId": "cell-biology",
+    "portalName": "Eukaryotic vs Prokaryotic Cell Structures",
+    "badgeIcon": "🧪",
+    "themeColor": "#059669",
+    "tagline": "Key Stage 4 (GCSE) • Science"
+  },
+  "tutorPersona": {
+    "name": "Science Guide",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-BIO4",
+      "name": "Eukaryotic vs Prokaryotic Cell Structures Cohort",
+      "subtext": "Key Stage 4 (GCSE) Science",
+      "defaultTopicId": "cell-biology-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "cell-biology-q1",
+      "cohortCode": "OAK-BIO4",
+      "topic": "Cell Biology",
+      "level": 1,
+      "prompt": "Which organelle is known as the powerhouse of the cell where aerobic respiration occurs?",
+      "expectedAnswer": "mitochondria",
+      "hint": "It produces ATP energy molecules for biological reactions.",
+      "explanation": "Mitochondria generate most of the chemical energy needed to power cellular biochemical reactions.",
+      "starterTutorPrompt": "Let's tackle this concept from Eukaryotic vs Prokaryotic Cell Structures: Which organelle is known as the powerhouse of the cell where aerobic respiration occurs?",
+      "semanticRules": [
+        {
+          "keywords": [
+            "ribosome"
+          ],
+          "response": "Ribosomes are responsible for protein synthesis."
+        },
+        {
+          "keywords": [
+            "nucleus"
+          ],
+          "response": "The nucleus contains the cell’s genetic material (DNA)."
+        }
+      ]
+    }
+  ]
+}
