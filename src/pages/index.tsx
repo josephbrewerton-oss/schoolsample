@@ -22,7 +22,7 @@ export default function Home() {
         }}>
           {/* Primary */}
           <Link
-            to="/primary/ks2-science"
+            to="/primary"
             style={{
               padding: '1.5rem',
               borderRadius: '12px',
