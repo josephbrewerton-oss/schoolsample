@@ -78,7 +78,7 @@ export default function UniversalLearningEngine({
   const [manifestKey, setManifestKey] = useState<string>(activeManifestId);
   const [manifest, setManifest] = useState<DomainManifest>(DEFAULT_REGISTRY[activeManifestId] ?? SCHOOL_MANIFEST);
 
-  // Multi-stream catalog state: Initialize using defaultStream prop
+  // Multi-stream catalog state
   const [catalog, setCatalog] = useState<MasterCatalog | null>(null);
   const [activeStream, setActiveStream] = useState<LearningStream>(defaultStream as LearningStream);
   const [selectedPhase, setSelectedPhase] = useState<string>(defaultPhase || 'ALL');
@@ -174,7 +174,8 @@ export default function UniversalLearningEngine({
 
   const loadCatalogItem = async (item: CatalogItem) => {
     try {
-      const res = await fetch(`${normalizedBase}${item.manifestPath}`);
+      const cleanPath = item.manifestPath.startsWith('/') ? item.manifestPath : `/${item.manifestPath}`;
+      const res = await fetch(`${normalizedBase}${cleanPath}`);
       if (!res.ok) throw new Error(`HTTP status ${res.status}`);
       const rawData = await res.json();
       
@@ -186,7 +187,7 @@ export default function UniversalLearningEngine({
       setRegistry((prev) => ({ ...prev, [loaded.meta.domainId]: loaded }));
       await switchDomain(loaded.meta.domainId);
     } catch {
-      alert(`Could not lazy-load manifest for ${item.title}`);
+      console.warn(`Could not load manifest for ${item.title}`);
     }
   };
 
@@ -224,24 +225,15 @@ export default function UniversalLearningEngine({
       }
     }
   }, [filteredLessons]);
-  // Automatically load first lesson when filter changes
-  useEffect(() => {
-    if (filteredLessons.length > 0) {
-      const exists = filteredLessons.some((i) => i.id === manifestKey);
-      if (!exists) {
-        loadCatalogItem(filteredLessons[0]);
-      }
-    }
-  }, [filteredLessons]);
 
-  // Place it here (line 227):
+  // Reset session when stream, phase, or subject changes
   useEffect(() => {
     setSelectedCohort(null);
     setFeedback(null);
     setStudentAnswer('');
     setShowHint(false);
   }, [selectedPhase, selectedSubject, activeStream]);
-  
+
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
