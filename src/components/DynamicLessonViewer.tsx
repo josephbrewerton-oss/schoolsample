@@ -105,6 +105,25 @@ export default function UniversalLearningEngine({
   const [queryInput, setQueryInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
+const [isTeacherMode, setIsTeacherMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('app_teacher_mode') === 'true';
+    }
+    return false;
+  });
+  const [showAstInspector, setShowAstInspector] = useState<boolean>(false);
+
+  useEffect(() => {
+    const syncTeacherMode = () => {
+      if (typeof window !== 'undefined') {
+        setIsTeacherMode(localStorage.getItem('app_teacher_mode') === 'true');
+      }
+    };
+
+    syncTeacherMode();
+    window.addEventListener('storage', syncTeacherMode);
+    return () => window.removeEventListener('storage', syncTeacherMode);
+  }, []);
 
   const activePrompt = (instructionMode === 'immersion' && (currentChallenge as any).immersionPrompt)
     ? (currentChallenge as any).immersionPrompt
@@ -650,6 +669,7 @@ export default function UniversalLearningEngine({
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
+
             <span>{feedback.status === 'correct' ? '✅ ' : '❌ '}{feedback.message}</span>
             {feedback.status === 'correct' && (
               <button onClick={nextChallenge} style={{ padding: '6px 12px', background: '#166534', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
@@ -659,6 +679,110 @@ export default function UniversalLearningEngine({
           </div>
         )}
       </div>
+      {/* Teacher & Facilitator Overlay */}
+        {isTeacherMode && currentChallenge && (
+          <div
+            style={{
+              marginTop: '1.25rem',
+              padding: '1rem',
+              border: '2px dashed var(--ifm-color-warning)',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 186, 0, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong style={{ color: 'var(--ifm-color-warning-darkest)' }}>
+                🎓 Teacher Mode Active
+              </strong>
+              <button
+                type="button"
+                className="button button--sm button--secondary"
+                onClick={() => setShowAstInspector(!showAstInspector)}
+              >
+                {showAstInspector ? 'Hide Raw AST' : 'Inspect Manifest AST'}
+              </button>
+            </div>
+
+<div style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+            <div>
+              <strong>Target Accepted Answers:</strong>{' '}
+              <code>
+                {(() => {
+                  const c = currentChallenge as any;
+                  const ans =
+                    c?.acceptedAnswers ||
+                    c?.a ||
+                    c?.answer ||
+                    c?.solution ||
+                    c?.solutions ||
+                    c?.targetAnswers ||
+                    c?.keywords;
+                  if (Array.isArray(ans) && ans.length > 0) return ans.join(', ');
+                  if (typeof ans === 'string' && ans.trim()) return ans;
+                  return 'Open-ended (Evaluated against prompt rubric)';
+                })()}
+              </code>
+            </div>
+
+            {(currentChallenge as any).semanticRules && (currentChallenge as any).semanticRules.length > 0 && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <strong>Known Misconceptions & Feedback:</strong>
+                <ul style={{ margin: '0.25rem 0 0 1.25rem' }}>
+                  {(currentChallenge as any).semanticRules.map(([term, feedback]: [string, string], idx: number) => (
+                    <li key={idx}>
+                      <code>"{term}"</code> → {feedback}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {((currentChallenge as any).e || (currentChallenge as any).explanation) && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <strong>Curriculum Explanation:</strong>{' '}
+                {(currentChallenge as any).e || (currentChallenge as any).explanation}
+              </div>
+            )}
+          </div>
+
+              {(currentChallenge as any).semanticRules && (currentChallenge as any).semanticRules.length > 0 && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <strong>Known Misconceptions & Feedback:</strong>
+                  <ul style={{ margin: '0.25rem 0 0 1.25rem' }}>
+                    {(currentChallenge as any).semanticRules.map(([term, feedback]: [string, string], idx: number) => (
+                      <li key={idx}>
+                        <code>"{term}"</code> → {feedback}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(currentChallenge as any).e && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <strong>Curriculum Explanation:</strong> {(currentChallenge as any).e}
+                </div>
+              )}
+            </div>
+
+            {showAstInspector && (
+              <pre
+                style={{
+                  marginTop: '1rem',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  fontSize: '0.8rem',
+                  background: '#1e1e1e',
+                  color: '#d4d4d4',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                }}
+              >
+                {JSON.stringify(currentChallenge, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
 
       {/* Persona Edge Terminal */}
       <div style={{ background: '#0b1120', borderRadius: '12px', padding: '1.25rem', border: '1px solid #1e293b' }}>
