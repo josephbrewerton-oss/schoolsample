@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { MasterCatalog, CatalogItem } from '../src/types/learning-ast';
+import { MasterCatalog, CatalogItem } from '../src/types/learning-ast.ts';
 
 // Custom streams preserved alongside Oak
 const CUSTOM_EXPANDED_CURRICULUM = [
