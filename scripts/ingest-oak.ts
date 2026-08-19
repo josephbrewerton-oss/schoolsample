@@ -1,142 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { DomainManifest, Challenge, MasterCatalog, CatalogItem } from '../src/types/learning-ast';
+import { MasterCatalog, CatalogItem } from '../src/types/learning-ast';
 
-function getSubjectEmoji(subject: string = ''): string {
-  const s = subject.toLowerCase();
-  if (s.includes('sci')) return '🧪';
-  if (s.includes('math')) return '📐';
-  if (s.includes('hist')) return '🏛️';
-  if (s.includes('eng')) return '📖';
-  if (s.includes('geog')) return '🌍';
-  if (s.includes('rel') || s.includes('faith') || s.includes('re')) return '⛪';
-  return '🎓';
-}
-
-function getSubjectColor(subject: string = ''): string {
-  const s = subject.toLowerCase();
-  if (s.includes('sci')) return '#059669';
-  if (s.includes('math')) return '#2563eb';
-  if (s.includes('hist')) return '#991b1b';
-  if (s.includes('eng')) return '#7c3aed';
-  if (s.includes('geog')) return '#d97706';
-  if (s.includes('rel') || s.includes('faith') || s.includes('re')) return '#b45309';
-  return '#1e293b';
-}
-
-// Extended Multi-Subject Curriculum Dataset
-const EXPANDED_CURRICULUM = [
-  // --- ACADEMIC STREAM ---
-  {
-    slug: 'states-of-matter',
-    stream: 'academic',
-    title: 'States of Matter & Particle Arrangement',
-    keyStage: 'KS3',
-    keyStageTitle: 'Key Stage 3',
-    subjectTitle: 'Science',
-    unitTitle: 'Matter & Solutions',
-    lessonCode: 'OAK-SCI3',
-    questions: [
-      {
-        questionText: 'In which state of matter are particles arranged in a regular, tightly packed lattice?',
-        correctAnswer: 'solid',
-        hint: 'Particles vibrate about fixed positions and cannot move past one another.',
-        explanation: 'In solids, particles are tightly bound in fixed, regular structures.',
-        distractors: [
-          { answerText: 'liquid', feedback: 'Liquid particles are close together but move randomly over each other.' },
-          { answerText: 'gas', feedback: 'Gas particles are widely spaced and move rapidly in all directions.' }
-        ]
-      },
-      {
-        questionText: 'What process describes a solid turning directly into a gas without becoming a liquid?',
-        correctAnswer: 'sublimation',
-        hint: 'Dry ice (solid CO2) is a famous example of this phase change.',
-        explanation: 'Sublimation occurs when thermal energy bypasses the liquid state entirely.',
-        distractors: [
-          { answerText: 'evaporation', feedback: 'Evaporation is the transition from liquid to gas at the surface.' },
-          { answerText: 'condensation', feedback: 'Condensation is gas changing into a liquid.' }
-        ]
-      }
-    ]
-  },
-  {
-    slug: 'angles-triangles',
-    stream: 'academic',
-    title: 'Angles in Triangles and Polygons',
-    keyStage: 'KS3',
-    keyStageTitle: 'Key Stage 3',
-    subjectTitle: 'Maths',
-    unitTitle: 'Geometry & Angles',
-    lessonCode: 'OAK-MTH3',
-    questions: [
-      {
-        questionText: 'What is the sum of interior angles in any Euclidean triangle?',
-        correctAnswer: '180',
-        hint: 'It equals a straight line in degrees.',
-        explanation: 'The interior angles of every standard triangle sum exactly to 180°.',
-        distractors: [
-          { answerText: '360', feedback: '360° is the sum of interior angles of a quadrilateral.' },
-          { answerText: '90', feedback: '90° is a single right angle.' }
-        ]
-      },
-      {
-        questionText: 'In an isosceles triangle, how many angles are guaranteed to be equal in measure?',
-        correctAnswer: '2',
-        hint: 'An equilateral has 3 equal angles, but an isosceles has fewer.',
-        explanation: 'An isosceles triangle has two equal sides and two equal base angles.',
-        distractors: [
-          { answerText: '3', feedback: 'A triangle with 3 equal angles is an equilateral triangle.' },
-          { answerText: '0', feedback: 'A triangle with no equal angles is a scalene triangle.' }
-        ]
-      }
-    ]
-  },
-  {
-    slug: 'romans-britain',
-    stream: 'academic',
-    title: 'Roman Britain & Boudicca’s Revolt',
-    keyStage: 'KS2',
-    keyStageTitle: 'Key Stage 2',
-    subjectTitle: 'History',
-    unitTitle: 'Roman Empire Impact',
-    lessonCode: 'OAK-HIS2',
-    questions: [
-      {
-        questionText: 'Which Iceni queen led a major rebellion against Roman rule in Britain in AD 60 or 61?',
-        correctAnswer: 'boudicca',
-        hint: 'Her statues now stand near Westminster Pier in London.',
-        explanation: 'Queen Boudicca led the Iceni tribe against Roman occupation, burning Camulodunum (Colchester) and Londinium.',
-        distractors: [
-          { answerText: 'cleopatra', feedback: 'Cleopatra was the last active ruler of the Ptolemaic Kingdom of Egypt.' },
-          { answerText: 'cartimandua', feedback: 'Cartimandua was queen of the Brigantes who allied with Rome.' }
-        ]
-      }
-    ]
-  },
-  {
-    slug: 'cell-biology',
-    stream: 'academic',
-    title: 'Eukaryotic vs Prokaryotic Cell Structures',
-    keyStage: 'KS4',
-    keyStageTitle: 'Key Stage 4 (GCSE)',
-    subjectTitle: 'Science',
-    unitTitle: 'Cell Biology',
-    lessonCode: 'OAK-BIO4',
-    questions: [
-      {
-        questionText: 'Which organelle is known as the powerhouse of the cell where aerobic respiration occurs?',
-        correctAnswer: 'mitochondria',
-        hint: 'It produces ATP energy molecules for biological reactions.',
-        explanation: 'Mitochondria generate most of the chemical energy needed to power cellular biochemical reactions.',
-        distractors: [
-          { answerText: 'ribosome', feedback: 'Ribosomes are responsible for protein synthesis.' },
-          { answerText: 'nucleus', feedback: 'The nucleus contains the cell’s genetic material (DNA).' }
-        ]
-      }
-    ]
-  },
-
-  // --- FAITH & FORMATION STREAM ---
+// Custom streams preserved alongside Oak
+const CUSTOM_EXPANDED_CURRICULUM = [
   {
     slug: 'first-holy-communion',
     stream: 'faith',
@@ -149,7 +16,7 @@ const EXPANDED_CURRICULUM = [
     questions: [
       {
         questionText: 'What is the outward sign and theological effect of Holy Communion?',
-        correctAnswer: 'body and blood of christ',
+        correctAnswer: ['body and blood of christ', 'body and blood', 'eucharist', 'real presence'],
         hint: 'Think about the Last Supper and the words of consecration.',
         explanation: 'The Eucharist is the source and summit of Christian life, representing the Real Presence (CCC 1324).',
         distractors: [
@@ -170,7 +37,7 @@ const EXPANDED_CURRICULUM = [
     questions: [
       {
         questionText: 'How does the Nicene Creed describe the relationship between God the Father and God the Son?',
-        correctAnswer: 'consubstantial',
+        correctAnswer: ['consubstantial', 'homoousios', 'same substance'],
         hint: 'It means "of the same substance" or essence.',
         explanation: 'The Nicene Creed states the Son is consubstantial (homoousios) with the Father.',
         distractors: [
@@ -181,7 +48,44 @@ const EXPANDED_CURRICULUM = [
   }
 ];
 
-function buildSystem() {
+function getSubjectEmoji(subject: string = ''): string {
+  const s = subject.toLowerCase();
+  if (s.includes('sci') || s.includes('bio') || s.includes('chem') || s.includes('phys')) return '🧪';
+  if (s.includes('math')) return '📐';
+  if (s.includes('hist')) return '🏛️';
+  if (s.includes('eng')) return '📖';
+  if (s.includes('geog')) return '🌍';
+  if (s.includes('rel') || s.includes('faith') || s.includes('re') || s.includes('catholic')) return '⛪';
+  if (s.includes('comp') || s.includes('tech')) return '💻';
+  if (s.includes('art')) return '🎨';
+  if (s.includes('french') || s.includes('german') || s.includes('span')) return '🗣️';
+  if (s.includes('cook') || s.includes('nutr')) return '🍳';
+  if (s.includes('citizen')) return '⚖️';
+  return '🎓';
+}
+
+function getSubjectColor(subject: string = ''): string {
+  const s = subject.toLowerCase();
+  if (s.includes('sci') || s.includes('bio') || s.includes('chem') || s.includes('phys')) return '#059669';
+  if (s.includes('math')) return '#2563eb';
+  if (s.includes('hist')) return '#991b1b';
+  if (s.includes('eng')) return '#7c3aed';
+  if (s.includes('geog')) return '#d97706';
+  if (s.includes('rel') || s.includes('faith') || s.includes('re')) return '#b45309';
+  if (s.includes('comp') || s.includes('tech')) return '#0284c7';
+  if (s.includes('art')) return '#db2777';
+  return '#1e293b';
+}
+
+function formatTitle(slug: string): string {
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+async function buildSystem() {
+  const localOakDir = path.join(process.cwd(), 'scripts', 'data', 'oak');
   const manifestsDir = path.join(process.cwd(), 'static', 'manifests');
   const lessonsDir = path.join(manifestsDir, 'lessons');
 
@@ -191,61 +95,56 @@ function buildSystem() {
 
   const catalogItems: CatalogItem[] = [];
 
-  for (const item of EXPANDED_CURRICULUM) {
-    const rawQuestions = item.questions || [];
+  // 1. Ingest Custom Streams (Faith & CPD)
+  for (const item of CUSTOM_EXPANDED_CURRICULUM) {
+    const challenges = (item.questions || []).map((q: any, index: number) => {
+      const distractors = q.distractors || [];
+      const semanticRules: [string, string][] = distractors.map((d: any) => [
+        d.answerText.toLowerCase().split(' ').filter((w: string) => w.length > 2).join(' '),
+        d.feedback || `Misconception flagged regarding "${d.answerText}".`
+      ]);
 
-// Replace the challenge mapping in scripts/ingest-oak.ts
-const challenges: Challenge[] = rawQuestions.map((q: any, index: number) => {
-  const distractors = q.distractors || [];
-  const semanticRules = distractors.map((d: any) => ({
-    keywords: d.answerText.toLowerCase().split(' ').filter((w: string) => w.length > 2),
-    response: d.feedback || `Misconception flagged regarding "${d.answerText}".`,
-  }));
+      const rawExpected = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
 
-  // Support array of acceptable answers or extract key terms
-  const rawExpected = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+      return {
+        i: `${item.slug}-q${index + 1}`,
+        p: q.questionText,
+        ip: (q as any).immersionQuestionText || undefined,
+        a: rawExpected.join(' | '),
+        h: q.hint,
+        e: q.explanation,
+        r: semanticRules,
+      };
+    });
 
-  return {
-    id: `${item.slug}-q${index + 1}`,
-    cohortCode: item.lessonCode || 'GEN-1',
-    topic: item.unitTitle,
-    level: index + 1,
-    prompt: q.questionText,
-    expectedAnswer: rawExpected.join(' | '),
-    hint: q.hint,
-    explanation: q.explanation,
-    starterTutorPrompt: `Let's tackle this concept from ${item.title}: ${q.questionText}`,
-    semanticRules,
-  };
-});
-
-    const manifest: DomainManifest = {
-      meta: {
-        domainId: item.slug,
-        portalName: item.title,
-        badgeIcon: getSubjectEmoji(item.subjectTitle),
-        themeColor: getSubjectColor(item.subjectTitle),
-        tagline: `${item.keyStageTitle} • ${item.subjectTitle}`,
+    const manifest = {
+      m: {
+        d: item.slug,
+        n: item.title,
+        i: getSubjectEmoji(item.subjectTitle),
+        c: getSubjectColor(item.subjectTitle),
+        t: `${item.keyStageTitle} • ${item.subjectTitle}`,
+        l: 'en-US'
       },
-      tutorPersona: {
-        name: `${item.subjectTitle} Guide`,
-        engineType: 'Socratic',
-        voicePitch: 1.0,
-        voiceRate: 1.0,
+      tp: {
+        n: `${item.subjectTitle} Guide`,
+        e: 'Socratic',
+        p: 1.0,
+        r: 1.0
       },
-      cohorts: [
+      co: [
         {
-          code: item.lessonCode || 'GEN-1',
-          name: `${item.title} Cohort`,
-          subtext: `${item.keyStageTitle} ${item.subjectTitle}`,
-          defaultTopicId: `${item.slug}-q1`,
-        },
+          c: item.lessonCode || 'GEN-1',
+          n: `${item.title} Cohort`,
+          s: `${item.keyStageTitle} ${item.subjectTitle}`,
+          d: `${item.slug}-q1`
+        }
       ],
-      challenges,
+      c: challenges
     };
 
     const fileName = `${item.slug}.json`;
-    fs.writeFileSync(path.join(lessonsDir, fileName), JSON.stringify(manifest, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(lessonsDir, fileName), JSON.stringify(manifest), 'utf-8');
 
     catalogItems.push({
       id: item.slug,
@@ -258,11 +157,124 @@ const challenges: Challenge[] = rawQuestions.map((q: any, index: number) => {
       manifestPath: `/manifests/lessons/${fileName}`,
     });
 
-    console.log(`📦 Compiled AST Lesson: ${fileName}`);
+    console.log(`📦 Compiled Custom AST: ${fileName}`);
   }
 
+  // 2. Ingest Offline Oak Bulk JSON Files from scripts/data/oak/
+  if (fs.existsSync(localOakDir)) {
+    const rawFiles = fs.readdirSync(localOakDir).filter(f => f.endsWith('.json'));
+    console.log(`\n📂 Found ${rawFiles.length} local Oak bulk files. Compiling AST manifests...`);
+
+    for (const file of rawFiles) {
+      const filePath = path.join(localOakDir, file);
+      const fileSlug = file.replace('.json', '');
+      const [subjectSlug, phase] = fileSlug.split('-');
+      const subjectTitle = formatTitle(subjectSlug);
+      const phaseTitle = phase ? formatTitle(phase) : 'Standard';
+
+      try {
+        const rawContent = fs.readFileSync(filePath, 'utf-8');
+        const data = JSON.parse(rawContent);
+
+        // Normalize units/lessons from Oak schema
+        const lessons = Array.isArray(data) ? data : (data.lessons || data.units || data.data || []);
+        if (!lessons.length) continue;
+
+        // Group into concise interactive modules
+        const maxModules = 12; // Index top units per subject to keep catalog balanced
+        const selectedLessons = lessons.slice(0, maxModules);
+
+        selectedLessons.forEach((lesson: any, lIdx: number) => {
+          const lessonSlug = `oak-${fileSlug}-unit-${lIdx + 1}`;
+          const lessonTitle = lesson.lessonTitle || lesson.unitTitle || lesson.title || `${subjectTitle} Unit ${lIdx + 1}`;
+          const rawQuestions = lesson.questions || lesson.quiz || lesson.keyLearningPoints || [];
+
+          const challenges = rawQuestions.slice(0, 8).map((q: any, qIdx: number) => {
+            const prompt = typeof q === 'string' ? q : (q.question || q.prompt || q.title || 'Analyze the concept');
+            const answers = q.answers || q.correctAnswers || [q.answer || 'Standard Definition'];
+            const distractors = q.distractors || q.misconceptions || [];
+
+            const semanticRules: [string, string][] = Array.isArray(distractors) 
+              ? distractors.map((d: any) => [
+                  typeof d === 'string' ? d.toLowerCase() : (d.text || d.answer || '').toLowerCase(),
+                  typeof d === 'string' ? `Note the definition for: ${d}` : (d.feedback || d.misconception || 'Review core terms.')
+                ])
+              : [];
+
+            return {
+              i: `${lessonSlug}-q${qIdx + 1}`,
+              p: prompt,
+              a: Array.isArray(answers) ? answers.join(' | ') : String(answers),
+              h: q.hint || `Focus on foundational concepts in ${subjectTitle}.`,
+              e: q.explanation || `Refer to Key Stage ${phaseTitle} guidance.`,
+              r: semanticRules
+            };
+          });
+
+          if (!challenges.length) {
+            challenges.push({
+              i: `${lessonSlug}-q1`,
+              p: `What is the primary concept addressed in ${lessonTitle}?`,
+              a: lessonTitle,
+              h: `Consider the unit title and context.`,
+              e: `Core focus: ${lessonTitle}`,
+              r: []
+            });
+          }
+
+          const manifest = {
+            m: {
+              d: lessonSlug,
+              n: lessonTitle,
+              i: getSubjectEmoji(subjectTitle),
+              c: getSubjectColor(subjectTitle),
+              t: `${phaseTitle} • ${subjectTitle}`,
+              l: 'en-US'
+            },
+            tp: {
+              n: `${subjectTitle} Tutor`,
+              e: 'Socratic',
+              p: 1.0,
+              r: 1.0
+            },
+            co: [
+              {
+                c: `OAK-${fileSlug.toUpperCase()}-${lIdx + 1}`,
+                n: `${lessonTitle} Cohort`,
+                s: `${phaseTitle} ${subjectTitle}`,
+                d: `${lessonSlug}-q1`
+              }
+            ],
+            c: challenges
+          };
+
+          const outFileName = `${lessonSlug}.json`;
+          fs.writeFileSync(path.join(lessonsDir, outFileName), JSON.stringify(manifest), 'utf-8');
+
+          catalogItems.push({
+            id: lessonSlug,
+            stream: 'academic',
+            keyStage: phaseTitle.toUpperCase(),
+            subject: subjectTitle,
+            unit: lessonTitle,
+            title: lessonTitle,
+            badgeIcon: getSubjectEmoji(subjectTitle),
+            manifestPath: `/manifests/lessons/${outFileName}`,
+          });
+        });
+
+        console.log(`✅ Processed ${file} (${selectedLessons.length} modular manifests generated)`);
+      } catch (err: any) {
+        console.warn(`⚠️ Error compiling ${file}: ${err.message}`);
+      }
+    }
+  } else {
+    console.warn(`⚠️ Oak folder not found at ${localOakDir}`);
+  }
+
+  // 3. Write Master Catalog
   const masterCatalog: MasterCatalog = {
-    version: '1.1.0',
+    version: '1.2.0-compact',
     generatedAt: Date.now(),
     streams: [
       { id: 'academic', title: 'National Curriculum (Oak)', description: 'Key Stage 1–4 Academic Mastery', icon: '🎓' },
@@ -273,7 +285,7 @@ const challenges: Challenge[] = rawQuestions.map((q: any, index: number) => {
   };
 
   fs.writeFileSync(path.join(manifestsDir, 'catalog.json'), JSON.stringify(masterCatalog, null, 2), 'utf-8');
-  console.log(`\n🚀 Ingestion Complete! Catalog updated at static/manifests/catalog.json (${catalogItems.length} modules indexed across multiple streams)`);
+  console.log(`\n🚀 Ingestion Complete! Generated ${catalogItems.length} interactive manifests in static/manifests/`);
 }
 
 buildSystem();

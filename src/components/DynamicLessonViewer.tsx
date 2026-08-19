@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { DomainManifest, MasterCatalog, CatalogItem, LearningStream } from '../types/learning-ast';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { DomainManifest, MasterCatalog, CatalogItem, LearningStream, ShorthandManifest } from '../types/learning-ast';
 import { SCHOOL_MANIFEST } from '../manifests/school';
 import { COMMUNION_MANIFEST } from '../manifests/communion';
-import { openLocalDB, saveManifest, getManifest, logProgress } from '../services/dbStore';
+import { openLocalDB, saveManifest, getManifest, logProgress, purgeInactiveManifests } from '../services/dbStore';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
 const DEFAULT_REGISTRY: Record<string, DomainManifest> = {
@@ -10,20 +10,82 @@ const DEFAULT_REGISTRY: Record<string, DomainManifest> = {
   communion: COMMUNION_MANIFEST,
 };
 
-export default function UniversalLearningEngine({ activeManifestId = 'school' }: { activeManifestId?: string }): React.JSX.Element {
+// Client-side hydrator for Shorthand AST manifests
+function hydrateManifest(raw: any): DomainManifest {
+  if (raw.meta && raw.meta.domainId) return raw as DomainManifest;
+
+  const s = raw as ShorthandManifest;
+  return {
+    meta: {
+      domainId: s.m.d,
+      portalName: s.m.n,
+      badgeIcon: s.m.i,
+      themeColor: s.m.c,
+      tagline: s.m.t,
+      lang: s.m.l || 'en-US',
+    },
+    tutorPersona: {
+      name: s.tp.n,
+      engineType: s.tp.e,
+      voicePitch: s.tp.p,
+      voiceRate: s.tp.r,
+    },
+    cohorts: s.co.map((c) => ({
+      code: c.c,
+      name: c.n,
+      subtext: c.s,
+      defaultTopicId: c.d,
+    })),
+    challenges: s.c.map((ch, index) => ({
+      id: ch.i,
+      cohortCode: s.co[0]?.c || 'GEN-1',
+      topic: s.m.n,
+      level: index + 1,
+      prompt: ch.p,
+      immersionPrompt: ch.ip,
+      expectedAnswer: ch.a,
+      hint: ch.h,
+      explanation: ch.e,
+      starterTutorPrompt: `Let's tackle this concept: ${ch.p}`,
+      semanticRules: ch.r.map(([kw, res]) => ({
+        keywords: kw.split(' '),
+        response: res,
+      })),
+    })),
+  };
+}
+
+interface EngineProps {
+  activeManifestId?: string;
+  defaultPhase?: 'PRIMARY' | 'SECONDARY' | string;
+  defaultSubject?: string;
+  defaultCode?: string;
+  defaultStream?: LearningStream | string;
+}
+
+export default function UniversalLearningEngine({
+  activeManifestId = 'school',
+  defaultPhase,
+  defaultSubject,
+  defaultCode,
+  defaultStream = 'academic'
+}: EngineProps): React.JSX.Element {
   const baseUrl = useBaseUrl('/');
   const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const [instructionMode, setInstructionMode] = useState<'bilingual' | 'immersion'>('bilingual');
 
   const [registry, setRegistry] = useState<Record<string, DomainManifest>>(DEFAULT_REGISTRY);
   const [manifestKey, setManifestKey] = useState<string>(activeManifestId);
   const [manifest, setManifest] = useState<DomainManifest>(DEFAULT_REGISTRY[activeManifestId] ?? SCHOOL_MANIFEST);
 
-  // Multi-stream catalog state
+  // Multi-stream catalog state: Initialize using defaultStream prop
   const [catalog, setCatalog] = useState<MasterCatalog | null>(null);
-  const [activeStream, setActiveStream] = useState<LearningStream>('academic');
+  const [activeStream, setActiveStream] = useState<LearningStream>(defaultStream as LearningStream);
+  const [selectedPhase, setSelectedPhase] = useState<string>(defaultPhase || 'ALL');
+  const [selectedSubject, setSelectedSubject] = useState<string>(defaultSubject || 'ALL');
 
   const [selectedCohort, setSelectedCohort] = useState<string | null>(null);
-  const [activeCodeInput, setActiveCodeInput] = useState<string>('');
+  const [activeCodeInput, setActiveCodeInput] = useState<string>(defaultCode || '');
   const [challengeIdx, setChallengeIdx] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
 
@@ -44,7 +106,11 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
   const [isProcessing, setIsProcessing] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
 
-  // 1. Initialize IndexedDB & Load Master Catalog Index
+  const activePrompt = (instructionMode === 'immersion' && (currentChallenge as any).immersionPrompt)
+    ? (currentChallenge as any).immersionPrompt
+    : currentChallenge.prompt;
+
+  // 1. Initialize IndexedDB & Load Master Catalog
   useEffect(() => {
     async function bootstrapEngine() {
       try {
@@ -52,7 +118,6 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
         await saveManifest(SCHOOL_MANIFEST);
         await saveManifest(COMMUNION_MANIFEST);
 
-        // Fetch Master Catalog
         try {
           const catRes = await fetch(`${normalizedBase}/manifests/catalog.json`);
           if (catRes.ok) {
@@ -60,7 +125,7 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
             setCatalog(catData);
           }
         } catch {
-          console.warn('Catalog index not yet compiled. Run: npm run ingest:oak');
+          console.warn('Catalog index not yet compiled.');
         }
 
         if (typeof window === 'undefined') return;
@@ -74,9 +139,6 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
             setRegistry((prev) => ({ ...prev, [queryDomain]: cached }));
             setManifestKey(queryDomain);
             setManifest(cached);
-          } else if (DEFAULT_REGISTRY[queryDomain]) {
-            setManifestKey(queryDomain);
-            setManifest(DEFAULT_REGISTRY[queryDomain]);
           }
         }
 
@@ -114,8 +176,13 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
     try {
       const res = await fetch(`${normalizedBase}${item.manifestPath}`);
       if (!res.ok) throw new Error(`HTTP status ${res.status}`);
-      const loaded: DomainManifest = await res.json();
+      const rawData = await res.json();
+      
+      const loaded: DomainManifest = hydrateManifest(rawData);
+
       await saveManifest(loaded);
+      await purgeInactiveManifests(loaded.meta.domainId);
+
       setRegistry((prev) => ({ ...prev, [loaded.meta.domainId]: loaded }));
       await switchDomain(loaded.meta.domainId);
     } catch {
@@ -123,18 +190,58 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
     }
   };
 
-  // 2. Auto-sync active manifest when tab/stream switches
+  // Filter items by Stream and Phase
+  const streamItems = useMemo(() => {
+    if (!catalog) return [];
+    return catalog.items.filter((item) => {
+      const matchesStream = item.stream === activeStream;
+      const matchesPhase = selectedPhase === 'ALL' || !item.keyStage || item.keyStage.toUpperCase().includes(selectedPhase.toUpperCase());
+      return matchesStream && matchesPhase;
+    });
+  }, [catalog, activeStream, selectedPhase]);
+
+  // Derive unique subjects from filtered items
+  const availableSubjects = useMemo(() => {
+    const subjects = new Set<string>();
+    streamItems.forEach((i) => {
+      if (i.subject) subjects.add(i.subject);
+    });
+    return Array.from(subjects).sort();
+  }, [streamItems]);
+
+  // Filter lessons matching chosen Subject
+  const filteredLessons = useMemo(() => {
+    if (selectedSubject === 'ALL') return streamItems;
+    return streamItems.filter((i) => i.subject === selectedSubject);
+  }, [streamItems, selectedSubject]);
+
+  // Automatically load first lesson when filter changes
   useEffect(() => {
-    if (!catalog) return;
-    const streamItems = catalog.items.filter((item) => item.stream === activeStream);
-    if (streamItems.length > 0) {
-      const currentMatches = streamItems.some((i) => i.id === manifestKey);
-      if (!currentMatches) {
-        loadCatalogItem(streamItems[0]);
+    if (filteredLessons.length > 0) {
+      const exists = filteredLessons.some((i) => i.id === manifestKey);
+      if (!exists) {
+        loadCatalogItem(filteredLessons[0]);
       }
     }
-  }, [activeStream, catalog]);
+  }, [filteredLessons]);
+  // Automatically load first lesson when filter changes
+  useEffect(() => {
+    if (filteredLessons.length > 0) {
+      const exists = filteredLessons.some((i) => i.id === manifestKey);
+      if (!exists) {
+        loadCatalogItem(filteredLessons[0]);
+      }
+    }
+  }, [filteredLessons]);
 
+  // Place it here (line 227):
+  useEffect(() => {
+    setSelectedCohort(null);
+    setFeedback(null);
+    setStudentAnswer('');
+    setShowHint(false);
+  }, [selectedPhase, selectedSubject, activeStream]);
+  
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -142,7 +249,9 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const parsed = JSON.parse(event.target?.result as string) as DomainManifest;
+        const parsedRaw = JSON.parse(event.target?.result as string);
+        const parsed = hydrateManifest(parsedRaw);
+
         if (!parsed.meta?.domainId || !Array.isArray(parsed.challenges)) {
           alert('Invalid AST Manifest format.');
           return;
@@ -169,6 +278,8 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.pitch = manifest.tutorPersona.voicePitch;
     utterance.rate = manifest.tutorPersona.voiceRate;
+    utterance.lang = manifest.meta.lang || 'en-US';
+
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
@@ -194,17 +305,14 @@ export default function UniversalLearningEngine({ activeManifestId = 'school' }:
     speakText(initial.starterTutorPrompt);
   };
 
-const checkAnswer = async (e: React.FormEvent) => {
+  const checkAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentAnswer.trim()) return;
 
     const inputClean = studentAnswer.trim().toLowerCase();
-    const targets = currentChallenge.expectedAnswer.toLowerCase().split('|').map(s => s.trim());
+    const targets = currentChallenge.expectedAnswer.toLowerCase().split('|').map((s) => s.trim());
 
-    // 1. Direct match on any variant
-    const directMatch = targets.some(target => inputClean.includes(target));
-
-    // 2. Keyword overlap match (if answer contains key terms like "body" or "blood")
+    const directMatch = targets.some((target) => inputClean.includes(target));
     const keyTerms = currentChallenge.expectedAnswer
       .toLowerCase()
       .split(/[\s|]+/)
@@ -224,7 +332,7 @@ const checkAnswer = async (e: React.FormEvent) => {
         userAnswer: studentAnswer.trim(),
       });
     } catch (err) {
-      console.warn('Failed to log progress to IndexedDB:', err);
+      console.warn('Failed to log progress:', err);
     }
 
     if (isCorrect) {
@@ -274,77 +382,137 @@ const checkAnswer = async (e: React.FormEvent) => {
     }, 350);
   };
 
-  // Filter catalog items by selected stream
-  const currentStreamItems = catalog?.items.filter((item) => item.stream === activeStream) || [];
-
   // 1. Onboarding Screen
   if (!selectedCohort) {
     return (
-      <div style={{ maxWidth: '580px', margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: '640px', margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
         
-        {/* Stream Selector Navigation Tabs */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '1.25rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem' }}>
-          {[
-            { id: 'academic' as LearningStream, label: '🎓 Academic (Oak)', color: '#2563eb' },
-            { id: 'faith' as LearningStream, label: '⛪ Faith & Formation', color: '#b45309' },
-            { id: 'cpd' as LearningStream, label: '💼 CPD / Vocational', color: '#059669' },
-          ].map((stream) => (
-            <button
-              key={stream.id}
-              onClick={() => setActiveStream(stream.id)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: activeStream === stream.id ? `2px solid ${stream.color}` : '1px solid #e2e8f0',
-                background: activeStream === stream.id ? '#f8fafc' : '#ffffff',
-                color: activeStream === stream.id ? stream.color : '#64748b',
-                fontWeight: activeStream === stream.id ? 700 : 500,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {stream.label}
-            </button>
-          ))}
+        {/* Stream Navigation Tabs */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          {catalog?.streams?.map((stream) => {
+            const isActive = activeStream === stream.id;
+            return (
+              <button
+                key={stream.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => {
+                  setActiveStream(stream.id);
+                  setSelectedSubject('ALL');
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  border: isActive ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                  background: isActive ? '#f8fafc' : '#ffffff',
+                  color: isActive ? '#2563eb' : '#334155',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {stream.icon} {stream.title}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Dynamic Catalog Stream Dropdown */}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
-          {currentStreamItems.length > 0 ? (
+        {/* Cascading Subject & Unit Pickers */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            
+            {/* Phase Selector (if not locked by prop) */}
+            {!defaultPhase && activeStream === 'academic' && (
+              <select
+                aria-label="Filter by Phase"
+                value={selectedPhase}
+                onChange={(e) => {
+                  setSelectedPhase(e.target.value);
+                  setSelectedSubject('ALL');
+                }}
+                style={{
+                  flex: '1 1 120px',
+                  padding: '8px 10px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="ALL">All Phases</option>
+                <option value="PRIMARY">🎒 Primary</option>
+                <option value="SECONDARY">🔬 Secondary</option>
+              </select>
+            )}
+
+            {/* Subject Selector */}
             <select
-              value={manifestKey}
-              onChange={(e) => {
-                const selected = currentStreamItems.find((i) => i.id === e.target.value);
-                if (selected) loadCatalogItem(selected);
-              }}
+              aria-label="Select Subject"
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
               style={{
-                flex: '1 1 240px',
-                padding: '8px 12px',
+                flex: '1 1 160px',
+                padding: '8px 10px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 background: '#f8fafc',
-                color: '#1e293b',
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              <option value="" disabled>Select a {activeStream} lesson...</option>
-              {currentStreamItems.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.badgeIcon} {item.keyStage ? `[${item.keyStage}] ` : ''}{item.title}
+              <option value="ALL">All Subjects ({availableSubjects.length})</option>
+              {availableSubjects.map((sub) => (
+                <option key={sub} value={sub}>
+                  {sub}
                 </option>
               ))}
             </select>
-          ) : (
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>No modules indexed for this stream yet.</span>
-          )}
+          </div>
 
-          <label style={{ padding: '6px 10px', borderRadius: '8px', border: '1px dashed #cbd5e1', background: '#ffffff', color: '#475569', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>
-            📁 Import AST
-            <input type="file" accept=".json" onChange={handleImportJson} style={{ display: 'none' }} />
-          </label>
+          {/* Unit / Topic Selector */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {filteredLessons.length > 0 ? (
+              <select
+                aria-label="Select lesson topic"
+                value={manifestKey}
+                onChange={(e) => {
+                  const selected = filteredLessons.find((i) => i.id === e.target.value);
+                  if (selected) loadCatalogItem(selected);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#f8fafc',
+                  color: '#1e293b',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {filteredLessons.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.badgeIcon} {item.title}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div style={{ flex: 1, padding: '8px', fontSize: '0.8rem', color: '#94a3b8' }}>
+                No modules found for this combination.
+              </div>
+            )}
+
+            <label style={{ padding: '6px 10px', borderRadius: '8px', border: '1px dashed #cbd5e1', background: '#ffffff', color: '#475569', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              📁 Import AST
+              <input type="file" accept=".json" onChange={handleImportJson} style={{ display: 'none' }} />
+            </label>
+          </div>
         </div>
 
         {/* Card Branding Banner */}
@@ -353,7 +521,15 @@ const checkAnswer = async (e: React.FormEvent) => {
         <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem' }}>{manifest.meta.tagline}</p>
 
         {/* Quick Cohort Entry Form */}
-        <form onSubmit={(e) => { e.preventDefault(); const c = manifest.cohorts.find(x => x.code.toLowerCase() === activeCodeInput.trim().toLowerCase()); if (c) selectCohort(c.code); else alert('Code not found in active module.'); }} style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem' }}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const c = manifest.cohorts.find((x) => x.code.toLowerCase() === activeCodeInput.trim().toLowerCase());
+            if (c) selectCohort(c.code);
+            else alert('Code not found in active module.');
+          }}
+          style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem' }}
+        >
           <input
             type="text"
             placeholder="Enter Code (e.g. OAK-SCI3, FHC-A)"
@@ -407,6 +583,23 @@ const checkAnswer = async (e: React.FormEvent) => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <select
+            value={instructionMode}
+            onChange={(e) => setInstructionMode(e.target.value as 'bilingual' | 'immersion')}
+            style={{
+              padding: '4px 8px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              background: '#ffffff',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: '#334155',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="bilingual">🇬🇧 English Mode</option>
+            <option value="immersion">🌐 Immersion Mode</option>
+          </select>
           <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>🔥 Streak: <strong style={{ color: '#ea580c' }}>{streak}</strong></span>
           <button
             type="button"
@@ -427,7 +620,7 @@ const checkAnswer = async (e: React.FormEvent) => {
           <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Level {currentChallenge.level}</span>
         </div>
 
-        <h2 style={{ fontSize: '1.25rem', margin: '0 0 1rem 0', color: '#0f172a' }}>{currentChallenge.prompt}</h2>
+        <h2 style={{ fontSize: '1.25rem', margin: '0 0 1rem 0', color: '#0f172a' }}>{activePrompt}</h2>
 
         <form onSubmit={checkAnswer} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <input
@@ -474,7 +667,7 @@ const checkAnswer = async (e: React.FormEvent) => {
           </div>
         )}
       </div>
-        
+
       {/* Persona Edge Terminal */}
       <div style={{ background: '#0b1120', borderRadius: '12px', padding: '1.25rem', border: '1px solid #1e293b' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>

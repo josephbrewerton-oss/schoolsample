@@ -1,0 +1,8 @@
+{
+  "label": "Sciences",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Biology, Chemistry, and Physics modules."
+  }
+}

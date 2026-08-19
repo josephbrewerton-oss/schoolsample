@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "generatedAt": 1787031005494,
+  "version": "1.2.0-compact",
+  "generatedAt": 1787165331821,
   "streams": [
     {
       "id": "academic",
@@ -23,46 +23,6 @@
   ],
   "items": [
     {
-      "id": "states-of-matter",
-      "stream": "academic",
-      "keyStage": "KS3",
-      "subject": "Science",
-      "unit": "Matter & Solutions",
-      "title": "States of Matter & Particle Arrangement",
-      "badgeIcon": "🧪",
-      "manifestPath": "/manifests/lessons/states-of-matter.json"
-    },
-    {
-      "id": "angles-triangles",
-      "stream": "academic",
-      "keyStage": "KS3",
-      "subject": "Maths",
-      "unit": "Geometry & Angles",
-      "title": "Angles in Triangles and Polygons",
-      "badgeIcon": "📐",
-      "manifestPath": "/manifests/lessons/angles-triangles.json"
-    },
-    {
-      "id": "romans-britain",
-      "stream": "academic",
-      "keyStage": "KS2",
-      "subject": "History",
-      "unit": "Roman Empire Impact",
-      "title": "Roman Britain & Boudicca’s Revolt",
-      "badgeIcon": "🏛️",
-      "manifestPath": "/manifests/lessons/romans-britain.json"
-    },
-    {
-      "id": "cell-biology",
-      "stream": "academic",
-      "keyStage": "KS4",
-      "subject": "Science",
-      "unit": "Cell Biology",
-      "title": "Eukaryotic vs Prokaryotic Cell Structures",
-      "badgeIcon": "🧪",
-      "manifestPath": "/manifests/lessons/cell-biology.json"
-    },
-    {
       "id": "first-holy-communion",
       "stream": "faith",
       "keyStage": "Parish",
@@ -79,8 +39,3848 @@
       "subject": "Catholic Christianity",
       "unit": "Beliefs & Teachings",
       "title": "The Nature of God: The Holy Trinity",
-      "badgeIcon": "🎓",
+      "badgeIcon": "⛪",
       "manifestPath": "/manifests/lessons/gcse-re-trinity.json"
+    },
+    {
+      "id": "oak-art-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Present a group design proposal",
+      "title": "Present a group design proposal",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-1.json"
+    },
+    {
+      "id": "oak-art-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Investigate an architect",
+      "title": "Investigate an architect",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-2.json"
+    },
+    {
+      "id": "oak-art-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Develop a collaborative group design",
+      "title": "Develop a collaborative group design",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-3.json"
+    },
+    {
+      "id": "oak-art-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Draw buildings using simple perspective",
+      "title": "Draw buildings using simple perspective",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-4.json"
+    },
+    {
+      "id": "oak-art-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Make an architectural 3D model",
+      "title": "Make an architectural 3D model",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-5.json"
+    },
+    {
+      "id": "oak-art-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Tonally shade architecture",
+      "title": "Tonally shade architecture",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-6.json"
+    },
+    {
+      "id": "oak-art-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Relief sculpture profile portrait",
+      "title": "Relief sculpture profile portrait",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-7.json"
+    },
+    {
+      "id": "oak-art-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Make a print profile portrait",
+      "title": "Make a print profile portrait",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-8.json"
+    },
+    {
+      "id": "oak-art-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Profile portraits in art",
+      "title": "Profile portraits in art",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-9.json"
+    },
+    {
+      "id": "oak-art-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Draw a profile portrait",
+      "title": "Draw a profile portrait",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-10.json"
+    },
+    {
+      "id": "oak-art-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Take and edit a portrait photograph",
+      "title": "Take and edit a portrait photograph",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-11.json"
+    },
+    {
+      "id": "oak-art-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Art",
+      "unit": "Create an identity mood board",
+      "title": "Create an identity mood board",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-primary-unit-12.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Building a collaborative still life",
+      "title": "Building a collaborative still life",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Analysing the work of artists and designers: key elements",
+      "title": "Analysing the work of artists and designers: key elements",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Developing ideas collaboratively through manipulating source material",
+      "title": "Developing ideas collaboratively through manipulating source material",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Analysing the work of artists and designers who work collaboratively",
+      "title": "Analysing the work of artists and designers who work collaboratively",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Effective annotation: supporting each other to record the process",
+      "title": "Effective annotation: supporting each other to record the process",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Review developed ideas: trials and experiments",
+      "title": "Review developed ideas: trials and experiments",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Evaluate use of materials and techniques",
+      "title": "Evaluate use of materials and techniques",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Develop ideas: trials and experiments",
+      "title": "Develop ideas: trials and experiments",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Initial ideas: collaboration and generating ideas",
+      "title": "Initial ideas: collaboration and generating ideas",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Taking the individual path, responding to collaborative work",
+      "title": "Taking the individual path, responding to collaborative work",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Personal response: reflect and refine the response",
+      "title": "Personal response: reflect and refine the response",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-art-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Art",
+      "unit": "Personal response: plan a response",
+      "title": "Personal response: plan a response",
+      "badgeIcon": "🎨",
+      "manifestPath": "/manifests/lessons/oak-art-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "What is Parliament and what are its functions?",
+      "title": "What is Parliament and what are its functions?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How can I take part in the democratic process? The role of select committees",
+      "title": "How can I take part in the democratic process? The role of select committees",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How is devolution impacting the UK's democracy?",
+      "title": "How is devolution impacting the UK's democracy?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "What is a free press and why is it important for democracy?",
+      "title": "What is a free press and why is it important for democracy?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How can we hold our leaders to account?",
+      "title": "How can we hold our leaders to account?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How can we tell if the UK is democratic?",
+      "title": "How can we tell if the UK is democratic?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "What happens after a general election?",
+      "title": "What happens after a general election?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How is the UK Government organised?",
+      "title": "How is the UK Government organised?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "What is the difference between the Government and Parliament?",
+      "title": "What is the difference between the Government and Parliament?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "What do MPs do?",
+      "title": "What do MPs do?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How does devolved government work?",
+      "title": "How does devolved government work?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-citizenship-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Citizenship",
+      "unit": "How do elections work?",
+      "title": "How do elections work?",
+      "badgeIcon": "⚖️",
+      "manifestPath": "/manifests/lessons/oak-citizenship-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Using lines and shapes to create digital pictures",
+      "title": "Using lines and shapes to create digital pictures",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-1.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Comparing computer art and painting",
+      "title": "Comparing computer art and painting",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-2.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Painting using computers",
+      "title": "Painting using computers",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-3.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Choosing the right digital painting tool",
+      "title": "Choosing the right digital painting tool",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-4.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Creating digital pictures in the style of an artist",
+      "title": "Creating digital pictures in the style of an artist",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-5.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Using the paintbrush tool to create digital pictures",
+      "title": "Using the paintbrush tool to create digital pictures",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-6.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "How search results are ranked",
+      "title": "How search results are ranked",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-7.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Searching the web",
+      "title": "Searching the web",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-8.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Digital systems",
+      "title": "Digital systems",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-9.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "How search results can be influenced",
+      "title": "How search results can be influenced",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-10.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Selecting search results",
+      "title": "Selecting search results",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-11.json"
+    },
+    {
+      "id": "oak-computing-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Computing",
+      "unit": "Computer systems in society",
+      "title": "Computer systems in society",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-primary-unit-12.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Vector markup",
+      "title": "Vector markup",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Using vector tools to draw and modify shapes",
+      "title": "Using vector tools to draw and modify shapes",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Vector paths",
+      "title": "Vector paths",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Developing a vector product",
+      "title": "Developing a vector product",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Working with multiple objects",
+      "title": "Working with multiple objects",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Comparing bitmap and vector graphics",
+      "title": "Comparing bitmap and vector graphics",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Reviewing a digital product",
+      "title": "Reviewing a digital product",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Creating a slide deck",
+      "title": "Creating a slide deck",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Poster planning",
+      "title": "Poster planning",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Poster making",
+      "title": "Poster making",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Features of a poster",
+      "title": "Features of a poster",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-computing-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Computing",
+      "unit": "Creating a slide deck template",
+      "title": "Creating a slide deck template",
+      "badgeIcon": "💻",
+      "manifestPath": "/manifests/lessons/oak-computing-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making Glamorgan sausages",
+      "title": "Making Glamorgan sausages",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-1.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making Irish soda bread",
+      "title": "Making Irish soda bread",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-2.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making raisin and banana cookies",
+      "title": "Making raisin and banana cookies",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-3.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making a UK seasonal fruit traybake",
+      "title": "Making a UK seasonal fruit traybake",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-4.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making patatas bravas",
+      "title": "Making patatas bravas",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-5.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making a tear 'n' share pizza",
+      "title": "Making a tear 'n' share pizza",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-6.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Let's make some veggie snacks",
+      "title": "Let's make some veggie snacks",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-7.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Let's make butter bean hummus on crackers",
+      "title": "Let's make butter bean hummus on crackers",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-8.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Let's make a layered breakfast",
+      "title": "Let's make a layered breakfast",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-9.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making Mexican pockets",
+      "title": "Making Mexican pockets",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-10.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making a poke bowl",
+      "title": "Making a poke bowl",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-11.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making fruit scone wedges",
+      "title": "Making fruit scone wedges",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-primary-unit-12.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making leek and potato soup",
+      "title": "Making leek and potato soup",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making yakisoba noodles",
+      "title": "Making yakisoba noodles",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making a mini deli salad",
+      "title": "Making a mini deli salad",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making cheesy bean burritos",
+      "title": "Making cheesy bean burritos",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making herby focaccia",
+      "title": "Making herby focaccia",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making green mac & cheese",
+      "title": "Making green mac & cheese",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making sweet potato katsu curry",
+      "title": "Making sweet potato katsu curry",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making Chelsea buns",
+      "title": "Making Chelsea buns",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making a sweet & sour fakeaway",
+      "title": "Making a sweet & sour fakeaway",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Health conditions",
+      "title": "Health conditions",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Making pea and mint falafel, with tzatziki",
+      "title": "Making pea and mint falafel, with tzatziki",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-cooking-nutrition-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "NUTRITION",
+      "subject": "Cooking",
+      "unit": "Nutritional needs throughout life",
+      "title": "Nutritional needs throughout life",
+      "badgeIcon": "🍳",
+      "manifestPath": "/manifests/lessons/oak-cooking-nutrition-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Ken Yeang and sustainable architecture",
+      "title": "Ken Yeang and sustainable architecture",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-1.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Manipulating 3D shapes",
+      "title": "Manipulating 3D shapes",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-2.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "The TinkerCAD user interface",
+      "title": "The TinkerCAD user interface",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-3.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Complex 3D shapes",
+      "title": "Complex 3D shapes",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-4.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Compound 3D shapes",
+      "title": "Compound 3D shapes",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-5.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Modify 3D shapes",
+      "title": "Modify 3D shapes",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-6.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Critique 3D eco-houses",
+      "title": "Critique 3D eco-houses",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-7.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Exploded diagrams in CAD",
+      "title": "Exploded diagrams in CAD",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-8.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Disassemble products to inspire ideas",
+      "title": "Disassemble products to inspire ideas",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-9.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Card slider mechanisms",
+      "title": "Card slider mechanisms",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-10.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Mechanisms in moving cards",
+      "title": "Mechanisms in moving cards",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-11.json"
+    },
+    {
+      "id": "oak-design-technology-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Joining materials in moving cards",
+      "title": "Joining materials in moving cards",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-primary-unit-12.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Electronic systems",
+      "title": "Electronic systems",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Levers and linkages",
+      "title": "Levers and linkages",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Energy generation and storage",
+      "title": "Energy generation and storage",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Cams and pulleys",
+      "title": "Cams and pulleys",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Material categories",
+      "title": "Material categories",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "New and emerging technologies informing design decisions",
+      "title": "New and emerging technologies informing design decisions",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Energy and the impact on designs",
+      "title": "Energy and the impact on designs",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Modern materials",
+      "title": "Modern materials",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Smart materials",
+      "title": "Smart materials",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Gears",
+      "title": "Gears",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "New and emerging technologies",
+      "title": "New and emerging technologies",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-design-technology-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "TECHNOLOGY",
+      "subject": "Design",
+      "unit": "Programmable systems",
+      "title": "Programmable systems",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-design-technology-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-english-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Five sentence types",
+      "title": "Five sentence types",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-1.json"
+    },
+    {
+      "id": "oak-english-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Clause structure",
+      "title": "Clause structure",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-2.json"
+    },
+    {
+      "id": "oak-english-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Subject and object",
+      "title": "Subject and object",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-3.json"
+    },
+    {
+      "id": "oak-english-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "New subordinating conjunctions and relative pronouns",
+      "title": "New subordinating conjunctions and relative pronouns",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-4.json"
+    },
+    {
+      "id": "oak-english-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Three ways for co-ordination in compound sentences",
+      "title": "Three ways for co-ordination in compound sentences",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-5.json"
+    },
+    {
+      "id": "oak-english-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Subordination with 'as' in adverbial complex sentences",
+      "title": "Subordination with 'as' in adverbial complex sentences",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-6.json"
+    },
+    {
+      "id": "oak-english-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Using the comma rule in compound sentences",
+      "title": "Using the comma rule in compound sentences",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-7.json"
+    },
+    {
+      "id": "oak-english-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Four types of simple sentence",
+      "title": "Four types of simple sentence",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-8.json"
+    },
+    {
+      "id": "oak-english-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Using the comma rule in adverbial complex sentences",
+      "title": "Using the comma rule in adverbial complex sentences",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-9.json"
+    },
+    {
+      "id": "oak-english-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Adverbial complex sentences",
+      "title": "Adverbial complex sentences",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-10.json"
+    },
+    {
+      "id": "oak-english-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Compound and adverbial complex sentences revision",
+      "title": "Compound and adverbial complex sentences revision",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-11.json"
+    },
+    {
+      "id": "oak-english-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "English",
+      "unit": "Understanding the comma rule in adverbial complex sentences",
+      "title": "Understanding the comma rule in adverbial complex sentences",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-primary-unit-12.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Developing analytical paragraphs on 'Animal Farm'",
+      "title": "Developing analytical paragraphs on 'Animal Farm'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Using critical quotations and evaluating the leadership of 'Animal Farm'",
+      "title": "Using critical quotations and evaluating the leadership of 'Animal Farm'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Writing effective introductions and conclusions on 'Animal Farm'",
+      "title": "Writing effective introductions and conclusions on 'Animal Farm'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Boxer and the theme of education in 'Animal Farm'",
+      "title": "Boxer and the theme of education in 'Animal Farm'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "The leadership of Mr. Jones in 'Animal Farm'",
+      "title": "The leadership of Mr. Jones in 'Animal Farm'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Analysing form and structure in 'Animal Farm'",
+      "title": "Analysing form and structure in 'Animal Farm'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "'Animal Farm': writing with clarity in essays",
+      "title": "'Animal Farm': writing with clarity in essays",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Contextualising gender expectations in ‘An Inspector Calls'",
+      "title": "Contextualising gender expectations in ‘An Inspector Calls'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Exploring interpretations of masculinity in 'An Inspector Calls'",
+      "title": "Exploring interpretations of masculinity in 'An Inspector Calls'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Planning an essay on societal expectations in ‘An Inspector Calls’",
+      "title": "Planning an essay on societal expectations in ‘An Inspector Calls’",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Sheila and changing attitudes toward gender and class in 'An Inspector Calls'",
+      "title": "Sheila and changing attitudes toward gender and class in 'An Inspector Calls'",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-english-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "English",
+      "unit": "Eva Smith in 'An Inspector Calls': representation and symbolism",
+      "title": "Eva Smith in 'An Inspector Calls': representation and symbolism",
+      "badgeIcon": "📖",
+      "manifestPath": "/manifests/lessons/oak-english-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-french-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "Months of the year",
+      "title": "Months of the year",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-1.json"
+    },
+    {
+      "id": "oak-french-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "I'm hungry: 'avoir' meaning 'be'",
+      "title": "I'm hungry: 'avoir' meaning 'be'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-2.json"
+    },
+    {
+      "id": "oak-french-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "I'm sick! 'Avoir' meaning 'be'",
+      "title": "I'm sick! 'Avoir' meaning 'be'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-3.json"
+    },
+    {
+      "id": "oak-french-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "How are you today? 'Avoir' meaning 'be'",
+      "title": "How are you today? 'Avoir' meaning 'be'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-4.json"
+    },
+    {
+      "id": "oak-french-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "New friends: 'mon, ma', 'ton, ta'",
+      "title": "New friends: 'mon, ma', 'ton, ta'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-5.json"
+    },
+    {
+      "id": "oak-french-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "Age: 'avoir' meaning 'be'",
+      "title": "Age: 'avoir' meaning 'be'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-6.json"
+    },
+    {
+      "id": "oak-french-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "My monster: numbers 1-12, 'des', 'combien'",
+      "title": "My monster: numbers 1-12, 'des', 'combien'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-7.json"
+    },
+    {
+      "id": "oak-french-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "My birthday: 'quand'",
+      "title": "My birthday: 'quand'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-8.json"
+    },
+    {
+      "id": "oak-french-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "My monster: 'il y a' and 'il a'",
+      "title": "My monster: 'il y a' and 'il a'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-9.json"
+    },
+    {
+      "id": "oak-french-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "Introductions: voici, 'je suis' and 'il, elle est'",
+      "title": "Introductions: voici, 'je suis' and 'il, elle est'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-10.json"
+    },
+    {
+      "id": "oak-french-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "School: 'ils, elles ont' and 'ils, elles sont'",
+      "title": "School: 'ils, elles ont' and 'ils, elles sont'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-11.json"
+    },
+    {
+      "id": "oak-french-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "French",
+      "unit": "School: Instructions in class",
+      "title": "School: Instructions in class",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-primary-unit-12.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "How do you spell that? Alphabet, 'ils', 'elles' meaning 'they', 'mon, ma, mes'",
+      "title": "How do you spell that? Alphabet, 'ils', 'elles' meaning 'they', 'mon, ma, mes'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "How do you say that? Articles, 'il y a' and 'il n'y a pas'",
+      "title": "How do you say that? Articles, 'il y a' and 'il n'y a pas'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Une personne intéressante : -re verbs like 'traduire' and 'écrire'",
+      "title": "Une personne intéressante : -re verbs like 'traduire' and 'écrire'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Mon temps libre: subject pronouns, -er verbs and 'aimer' + infinitive",
+      "title": "Mon temps libre: subject pronouns, -er verbs and 'aimer' + infinitive",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Qui fait quoi ? : -re verbs like 'prendre' and 'entendre'",
+      "title": "Qui fait quoi ? : -re verbs like 'prendre' and 'entendre'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Rock en Seine : plural 'être', plural adjectives",
+      "title": "Rock en Seine : plural 'être', plural adjectives",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Dieppe festival: singular -er verbs, 'pour' and 'sans', intonation questions",
+      "title": "Dieppe festival: singular -er verbs, 'pour' and 'sans', intonation questions",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Two musicians: singular 'être', singular adjectives",
+      "title": "Two musicians: singular 'être', singular adjectives",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Dieppe festival: plural -er verbs, 'est-ce que' questions",
+      "title": "Dieppe festival: plural -er verbs, 'est-ce que' questions",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "À table ! Partitive and indefinite articles, preverbal use of 'y' and 'en'",
+      "title": "À table ! Partitive and indefinite articles, preverbal use of 'y' and 'en'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "Vive la République : present tense,  prepositions 'à' and 'de'",
+      "title": "Vive la République : present tense,  prepositions 'à' and 'de'",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-french-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "French",
+      "unit": "La diversité religieuse dans les pays francophones : extending vocabulary",
+      "title": "La diversité religieuse dans les pays francophones : extending vocabulary",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-french-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "The UK: Moving in, moving out",
+      "title": "The UK: Moving in, moving out",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-1.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Impacts of the UK's changing population",
+      "title": "Impacts of the UK's changing population",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-2.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Images of the UK",
+      "title": "Images of the UK",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-3.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Moving within the UK",
+      "title": "Moving within the UK",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-4.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Revealing the UK's global links",
+      "title": "Revealing the UK's global links",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-5.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Regions and counties of the UK",
+      "title": "Regions and counties of the UK",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-6.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Changing land use",
+      "title": "Changing land use",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-7.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Land use in the locality",
+      "title": "Land use in the locality",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-8.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Using grid references to identify land use",
+      "title": "Using grid references to identify land use",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-9.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Different types of land use in the UK",
+      "title": "Different types of land use in the UK",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-10.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "UK human and physical features",
+      "title": "UK human and physical features",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-11.json"
+    },
+    {
+      "id": "oak-geography-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Geography",
+      "unit": "Farming in the UK",
+      "title": "Farming in the UK",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-primary-unit-12.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Rostow’s and Frank’s theories about development over time",
+      "title": "Rostow’s and Frank’s theories about development over time",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Causes of global inequalities",
+      "title": "Causes of global inequalities",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Top-down strategies to reduce global inequalities",
+      "title": "Top-down strategies to reduce global inequalities",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Development and demography",
+      "title": "Development and demography",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Using GIS maps to analyse links between inequality and migration",
+      "title": "Using GIS maps to analyse links between inequality and migration",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Measuring development",
+      "title": "Measuring development",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Bottom-up strategies to reduce global inequalities",
+      "title": "Bottom-up strategies to reduce global inequalities",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Defining development",
+      "title": "Defining development",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Consequences of global inequalities",
+      "title": "Consequences of global inequalities",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Using GIS to visualise data in a webmap",
+      "title": "Using GIS to visualise data in a webmap",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Using atlases",
+      "title": "Using atlases",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-geography-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Geography",
+      "unit": "Using and interpreting spatial data",
+      "title": "Using and interpreting spatial data",
+      "badgeIcon": "🌍",
+      "manifestPath": "/manifests/lessons/oak-geography-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Identifying things: ‘ist’, ‘sein’ and learning vocabulary",
+      "title": "Identifying things: ‘ist’, ‘sein’ and learning vocabulary",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Greetings and locating things: capital letters on German nouns",
+      "title": "Greetings and locating things: capital letters on German nouns",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "What is it? 'Was' and 'sagen'",
+      "title": "What is it? 'Was' and 'sagen'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Greetings and location:  'wo' and singular definite articles",
+      "title": "Greetings and location:  'wo' and singular definite articles",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "What is it like? 'Ist' with adjectives",
+      "title": "What is it like? 'Ist' with adjectives",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Classroom conversations: German alphabet",
+      "title": "Classroom conversations: German alphabet",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "How's it going? 'Wie' and the singular indefinite articles 'ein', 'eine', 'ein'",
+      "title": "How's it going? 'Wie' and the singular indefinite articles 'ein', 'eine', 'ein'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Describe things: 'sein' 1st and 2nd person singular, negation 'nicht' and 'kein'",
+      "title": "Describe things: 'sein' 1st and 2nd person singular, negation 'nicht' and 'kein'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Who, what, how and where? Forming questions, compound nouns",
+      "title": "Who, what, how and where? Forming questions, compound nouns",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "A fairy tale: present tense 2nd person plural ('ihr'), dative verbs",
+      "title": "A fairy tale: present tense 2nd person plural ('ihr'), dative verbs",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "Interview with a musician: present tense weak verbs, yes/no questions",
+      "title": "Interview with a musician: present tense weak verbs, yes/no questions",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-german-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "German",
+      "unit": "German musicians: present tense open questions, word order",
+      "title": "German musicians: present tense open questions, word order",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-german-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-history-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "The big picture of the earliest humans in Britain",
+      "title": "The big picture of the earliest humans in Britain",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-1.json"
+    },
+    {
+      "id": "oak-history-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "Life at the end of the last Ice Age",
+      "title": "Life at the end of the last Ice Age",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-2.json"
+    },
+    {
+      "id": "oak-history-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "Significant Stone Age artefacts",
+      "title": "Significant Stone Age artefacts",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-3.json"
+    },
+    {
+      "id": "oak-history-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "The evidence of the Paleolithic Era",
+      "title": "The evidence of the Paleolithic Era",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-4.json"
+    },
+    {
+      "id": "oak-history-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "Settlement during the Mesolithic Era",
+      "title": "Settlement during the Mesolithic Era",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-5.json"
+    },
+    {
+      "id": "oak-history-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "Skara Brae and life in the Neolithic Era",
+      "title": "Skara Brae and life in the Neolithic Era",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-6.json"
+    },
+    {
+      "id": "oak-history-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "A princess in wartime Britain",
+      "title": "A princess in wartime Britain",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-7.json"
+    },
+    {
+      "id": "oak-history-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "The first televised coronation",
+      "title": "The first televised coronation",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-8.json"
+    },
+    {
+      "id": "oak-history-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "The princess who spoke to the nation",
+      "title": "The princess who spoke to the nation",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-9.json"
+    },
+    {
+      "id": "oak-history-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "Saying goodbye and remembering a reign",
+      "title": "Saying goodbye and remembering a reign",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-10.json"
+    },
+    {
+      "id": "oak-history-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "A queen of four nations, head of the Commonwealth",
+      "title": "A queen of four nations, head of the Commonwealth",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-11.json"
+    },
+    {
+      "id": "oak-history-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "History",
+      "unit": "The queen’s clothes tell a story",
+      "title": "The queen’s clothes tell a story",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-primary-unit-12.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "The Great Schism",
+      "title": "The Great Schism",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "The Eastern Orthodox Church",
+      "title": "The Eastern Orthodox Church",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Background to the Great Schism: the Roman Catholic Church",
+      "title": "Background to the Great Schism: the Roman Catholic Church",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "The English Reformation in its European context",
+      "title": "The English Reformation in its European context",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Thomas Cromwell and the Reformation Parliament",
+      "title": "Thomas Cromwell and the Reformation Parliament",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Martin Luther and the Lutheran Reformation",
+      "title": "Martin Luther and the Lutheran Reformation",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "The beliefs of the Church of England 1534-1558",
+      "title": "The beliefs of the Church of England 1534-1558",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Henry VIII and the King's Great Matter",
+      "title": "Henry VIII and the King's Great Matter",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Zwingli, Calvin and the Swiss Reformation",
+      "title": "Zwingli, Calvin and the Swiss Reformation",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Baghdad in the 11th century",
+      "title": "Baghdad in the 11th century",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Cordoba in the 11th century",
+      "title": "Cordoba in the 11th century",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-history-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "History",
+      "unit": "Sicily and other Islamic worlds in the 11th century",
+      "title": "Sicily and other Islamic worlds in the 11th century",
+      "badgeIcon": "🏛️",
+      "manifestPath": "/manifests/lessons/oak-history-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using column addition with regrouping in the ones and tens columns",
+      "title": "Review using column addition with regrouping in the ones and tens columns",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-1.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using column subtraction with regrouping from hundreds to tens",
+      "title": "Review using column subtraction with regrouping from hundreds to tens",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-2.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using known facts and strategies to accurately and efficiently use and check column addition",
+      "title": "Review using known facts and strategies to accurately and efficiently use and check column addition",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-3.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using column subtraction with regrouping from tens to ones",
+      "title": "Review using column subtraction with regrouping from tens to ones",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-4.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review adding 3-digit numbers using column addition without regrouping",
+      "title": "Review adding 3-digit numbers using column addition without regrouping",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-5.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using column subtraction to subtract without regrouping",
+      "title": "Review using column subtraction to subtract without regrouping",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-6.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Decide on the most efficient subtraction strategy, including column subtraction",
+      "title": "Decide on the most efficient subtraction strategy, including column subtraction",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-7.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review adding 2-digit numbers using column addition without regrouping",
+      "title": "Review adding 2-digit numbers using column addition without regrouping",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-8.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using column addition to add 2- and 3-digit numbers by regrouping ones",
+      "title": "Review using column addition to add 2- and 3-digit numbers by regrouping ones",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-9.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review using column addition to add 2- and 3-digit numbers by regrouping tens",
+      "title": "Review using column addition to add 2- and 3-digit numbers by regrouping tens",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-10.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Use column addition to solve problems in different contexts",
+      "title": "Use column addition to solve problems in different contexts",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-11.json"
+    },
+    {
+      "id": "oak-maths-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Maths",
+      "unit": "Review identifying the minuend and subtrahend in column subtraction",
+      "title": "Review identifying the minuend and subtrahend in column subtraction",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-primary-unit-12.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Congruent, similar or neither",
+      "title": "Congruent, similar or neither",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Congruent triangles (ASA and AAS)",
+      "title": "Congruent triangles (ASA and AAS)",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Further demonstrating of Pythagoras' theorem",
+      "title": "Further demonstrating of Pythagoras' theorem",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Demonstrating Pythagoras' theorem",
+      "title": "Demonstrating Pythagoras' theorem",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Applying the criteria for congruence",
+      "title": "Applying the criteria for congruence",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Pythagoras' theorem in context",
+      "title": "Pythagoras' theorem in context",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Checking understanding of similarity",
+      "title": "Checking understanding of similarity",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Determining which side",
+      "title": "Determining which side",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Similarity in shapes",
+      "title": "Similarity in shapes",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Congruence in shapes",
+      "title": "Congruence in shapes",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Checking understanding of congruence",
+      "title": "Checking understanding of congruence",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-maths-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Maths",
+      "unit": "Rotational symmetry",
+      "title": "Rotational symmetry",
+      "badgeIcon": "📐",
+      "manifestPath": "/manifests/lessons/oak-maths-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-music-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Folk songs and the major pentachord",
+      "title": "Folk songs and the major pentachord",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-1.json"
+    },
+    {
+      "id": "oak-music-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Layering accompaniments under major and minor folk songs",
+      "title": "Layering accompaniments under major and minor folk songs",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-2.json"
+    },
+    {
+      "id": "oak-music-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Building texture with a melodic ostinato",
+      "title": "Building texture with a melodic ostinato",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-3.json"
+    },
+    {
+      "id": "oak-music-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Building texture with a minor accompaniment",
+      "title": "Building texture with a minor accompaniment",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-4.json"
+    },
+    {
+      "id": "oak-music-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Folk songs and the minor pentachord",
+      "title": "Folk songs and the minor pentachord",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-5.json"
+    },
+    {
+      "id": "oak-music-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Major and minor tonality folk songs",
+      "title": "Major and minor tonality folk songs",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-6.json"
+    },
+    {
+      "id": "oak-music-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Rehearsing and evaluating an ensemble piece with a thick texture",
+      "title": "Rehearsing and evaluating an ensemble piece with a thick texture",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-7.json"
+    },
+    {
+      "id": "oak-music-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Part singing: rounds and partner songs",
+      "title": "Part singing: rounds and partner songs",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-8.json"
+    },
+    {
+      "id": "oak-music-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Layering part-singing: adding a three note melody",
+      "title": "Layering part-singing: adding a three note melody",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-9.json"
+    },
+    {
+      "id": "oak-music-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Two-part singing: rounds and partner songs",
+      "title": "Two-part singing: rounds and partner songs",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-10.json"
+    },
+    {
+      "id": "oak-music-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Part singing: adding a rhythmic ostinato accompaniment",
+      "title": "Part singing: adding a rhythmic ostinato accompaniment",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-11.json"
+    },
+    {
+      "id": "oak-music-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Music",
+      "unit": "Singing and playing simultaneously: three note melodies",
+      "title": "Singing and playing simultaneously: three note melodies",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-primary-unit-12.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Developing mood in film music",
+      "title": "Developing mood in film music",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Using film music to establish mood",
+      "title": "Using film music to establish mood",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Using leitmotif in film music",
+      "title": "Using leitmotif in film music",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Developing a leitmotif",
+      "title": "Developing a leitmotif",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Creating contrasting leitmotifs",
+      "title": "Creating contrasting leitmotifs",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Genre specific considerations",
+      "title": "Genre specific considerations",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Purpose, style and a musical starting point",
+      "title": "Purpose, style and a musical starting point",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Extending a musical idea",
+      "title": "Extending a musical idea",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Structure and bigger picture ideas",
+      "title": "Structure and bigger picture ideas",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Refining and developing musical ideas",
+      "title": "Refining and developing musical ideas",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Genre specific considerations",
+      "title": "Genre specific considerations",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-music-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Music",
+      "unit": "Purpose, style and a musical starting point",
+      "title": "Purpose, style and a musical starting point",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-music-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Collaborate effectively to complete a timed course",
+      "title": "Collaborate effectively to complete a timed course",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-1.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Orientating a map to locate points",
+      "title": "Orientating a map to locate points",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-2.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Using a map to follow a route",
+      "title": "Using a map to follow a route",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-3.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Following a set route using a map",
+      "title": "Following a set route using a map",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-4.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Orienteering competition",
+      "title": "Orienteering competition",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-5.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Introduce maps working together",
+      "title": "Introduce maps working together",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-6.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Introduce the STEP principle focusing on space",
+      "title": "Introduce the STEP principle focusing on space",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-7.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Effective leaders",
+      "title": "Effective leaders",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-8.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Using equipment to adapt a task",
+      "title": "Using equipment to adapt a task",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-9.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Communicating as a leader",
+      "title": "Communicating as a leader",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-10.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Focusing on the task",
+      "title": "Focusing on the task",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-11.json"
+    },
+    {
+      "id": "oak-physical-education-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Organising people",
+      "title": "Organising people",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-primary-unit-12.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "How to manage competition, in victory or defeat",
+      "title": "How to manage competition, in victory or defeat",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Supporting others to be their best",
+      "title": "Supporting others to be their best",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Balanced competition",
+      "title": "Balanced competition",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Redefining success",
+      "title": "Redefining success",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Create and lead a competition",
+      "title": "Create and lead a competition",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Tournament time",
+      "title": "Tournament time",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Classification of skills continua",
+      "title": "Classification of skills continua",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Characteristics of skilful movement",
+      "title": "Characteristics of skilful movement",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Self-paced/externally paced and gross/fine continua",
+      "title": "Self-paced/externally paced and gross/fine continua",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Classification of skills on a continua",
+      "title": "Classification of skills on a continua",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Massed, distributed, fixed and variable practice",
+      "title": "Massed, distributed, fixed and variable practice",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-physical-education-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Physical",
+      "unit": "Skill and ability",
+      "title": "Skill and ability",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-physical-education-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Noah and the Rainbow",
+      "title": "Noah and the Rainbow",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-1.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Jesus: waiting for a promise to be fulfilled",
+      "title": "Jesus: waiting for a promise to be fulfilled",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-2.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The story of Joseph",
+      "title": "The story of Joseph",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-3.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Shared stories",
+      "title": "Shared stories",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-4.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The calling of Abraham",
+      "title": "The calling of Abraham",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-5.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The story of Abraham and Sarah",
+      "title": "The story of Abraham and Sarah",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-6.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Rosh Hashanah: diverse Jewish celebrations",
+      "title": "Rosh Hashanah: diverse Jewish celebrations",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-7.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The story of Esther and Haman",
+      "title": "The story of Esther and Haman",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-8.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The story of Hanukkah",
+      "title": "The story of Hanukkah",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-9.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Hanukkah and Jewish identity today",
+      "title": "Hanukkah and Jewish identity today",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-10.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Rosh Hashanah and Yom Kippur",
+      "title": "Rosh Hashanah and Yom Kippur",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-11.json"
+    },
+    {
+      "id": "oak-religious-education-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "How Jews mark Purim today",
+      "title": "How Jews mark Purim today",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-primary-unit-12.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Western, Educated, Industrialized, Rich, and Democratic: worldviews and context",
+      "title": "Western, Educated, Industrialized, Rich, and Democratic: worldviews and context",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Living harmoniously with different worldviews",
+      "title": "Living harmoniously with different worldviews",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Personal worldviews and organised worldviews",
+      "title": "Personal worldviews and organised worldviews",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Blending worldviews and changing worldviews",
+      "title": "Blending worldviews and changing worldviews",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The nature and purpose of marriage",
+      "title": "The nature and purpose of marriage",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Contraception and family planning",
+      "title": "Contraception and family planning",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "The nature of families including the role of parents and children",
+      "title": "The nature of families including the role of parents and children",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Human sexuality including heterosexual and same sex relationships",
+      "title": "Human sexuality including heterosexual and same sex relationships",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Gender prejudice and discrimination",
+      "title": "Gender prejudice and discrimination",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Divorce, remarriage and related ethical arguments",
+      "title": "Divorce, remarriage and related ethical arguments",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Different religious views about contraception",
+      "title": "Different religious views about contraception",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-religious-education-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "EDUCATION",
+      "subject": "Religious",
+      "unit": "Religious views about divorce and remarriage",
+      "title": "Religious views about divorce and remarriage",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/oak-religious-education-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Emotions and deep feelings",
+      "title": "Emotions and deep feelings",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-1.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Managing strong emotions",
+      "title": "Managing strong emotions",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-2.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Our emotions toolkit: strong emotions",
+      "title": "Our emotions toolkit: strong emotions",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-3.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Managing conflict in healthy ways",
+      "title": "Managing conflict in healthy ways",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-4.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Managing my emotions",
+      "title": "Managing my emotions",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-5.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Our emotions toolkit: self-esteem",
+      "title": "Our emotions toolkit: self-esteem",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-6.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Living happy lives",
+      "title": "Living happy lives",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-7.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Feeling down and lonely",
+      "title": "Feeling down and lonely",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-8.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Managing a range of emotions",
+      "title": "Managing a range of emotions",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-9.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Managing change",
+      "title": "Managing change",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-10.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Things that affect how we feel",
+      "title": "Things that affect how we feel",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-11.json"
+    },
+    {
+      "id": "oak-rshe-pshe-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Our emotions toolkit: different feelings",
+      "title": "Our emotions toolkit: different feelings",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-primary-unit-12.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "The Equality Act (2010) and modern Britain",
+      "title": "The Equality Act (2010) and modern Britain",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "LGBT people in modern Britain",
+      "title": "LGBT people in modern Britain",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Diversity and the law in modern Britain",
+      "title": "Diversity and the law in modern Britain",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Marriage equality",
+      "title": "Marriage equality",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Rights and responsibilities in our community",
+      "title": "Rights and responsibilities in our community",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Support in our community",
+      "title": "Support in our community",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Rights and responsibilities in the workplace",
+      "title": "Rights and responsibilities in the workplace",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Equality in modern Britain",
+      "title": "Equality in modern Britain",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Kindness in our community",
+      "title": "Kindness in our community",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Keeping safe in our community",
+      "title": "Keeping safe in our community",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Faith and culture in modern Britain",
+      "title": "Faith and culture in modern Britain",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-rshe-pshe-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "PSHE",
+      "subject": "Rshe",
+      "unit": "Making the world a more inclusive place",
+      "title": "Making the world a more inclusive place",
+      "badgeIcon": "🎓",
+      "manifestPath": "/manifests/lessons/oak-rshe-pshe-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-science-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Soil permeability: plan (non-statutory)",
+      "title": "Soil permeability: plan (non-statutory)",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-1.json"
+    },
+    {
+      "id": "oak-science-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "How fossils are formed",
+      "title": "How fossils are formed",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-2.json"
+    },
+    {
+      "id": "oak-science-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Mary Anning (non-statutory)",
+      "title": "Mary Anning (non-statutory)",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-3.json"
+    },
+    {
+      "id": "oak-science-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Everyday uses of rocks",
+      "title": "Everyday uses of rocks",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-4.json"
+    },
+    {
+      "id": "oak-science-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "What soils are made from",
+      "title": "What soils are made from",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-5.json"
+    },
+    {
+      "id": "oak-science-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Mohs' scale of hardness (non-statutory)",
+      "title": "Mohs' scale of hardness (non-statutory)",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-6.json"
+    },
+    {
+      "id": "oak-science-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "More about fossil formation",
+      "title": "More about fossil formation",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-7.json"
+    },
+    {
+      "id": "oak-science-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Introduction to rocks",
+      "title": "Introduction to rocks",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-8.json"
+    },
+    {
+      "id": "oak-science-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Physical properties of rocks: hardness",
+      "title": "Physical properties of rocks: hardness",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-9.json"
+    },
+    {
+      "id": "oak-science-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Different types of soils (non-statutory)",
+      "title": "Different types of soils (non-statutory)",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-10.json"
+    },
+    {
+      "id": "oak-science-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Weathering and erosion of rocks",
+      "title": "Weathering and erosion of rocks",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-11.json"
+    },
+    {
+      "id": "oak-science-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Science",
+      "unit": "Soil permeability: do and review (non-statutory)",
+      "title": "Soil permeability: do and review (non-statutory)",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-primary-unit-12.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Plant cells: common structures and specialised cells",
+      "title": "Plant cells: common structures and specialised cells",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Animal cells: common structures and specialised cells",
+      "title": "Animal cells: common structures and specialised cells",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Common structures of prokaryotic cells",
+      "title": "Common structures of prokaryotic cells",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Cells",
+      "title": "Cells",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "The size and scale of cells: including standard form",
+      "title": "The size and scale of cells: including standard form",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "The size and scale of cells: the basics",
+      "title": "The size and scale of cells: the basics",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Eukaryotic and prokaryotic organisms",
+      "title": "Eukaryotic and prokaryotic organisms",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Light microscopy: observing and drawing cells",
+      "title": "Light microscopy: observing and drawing cells",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Developing a reactivity series for metals",
+      "title": "Developing a reactivity series for metals",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Polymer structures",
+      "title": "Polymer structures",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Alternative methods of extracting metals: phytomining and bioleaching",
+      "title": "Alternative methods of extracting metals: phytomining and bioleaching",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-science-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Science",
+      "unit": "Extraction of metals by reduction",
+      "title": "Extraction of metals by reduction",
+      "badgeIcon": "🧪",
+      "manifestPath": "/manifests/lessons/oak-science-secondary-unit-12.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-1",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "How is Sofía? Using 'está' to say how someone is today",
+      "title": "How is Sofía? Using 'está' to say how someone is today",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-1.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-2",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "How are you feeling? Information questions with '¿cómo?'",
+      "title": "How are you feeling? Information questions with '¿cómo?'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-2.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-3",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "In class: asking intonation questions",
+      "title": "In class: asking intonation questions",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-3.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-4",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "I am pleased: 'estoy' and 'está' for state",
+      "title": "I am pleased: 'estoy' and 'está' for state",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-4.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-5",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "Ask where: information questions with '¿dónde?'",
+      "title": "Ask where: information questions with '¿dónde?'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-5.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-6",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "Ask how someone is today",
+      "title": "Ask how someone is today",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-6.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-7",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "How someone is today: singular regular adjective agreement",
+      "title": "How someone is today: singular regular adjective agreement",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-7.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-8",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "Are you here? 'Estás' for location",
+      "title": "Are you here? 'Estás' for location",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-8.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-9",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "In class: 'estoy' and 'está' for location",
+      "title": "In class: 'estoy' and 'está' for location",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-9.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-10",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "Greetings: the verb 'estar'",
+      "title": "Greetings: the verb 'estar'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-10.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-11",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "How are you today? 'Estoy' and 'estás' for states",
+      "title": "How are you today? 'Estoy' and 'estás' for states",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-11.json"
+    },
+    {
+      "id": "oak-spanish-primary-unit-12",
+      "stream": "academic",
+      "keyStage": "PRIMARY",
+      "subject": "Spanish",
+      "unit": "How are you today and usually? 'Estar' for states and 'ser' for traits",
+      "title": "How are you today and usually? 'Estar' for states and 'ser' for traits",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-primary-unit-12.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-1",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "Where are you? 'Estar' 2nd person singular",
+      "title": "Where are you? 'Estar' 2nd person singular",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-1.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-2",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "Greetings in the Spanish-speaking world: 'estar' 1st and 3rd person singular",
+      "title": "Greetings in the Spanish-speaking world: 'estar' 1st and 3rd person singular",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-2.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-3",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "What I am like: 'ser' singular persons",
+      "title": "What I am like: 'ser' singular persons",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-3.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-4",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "How are you feeling? 'Estar' singular persons",
+      "title": "How are you feeling? 'Estar' singular persons",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-4.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-5",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "How are you feeling? Singular gender adjective agreement",
+      "title": "How are you feeling? Singular gender adjective agreement",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-5.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-6",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "What I am like: intonation questions",
+      "title": "What I am like: intonation questions",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-6.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-7",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "Relaciones: plural reflexive verbs with reciprocal meaning",
+      "title": "Relaciones: plural reflexive verbs with reciprocal meaning",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-7.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-8",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "Nos preparamos: plural reflexive verbs, possessive adjectives and pronouns",
+      "title": "Nos preparamos: plural reflexive verbs, possessive adjectives and pronouns",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-8.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-9",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "¿De quién es? Plural possessives '(el) nuestro/vuestro'",
+      "title": "¿De quién es? Plural possessives '(el) nuestro/vuestro'",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-9.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-10",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "En casa: plural present and preterite -ar verbs",
+      "title": "En casa: plural present and preterite -ar verbs",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-10.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-11",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "Nos vamos de viaje: role-play",
+      "title": "Nos vamos de viaje: role-play",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-11.json"
+    },
+    {
+      "id": "oak-spanish-secondary-unit-12",
+      "stream": "academic",
+      "keyStage": "SECONDARY",
+      "subject": "Spanish",
+      "unit": "De viaje con amigos: present and preterite -er/-ir verbs",
+      "title": "De viaje con amigos: present and preterite -er/-ir verbs",
+      "badgeIcon": "🗣️",
+      "manifestPath": "/manifests/lessons/oak-spanish-secondary-unit-12.json"
     }
   ]
 }

@@ -2,11 +2,13 @@
   "name": "school-portal",
   "version": "0.0.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "obfuscate": "javascript-obfuscator static/js/webrtc-agent.js --output static/js/webrtc-agent.js --compact true --control-flow-flattening true --dead-code-injection true",
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
+    "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
     "build": "npm run ingest:oak && docusaurus build",
     "deploy": "docusaurus deploy"
   },

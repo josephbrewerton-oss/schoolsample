@@ -68,3 +68,34 @@ export async function logProgress(record: StudentRecord): Promise<void> {
     req.onerror = () => reject(req.error);
   });
 }
+
+/**
+ * Ephemeral Storage Management:
+ * Deletes older lesson manifests to keep IndexedDB lean while leaving
+ * student completion records in 'student_progress' intact.
+ */
+export async function purgeInactiveManifests(
+  activeDomainId: string, 
+  preservedDomains: string[] = ['school', 'communion']
+): Promise<void> {
+  const db = await openLocalDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_MANIFESTS, 'readwrite');
+    const store = tx.objectStore(STORE_MANIFESTS);
+    const keysReq = store.getAllKeys();
+
+    keysReq.onsuccess = () => {
+      const keys = keysReq.result as string[];
+      keys.forEach((key) => {
+        // Protect active module and hardcoded default manifests
+        if (key !== activeDomainId && !preservedDomains.includes(key)) {
+          store.delete(key);
+          console.log(`🧹 Ephemeral Cache Purge: Cleared manifest [${key}] from local IndexedDB`);
+        }
+      });
+      resolve();
+    };
+
+    keysReq.onerror = () => reject(keysReq.error);
+  });
+}
