@@ -745,44 +745,24 @@ const [isTeacherMode, setIsTeacherMode] = useState<boolean>(() => {
             )}
           </div>
 
-              {(currentChallenge as any).semanticRules && (currentChallenge as any).semanticRules.length > 0 && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  <strong>Known Misconceptions & Feedback:</strong>
-                  <ul style={{ margin: '0.25rem 0 0 1.25rem' }}>
-                    {(currentChallenge as any).semanticRules.map(([term, feedback]: [string, string], idx: number) => (
-                      <li key={idx}>
-                        <code>"{term}"</code> → {feedback}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {(currentChallenge as any).e && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  <strong>Curriculum Explanation:</strong> {(currentChallenge as any).e}
-                </div>
-              )}
-            </div>
-
-            {showAstInspector && (
-              <pre
-                style={{
-                  marginTop: '1rem',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  fontSize: '0.8rem',
-                  background: '#1e1e1e',
-                  color: '#d4d4d4',
-                  padding: '0.75rem',
-                  borderRadius: '6px',
-                }}
-              >
-                {JSON.stringify(currentChallenge, null, 2)}
-              </pre>
-            )}
-          </div>
-        )}
+          {showAstInspector && (
+            <pre
+              style={{
+                marginTop: '1rem',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                fontSize: '0.8rem',
+                background: '#1e1e1e',
+                color: '#d4d4d4',
+                padding: '0.75rem',
+                borderRadius: '6px',
+              }}
+            >
+              {JSON.stringify(currentChallenge, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
 
       {/* Persona Edge Terminal */}
       <div style={{ background: '#0b1120', borderRadius: '12px', padding: '1.25rem', border: '1px solid #1e293b' }}>
