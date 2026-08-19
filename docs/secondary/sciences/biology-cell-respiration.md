@@ -10,13 +10,13 @@ Copyright (c) 2026 Joseph Brewerton
 Licensed under the MIT License.
 -->
 
-import InteractiveEdgeSandbox from '@site/src/components/InteractiveEdgeSandbox';
+import DynamicLessonViewer from '@site/src/components/DynamicLessonViewer';
 
 # GCSE Biology: Cellular Respiration 🌿
 
 Explore aerobic vs. anaerobic pathways, mitochondrial ATP synthesis, and gas exchange.
 
-<InteractiveEdgeSandbox />
+<DynamicLessonViewer defaultPhase="SECONDARY" defaultSubject="Science" />
 
 ---
 
