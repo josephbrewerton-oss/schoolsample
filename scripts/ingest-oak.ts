@@ -84,6 +84,25 @@ function formatTitle(slug: string): string {
     .join(' ');
 }
 
+function buildChallengePrompt(unitTitle: string, subjectTitle: string, phaseTitle: string): string {
+  const s = subjectTitle.toLowerCase();
+  if (s.includes('art') || s.includes('design')) {
+    return `Examine the techniques, composition, and visual methods in "${unitTitle}".`;
+  }
+  if (s.includes('sci') || s.includes('bio') || s.includes('chem') || s.includes('phys')) {
+    return `Explain the core scientific principles and mechanisms behind "${unitTitle}".`;
+  }
+  if (s.includes('math')) {
+    return `Outline the step-by-step method and solve the core problem for "${unitTitle}".`;
+  }
+  if (s.includes('hist') || s.includes('geog')) {
+    return `Analyze the key events, evidence, and real-world impacts explored in "${unitTitle}".`;
+  }
+  if (s.includes('eng') || s.includes('lang') || s.includes('lit')) {
+    return `Examine the literary themes, language choices, and structural devices in "${unitTitle}".`;
+  }
+  return `Explain the essential concepts and practical applications of "${unitTitle}".`;
+}
 async function buildSystem() {
   const localOakDir = path.join(process.cwd(), 'scripts', 'data', 'oak');
   const manifestsDir = path.join(process.cwd(), 'static', 'manifests');
@@ -190,7 +209,10 @@ async function buildSystem() {
           const rawQuestions = lesson.questions || lesson.quiz || lesson.keyLearningPoints || [];
 
           const challenges = rawQuestions.slice(0, 8).map((q: any, qIdx: number) => {
-            const prompt = typeof q === 'string' ? q : (q.question || q.prompt || q.title || 'Analyze the concept');
+          const defaultPrompt = buildChallengePrompt(lessonTitle, subjectTitle, phaseTitle);
+          const prompt = typeof q === 'string' 
+              ? (q.trim() ? q : defaultPrompt)
+              : (q.question || q.prompt || q.title || defaultPrompt);
             const answers = q.answers || q.correctAnswers || [q.answer || 'Standard Definition'];
             const distractors = q.distractors || q.misconceptions || [];
 
