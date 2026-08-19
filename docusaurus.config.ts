@@ -83,7 +83,7 @@ const config: Config = {
         },
         {
           to: '/settings',
-          label: '⚙ AI Settings',
+          label: '⚙️ Settings & Access',
           position: 'right',
         },
         {
