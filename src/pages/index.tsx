@@ -7,7 +7,7 @@ export default function Home() {
     <Layout title="Home" description="School AI Learning Portal">
       <main style={{ padding: '4rem 1.5rem', textAlign: 'center', maxWidth: '1000px', margin: '0 auto' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: '#0f172a' }}>
-          Welcome to School AI Portal
+          Welcome to St Joseph's Learning Portal
         </h1>
         <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '3rem' }}>
           Interactive national curriculum mastery powered by on-device edge AI.

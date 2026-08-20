@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'School AI Portal',
-  tagline: 'Interactive Learning Powered by Local AI',
+  title: 'St Joseph',
+  tagline: 'Education for All — Offline-First Curriculum Engine',
   favicon: 'img/favicon.ico',
 
   // Production URL and baseUrl for GitHub Pages
@@ -64,7 +64,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'School AI Portal',
+      title: "St Joseph's",
       logo: {
         alt: 'School AI Logo',
         src: 'img/logo.svg',
