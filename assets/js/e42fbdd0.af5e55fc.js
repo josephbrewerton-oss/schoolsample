@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkschool_portal||=[]).push([[826],{567(o){o.exports=JSON.parse('{"metadata":{"permalink":"/schoolsample/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"blogDescription":"Blog","blogTitle":"Blog"}}')}}]);

@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkschool_portal||=[]).push([[147],{2147(l,u,t){function n(){return null}t.d(u,{default:()=>n})}}]);

@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkst_joseph_curriculum_portal||=[]).push([[472],{5513(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"school-ai-breakthrough","permalink":"/schoolsample/blog/2026/08/16/school-ai-breakthrough","unlisted":false,"date":"2026-08-16T00:00:00.000Z"}]}')}}]);
