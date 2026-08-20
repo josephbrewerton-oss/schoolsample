@@ -148,14 +148,20 @@ const speak = (text: string) => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleSend = async (e: React.FormEvent) => {
+const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || busy) return;
 
     const userText = input.trim();
     setInput('');
-    setLogs((prev) => [...prev, { role: 'student', text: userText }]);
     setBusy(true);
+
+    // Append student prompt + create empty tutor bubble
+    setLogs((prev) => [
+      ...prev,
+      { role: 'student', text: userText },
+      { role: 'tutor', text: '' },
+    ]);
 
     if (onAction) {
       onAction('ai:query', {
@@ -165,12 +171,62 @@ const speak = (text: string) => {
       });
     }
 
-    setTimeout(() => {
-      const reply = `Let's think through "${userText}". What is the core rule or first step we should review?`;
-      setLogs((prev) => [...prev, { role: 'tutor', text: reply }]);
+    try {
+      const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
+
+      if (aiObj) {
+        const session = await (aiObj.create
+          ? aiObj.create({
+              systemPrompt:
+                'You are a concise, Socratic tutor for primary school students. Guide the student with 1 short question or rule under 15 words. Never give the direct answer.',
+            })
+          : (window as any).ai.languageModel.create({
+              systemPrompt:
+                'You are a concise, Socratic tutor for primary school students. Guide the student with 1 short question or rule under 15 words. Never give the direct answer.',
+            }));
+
+        let accumulated = '';
+        const stream = session.promptStreaming(userText);
+
+        for await (const chunk of stream) {
+          // If the engine sends cumulative text, use it; otherwise append delta
+          if (chunk.startsWith(accumulated)) {
+            accumulated = chunk;
+          } else {
+            accumulated += chunk;
+          }
+
+          setLogs((prev) => {
+            if (prev.length === 0) return prev;
+            const next = [...prev];
+            next[next.length - 1] = { role: 'tutor', text: accumulated };
+            return next;
+          });
+        }
+
+        speak(accumulated);
+      } else {
+        await new Promise((res) => setTimeout(res, 350));
+        const fallback = `Break down the problem step-by-step. What do the units add up to first?`;
+        setLogs((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = { role: 'tutor', text: fallback };
+          return next;
+        });
+        speak(fallback);
+      }
+    } catch (err) {
+      console.warn('[Nano Inference Error]', err);
+      const fallback = `Let's focus on the first place value column.`;
+      setLogs((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { role: 'tutor', text: fallback };
+        return next;
+      });
+      speak(fallback);
+    } finally {
       setBusy(false);
-      speak(reply);
-    }, 450);
+    }
   };
 
   return (
@@ -325,7 +381,70 @@ function QuizNode({
     setSelectedIdx(idx);
   };
 
-  const handleCheck = () => {
+const [failCount, setFailCount] = useState(0);
+
+const synthesizeRemediationLesson = async (subject: string, question: string) => {
+    setLogs((prev) => [
+      ...prev,
+      { role: 'tutor', text: 'Synthesizing an adaptive micro-lesson into the local VFS...' },
+    ]);
+
+    const defaultMicroLesson = `
+(lesson
+  :title "Remediation: Place Value Column Addition"
+  (card :type "starter"
+    (text "Let's review: 4 units + 3 units = 7 units."))
+  (card :type "stepper"
+    (step :num 1 "Add the units column first: 4 + 3 = 7")
+    (step :num 2 "Add the tens column next: 10 + 10 = 20")
+    (step :num 3 "Combine the sums: 20 + 7 = 27"))
+  (card :type "practice"
+    (quiz :id "rem-1" :prompt "What is 14 + 13?"
+      (opt "27" :correct #t)
+      (opt "26" :correct #f))))
+    `.trim();
+
+    try {
+      const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
+      let synthesizedLisp = defaultMicroLesson;
+
+      if (aiObj) {
+        const session = await (aiObj.create
+          ? aiObj.create({
+              systemPrompt:
+                'Output ONLY a valid 3-step Lisp S-expression lesson AST. Do not include markdown code blocks or explanations.',
+            })
+          : (window as any).ai.languageModel.create({
+              systemPrompt:
+                'Output ONLY a valid 3-step Lisp S-expression lesson AST. Do not include markdown code blocks or explanations.',
+            }));
+
+        const result = await session.prompt(
+          `Create a 3-step micro-lesson S-expression for a student struggling with "${question}" in "${subject}". Use format: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...))`
+        );
+        if (result && result.includes('(lesson')) {
+          synthesizedLisp = result.replace(/```lisp|```/g, '').trim();
+        }
+      }
+
+      // Signal parent to mount the synthesized VFS node
+      if (onAction) {
+        onAction('vfs:mount-remediation', {
+          path: `/sys/views/remediation/${props.id || 'current-lesson'}.lisp`,
+          astSource: synthesizedLisp,
+        });
+      }
+
+      setLogs((prev) => [
+        ...prev,
+        { role: 'tutor', text: 'Adaptive module generated! Loading step-by-step review...' },
+      ]);
+    } catch (err) {
+      console.warn('[Synthesis Error]', err);
+    }
+  };
+
+  const handleCheck = async () => {
     if (selectedIdx === null) return;
     setSubmitted(true);
     const chosenOption = optionNodes[selectedIdx];
@@ -337,6 +456,59 @@ function QuizNode({
         selectedIdx,
         isCorrect,
       });
+    }
+
+if (!isCorrect) {
+      const nextFails = failCount + 1;
+      setFailCount(nextFails);
+
+      if (nextFails >= 2) {
+        await synthesizeRemediationLesson(props.subject || 'Maths', props.prompt || '14 + 13');
+        return;
+      }
+
+      // ... keep existing single-hint Socratic diagnostic below
+
+      try {
+        const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
+
+        if (aiObj) {
+          const session = await (aiObj.create
+            ? aiObj.create({
+                systemPrompt:
+                  'The student chose an incorrect quiz option. Give a short, 1-sentence Socratic hint under 15 words explaining why or pointing to the first step. Never give the answer.',
+              })
+            : (window as any).ai.languageModel.create({
+                systemPrompt:
+                  'The student chose an incorrect quiz option. Give a short, 1-sentence Socratic hint under 15 words explaining why or pointing to the first step. Never give the answer.',
+              }));
+
+          const diagnosticPrompt = `Student selected option index ${selectedIdx} (incorrect). Provide a short Socratic hint.`;
+          let streamedHint = '';
+          const stream = session.promptStreaming(diagnosticPrompt);
+
+          for await (const chunk of stream) {
+            streamedHint = chunk;
+            setLogs((prev) => {
+              if (prev.length === 0) return prev;
+              const next = [...prev];
+              next[next.length - 1] = { role: 'tutor', text: streamedHint };
+              return next;
+            });
+          }
+          speak(streamedHint);
+        } else {
+          const fallback = `That's not quite right. Look at the place values again—what do the units add up to?`;
+          setLogs((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { role: 'tutor', text: fallback };
+            return next;
+          });
+          speak(fallback);
+        }
+      } catch (err) {
+        console.warn('[Remediation Error]', err);
+      }
     }
   };
 

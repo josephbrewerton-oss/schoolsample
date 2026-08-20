@@ -8,18 +8,56 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }) {
   const [inputQuery, setInputQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const triggerStream = (promptText) => {
+const triggerStream = async (promptText: string) => {
     setIsProcessing(true);
-    setTerminalLogs((prev) => [...prev, `\n> [Input]: ${promptText}`, '⏳ Dispatching local AST pipeline...']);
+    setTerminalLogs((prev) => [
+      ...prev,
+      `\n> [Input]: ${promptText}`,
+      '⚡ Connecting to on-device Gemini Nano...',
+    ]);
 
-    setTimeout(() => {
+    try {
+      // 1. Check for Chrome's native on-device Prompt API
+      const aiObj = (window as any).ai || (window as any).LanguageModel;
+      
+      if (aiObj) {
+        const session = (window as any).ai?.languageModel 
+          ? await (window as any).ai.languageModel.create({
+              systemPrompt: "You are a concise, Socratic tutor for primary school students. Extract one narrow rule or question to guide the student. Never give the direct answer. Maximum 20 words.",
+            })
+          : await (window as any).LanguageModel.create({
+              systemPrompt: "You are a concise, Socratic tutor for primary school students. Extract one narrow rule or question to guide the student. Never give the direct answer. Maximum 20 words.",
+            });
+
+        // 2. Stream tokens in real time directly to the terminal
+        const stream = session.promptStreaming(promptText);
+        let fullResponse = '';
+
+        for await (const chunk of stream) {
+          fullResponse = chunk;
+          setTerminalLogs((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = `🤖 [Nano Tutor]: ${fullResponse}`;
+            return next;
+          });
+        }
+      } else {
+        // Fallback for browsers without window.ai enabled
+        await new Promise((res) => setTimeout(res, 400));
+        setTerminalLogs((prev) => [
+          ...prev,
+          `💡 [Offline Socratic Rule]: Break the problem down into place values. What do the units add up to?`,
+        ]);
+      }
+    } catch (err: any) {
+      console.warn('[Nano Inference Error]', err);
       setTerminalLogs((prev) => [
         ...prev,
-        `🤖 [Local AI Tutor]: Analyzing "${promptText}"`,
-        `💡 [Guidance]: Starting Socratic inquiry loop. Observe the key variables and state your hypothesis.`
+        `⚠️ [Fallback Tutor]: Let's look at the first step together. Try adding the ones column first.`,
       ]);
+    } finally {
       setIsProcessing(false);
-    }, 600);
+    }
   };
 
   const handlePreset = (topic) => {
