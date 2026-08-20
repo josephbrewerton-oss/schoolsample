@@ -122,6 +122,28 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
+
+  plugins: [
+    [
+      '@docusaurus/plugin-pwa',
+      {
+        debug: false,
+        offlineModeActivationStrategies: [
+          'appInstalled',
+          'standalone',
+          'queryString',
+        ],
+        pwaHead: [
+          { tagName: 'link', rel: 'icon', href: '/schoolsample/img/logo.svg' },
+          { tagName: 'link', rel: 'manifest', href: '/schoolsample/manifest.json' },
+          { tagName: 'meta', name: 'theme-color', content: '#2563eb' },
+        ],
+      },
+    ],
+  ],
+};
+
+export default config;
 };
 
 export default config;
