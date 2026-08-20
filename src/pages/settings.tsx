@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
 import Layout from "@theme/Layout";
 import { AVAILABLE_MODELS, loadModel } from "@site/src/utils/aiEngine";
+import SExprViewRenderer from "@site/src/components/SExprViewRenderer";
+import { parseSExpr } from "@site/src/utils/sexprParser";
+import { SExprAST } from "@site/src/types/sexpr";
+import { getVfsView, saveVfsView, bootstrapVfsViews } from "@site/src/services/dbStore";
+import { Channels } from "@site/src/utils/channelBus";
+
+const DEFAULT_CHEAT_SHEET_VIEW = `(view :className "card padding--md margin-bottom--md"
+  (header :level 3 "Dynamic Cheat Sheet (VFS Loaded)")
+  (text "This UI is fetched directly from IndexedDB VFS storage at runtime.")
+  (box :className "row"
+    (badge :variant "success" "Offline Ready")
+    (badge :variant "secondary" "VFS IndexedDB"))
+  (button :action "system:ping" :payload "vfs-node-01" "Test Action"))`;
 
 export default function SettingsPage(): JSX.Element {
   // AI Engine states
@@ -14,8 +27,29 @@ export default function SettingsPage(): JSX.Element {
   const [highContrast, setHighContrast] = useState<boolean>(false);
   const [teacherMode, setTeacherMode] = useState<boolean>(false);
 
+  // VFS & S-Expression states
+  const [vfsSource, setVfsSource] = useState<string>("");
+  const [dynamicAst, setDynamicAst] = useState<SExprAST | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  const loadViewFromVFS = async () => {
+    try {
+      await bootstrapVfsViews({
+        "/sys/views/cheat_sheet.lisp": DEFAULT_CHEAT_SHEET_VIEW,
+      });
+
+      const raw = await getVfsView("/sys/views/cheat_sheet.lisp");
+      if (raw) {
+        setVfsSource(raw);
+        const ast = parseSExpr(raw);
+        setDynamicAst(ast);
+      }
+    } catch (err) {
+      console.error("VFS Load Failure:", err);
+    }
+  };
+
   useEffect(() => {
-    // Load saved preferences
     const savedModel = localStorage.getItem("preferred_ai_model");
     const storedFont = localStorage.getItem("app_font_size") as "normal" | "large" | "xlarge" | null;
     const storedContrast = localStorage.getItem("app_high_contrast") === "true";
@@ -25,6 +59,8 @@ export default function SettingsPage(): JSX.Element {
     if (storedFont) setFontSize(storedFont);
     if (storedContrast) setHighContrast(true);
     if (storedTeacher) setTeacherMode(true);
+
+    loadViewFromVFS();
   }, []);
 
   const applyAccessibility = (newFont: string, newContrast: boolean, newTeacher: boolean) => {
@@ -60,12 +96,27 @@ export default function SettingsPage(): JSX.Element {
     }
   };
 
+    const handleVfsAction = (action: string, payload?: any) => {
+    Channels.UI_ACTIONS.send({ action, payload });
+  };
+
+  const handleSaveVfsEdit = async () => {
+    try {
+      await saveVfsView("/sys/views/cheat_sheet.lisp", vfsSource);
+      const parsed = parseSExpr(vfsSource);
+      setDynamicAst(parsed);
+      setIsEditing(false);
+    } catch (err: any) {
+      alert("Syntax Error parsing S-Expression: " + err.message);
+    }
+  };
+
   return (
     <Layout title="Settings & Accessibility" description="Choose local on-device AI model, visual accessibility, and teacher tools">
       <main className="container margin-vert--lg" style={{ maxWidth: "800px" }}>
         <h1>⚙️ System Settings & Accessibility</h1>
         <p style={{ color: "var(--ifm-color-emphasis-700)" }}>
-          Preferences are stored 100% locally on your device without tracking cookies or external servers.
+          Preferences and VFS file trees are stored 100% locally on this device.
         </p>
 
         {/* Section 1: Accessibility */}
@@ -168,6 +219,52 @@ export default function SettingsPage(): JSX.Element {
               </div>
             )}
           </div>
+        </section>
+
+        {/* Section 4: Live VFS S-Expression Engine */}
+        <section style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginTop: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+            <h2>📑 IndexedDB VFS View: <code>/sys/views/cheat_sheet.lisp</code></h2>
+            <button
+              type="button"
+              className="button button--secondary button--sm"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? "Cancel" : "Edit Lisp Source"}
+            </button>
+          </div>
+
+          {isEditing && (
+            <div style={{ marginBottom: "1rem" }}>
+              <textarea
+                value={vfsSource}
+                onChange={(e) => setVfsSource(e.target.value)}
+                rows={7}
+                style={{
+                  width: "100%",
+                  fontFamily: "monospace",
+                  padding: "0.5rem",
+                  borderRadius: "4px",
+                  border: "1px solid var(--ifm-color-emphasis-400)",
+                  background: "var(--ifm-background-surface-color)",
+                  color: "inherit"
+                }}
+              />
+              <button
+                type="button"
+                className="button button--primary button--sm margin-top--xs"
+                onClick={handleSaveVfsEdit}
+              >
+                Save & Hot-Reload to IndexedDB
+              </button>
+            </div>
+          )}
+
+          {dynamicAst ? (
+            <SExprViewRenderer ast={dynamicAst} onAction={handleVfsAction} />
+          ) : (
+            <p>Loading view from IndexedDB...</p>
+          )}
         </section>
       </main>
     </Layout>

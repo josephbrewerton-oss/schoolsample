@@ -3,3 +3,42 @@
  * Licensed under the MIT License.
  */
 /* Custom styles */
+/* Accessibility: Low-Vision & Font Scaling */
+html[data-font-size="normal"] {
+  font-size: 100%;
+}
+
+html[data-font-size="large"] {
+  font-size: 125%;
+}
+
+html[data-font-size="xlarge"] {
+  font-size: 150%;
+}
+
+/* Accessibility: High Contrast Mode */
+html.high-contrast-mode {
+  --ifm-color-emphasis-100: #e0e0e0;
+  --ifm-color-emphasis-200: #000000;
+  --ifm-color-emphasis-300: #000000;
+  --ifm-color-emphasis-700: #000000;
+  --ifm-font-color-base: #000000;
+  --ifm-background-color: #ffffff;
+  --ifm-card-background-color: #ffffff;
+}
+
+[data-theme='dark'] html.high-contrast-mode {
+  --ifm-color-emphasis-100: #222222;
+  --ifm-color-emphasis-200: #ffffff;
+  --ifm-color-emphasis-300: #ffffff;
+  --ifm-color-emphasis-700: #ffffff;
+  --ifm-font-color-base: #ffffff;
+  --ifm-background-color: #000000;
+  --ifm-card-background-color: #000000;
+}
+
+html.high-contrast-mode .card,
+html.high-contrast-mode section {
+  border-width: 2px !important;
+  border-color: currentColor !important;
+}
