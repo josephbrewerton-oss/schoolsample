@@ -1,0 +1,16 @@
+{
+  "name": "School AI Portal",
+  "short_name": "SchoolPortal",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/schoolsample/",
+  "start_url": "/schoolsample/primary",
+  "icons": [
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
