@@ -7,12 +7,23 @@ interface Props {
 }
 
 export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.Element | null {
-  if (ast === null || ast === undefined) return null;
+  if (ast === null || ast === undefined) {
+    return (
+      <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.875rem' }}>
+        Loading curriculum node...
+      </div>
+    );
+  }
+
   if (typeof ast !== 'object') {
     return <span>{String(ast)}</span>;
   }
 
   const { tag, props, children } = ast as SExprNode;
+
+const isTeacherMode =
+    typeof window !== 'undefined' &&
+    localStorage.getItem('app_teacher_mode') === 'true';
 
   const renderChildren = () =>
     children.map((child, index) => (
@@ -77,7 +88,7 @@ export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.E
       );
 
     case 'quiz':
-      return <QuizNode props={props} children={children} onAction={onAction} />;
+      return <QuizNode props={props} children={children} onAction={onAction} isTeacherMode={isTeacherMode} />;
 
     case 'stepper':
       return <StepperNode props={props} children={children} onAction={onAction} />;
@@ -356,10 +367,12 @@ function QuizNode({
   props,
   children,
   onAction,
+  isTeacherMode,
 }: {
   props: Record<string, any>;
   children: (SExprNode | any)[];
   onAction?: (action: string, payload?: any) => void;
+  isTeacherMode?: boolean;
 }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState<boolean>(false);
@@ -521,6 +534,21 @@ if (!isCorrect) {
 
   return (
     <div className="card padding--md margin-vert--md" style={{ border: '1px solid var(--ifm-color-emphasis-300)' }}>
+      {isTeacherMode && (
+  <div
+          style={{
+            marginBottom: '12px',
+            padding: '8px 12px',
+            background: 'rgba(168, 85, 247, 0.15)',
+            borderLeft: '4px solid #a855f7',
+            borderRadius: '4px',
+            color: '#d8b4fe',
+            fontSize: '0.82rem',
+          }}
+        >
+          🧑‍🏫 <strong>Teacher Mode:</strong> Expected correct answer is outlined in green.
+        </div>
+      )}
       {questionNode && (
         <div style={{ fontWeight: 600, fontSize: '1.05rem', marginBottom: '0.75rem' }}>
           <SExprViewRenderer ast={questionNode} onAction={onAction} />
@@ -541,13 +569,14 @@ if (!isCorrect) {
           }
 
           return (
-            <button
-              key={idx}
-              type="button"
-              className={btnClass}
-              style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-              onClick={() => handleSelect(idx)}
-            >
+          <button
+            key={idx}
+            className={btnClass}
+            onClick={() => handleSelect(idx)}
+            style={{
+            border: isTeacherMode && isCorrect ? '2px solid #22c55e' : undefined,
+          }}
+>
               <SExprViewRenderer ast={opt} onAction={onAction} />
             </button>
           );

@@ -1,77 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
-import { EdgeCognitiveEngine, SandboxedEvaluator } from '@school-ai/edge-runtime';
+import SExprViewRenderer from './SExprViewRenderer';
 
-function SandboxComponent() {
-  const [engine, setEngine] = useState<EdgeCognitiveEngine | null>(null);
-  const [status, setStatus] = useState('Initializing Edge Runtime...');
-  const [output, setOutput] = useState('');
-  const [isEvaluating, setIsEvaluating] = useState(false);
+interface SandboxProps {
+  onSaveToVfs?: (path: string, content: string) => Promise<void> | void;
+}
 
-  useEffect(() => {
-    const initSdk = async () => {
-      try {
-        const edgeEngine = new EdgeCognitiveEngine({
-          model: 'Llama-3.2-1B-Instruct-q4f32_1-MLC',
-          autoFallback: true
-        });
+const DEFAULT_TEMPLATE = `(lesson
+  :title "Primary Science: Plant Parts"
+  (card :type "starter"
+    (text "Plants have roots, stems, leaves, and flowers."))
+  (card :type "stepper"
+    (step :num 1 "Roots anchor the plant and absorb water.")
+    (step :num 2 "Stems carry water and hold up leaves.")
+    (step :num 3 "Leaves absorb sunlight to make food."))
+  (card :type "practice"
+    (quiz :id "sci-1" :prompt "Which part absorbs water from soil?"
+      (opt "Roots" :correct #t)
+      (opt "Leaves" :correct #f)
+      (opt "Flowers" :correct #f))))`;
 
-        await edgeEngine.init((progress) => {
-          setStatus(`Loading weights: ${Math.round(progress.progress * 100)}%`);
-        });
+function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
+  const [lispCode, setLispCode] = useState(DEFAULT_TEMPLATE);
+  const [topicPrompt, setTopicPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
 
-        setEngine(edgeEngine);
-        setStatus('Edge runtime ready (100% Client-Side)');
-      } catch (err: any) {
-        setStatus(`Initialization notice: ${err.message || err}`);
-      }
-    };
+  // Synthesize Oak lesson via Gemini Nano
+  const handleAIGenerate = async () => {
+    if (!topicPrompt.trim() || isGenerating) return;
+    setIsGenerating(true);
+    setSaveStatus('');
 
-    initSdk();
-  }, []);
-
-  const runEvaluation = async () => {
-    if (!engine) return;
-    setIsEvaluating(true);
     try {
-      const res = await engine.executeWithSelfCorrection(
-        'Calculate the kinetic energy of a 2kg mass moving at 5m/s (KE = 0.5 * m * v^2)',
-        (code) => SandboxedEvaluator.evaluate(code)
-      );
-      setOutput(`Output: ${res.output}\nResult: ${JSON.stringify(res.executionTrace)}\nSource: ${res.source}\nRetries: ${res.correctionsCount}`);
-    } catch (err: any) {
-      setOutput(`Evaluation error: ${err.message}`);
+      const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
+      if (aiObj) {
+        const session = await (aiObj.create
+          ? aiObj.create({
+              systemPrompt:
+                'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences.',
+            })
+          : (window as any).ai.languageModel.create({
+              systemPrompt:
+                'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences.',
+            }));
+
+        const prompt = `Synthesize a primary school lesson on topic: "${topicPrompt}". Output only pure Lisp AST.`;
+        const result = await session.prompt(prompt);
+        if (result && result.includes('(lesson')) {
+          setLispCode(result.replace(/```lisp|```/g, '').trim());
+        }
+      }
+    } catch (err) {
+      console.warn('[Teacher Gen Error]', err);
     } finally {
-      setIsEvaluating(false);
+      setIsGenerating(false);
     }
   };
 
-  return (
-    <div style={{ border: '1px solid #334155', borderRadius: '8px', padding: '1.25rem', margin: '1.5rem 0', background: '#0f172a' }}>
-      <h4 style={{ margin: '0 0 0.5rem 0', color: '#f8fafc' }}>⚡ Neuro-Symbolic Edge Runtime</h4>
-      <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>Status: {status}</p>
-      
-      <button 
-        className="button button--primary" 
-        onClick={runEvaluation} 
-        disabled={!engine || isEvaluating}
-      >
-        {isEvaluating ? 'Evaluating...' : 'Run Client-Side Loop'}
-      </button>
+  // Commit lesson AST to VFS
+  const handleSave = async () => {
+    const slug = topicPrompt.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') || 'custom-lesson';
+    const vfsPath = `/sys/views/lessons/${slug}.lisp`;
 
-      {output && (
-        <pre style={{ marginTop: '1rem', background: '#020617', color: '#4ade80', padding: '1rem', borderRadius: '6px', whiteSpace: 'pre-wrap' }}>
-          {output}
-        </pre>
-      )}
+    if (onSaveToVfs) {
+      await onSaveToVfs(vfsPath, lispCode);
+    }
+    setSaveStatus(`Saved to ${vfsPath}`);
+    setTimeout(() => setSaveStatus(''), 3000);
+  };
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', padding: '16px', background: '#090d16', color: '#fff', minHeight: '80vh', borderRadius: '8px' }}>
+      {/* Code Editor & AI Generator */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            placeholder="E.g. Fractions: Equivalent Halves"
+            value={topicPrompt}
+            onChange={(e) => setTopicPrompt(e.target.value)}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: '6px', border: '1px solid #2d3748', background: '#1a202c', color: '#fff' }}
+          />
+          <button
+            onClick={handleAIGenerate}
+            disabled={isGenerating}
+            style={{ padding: '10px 16px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            {isGenerating ? 'Synthesizing...' : 'AI Generate'}
+          </button>
+          <button
+            onClick={handleSave}
+            style={{ padding: '10px 16px', background: '#38a169', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Save to VFS
+          </button>
+        </div>
+
+        {saveStatus && <div style={{ color: '#48bb78', fontSize: '13px' }}>{saveStatus}</div>}
+
+        <textarea
+          value={lispCode}
+          onChange={(e) => setLispCode(e.target.value)}
+          spellCheck={false}
+          style={{
+            flex: 1,
+            width: '100%',
+            background: '#0e1726',
+            color: '#63b3ed',
+            fontFamily: 'monospace',
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid #1e293b',
+            fontSize: '13px',
+            lineHeight: 1.5,
+            resize: 'none',
+          }}
+        />
+      </div>
+
+      {/* Real-time AST Render Pane */}
+      <div style={{ border: '1px solid #1e293b', borderRadius: '8px', overflow: 'auto', background: '#0b1120', padding: '12px' }}>
+        <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '1px', color: '#718096', marginBottom: '12px' }}>
+          Live Lesson Preview
+        </div>
+        <SExprViewRenderer source={lispCode} />
+      </div>
     </div>
   );
 }
 
-export default function InteractiveEdgeSandbox() {
+export default function InteractiveEdgeSandbox(props: SandboxProps) {
   return (
-    <BrowserOnly fallback={<div>Loading runtime environment...</div>}>
-      {() => <SandboxComponent />}
+    <BrowserOnly fallback={<div style={{ padding: '2rem', color: '#94a3b8' }}>Loading teacher authoring suite...</div>}>
+      {() => <TeacherSandboxInner {...props} />}
     </BrowserOnly>
   );
 }
