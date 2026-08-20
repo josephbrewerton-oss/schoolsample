@@ -316,48 +316,122 @@ const [isTeacherMode, setIsTeacherMode] = useState<boolean>(() => {
     speakText(initial.starterTutorPrompt);
   };
 
-  const checkAnswer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentAnswer.trim()) return;
+const checkAnswer = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const trimmed = studentAnswer.trim();
+  if (!trimmed || isProcessing) return;
 
-    const inputClean = studentAnswer.trim().toLowerCase();
-    const targets = currentChallenge.expectedAnswer.toLowerCase().split('|').map((s) => s.trim());
+  const rawExpected = String(currentChallenge.expectedAnswer || '').trim().toLowerCase();
+  
+  const isOpenEnded =
+    !rawExpected ||
+    rawExpected === 'undefined' ||
+    rawExpected === 'null' ||
+    rawExpected.includes('standard definition') ||
+    rawExpected.includes('open-ended') ||
+    rawExpected.includes('rubric') ||
+    rawExpected.includes('refer to');
 
-    const directMatch = targets.some((target) => inputClean.includes(target));
-    const keyTerms = currentChallenge.expectedAnswer
-      .toLowerCase()
+  // 1. Direct / Keyword check for structured questions
+  if (!isOpenEnded) {
+    const targets = rawExpected.split('|').map((s) => s.trim()).filter(Boolean);
+    const directMatch = targets.some((target) => trimmed.toLowerCase().includes(target));
+
+    const keyTerms = rawExpected
       .split(/[\s|]+/)
-      .filter((w) => w.length > 3 && !['what', 'that', 'with', 'from', 'this'].includes(w));
+      .filter((w) => w.length > 2 && !['what', 'that', 'with', 'from', 'this', 'the', 'and'].includes(w));
 
-    const keywordMatches = keyTerms.filter((term) => inputClean.includes(term));
-    const isKeywordMatch = keyTerms.length > 0 && keywordMatches.length >= Math.ceil(keyTerms.length * 0.5);
+    const keywordMatches = keyTerms.filter((term) => trimmed.toLowerCase().includes(term));
+    const isCorrect = directMatch || (keyTerms.length > 0 && keywordMatches.length >= Math.ceil(keyTerms.length * 0.5));
 
-    const isCorrect = directMatch || isKeywordMatch;
+    await handleAnswerResult(isCorrect, trimmed, currentChallenge.explanation || 'Well done!');
+    return;
+  }
 
-    try {
-      await logProgress({
-        cohortCode: selectedCohort || 'general',
-        challengeId: currentChallenge.id,
-        answeredAt: Date.now(),
-        isCorrect,
-        userAnswer: studentAnswer.trim(),
-      });
-    } catch (err) {
-      console.warn('Failed to log progress:', err);
-    }
+  // 2. Open-Ended: Pipe through the Socratic Evaluator
+  setIsProcessing(true);
+  window.speechSynthesis?.cancel();
 
-    if (isCorrect) {
-      const msg = `Correct! ${currentChallenge.explanation}`;
-      setFeedback({ status: 'correct', message: msg });
-      setStreak((s) => s + 1);
-      speakText(msg);
+  // Log student attempt into the Socratic terminal
+  setTerminalLogs((prev) => [
+    ...prev,
+    { role: 'student', text: `[Answer Submission] ${trimmed}` },
+  ]);
+
+  setTimeout(async () => {
+    const lowerInput = trimmed.toLowerCase();
+
+// Dynamically derive domain keywords from the active challenge metadata
+    const stopWords = new Set([
+      'what', 'that', 'with', 'from', 'this', 'outline', 'method', 'solve', 
+      'problem', 'concept', 'guidance', 'primary', 'secondary', 'stage', 
+      'review', 'using', 'core', 'your', 'about', 'have', 'been', 'which'
+    ]);
+
+    const topicTokens = `${currentChallenge.topic} ${currentChallenge.prompt} ${currentChallenge.explanation || ''}`
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !stopWords.has(w));
+
+    const uniqueKeywords = Array.from(new Set(topicTokens));
+    const matchedKeywords = uniqueKeywords.filter((kw) => lowerInput.includes(kw));
+
+    const matchedRule = currentChallenge.semanticRules?.find((r) =>
+      r.keywords.some((k) => lowerInput.includes(k.toLowerCase()))
+    );
+
+    let isCorrect = false;
+    let tutorFeedback = '';
+
+    if (matchedRule) {
+      isCorrect = true;
+      tutorFeedback = matchedRule.response;
+    } else if (matchedKeywords.length >= 2) {
+      isCorrect = true;
+      tutorFeedback = `Great breakdown. You correctly identified key steps (${matchedKeywords.join(', ')}).`;
+    } else if (matchedKeywords.length === 1) {
+      isCorrect = false;
+      tutorFeedback = `You mentioned "${matchedKeywords[0]}", but can you describe what happens to the extra amount when a column exceeds 9?`;
     } else {
-      const msg = `Not quite. Review the question or view the hint.`;
-      setFeedback({ status: 'incorrect', message: msg });
-      setStreak(0);
-      speakText(msg);
+      isCorrect = false;
+      tutorFeedback = `That doesn't quite explain the method. How do we line up the ones and tens columns to add them?`;
     }
-  };
+
+    // Output tutor reflection in terminal
+    setTerminalLogs((prev) => [
+      ...prev,
+      { role: 'tutor', text: tutorFeedback },
+    ]);
+    speakText(tutorFeedback);
+    setIsProcessing(false);
+
+    await handleAnswerResult(isCorrect, trimmed, tutorFeedback);
+  }, 400);
+};
+
+// Helper to update progress and UI feedback
+const handleAnswerResult = async (isCorrect: boolean, answerText: string, feedbackMsg: string) => {
+  try {
+    await logProgress({
+      cohortCode: selectedCohort || 'general',
+      challengeId: currentChallenge.id,
+      answeredAt: Date.now(),
+      isCorrect,
+      userAnswer: answerText,
+    });
+  } catch (err) {
+    console.warn('Failed to log progress:', err);
+  }
+
+  if (isCorrect) {
+    setFeedback({ status: 'correct', message: feedbackMsg });
+    setStreak((s) => s + 1);
+  } else {
+    setFeedback({ status: 'incorrect', message: feedbackMsg });
+    setStreak(0);
+  }
+};
 
   const nextChallenge = () => {
     window.speechSynthesis?.cancel();
