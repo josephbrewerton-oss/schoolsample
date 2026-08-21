@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkst_joseph_curriculum_portal||=[]).push([[647],{7121(r,e,s){s.r(e),s.d(e,{default:()=>h});s(6540);var u=s(4164),a=s(7559),c=s(5500),t=s(2831),l=s(1656),o=s(4848);function h(r){return(0,o.jsx)(c.e3,{className:(0,u.A)(a.G.wrapper.docsPages),children:(0,o.jsx)(l.A,{children:(0,t.v)(r.route.routes)})})}}}]);
