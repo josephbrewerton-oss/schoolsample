@@ -36,11 +36,8 @@ const config: Config = {
     [
       'classic',
       {
-        docs: {
-          sidebarPath: './sidebars.ts',
-          routeBasePath: '/',
-          editUrl: 'https://github.com/josephbrewerton-oss/schoolsample/tree/main/',
-        },
+        // Docs engine disabled — routes now resolve cleanly to src/pages/
+        docs: false,
         blog: {
           showReadingTime: true,
           feedOptions: {
@@ -71,10 +68,9 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
-          position: 'left',
+          to: '/practice-lab',
           label: 'Practice Lab',
+          position: 'left',
         },
         {
           to: '/blog',

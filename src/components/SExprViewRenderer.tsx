@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SExprAST, SExprNode } from '../types/sexpr';
 
 interface Props {
@@ -21,7 +21,7 @@ export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.E
 
   const { tag, props, children } = ast as SExprNode;
 
-const isTeacherMode =
+  const isTeacherMode =
     typeof window !== 'undefined' &&
     localStorage.getItem('app_teacher_mode') === 'true';
 
@@ -125,24 +125,19 @@ function AiTutorNode({
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-const speak = (text: string) => {
+  const speak = (text: string) => {
     if (!voiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    
-    // Resume audio context if the browser suspended speech synthesis
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
     }
-    
     window.speechSynthesis.cancel();
 
     const clean = text.replace(/[*_#`~[\]]/g, '').replace(/[^\x00-\x7F]/g, '');
     const utterance = new SpeechSynthesisUtterance(clean);
-    
     utterance.pitch = Number(props.voicePitch) || 1.0;
     utterance.rate = Number(props.voiceRate) || 1.0;
     utterance.lang = props.lang || 'en-US';
 
-    // Pick an available browser voice if available
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
       const preferredVoice = voices.find((v) => v.lang.startsWith(utterance.lang.slice(0, 2))) || voices[0];
@@ -159,7 +154,7 @@ const speak = (text: string) => {
     window.speechSynthesis.speak(utterance);
   };
 
-const handleSend = async (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || busy) return;
 
@@ -167,7 +162,6 @@ const handleSend = async (e: React.FormEvent) => {
     setInput('');
     setBusy(true);
 
-    // Append student prompt + create empty tutor bubble
     setLogs((prev) => [
       ...prev,
       { role: 'student', text: userText },
@@ -200,7 +194,6 @@ const handleSend = async (e: React.FormEvent) => {
         const stream = session.promptStreaming(userText);
 
         for await (const chunk of stream) {
-          // If the engine sends cumulative text, use it; otherwise append delta
           if (chunk.startsWith(accumulated)) {
             accumulated = chunk;
           } else {
@@ -363,6 +356,8 @@ const handleSend = async (e: React.FormEvent) => {
 
 // --- Interactive Quiz Component Node ---
 
+// --- Interactive Quiz Component Node ---
+
 function QuizNode({
   props,
   children,
@@ -376,6 +371,17 @@ function QuizNode({
 }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+
+  useEffect(() => {
+    const handleFocusQuiz = () => {
+      setIsHighlighted(true);
+      setTimeout(() => setIsHighlighted(false), 1800);
+    };
+
+    window.addEventListener('focus-quiz-node', handleFocusQuiz);
+    return () => window.removeEventListener('focus-quiz-node', handleFocusQuiz);
+  }, []);
 
   const questionNode = children.find(
     (c) => typeof c === 'object' && c !== null && c.tag === 'question'
@@ -394,70 +400,7 @@ function QuizNode({
     setSelectedIdx(idx);
   };
 
-const [failCount, setFailCount] = useState(0);
-
-const synthesizeRemediationLesson = async (subject: string, question: string) => {
-    setLogs((prev) => [
-      ...prev,
-      { role: 'tutor', text: 'Synthesizing an adaptive micro-lesson into the local VFS...' },
-    ]);
-
-    const defaultMicroLesson = `
-(lesson
-  :title "Remediation: Place Value Column Addition"
-  (card :type "starter"
-    (text "Let's review: 4 units + 3 units = 7 units."))
-  (card :type "stepper"
-    (step :num 1 "Add the units column first: 4 + 3 = 7")
-    (step :num 2 "Add the tens column next: 10 + 10 = 20")
-    (step :num 3 "Combine the sums: 20 + 7 = 27"))
-  (card :type "practice"
-    (quiz :id "rem-1" :prompt "What is 14 + 13?"
-      (opt "27" :correct #t)
-      (opt "26" :correct #f))))
-    `.trim();
-
-    try {
-      const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
-      let synthesizedLisp = defaultMicroLesson;
-
-      if (aiObj) {
-        const session = await (aiObj.create
-          ? aiObj.create({
-              systemPrompt:
-                'Output ONLY a valid 3-step Lisp S-expression lesson AST. Do not include markdown code blocks or explanations.',
-            })
-          : (window as any).ai.languageModel.create({
-              systemPrompt:
-                'Output ONLY a valid 3-step Lisp S-expression lesson AST. Do not include markdown code blocks or explanations.',
-            }));
-
-        const result = await session.prompt(
-          `Create a 3-step micro-lesson S-expression for a student struggling with "${question}" in "${subject}". Use format: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...))`
-        );
-        if (result && result.includes('(lesson')) {
-          synthesizedLisp = result.replace(/```lisp|```/g, '').trim();
-        }
-      }
-
-      // Signal parent to mount the synthesized VFS node
-      if (onAction) {
-        onAction('vfs:mount-remediation', {
-          path: `/sys/views/remediation/${props.id || 'current-lesson'}.lisp`,
-          astSource: synthesizedLisp,
-        });
-      }
-
-      setLogs((prev) => [
-        ...prev,
-        { role: 'tutor', text: 'Adaptive module generated! Loading step-by-step review...' },
-      ]);
-    } catch (err) {
-      console.warn('[Synthesis Error]', err);
-    }
-  };
-
-  const handleCheck = async () => {
+  const handleCheck = () => {
     if (selectedIdx === null) return;
     setSubmitted(true);
     const chosenOption = optionNodes[selectedIdx];
@@ -470,59 +413,6 @@ const synthesizeRemediationLesson = async (subject: string, question: string) =>
         isCorrect,
       });
     }
-
-if (!isCorrect) {
-      const nextFails = failCount + 1;
-      setFailCount(nextFails);
-
-      if (nextFails >= 2) {
-        await synthesizeRemediationLesson(props.subject || 'Maths', props.prompt || '14 + 13');
-        return;
-      }
-
-      // ... keep existing single-hint Socratic diagnostic below
-
-      try {
-        const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
-
-        if (aiObj) {
-          const session = await (aiObj.create
-            ? aiObj.create({
-                systemPrompt:
-                  'The student chose an incorrect quiz option. Give a short, 1-sentence Socratic hint under 15 words explaining why or pointing to the first step. Never give the answer.',
-              })
-            : (window as any).ai.languageModel.create({
-                systemPrompt:
-                  'The student chose an incorrect quiz option. Give a short, 1-sentence Socratic hint under 15 words explaining why or pointing to the first step. Never give the answer.',
-              }));
-
-          const diagnosticPrompt = `Student selected option index ${selectedIdx} (incorrect). Provide a short Socratic hint.`;
-          let streamedHint = '';
-          const stream = session.promptStreaming(diagnosticPrompt);
-
-          for await (const chunk of stream) {
-            streamedHint = chunk;
-            setLogs((prev) => {
-              if (prev.length === 0) return prev;
-              const next = [...prev];
-              next[next.length - 1] = { role: 'tutor', text: streamedHint };
-              return next;
-            });
-          }
-          speak(streamedHint);
-        } else {
-          const fallback = `That's not quite right. Look at the place values again—what do the units add up to?`;
-          setLogs((prev) => {
-            const next = [...prev];
-            next[next.length - 1] = { role: 'tutor', text: fallback };
-            return next;
-          });
-          speak(fallback);
-        }
-      } catch (err) {
-        console.warn('[Remediation Error]', err);
-      }
-    }
   };
 
   const handleReset = () => {
@@ -533,9 +423,22 @@ if (!isCorrect) {
   const isCurrentCorrect = selectedIdx !== null && Boolean(optionNodes[selectedIdx]?.props?.correct);
 
   return (
-    <div className="card padding--md margin-vert--md" style={{ border: '1px solid var(--ifm-color-emphasis-300)' }}>
+    <div
+      id="lesson-quiz-container"
+      className="card padding--md margin-vert--md"
+      style={{
+        border: isHighlighted
+          ? '2px solid var(--ifm-color-primary, #2563eb)'
+          : '1px solid var(--ifm-color-emphasis-300)',
+        boxShadow: isHighlighted
+          ? '0 0 20px rgba(37, 99, 235, 0.45)'
+          : undefined,
+        transform: isHighlighted ? 'scale(1.02)' : 'scale(1)',
+        transition: 'all 0.35s ease-in-out',
+      }}
+    >
       {isTeacherMode && (
-  <div
+        <div
           style={{
             marginBottom: '12px',
             padding: '8px 12px',
@@ -569,14 +472,15 @@ if (!isCorrect) {
           }
 
           return (
-          <button
-            key={idx}
-            className={btnClass}
-            onClick={() => handleSelect(idx)}
-            style={{
-            border: isTeacherMode && isCorrect ? '2px solid #22c55e' : undefined,
-          }}
->
+            <button
+              key={idx}
+              type="button"
+              className={btnClass}
+              onClick={() => handleSelect(idx)}
+              style={{
+                border: isTeacherMode && isCorrect ? '2px solid #22c55e' : undefined,
+              }}
+            >
               <SExprViewRenderer ast={opt} onAction={onAction} />
             </button>
           );
@@ -637,6 +541,21 @@ function StepperNode({
 
   if (stepNodes.length === 0) return null;
 
+  const isFinalStep = currentStep === stepNodes.length - 1;
+
+  const handleNext = () => {
+    if (!isFinalStep) {
+      setCurrentStep((s) => s + 1);
+    } else {
+      // Dispatches visual focus pulse to the quiz card
+      window.dispatchEvent(new CustomEvent('focus-quiz-node'));
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep((s) => Math.max(0, s - 1));
+  };
+
   return (
     <div
       className="card padding--md margin-vert--md"
@@ -651,22 +570,21 @@ function StepperNode({
             type="button"
             className="button button--secondary button--sm"
             disabled={currentStep === 0}
-            onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
+            onClick={handleBack}
           >
             ◀ Back
           </button>
           <button
             type="button"
-            className="button button--secondary button--sm"
-            disabled={currentStep >= stepNodes.length - 1}
-            onClick={() => setCurrentStep((s) => Math.min(stepNodes.length - 1, s + 1))}
+            className={`button ${isFinalStep ? 'button--primary' : 'button--secondary'} button--sm`}
+            onClick={handleNext}
           >
-            Next ▶
+            {isFinalStep ? 'Try Practice Question 👇' : 'Next ▶'}
           </button>
         </div>
       </div>
 
-      <div style={{ padding: '0.5rem 0', minHeight: '60px' }}>
+      <div style={{ padding: '0.5rem 0', minHeight: '60px' }} aria-live="polite">
         <SExprViewRenderer ast={stepNodes[currentStep]} onAction={onAction} />
       </div>
     </div>

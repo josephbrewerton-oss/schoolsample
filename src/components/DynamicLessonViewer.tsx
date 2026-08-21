@@ -80,22 +80,17 @@ useEffect(() => {
           const catData: MasterCatalog = await catRes.json();
           setCatalog(catData);
 
-          // Dynamically synthesize S-Expression views for every Oak lesson
+// Dynamically synthesize structured S-Expression views for Oak lessons
           catData.items.forEach((item) => {
             const vfsPath = `/sys/views/${item.id}.lisp`;
             catViews[vfsPath] = `(view :className "card padding--md margin-vert--md"
   (header :level 3 "${item.title}")
-  (callout :variant "info" "${item.description || 'Explore the lesson steps and check your understanding.'}")
+  (callout :variant "info" "${item.description || 'Work through the lesson walkthrough below.'}")
   (stepper
-    (step (text "Review the core principles and context for ${item.title}."))
-    (step (text "Work through the primary practice problems carefully."))
-    (step (text "Verify your conclusions against the solution criteria.")))
-  (quiz :id "${item.id}-quiz"
-    (question "Are you ready to test your knowledge on ${item.title}?")
-    (option :correct true "Yes, begin review")
-    (option "Review concepts again")
-    (explanation "Proceed with your analysis and ask the tutor if you need guidance."))
-  (ai-tutor :persona "${item.subject || 'Oak'} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${item.title}! How can I help guide your learning today?"))`;
+    (step (text "Step 1: Identify the main problem and review the key rules."))
+    (step (text "Step 2: Apply the method carefully step-by-step."))
+    (step (text "Step 3: Check your calculations and verify your answer.")))
+  (ai-tutor :persona "${item.subject || 'Oak'} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${item.title}! Work through the steps above, or ask me any question if you need guidance!"))`;
           });
         }
 

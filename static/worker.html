@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Headless Neural Daemon</title>
+  <style>body { background:#0a0a0a; color:#00ff41; font-family:monospace; padding:1.5rem; }</style>
+</head>
+<body>
+  <h3>[NODE A: HEADLESS GEMINI NANO DAEMON]</h3>
+  <pre id="log">&gt; Probing Gemini Nano runtime...\n</pre>
+
+  <script type="module">
+    const log = (msg) => {
+      console.log(msg);
+      const el = document.getElementById('log');
+      if (el) el.textContent += msg + '\n';
+    };
+
+    const bus = new BroadcastChannel('webrtc-neural-signaling');
+    const langBus = new BroadcastChannel('neural_hypervisor_bus');
+    
+    let pc, channel, nanoSession;
+    let isExecuting = false;
+    let currentLang = 'en';
+
+    langBus.onmessage = (e) => {
+      if (e.data?.type === 'SET_LANGUAGE' && e.data.lang) {
+        currentLang = e.data.lang;
+        log(`> Operational language: [${currentLang}]`);
+      }
+    };
+
+    function resolveLanguageModel() {
+      return window.ai?.languageModel || globalThis.ai?.languageModel || (typeof LanguageModel !== 'undefined' ? LanguageModel : null);
+    }
+
+async function getSession() {
+  if (nanoSession) return nanoSession;
+  const LM = resolveLanguageModel();
+  if (!LM) return null;
+  try {
+    // Satisfy Chrome's supported language schema
+    nanoSession = await LM.create({
+      systemPrompt: 'You are an educational quiz generator and S-expression compiler.',
+      expectedInputs: [{ type: 'text', languages: ['en'] }],
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+    });
+    return nanoSession;
+  } catch {
+    nanoSession = await LM.create({
+      systemPrompt: 'You are an educational quiz generator and S-expression compiler.',
+    });
+    return nanoSession;
+  }
+}
+
+    async function broadcastOffer() {
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+
+      pc = new RTCPeerConnection();
+      channel = pc.createDataChannel('ast-bus', { ordered: true });
+
+      channel.onopen = () => log('> WebRTC DataChannel OPEN. Linked to Hypervisor.');
+      
+      channel.onmessage = async (e) => {
+        if (isExecuting) return;
+        isExecuting = true;
+
+        try {
+          const userPrompt = e.data;
+          log(`> Executing intent: "${userPrompt}"`);
+
+          const session = await getSession();
+          let generatedAST = '';
+
+          if (session) {
+            try {
+const LANG_MAP = {
+  en: { name: 'English', ex: 'Which fraction is equivalent to 1/2?' },
+  sw: { name: 'Kiswahili', ex: 'Ni sehemu gani inayolingana na 1/2?' },
+  yo: { name: 'Yoruba (Èdè Yorùbá)', ex: 'Idamẹta wo ni o dọgba pẹlu 1/2?' },
+  ig: 'Igbo (Asụsụ Igbo)',
+  ha: 'Hausa',
+  zu: 'isiZulu',
+  am: 'Amharic',
+};
+
+const langInfo = LANG_MAP[currentLang] || LANG_MAP.en;
+const langName = typeof langInfo === 'object' ? langInfo.name : langInfo;
+
+const prompt = `Task: Create a 4-choice quiz question for ${userPrompt}.
+
+LANGUAGE REQUIREMENT:
+- Write the question string :q and options :opts in ${langName}.
+- AST tags (:title, :body, :q, :opts, :ans, list, view, quiz) MUST remain in ASCII English.
+
+STRICT SYNTAX RULES:
+1. :q MUST contain ONLY the question prompt. Do NOT list the choices (A, B, C, D) inside :q.
+2. :opts MUST contain a list of exactly 4 choices.
+3. :ans MUST be the 0-based integer index (0, 1, 2, or 3) of the correct choice.
+4. Output ONLY the raw single-line S-expression.
+
+Format:
+(view :title "Quiz" :body (quiz :q "What is 3/4 as a decimal?" :opts (list "0.75" "0.5" "0.25" "0.8") :ans 0))`;
+
+          const raw = await session.prompt(prompt);
+
+          const firstParen = raw.indexOf('(');
+          const lastParen = raw.lastIndexOf(')');
+
+          if (firstParen !== -1 && lastParen !== -1) {
+            generatedAST = raw.substring(firstParen, lastParen + 1).trim();
+          } else {
+            generatedAST = raw.replace(/```lisp|```/g, '').trim();
+          }
+
+          log(`> Nano Generated: ${generatedAST}`);
+        } catch (pErr) {
+          log(`! Prompt error: ${pErr.message}`);
+        }
+      }
+
+      // Safe fallback AST if model takes too long or fails
+      if (!generatedAST || !generatedAST.startsWith('(')) {
+        generatedAST = '(view :title "Mathematics: Fractions & Decimals" :body (quiz :q "Which fraction is equivalent to 0.75?" :opts (list "3/4" "1/2" "2/5" "3/5") :ans 0))';
+        log('> Dispatched default fallback AST.');
+      }
+
+      if (channel && channel.readyState === 'open') {
+        channel.send(generatedAST);
+        channel.send('__EOF__');
+      }
+    } catch (err) {
+      log(`! Execution Error: ${err.message}`);
+    } finally {
+      isExecuting = false;
+    }
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) bus.postMessage({ type: 'candidate', candidate: e.candidate.toJSON() });
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  bus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
+  log('> Fresh offer broadcasted.');
+}
+
+async function init() {
+      await getSession();
+      log('> Gemini Nano Session: LOCKED & ONLINE.');
+      bus.postMessage({ type: 'daemon_ready' });
+      await broadcastOffer();
+    }
+
+    bus.onmessage = async (e) => {
+      if (e.data.type === 'peer_ready') {
+        log('> Peer signaled ready. Negotiating...');
+        await broadcastOffer();
+      } else if (e.data.type === 'answer' && pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(e.data.sdp));
+        log('> WebRTC Handshake Complete.');
+      } else if (e.data.type === 'candidate' && pc && e.data.candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(e.data.candidate));
+        } catch {}
+      } else if (e.data.type === 'tutor_query') {
+        try {
+          const session = await getSession();
+const LANG_MAP = {
+          en: { name: 'English', ex: 'Which fraction is equivalent to 1/2?' },
+          sw: { name: 'Kiswahili', ex: 'Ni sehemu gani inayolingana na 1/2?' },
+          yo: { name: 'Yoruba (Èdè Yorùbá)', ex: 'Idamẹta wo ni o dọgba pẹlu 1/2?' },
+          ig: 'Igbo (Asụsụ Igbo)',
+          ha: 'Hausa',
+          zu: 'isiZulu',
+          am: 'Amharic',
+        };
+
+        const langInfo = LANG_MAP[currentLang] || LANG_MAP.en;
+        const langName = typeof langInfo === 'object' ? langInfo.name : langInfo;
+
+        const tutorPrompt = `You are a school tutor. You MUST write your response entirely in ${langName}.
+        Explain briefly (max 2 short sentences) in ${langName} without giving away the answer:
+        Student: ${e.data.prompt}
+        Tutor (${langName}):`;
+
+          const reply = session ? await session.prompt(tutorPrompt) : "Let's work through this step by step!";
+          bus.postMessage({ type: 'tutor_response', text: reply });
+        } catch (err) {
+          bus.postMessage({ type: 'tutor_response', text: "Let's think carefully about the problem and try again!" });
+        }
+      }
+    };
+
+    init();
+  </script>
+</body>
+</html>

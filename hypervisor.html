@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab B: Hypervisor Display</title>
+  <style>
+    body { background:#000; color:#33ff33; font-family:monospace; margin:0; display:flex; flex-direction:column; height:100vh; }
+    #toolbar { padding: 10px; background: #111; border-bottom: 1px solid #333; }
+    button { background:#00ff41; color:#000; font-weight:bold; border:none; padding:8px 16px; cursor:pointer; }
+    canvas { flex: 1; width: 100vw; height: calc(100vh - 60px); }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="btn-dispatch">DISPATCH: (make-quiz "Quadratic Equations")</button>
+    <span id="status" style="margin-left:15px; color:#888;">[Awaiting Tab A Signaling...]</span>
+  </div>
+  <canvas id="screen" width="1280" height="720"></canvas>
+
+  <script type="module">
+    const canvas = document.getElementById('screen');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const bus = new BroadcastChannel('webrtc-neural-signaling');
+    let pc, channel;
+    let astBuffer = '';
+
+    function renderScreen(text) {
+      ctx.fillStyle = '#050a05';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00ff66';
+      ctx.font = '20px monospace';
+      
+      const lines = text.split('\n');
+      lines.forEach((line, idx) => {
+        ctx.fillText(line, 40, 60 + (idx * 28));
+      });
+    }
+
+    renderScreen('> LISP-RT HYPERVISOR v1.0.0\n> AWAITING NEURAL BUS LINK...');
+
+    bus.onmessage = async (e) => {
+      if (e.data.type === 'offer') {
+        pc = new RTCPeerConnection();
+        pc.ondatachannel = (ev) => {
+          channel = ev.channel;
+          channel.onopen = () => { status.textContent = '[NEURAL BUS CONNECTED]'; status.style.color = '#00ff41'; };
+          channel.onmessage = (msg) => {
+            if (msg.data === '__EOF__') {
+              astBuffer += '\n\n; --- AST COMPILED & EVALUATED ---';
+            } else {
+              astBuffer += msg.data;
+            }
+            renderScreen(`> INCOMING S-EXPRESSION STREAM:\n\n${astBuffer}`);
+          };
+        };
+
+        pc.onicecandidate = (ev) => {
+          if (ev.candidate) bus.postMessage({ type: 'candidate', candidate: ev.candidate });
+        };
+
+        await pc.setRemoteDescription(new RTCSessionDescription(e.data.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        bus.postMessage({ type: 'answer', sdp: pc.localDescription });
+      } else if (e.data.type === 'candidate' && pc) {
+        await pc.addIceCandidate(new RTCIceCandidate(e.data.candidate));
+      }
+    };
+
+    document.getElementById('btn-dispatch').onclick = () => {
+      if (!channel || channel.readyState !== 'open') return;
+      astBuffer = '';
+      renderScreen('> DISPATCHING INTENT TO SILICON...');
+      channel.send('Generate a short quadratic equation practice quiz node.');
+    };
+  </script>
+</body>
+</html>
