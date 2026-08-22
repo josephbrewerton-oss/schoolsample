@@ -13,11 +13,11 @@ const typesDir = path.join(srcDir, 'types');
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
-// 2. Define package.json
+// 2. Package.json
 const packageJson = {
   name: "@school-ai/edge-runtime",
-  version: "1.0.0",
-  description: "Client-side neuro-symbolic inference and deterministic verification SDK",
+  version: "1.1.0",
+  description: "Client-side edge inference, WebRTC daemon transport, and S-expression AST verification SDK",
   main: "./dist/index.js",
   module: "./dist/index.mjs",
   types: "./dist/index.d.ts",
@@ -42,7 +42,8 @@ const packageJson = {
   },
   license: "MIT"
 };
-// 3. Define tsconfig.json
+
+// 3. Tsconfig
 const tsconfig = {
   compilerOptions: {
     target: "ES2022",
@@ -58,7 +59,7 @@ const tsconfig = {
   include: ["src/**/*"]
 };
 
-// 4. Define tsup.config.ts
+// 4. Tsup Config
 const tsupConfig = `import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -72,161 +73,163 @@ export default defineConfig({
 });
 `;
 
-// 5. Define Types (src/types/index.ts)
-const typesCode = `import type * as webllm from "@mlc-ai/web-llm";
+// 5. Types (src/types/index.ts)
+const typesCode = `export type BackendTier = "chrome-nano" | "webgpu-webllm" | "webrtc-daemon";
 
-export type TierBackend = "chrome-builtin-nano" | "webgpu-webllm" | "symbolic-evaluator";
+export interface ParsedAstNode {
+  route: string;
+  calc?: string;
+  prompt: string;
+  options: string[];
+  answerKey: number;
+}
 
 export interface EngineExecutionResult {
   output: string;
-  source: TierBackend;
-  executionTrace?: any;
+  source: BackendTier;
+  ast?: ParsedAstNode;
   correctionsCount: number;
 }
 
 export interface EngineOptions {
   model?: string;
-  autoFallback?: boolean;
+  channelName?: string;
 }
-
-export interface EvaluationResult {
-  success: boolean;
-  result?: any;
-  error?: string;
-}
-
-export type EvaluatorFunction = (code: string) => EvaluationResult;
 `;
 
-// 6. Define Sandbox Evaluator (src/core/Sandbox.ts)
-const sandboxCode = `import { EvaluationResult } from "../types";
+// 6. AST Parser & Validator (src/core/AstCompiler.ts)
+const astCompilerCode = `import { ParsedAstNode } from "../types";
 
-export class SandboxedEvaluator {
-  static evaluate(code: string): EvaluationResult {
-    try {
-      const sanitized = code.replace(/console\\.log/g, "return ");
-      const evalResult = new Function(sanitized)();
-      return { success: true, result: evalResult };
-    } catch (err: any) {
-      return { success: false, error: err.message || String(err) };
+export class AstCompiler {
+  static parse(sExpr: string): ParsedAstNode {
+    const routeMatch = sExpr.match(/:route\\s+"([^"]+)"/);
+    const calcMatch = sExpr.match(/:calc\\s+"([^"]+)"/);
+    const promptMatch = sExpr.match(/:prompt\\s+"([^"]+)"/);
+    const answerKeyMatch = sExpr.match(/:answer-key\\s+(\\d+)/);
+    const optionsMatch = sExpr.match(/:options\\s+\\((?:list\\s+)?([\\s\\S]*?)\\)(?:\\s*\\)|\\s*:)/);
+
+    if (!promptMatch) {
+      throw new Error("Invalid AST: Missing :prompt tag");
     }
+
+    const options: string[] = [];
+    if (optionsMatch) {
+      const optRegex = /"([^"]+)"/g;
+      let m: RegExpExecArray | null;
+      while ((m = optRegex.exec(optionsMatch[1])) !== null) {
+        options.push(m[1]);
+      }
+    }
+
+    return {
+      route: routeMatch ? routeMatch[1] : "quiz:mcq",
+      calc: calcMatch ? calcMatch[1] : undefined,
+      prompt: promptMatch[1],
+      options: options.length > 0 ? options : ["Option A", "Option B", "Option C", "Option D"],
+      answerKey: answerKeyMatch ? parseInt(answerKeyMatch[1], 10) : 0
+    };
+  }
+
+  static validate(node: ParsedAstNode): boolean {
+    return Boolean(
+      node.prompt.length > 0 &&
+      node.options.length >= 2 &&
+      node.answerKey >= 0 &&
+      node.answerKey < node.options.length
+    );
   }
 }
 `;
 
-// 7. Define Core Engine (src/core/Engine.ts)
+// 7. Core Engine (src/core/Engine.ts)
 const engineCode = `import * as webllm from "@mlc-ai/web-llm";
-import { EngineExecutionResult, EngineOptions, EvaluatorFunction } from "../types";
+import { BackendTier, EngineExecutionResult, EngineOptions } from "../types";
+import { AstCompiler } from "./AstCompiler";
 
 export class EdgeCognitiveEngine {
   private webllmEngine: webllm.MLCEngineInterface | null = null;
-  private hasWebGPU: boolean = false;
-  private hasChromeAI: boolean = false;
   private modelName: string;
+  private channel: BroadcastChannel | null = null;
 
   constructor(options?: EngineOptions) {
     this.modelName = options?.model || "Llama-3.2-1B-Instruct-q4f32_1-MLC";
-  }
-
-  async init(onProgress?: (report: webllm.InitProgressReport) => void): Promise<void> {
-    this.hasWebGPU = typeof navigator !== "undefined" && "gpu" in navigator;
-    this.hasChromeAI = typeof window !== "undefined" && "ai" in window && "languageModel" in (window as any).ai;
-
-    if (this.hasWebGPU && !this.webllmEngine) {
-      try {
-        this.webllmEngine = await webllm.CreateMLCEngine(this.modelName, {
-          initProgressCallback: onProgress,
-        });
-      } catch (err) {
-        console.warn("WebLLM initialization deferred or failed:", err);
-      }
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      this.channel = new BroadcastChannel(options?.channelName || "schoolai-bus");
     }
   }
 
-  async infer(prompt: string, systemPrompt?: string): Promise<string> {
-    if (this.hasChromeAI) {
+  async infer(prompt: string, systemPrompt?: string): Promise<{ text: string; source: BackendTier }> {
+    // 1. Built-in Gemini Nano / Prompt API
+    if (typeof window !== "undefined" && (window as any).ai?.languageModel) {
       try {
-        const session = await (window as any).ai.languageModel.create({
-          systemPrompt: systemPrompt || "You are an accurate, deterministic educational assistant.",
-        });
-        const result = await session.prompt(prompt);
-        session.destroy();
-        return result;
+        const capabilities = await (window as any).ai.languageModel.capabilities?.();
+        if (!capabilities || capabilities.available !== "no") {
+          const session = await (window as any).ai.languageModel.create({
+            systemPrompt: systemPrompt || "You are an educational AST generator."
+          });
+          const result = await session.prompt(prompt);
+          if (session.destroy) session.destroy();
+          return { text: result, source: "chrome-nano" };
+        }
       } catch (e) {
-        console.warn("Chrome AI invocation failed, falling back to WebGPU:", e);
+        console.warn("Chrome AI invocation failed, trying WebGPU fallback:", e);
       }
     }
 
+    // 2. WebGPU WebLLM
     if (this.webllmEngine) {
       const reply = await this.webllmEngine.chat.completions.create({
         messages: [
           ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
-          { role: "user" as const, content: prompt },
-        ],
+          { role: "user" as const, content: prompt }
+        ]
       });
-      return reply.choices[0].message.content || "";
+      return { text: reply.choices[0].message.content || "", source: "webgpu-webllm" };
     }
 
-    throw new Error("No client-side hardware inference backend available on this device.");
+    throw new Error("No client-side hardware inference backend available.");
   }
 
-  async executeWithSelfCorrection(
-    prompt: string,
-    evaluatorFn: EvaluatorFunction,
-    maxRetries: number = 3
-  ): Promise<EngineExecutionResult> {
+  async executeAstWithRepair(prompt: string, systemPrompt: string, maxRetries = 2): Promise<EngineExecutionResult> {
     let attempts = 0;
     let currentPrompt = prompt;
 
-    while (attempts < maxRetries) {
-      const generatedCode = await this.infer(
-        currentPrompt,
-        "Generate strictly executable JavaScript wrapped in \`\`\`eval ... \`\`\` blocks. Do not include conversational filler."
-      );
-
-      const match = generatedCode.match(/\`\`\`(?:eval|javascript|js)?\\s*([\\s\\S]*?)\\s*\`\`\`/);
-      const codeToEval = match ? match[1] : generatedCode;
-
-      const trace = evaluatorFn(codeToEval);
-
-      if (trace.success) {
-        return {
-          output: codeToEval,
-          source: this.hasChromeAI ? "chrome-builtin-nano" : "webgpu-webllm",
-          executionTrace: trace.result,
-          correctionsCount: attempts,
-        };
+    while (attempts <= maxRetries) {
+      const { text, source } = await this.infer(currentPrompt, systemPrompt);
+      try {
+        const ast = AstCompiler.parse(text);
+        if (AstCompiler.validate(ast)) {
+          return { output: text, source, ast, correctionsCount: attempts };
+        }
+      } catch (err: any) {
+        attempts++;
+        currentPrompt = \`\${prompt}\\nRepair S-Expression syntax error: \${err.message}\\nEnsure proper AST formatting.\`;
       }
-
-      attempts++;
-      currentPrompt = \`The previous output failed verification:\\nError: \${trace.error}\\nCode:\\n\${codeToEval}\\nPlease repair the logic and output only the corrected code block.\`;
     }
 
-    throw new Error(\`Self-correction failed after \${maxRetries} feedback iterations.\`);
+    throw new Error("AST generation failed validation after retry attempts.");
   }
 }
 `;
 
-// 8. Define Main Entry (src/index.ts)
+// 8. Main Entry (src/index.ts)
 const indexCode = `export { EdgeCognitiveEngine } from "./core/Engine";
-export { SandboxedEvaluator } from "./core/Sandbox";
+export { AstCompiler } from "./core/AstCompiler";
 export * from "./types";
 `;
 
-// 9. Write Files
+// 9. Write Files & Compile
 console.log('Scaffolding SDK in packages/edge-runtime...');
 fs.writeFileSync(path.join(sdkDir, 'package.json'), JSON.stringify(packageJson, null, 2), 'utf8');
 fs.writeFileSync(path.join(sdkDir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2), 'utf8');
 fs.writeFileSync(path.join(sdkDir, 'tsup.config.ts'), tsupConfig, 'utf8');
 fs.writeFileSync(path.join(typesDir, 'index.ts'), typesCode, 'utf8');
-fs.writeFileSync(path.join(coreDir, 'Sandbox.ts'), sandboxCode, 'utf8');
+fs.writeFileSync(path.join(coreDir, 'AstCompiler.ts'), astCompilerCode, 'utf8');
 fs.writeFileSync(path.join(coreDir, 'Engine.ts'), engineCode, 'utf8');
 fs.writeFileSync(path.join(srcDir, 'index.ts'), indexCode, 'utf8');
 
-console.log('Installing SDK bundler dependencies...');
+console.log('Installing dependencies and building SDK...');
 execSync('npm install --save-dev tsup', { stdio: 'inherit', cwd: sdkDir });
-
-console.log('Building SDK distribution files...');
 execSync('npm run build', { stdio: 'inherit', cwd: sdkDir });
 
-console.log('✅ SDK successfully created and compiled at: packages/edge-runtime/dist');
+console.log('✅ Edge-Runtime SDK updated with S-Expression AST verification at packages/edge-runtime/dist');

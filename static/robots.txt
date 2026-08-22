@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow indexing of internal AST schemas and worker scripts
+Disallow: /static/*.ast
+Disallow: /worker.html
+
+# Sitemap (optional, replace with your domain if configured)
+# Sitemap: https://josephbrewerton-oss.github.io/sitemap.xml

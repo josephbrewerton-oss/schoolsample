@@ -12,7 +12,7 @@ export const SUPPORTED_LANGUAGES: Record<string, SupportedLanguage> = {
   en: {
     code: 'en',
     label: 'English',
-    nativeLabel: 'English',
+    nativeLabel: 'UK',
     ttsVoiceLang: 'en-GB',
     promptCondition: 'Formulate all explanations, question text, and hints in clear English.',
   },

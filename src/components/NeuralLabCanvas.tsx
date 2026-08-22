@@ -263,7 +263,7 @@ export default function NeuralLabCanvas() {
       ctx.fillStyle = isCorrect ? '#059669' : '#ea580c';
       ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.fillText(
-        isCorrect ? '🎉 Correct! Archetype validated.' : '💡 Let’s try another one!',
+        isCorrect ? '🎉 Correct! Well done, great answer.' : '💡 Let’s try another one!',
         60,
         optionsStartY + displayOptions.length * 68 + 30
       );
@@ -349,7 +349,7 @@ export default function NeuralLabCanvas() {
 
           channel.onopen = () => {
             setIsReady(true);
-            setStatus('Hypervisor Linked');
+            setStatus('Engine Ready');
             setTimeout(() => {
               dispatchIntent();
             }, 100);

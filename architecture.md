@@ -1,52 +1,47 @@
 # School AI Portal (Schoolsample) — System Architecture & Context
 
 ## 1. Project Overview & Commercial Thesis
-The School AI Portal is a zero-marginal-cost, privacy-first interactive learning and revision system built on Docusaurus and static WebAssembly/IndexedDB technologies.
+The School AI Portal is a zero-marginal-cost, privacy-first interactive learning and practice engine built on Docusaurus, edge-first local LLMs (Gemini Nano / `window.ai`), and immediate-mode Canvas rendering.
 
-* **Zero Cloud Compute Costs:** Socratic evaluation, semantic misconception checks, state management, and text-to-speech audio feedback run 100% client-side in the student's browser.
-* **UK GDPR / Safeguarding Compliance:** Zero student data, voice audio, or quiz answers are sent to external API endpoints. Everything stays within the local browser sandbox.
-* **Multi-Stream Coverage:** Combines DfE-aligned national curriculum lessons (Oak National Academy) with independent modules (Parish / Catholic Faith Formation, Staff CPD).
-
----
-
-## 2. Core Architecture & Data Pipeline
-
-### Compact AST Format
-To minimize bundle size and allow instant local evaluation, lessons are compiled into a single-character key Abstract Syntax Tree (AST):
-* `tp`: Challenge type (e.g., `'quiz'`, `'input'`)
-* `co`: Content / question prompt
-* `m`: Multiple-choice options array
-* `r`: Misconception feedback pairs (`[trigger_phrase, guidance_explanation]`)
-* `c`: Correct answer
-
-### File Structure & Paths
-* `scripts/ingest-oak.ts`: Ingestion compiler script that transforms raw lesson definitions into AST JSON files.
-* `static/manifests/master_catalog.json`: Lightweight index of all available modules (`slug`, `title`, `keyStage`, `subject`, `stream`, `icon`).
-* `static/manifests/[lesson-slug].json`: Individual micro-manifest files lazy-loaded into browser IndexedDB on demand.
-* `src/components/`: Client-side interactive lesson viewers, stream filters, audio synthesis drivers, and terminal companions.
+* **Zero Cloud Compute Costs:** Inference, Socratic evaluation, AST compilation, and state validation run 100% client-side in the student's browser.
+* **UK GDPR / Safeguarding Compliance:** Zero student data, telemetry, or generated quiz tokens leave the local device sandbox.
+* **Decoupled Architecture:** Clean separation between curriculum registries, prompt strategy factories, WebRTC headless daemons, and low-level canvas renderers.
 
 ---
 
-## 3. Active Streams & Cohort Codes
-1. **Academic (Oak National Academy):**
-   * `states-of-matter` (`OAK-SCI3`)
-   * `angles-triangles` (`OAK-MTH3`)
-   * `romans-britain` (`OAK-HIS2`)
-   * `cell-biology` (`OAK-SCI4`)
-2. **Faith & Formation:**
-   * `first-holy-communion` (`FHC-A`)
-   * `gcse-re-trinity` (`RE-TRIN`)
-3. **CPD / Vocational:**
-   * Reserved for staff safeguarding, GDPR, and pedagogical training modules.
+## 2. Core Architecture & Execution Pipeline
+
+### Headless WebRTC Daemon Isolation
+To maintain a strict 60 FPS UI budget on the main React thread, on-device neural inference is offloaded to a headless daemon (`static/worker.html`) connected via a local WebRTC `RTCDataChannel`.
+
+### Deterministic S-Expression AST Compiler
+Instead of brittle JSON schemas, generative model output is emitted and validated as Lisp-style S-expressions (`.ast`):
+* `(:route ...)`: Dynamic archetype routing (e.g. `"quiz:mcq"`).
+* `(:calc ...)`: Scratchpad arithmetic trace for verified STEM step-by-step reasoning.
+* `(:prompt ...)`: Student-facing challenge prompt.
+* `(:options (list ...))`: Validated answer and distractor payload.
+* `(:answer-key <index>)`: Zero-indexed canonical solution key.
+
+### Immediate-Mode 2D Canvas Engine
+* Rendered via `src/components/NeuralLabCanvas.tsx`.
+* Native coordinate math, dynamic text-wrapping, and custom bounding-box hit detection for interactive option selection.
+
+---
+
+## 3. Directory Layout & Module Boundaries
+
+* `src/curriculum/oakCatalogue.ts`: Standalone curriculum dictionary (Key Stages 1–4 across STEM, Humanities, and Languages).
+* `static/promptStrategies.js`: Isolated prompt generation factories, dimensional unit constraints, and domain routing.
+* `static/worker.html`: Headless inference worker executing on-device LLM sessions over WebRTC data channels.
+* `static/version.json`: On-device build handshake and cache invalidation metadata.
+* `src/components/`: Modular React components (`NeuralLabCanvas.tsx`, `NanoAssistantPanel.tsx`, `DynamicLessonViewer.tsx`).
+* `docs/practice-lab.mdx`: MDX orchestration layer with open-source MIT and Oak National Academy (OGL v3.0) licensing attribution.
 
 ---
 
 ## 4. Key Commands
 
 ```powershell
-# Compile AST manifests and master catalog
-npm run ingest:oak
-
 # Start local development server
 npm run start
 

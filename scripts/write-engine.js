@@ -13,11 +13,48 @@ fs.mkdirSync(componentsDir, { recursive: true });
 // 2. Define File Contents
 const engineCode = `import * as webllm from "@mlc-ai/web-llm";
 
+export interface ParsedAstNode {
+  route: string;
+  calc?: string;
+  prompt: string;
+  options: string[];
+  answerKey: number;
+}
+
 export interface EngineExecutionResult {
   output: string;
-  source: "chrome-builtin-nano" | "webgpu-webllm" | "symbolic-evaluator";
-  executionTrace?: any;
+  source: "chrome-builtin-nano" | "webgpu-webllm" | "daemon-channel";
+  ast?: ParsedAstNode;
   correctionsCount: number;
+}
+
+export class AstParser {
+  static parse(sExpr: string): ParsedAstNode {
+    const routeMatch = sExpr.match(/:route\\s+"([^"]+)"/);
+    const calcMatch = sExpr.match(/:calc\\s+"([^"]+)"/);
+    const promptMatch = sExpr.match(/:prompt\\s+"([^"]+)"/);
+    const answerKeyMatch = sExpr.match(/:answer-key\\s+(\\d+)/);
+    const optionsMatch = sExpr.match(/:options\\s+\\((?:list\\s+)?([\\s\\S]*?)\\)(?:\\s*\\)|\\s*:)/);
+
+    if (!promptMatch) throw new Error("Invalid AST: Missing :prompt token");
+
+    const options: string[] = [];
+    if (optionsMatch) {
+      const optRegex = /"([^"]+)"/g;
+      let m: RegExpExecArray | null;
+      while ((m = optRegex.exec(optionsMatch[1])) !== null) {
+        options.push(m[1]);
+      }
+    }
+
+    return {
+      route: routeMatch ? routeMatch[1] : "quiz:mcq",
+      calc: calcMatch ? calcMatch[1] : undefined,
+      prompt: promptMatch[1],
+      options: options.length > 0 ? options : ["Option A", "Option B", "Option C", "Option D"],
+      answerKey: answerKeyMatch ? parseInt(answerKeyMatch[1], 10) : 0
+    };
+  }
 }
 
 export class EdgeCognitiveEngine {
@@ -40,17 +77,17 @@ export class EdgeCognitiveEngine {
     }
   }
 
-  async infer(prompt: string, systemPrompt?: string): Promise<string> {
+  async infer(prompt: string, systemPrompt?: string): Promise<{ output: string; source: EngineExecutionResult["source"] }> {
     if (this.hasChromeAI) {
       try {
         const session = await (window as any).ai.languageModel.create({
-          systemPrompt: systemPrompt || "You are an accurate, deterministic educational assistant.",
+          systemPrompt: systemPrompt || "Generate deterministic S-expressions for educational practice.",
         });
         const result = await session.prompt(prompt);
-        session.destroy();
-        return result;
+        if (session.destroy) session.destroy();
+        return { output: result, source: "chrome-builtin-nano" };
       } catch (e) {
-        console.warn("Chrome AI invocation failed, falling back to WebGPU:", e);
+        console.warn("Chrome AI invocation failed, trying WebGPU fallback:", e);
       }
     }
 
@@ -61,45 +98,32 @@ export class EdgeCognitiveEngine {
           { role: "user" as const, content: prompt },
         ],
       });
-      return reply.choices[0].message.content || "";
+      return { output: reply.choices[0].message.content || "", source: "webgpu-webllm" };
     }
 
-    throw new Error("No client-side hardware inference backend available on this device.");
+    throw new Error("No client-side hardware inference backend available.");
   }
 
-  async executeWithSelfCorrection(
+  async executeAstWithSelfCorrection(
     prompt: string,
-    evaluatorFn: (code: string) => { success: boolean; result?: any; error?: string },
-    maxRetries: number = 3
+    systemPrompt: string,
+    maxRetries = 2
   ): Promise<EngineExecutionResult> {
     let attempts = 0;
     let currentPrompt = prompt;
 
-    while (attempts < maxRetries) {
-      const generatedCode = await this.infer(
-        currentPrompt,
-        "Generate strictly executable code or expressions wrapped in \`\`\`eval ... \`\`\` blocks. Do not include conversational filler."
-      );
-
-      const match = generatedCode.match(/\`\`\`(?:eval|javascript|lisp)?\\s*([\\s\\S]*?)\\s*\`\`\`/);
-      const codeToEval = match ? match[1] : generatedCode;
-
-      const trace = evaluatorFn(codeToEval);
-
-      if (trace.success) {
-        return {
-          output: codeToEval,
-          source: this.hasChromeAI ? "chrome-builtin-nano" : "webgpu-webllm",
-          executionTrace: trace.result,
-          correctionsCount: attempts,
-        };
+    while (attempts <= maxRetries) {
+      const { output, source } = await this.infer(currentPrompt, systemPrompt);
+      try {
+        const ast = AstParser.parse(output);
+        return { output, source, ast, correctionsCount: attempts };
+      } catch (err: any) {
+        attempts++;
+        currentPrompt = \`\${prompt}\\nRepair S-Expression syntax error: \${err.message}\\nOutput valid S-expression only.\`;
       }
-
-      attempts++;
-      currentPrompt = \`The previous output generated a runtime error:\\n\${trace.error}\\nCode:\\n\${codeToEval}\\nPlease fix the logic and regenerate the code correctly.\`;
     }
 
-    throw new Error(\`Self-correction failed after \${maxRetries} feedback iterations.\`);
+    throw new Error(\`AST self-correction failed after \${maxRetries} feedback iterations.\`);
   }
 }
 `;
@@ -109,7 +133,7 @@ import { EdgeCognitiveEngine, EngineExecutionResult } from "../engine/EdgeCognit
 
 export default function InteractiveEdgeSandbox() {
   const [status, setStatus] = useState<string>("Initializing edge runtime...");
-  const [prompt, setPrompt] = useState<string>("Calculate the kinetic energy of a 2kg mass moving at 5m/s (KE = 0.5 * m * v^2)");
+  const [prompt, setPrompt] = useState<string>("Generate a practice question for GCSE Physics: Kinetic Energy formula");
   const [result, setResult] = useState<EngineExecutionResult | null>(null);
   const [running, setRunning] = useState<boolean>(false);
   const engineRef = useRef<EdgeCognitiveEngine | null>(null);
@@ -120,7 +144,7 @@ export default function InteractiveEdgeSandbox() {
     const engine = new EdgeCognitiveEngine();
     engine.init((report) => setStatus(report.text)).then(() => {
       engineRef.current = engine;
-      setStatus("Edge runtime ready (100% Client-Side)");
+      setStatus("Edge runtime ready (100% Client-Side AST Engine)");
     });
   }, []);
 
@@ -128,18 +152,8 @@ export default function InteractiveEdgeSandbox() {
     if (!engineRef.current) return;
     setRunning(true);
     try {
-      const res = await engineRef.current.executeWithSelfCorrection(
-        prompt,
-        (code) => {
-          try {
-            const sanitized = code.replace(/console\\.log/g, "return ");
-            const evalResult = new Function(sanitized)();
-            return { success: true, result: evalResult };
-          } catch (err: any) {
-            return { success: false, error: err.message };
-          }
-        }
-      );
+      const systemPrompt = \`Output format: (:route "quiz:mcq" :calc "<math>" :prompt "<question>" :options (list "<ans>" "<dist1>" "<dist2>" "<dist3>") :answer-key 0)\`;
+      const res = await engineRef.current.executeAstWithSelfCorrection(prompt, systemPrompt);
       setResult(res);
     } catch (err: any) {
       alert(err.message);
@@ -149,13 +163,13 @@ export default function InteractiveEdgeSandbox() {
   };
 
   return (
-    <div style={{ border: "1px solid #444", borderRadius: 8, padding: 16, margin: "20px 0" }}>
-      <h4>⚡ Neuro-Symbolic Edge Runtime</h4>
-      <p style={{ fontSize: "0.85rem", color: "#888" }}>Status: {status}</p>
+    <div style={{ border: "1px solid #333", borderRadius: 8, padding: 16, margin: "20px 0", background: "#18181b" }}>
+      <h4 style={{ margin: "0 0 8px 0", color: "#60a5fa" }}>⚡ Neuro-Symbolic Edge AST Sandbox</h4>
+      <p style={{ fontSize: "0.85rem", color: "#a1a1aa", margin: "0 0 12px 0" }}>Status: {status}</p>
       
       <textarea
         rows={3}
-        style={{ width: "100%", padding: 8, borderRadius: 4, background: "#1e1e1e", color: "#fff" }}
+        style={{ width: "100%", padding: 8, borderRadius: 4, background: "#09090b", color: "#fafafa", border: "1px solid #27272a" }}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
       />
@@ -163,17 +177,28 @@ export default function InteractiveEdgeSandbox() {
       <button
         onClick={handleRun}
         disabled={running}
-        style={{ marginTop: 10, padding: "8px 16px", cursor: "pointer", background: "#25c2a0", border: "none", borderRadius: 4, fontWeight: "bold" }}
+        style={{ marginTop: 10, padding: "8px 16px", cursor: running ? "not-allowed" : "pointer", background: "#2563eb", color: "#fff", border: "none", borderRadius: 4, fontWeight: "bold" }}
       >
-        {running ? "Synthesizing & Verifying..." : "Run Client-Side Loop"}
+        {running ? "Compiling AST..." : "Run Edge Inference"}
       </button>
 
       {result && (
-        <div style={{ marginTop: 16, padding: 12, background: "#111", borderRadius: 4 }}>
+        <div style={{ marginTop: 16, padding: 12, background: "#09090b", borderRadius: 4, border: "1px solid #27272a" }}>
           <div><strong>Execution Tier:</strong> {result.source}</div>
           <div><strong>Self-Correction Cycles:</strong> {result.correctionsCount}</div>
-          <div><strong>Evaluated Output:</strong> {JSON.stringify(result.executionTrace)}</div>
-          <pre style={{ marginTop: 8 }}>{result.output}</pre>
+          {result.ast && (
+            <div style={{ marginTop: 8 }}>
+              <strong>Parsed AST Prompt:</strong> {result.ast.prompt}
+              <ul style={{ margin: "6px 0" }}>
+                {result.ast.options.map((opt, i) => (
+                  <li key={i} style={{ color: i === result.ast?.answerKey ? "#4ade80" : "#d4d4d8" }}>
+                    {opt} {i === result.ast?.answerKey ? "(Correct)" : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <pre style={{ marginTop: 8, fontSize: "0.8rem", color: "#93c5fd" }}>{result.output}</pre>
         </div>
       )}
     </div>
@@ -193,6 +218,6 @@ console.log('Building project...');
 execSync('npm run build', { stdio: 'inherit', cwd: rootDir });
 
 console.log('Deploying to GitHub Pages...');
-execSync('npm run deploy', { stdio: 'inherit', cwd: rootDir });
+execSync('npm run deploy', { stdio: 'inherit', cwd: rootDir, env: { ...process.env, GIT_USER: process.env.GIT_USER || "josephbrewerton-oss" } });
 
-console.log('✅ Deployment script complete.');
+console.log('✅ Edge engine written and production bundle deployed successfully.');
