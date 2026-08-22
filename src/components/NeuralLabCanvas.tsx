@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
 
-
 export default function NeuralLabCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [status, setStatus] = useState('Loading Pattern Registry...');
@@ -39,15 +38,51 @@ export default function NeuralLabCanvas() {
   scoreRef.current = score;
   streakRef.current = streak;
 
-  // --- S-EXPRESSION ENGINE ---
-const tokenize = (input: string) => {
-  return input
-    .replace(/,/g, ' ') // Strip JSON-style commas
-    .replace(/\(/g, ' ( ')
-    .replace(/\)/g, ' ) ')
-    .trim()
-    .match(/"[^"]*"|[^\s]+/g) || [];
-};
+  // --- RESILIENT AST PARSER ---
+  const parseAstDirectly = (raw: string) => {
+    try {
+      // 1. Extract prompt before options tag boundary
+      const promptMatch = raw.match(/:prompt\s+"([\s\S]*?)"(?=\s*:options|\s*:answer-key|\s*\))/i) 
+        || raw.match(/:prompt\s+"([^"]+)"/i);
+
+      let cleanPrompt = promptMatch ? promptMatch[1] : '';
+      cleanPrompt = cleanPrompt.replace(/:route[\s\S]*$/i, '').trim();
+
+      // 2. Extract options list array
+      const optionsBlockMatch = raw.match(/:options\s+\((?:list\s+)?([\s\S]*?)\)/i);
+      const options: string[] = [];
+
+      if (optionsBlockMatch) {
+        const optRegex = /"([^"]+)"/g;
+        let m: RegExpExecArray | null;
+        while ((m = optRegex.exec(optionsBlockMatch[1])) !== null) {
+          options.push(m[1].trim());
+        }
+      }
+
+      // 3. Extract answer key
+      const keyMatch = raw.match(/:answer-key\s+(\d+)/i);
+      const answerKey = keyMatch ? parseInt(keyMatch[1], 10) : 0;
+
+      return {
+        prompt: cleanPrompt || 'Select the correct answer:',
+        options: options.length >= 2 ? options : ['Option A', 'Option B', 'Option C', 'Option D'],
+        answerKey: answerKey
+      };
+    } catch (e) {
+      console.error('Direct AST Parse Error:', e);
+      return null;
+    }
+  };
+
+  const tokenize = (input: string) => {
+    return input
+      .replace(/,/g, ' ')
+      .replace(/\(/g, ' ( ')
+      .replace(/\)/g, ' ) ')
+      .trim()
+      .match(/"[^"]*"|[^\s]+/g) || [];
+  };
 
   const parseSExpr = (tokens: string[]): any => {
     if (tokens.length === 0) return null;
@@ -69,7 +104,7 @@ const tokenize = (input: string) => {
     return token;
   };
 
-const extractKwargs = (list: any[]) => {
+  const extractKwargs = (list: any[]) => {
     const kwargs: Record<string, any> = {};
     if (!Array.isArray(list)) return kwargs;
 
@@ -78,53 +113,34 @@ const extractKwargs = (list: any[]) => {
       if (typeof item === 'string' && item.startsWith(':')) {
         const key = item.replace(/^:/, '');
         kwargs[key] = list[i + 1];
-        i++; // skip value
+        i++;
       }
     }
     return kwargs;
-  };
-
-  // --- AST PATTERN SPLICER ---
-  const splicePatternSlots = (templateAst: any, slots: Record<string, any>): any => {
-    if (!Array.isArray(templateAst)) return templateAst;
-    
-    const result: any[] = [];
-    for (let i = 0; i < templateAst.length; i++) {
-      const node = templateAst[i];
-      if (node === ':bind' && i + 1 < templateAst.length) {
-        const slotKey = String(templateAst[i + 1]).replace(/^:/, '');
-        if (slots[slotKey] !== undefined) {
-          result.push(':value', slots[slotKey]);
-          i++; // skip bound key
-          continue;
-        }
-      }
-      result.push(Array.isArray(node) ? splicePatternSlots(node, slots) : node);
-    }
-    return result;
   };
 
   // --- PRELOAD MANIFEST & PATTERNS ---
   useEffect(() => {
     async function loadPatterns() {
       try {
-        // 1. Check Engine Version
         const verRes = await fetch(`/static/version.json?t=${Date.now()}`);
         if (verRes.ok) {
           const verData = await verRes.json();
           console.log(`[Hypervisor] Engine v${verData.version} (Schema v${verData.schemaVersion})`);
         }
         const manifestRes = await fetch('/static/nano-map.ast');
-        const manifestText = await manifestRes.text();
-        const manifestAst = parseSExpr(tokenize(manifestText));
+        if (manifestRes.ok) {
+          const manifestText = await manifestRes.text();
+          const manifestAst = parseSExpr(tokenize(manifestText));
 
-        if (Array.isArray(manifestAst) && manifestAst[0] === 'registry:manifest') {
-          for (let i = 1; i < manifestAst.length; i++) {
-            const entry = extractKwargs(manifestAst[i]);
-            if (entry.node && entry.path) {
-              const fileRes = await fetch(entry.path);
-              const fileText = await fileRes.text();
-              patternRegistryRef.current.set(entry.node, fileText);
+          if (Array.isArray(manifestAst) && manifestAst[0] === 'registry:manifest') {
+            for (let i = 1; i < manifestAst.length; i++) {
+              const entry = extractKwargs(manifestAst[i]);
+              if (entry.node && entry.path) {
+                const fileRes = await fetch(entry.path);
+                const fileText = await fileRes.text();
+                patternRegistryRef.current.set(entry.node, fileText);
+              }
             }
           }
         }
@@ -137,10 +153,6 @@ const extractKwargs = (list: any[]) => {
     loadPatterns();
   }, []);
 
-  // --- CANVAS RENDERER ---
-// --- CANVAS RENDERER ---
-
-// --- CANVAS RENDERER ---
   function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
     const words = text.split(' ');
     let line = '';
@@ -178,7 +190,7 @@ const extractKwargs = (list: any[]) => {
     }
 
     interactiveButtonsRef.current = [];
-    const root = compiledASTRef.current;
+    const parsedData = compiledASTRef.current;
 
     ctx.strokeStyle = '#e2e8f0';
     ctx.lineWidth = 2;
@@ -194,51 +206,20 @@ const extractKwargs = (list: any[]) => {
     ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.fillText(`⭐ Stars: ${scoreRef.current}   🔥 Streak: ${streakRef.current}`, 760, 65);
 
-    // Extract AST Props
-    let prompt = '';
-    let rawOptions: string[] = [];
-    let originalAnsIdx = 0;
-
-    if (Array.isArray(root)) {
-      if (root[0] === 'view') {
-        const viewProps = extractKwargs(root);
-        const body = viewProps.body;
-        if (Array.isArray(body) && body[0] === 'quiz') {
-          const quizProps = extractKwargs(body);
-          prompt = quizProps.q || '';
-          const rawOpts = quizProps.opts;
-          const parsed = Array.isArray(rawOpts) && rawOpts[0] === 'list' ? rawOpts.slice(1) : (Array.isArray(rawOpts) ? rawOpts : []);
-          rawOptions = parsed
-            .map((opt: any) => String(opt).replace(/^["']|["']$/g, '').trim())
-            .filter((opt: string) => opt && opt !== ',' && opt !== ';');
-          const rawAns = quizProps.ans;
-          originalAnsIdx = typeof rawAns === 'number' ? rawAns : parseInt(String(rawAns), 10) || 0;
-        }
-      } else {
-        const props = extractKwargs(root);
-        prompt = props.prompt || props.q || '';
-        const rawOpts = props.options || props.opts;
-        const parsed = Array.isArray(rawOpts) && rawOpts[0] === 'list' ? rawOpts.slice(1) : (Array.isArray(rawOpts) ? rawOpts : []);
-        rawOptions = parsed
-          .map((opt: any) => String(opt).replace(/^["']|["']$/g, '').trim())
-          .filter((opt: string) => opt && opt !== ',' && opt !== ';');
-        originalAnsIdx = Number(props['answer-key'] ?? props.ans) || 0;
-      }
-    }
-
+    const prompt = parsedData.prompt;
+    const rawOptions = parsedData.options;
+    const originalAnsIdx = parsedData.answerKey || 0;
     const targetCorrectValue = rawOptions[originalAnsIdx] ?? rawOptions[0];
 
-    // Client-side deterministic option shuffling
+    // Shuffling
     let displayOptions = rawOptions;
     if (correctIndexRef.current === null && rawOptions.length > 0) {
       const shuffled = [...rawOptions].sort(() => Math.random() - 0.5);
       displayOptions = shuffled;
       correctIndexRef.current = shuffled.indexOf(targetCorrectValue);
-      if (Array.isArray(root)) {
-        (root as any)._shuffled = shuffled;
-      }
-    } else if (root && (root as any)._shuffled) {
-      displayOptions = (root as any)._shuffled;
+      parsedData._shuffled = shuffled;
+    } else if (parsedData._shuffled) {
+      displayOptions = parsedData._shuffled;
     }
 
     // Wrapped Question Prompt
@@ -246,7 +227,6 @@ const extractKwargs = (list: any[]) => {
     ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     const lastPromptY = wrapText(ctx, prompt || 'Choose the correct answer:', 60, 125, 960, 28);
 
-    // Options dynamically positioned below question text
     const optionsStartY = Math.max(175, lastPromptY + 30);
 
     displayOptions.forEach((opt: string, idx: number) => {
@@ -303,7 +283,7 @@ const extractKwargs = (list: any[]) => {
     }
   };
 
-const dispatchIntent = () => {
+  const dispatchIntent = () => {
     if (!channelRef.current || channelRef.current.readyState !== 'open') return;
     rawAstStreamRef.current = '';
     compiledASTRef.current = null;
@@ -316,7 +296,6 @@ const dispatchIntent = () => {
     const nonce = Date.now().toString(36).slice(-4);
 
     const intent = `Subject: "${selectedSubject}", Topic: "${selectedUnit}", Key Stage: "${selectedKeyStage}" (Seed #${seed}-${nonce})`;
-    
     channelRef.current.send(intent);
   };
 
@@ -376,7 +355,7 @@ const dispatchIntent = () => {
             }, 100);
           };
 
-channel.onmessage = (msg) => {
+          channel.onmessage = (msg) => {
             if (msg.data === '__EOF__') {
               try {
                 const cleanRaw = rawAstStreamRef.current
@@ -384,14 +363,12 @@ channel.onmessage = (msg) => {
                   .replace(/```/g, '')
                   .trim();
 
-                const tokens = tokenize(cleanRaw);
-                const rawParsed = parseSExpr(tokens);
-
-                if (Array.isArray(rawParsed)) {
-                  compiledASTRef.current = rawParsed;
+                const parsed = parseAstDirectly(cleanRaw);
+                if (parsed) {
+                  compiledASTRef.current = parsed;
                 }
               } catch (err) {
-                console.error('AST Parse/Graft Error:', err);
+                console.error('AST Parse Error:', err);
               }
               renderScreen();
             } else {
