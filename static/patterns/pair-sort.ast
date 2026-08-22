@@ -1,0 +1,11 @@
+(pattern:def :id "quiz:pair-sort"
+  (ui:card :class "quiz-card"
+    (ui:text :variant "h2" :bind :prompt)
+    (ui:drag-match-grid
+      (ui:column :id "keys" :bind :items)
+      (ui:column :id "targets" :bind :targets))
+    (behavior:fsm :id "eval-fsm"
+      (state :initial "pending"
+        (on "COMPLETE" (eval:map-match :target :current-pairs :expected :mapping))
+        (on "CORRECT" (audio:play "feedback-success") (transition "success"))
+        (on "INCORRECT" (audio:play "feedback-fail") (transition "retry"))))))

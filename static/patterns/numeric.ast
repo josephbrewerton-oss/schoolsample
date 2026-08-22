@@ -1,0 +1,9 @@
+(pattern:def :id "quiz:numeric"
+  (ui:card :class "quiz-card"
+    (ui:text :variant "h2" :bind :prompt)
+    (ui:input-number :id "num-input" :step :precision)
+    (behavior:fsm :id "eval-fsm"
+      (state :initial "pending"
+        (on "SUBMIT" (eval:numeric-range :target "num-input" :expected :expected-num :tolerance :margin))
+        (on "CORRECT" (audio:play "feedback-success") (transition "success"))
+        (on "INCORRECT" (audio:play "feedback-fail") (transition "retry"))))))

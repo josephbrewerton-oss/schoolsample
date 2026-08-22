@@ -35,10 +35,9 @@ const DEFAULT_OAK_CATALOGUE: Record<string, Record<string, string[]>> = {
 
 export default function NeuralLabCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [status, setStatus] = useState('Connecting to On-Device Hypervisor...');
+  const [status, setStatus] = useState('Loading Pattern Registry...');
   const [isReady, setIsReady] = useState(false);
 
-  // Cascading Oak Selectors
   const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 2');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [selectedUnit, setSelectedUnit] = useState('Fractions and Decimals');
@@ -58,6 +57,7 @@ export default function NeuralLabCanvas() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const busRef = useRef<BroadcastChannel | null>(null);
 
+  const patternRegistryRef = useRef<Map<string, string>>(new Map());
   const rawAstStreamRef = useRef('');
   const compiledASTRef = useRef<any>(null);
   const interactiveButtonsRef = useRef<{ id: string; x: number; y: number; w: number; h: number; idx?: number }[]>([]);
@@ -70,14 +70,15 @@ export default function NeuralLabCanvas() {
   scoreRef.current = score;
   streakRef.current = streak;
 
-  // --- S-EXPRESSION PARSER ---
-  const tokenize = (input: string) => {
-    return input
-      .replace(/\(/g, ' ( ')
-      .replace(/\)/g, ' ) ')
-      .trim()
-      .match(/"[^"]*"|[^\s]+/g) || [];
-  };
+  // --- S-EXPRESSION ENGINE ---
+const tokenize = (input: string) => {
+  return input
+    .replace(/,/g, ' ') // Strip JSON-style commas
+    .replace(/\(/g, ' ( ')
+    .replace(/\)/g, ' ) ')
+    .trim()
+    .match(/"[^"]*"|[^\s]+/g) || [];
+};
 
   const parseSExpr = (tokens: string[]): any => {
     if (tokens.length === 0) return null;
@@ -99,17 +100,92 @@ export default function NeuralLabCanvas() {
     return token;
   };
 
-  const extractKwargs = (list: any[]) => {
+const extractKwargs = (list: any[]) => {
     const kwargs: Record<string, any> = {};
     if (!Array.isArray(list)) return kwargs;
-    for (let i = 1; i < list.length; i += 2) {
-      const key = String(list[i]).replace(/^:/, '');
-      kwargs[key] = list[i + 1];
+
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      if (typeof item === 'string' && item.startsWith(':')) {
+        const key = item.replace(/^:/, '');
+        kwargs[key] = list[i + 1];
+        i++; // skip value
+      }
     }
     return kwargs;
   };
 
+  // --- AST PATTERN SPLICER ---
+  const splicePatternSlots = (templateAst: any, slots: Record<string, any>): any => {
+    if (!Array.isArray(templateAst)) return templateAst;
+    
+    const result: any[] = [];
+    for (let i = 0; i < templateAst.length; i++) {
+      const node = templateAst[i];
+      if (node === ':bind' && i + 1 < templateAst.length) {
+        const slotKey = String(templateAst[i + 1]).replace(/^:/, '');
+        if (slots[slotKey] !== undefined) {
+          result.push(':value', slots[slotKey]);
+          i++; // skip bound key
+          continue;
+        }
+      }
+      result.push(Array.isArray(node) ? splicePatternSlots(node, slots) : node);
+    }
+    return result;
+  };
+
+  // --- PRELOAD MANIFEST & PATTERNS ---
+  useEffect(() => {
+    async function loadPatterns() {
+      try {
+        const manifestRes = await fetch('/static/nano-map.ast');
+        const manifestText = await manifestRes.text();
+        const manifestAst = parseSExpr(tokenize(manifestText));
+
+        if (Array.isArray(manifestAst) && manifestAst[0] === 'registry:manifest') {
+          for (let i = 1; i < manifestAst.length; i++) {
+            const entry = extractKwargs(manifestAst[i]);
+            if (entry.node && entry.path) {
+              const fileRes = await fetch(entry.path);
+              const fileText = await fileRes.text();
+              patternRegistryRef.current.set(entry.node, fileText);
+            }
+          }
+        }
+        setStatus('Ready for Edge Inference');
+      } catch (err) {
+        console.error('Failed to load static pattern registry:', err);
+        setStatus('Error loading patterns');
+      }
+    }
+    loadPatterns();
+  }, []);
+
   // --- CANVAS RENDERER ---
+// --- CANVAS RENDERER ---
+
+// --- CANVAS RENDERER ---
+  function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+    const words = text.split(' ');
+    let line = '';
+    let currentY = y;
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        ctx.fillText(line, x, currentY);
+        line = words[n] + ' ';
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, currentY);
+    return currentY;
+  }
+
   const renderScreen = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -122,171 +198,150 @@ export default function NeuralLabCanvas() {
     if (!compiledASTRef.current) {
       ctx.fillStyle = '#64748b';
       ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.fillText('✨ Generating an Oak National Academy practice question...', 60, 100);
+      ctx.fillText('⚡ Fast-splicing AST question archetype...', 60, 100);
       return;
     }
 
     interactiveButtonsRef.current = [];
     const root = compiledASTRef.current;
 
-    if (Array.isArray(root) && root[0] === 'view') {
-      const viewProps = extractKwargs(root);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, 20, 1020, 660);
 
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(30, 20, 1020, 660);
+    // Dynamic Header Banner
+    ctx.fillStyle = '#1e3a8a';
+    ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`${selectedSubject}: ${selectedUnit}`, 60, 65);
 
-      // Header Banner
-      ctx.fillStyle = '#1e3a8a';
-      ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.fillText(viewProps.title || `${selectedSubject} Practice`, 60, 65);
+    // Score & Streak
+    ctx.fillStyle = '#d97706';
+    ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`⭐ Stars: ${scoreRef.current}   🔥 Streak: ${streakRef.current}`, 760, 65);
 
-      // Score & Streak
-      ctx.fillStyle = '#d97706';
-      ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      ctx.fillText(`⭐ Stars: ${scoreRef.current}   🔥 Streak: ${streakRef.current}`, 760, 65);
+    // Extract AST Props
+    let prompt = '';
+    let rawOptions: string[] = [];
+    let originalAnsIdx = 0;
 
-      const body = viewProps.body;
-      if (Array.isArray(body) && body[0] === 'quiz') {
-        const quizProps = extractKwargs(body);
-        const rawOpts = quizProps.opts;
-        const options = Array.isArray(rawOpts) && rawOpts[0] === 'list' ? rawOpts.slice(1) : [];
-
-        let ansIdx = 0;
-        const rawAns = quizProps.ans;
-        if (typeof rawAns === 'number') {
-          ansIdx = rawAns;
-        } else if (typeof rawAns === 'string') {
-          const clean = rawAns.trim().toUpperCase();
-          ansIdx = ['A', 'B', 'C', 'D'].includes(clean)
-            ? clean.charCodeAt(0) - 65
-            : parseInt(clean, 10) || 0;
+    if (Array.isArray(root)) {
+      if (root[0] === 'view') {
+        const viewProps = extractKwargs(root);
+        const body = viewProps.body;
+        if (Array.isArray(body) && body[0] === 'quiz') {
+          const quizProps = extractKwargs(body);
+          prompt = quizProps.q || '';
+          const rawOpts = quizProps.opts;
+          const parsed = Array.isArray(rawOpts) && rawOpts[0] === 'list' ? rawOpts.slice(1) : (Array.isArray(rawOpts) ? rawOpts : []);
+          rawOptions = parsed
+            .map((opt: any) => String(opt).replace(/^["']|["']$/g, '').trim())
+            .filter((opt: string) => opt && opt !== ',' && opt !== ';');
+          const rawAns = quizProps.ans;
+          originalAnsIdx = typeof rawAns === 'number' ? rawAns : parseInt(String(rawAns), 10) || 0;
         }
-
-        const qText = String(quizProps.q || '');
-
-        // Non-blocking math equivalency evaluation
-        const parseVal = (str: string): number | null => {
-          const clean = str.trim();
-          const frac = clean.match(/^(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/);
-          if (frac) {
-            const denom = Number(frac[2]);
-            return denom !== 0 ? Number(frac[1]) / denom : null;
-          }
-          const num = parseFloat(clean);
-          return isNaN(num) ? null : num;
-        };
-
-        const fracInPrompt = qText.match(/(\d+\/\d+)/);
-        const decInPrompt = qText.match(/(?:(?:is|to)\s+)?(\d+\.\d+|\b0\.\d+\b)/i);
-
-        let targetVal: number | null = null;
-        if (fracInPrompt) {
-          targetVal = parseVal(fracInPrompt[1]);
-        } else if (decInPrompt) {
-          targetVal = parseVal(decInPrompt[1]);
-        }
-
-        if (targetVal !== null) {
-          let matchIdx = options.findIndex((opt: string) => {
-            const optVal = parseVal(String(opt));
-            return optVal !== null && Math.abs(optVal - targetVal!) < 0.001;
-          });
-
-          if (matchIdx === -1) {
-            let closestDiff = Infinity;
-            options.forEach((opt: string, idx: number) => {
-              const optVal = parseVal(String(opt));
-              if (optVal !== null) {
-                const diff = Math.abs(optVal - targetVal!);
-                if (diff < closestDiff) {
-                  closestDiff = diff;
-                  matchIdx = idx;
-                }
-              }
-            });
-          }
-
-          if (matchIdx !== -1) ansIdx = matchIdx;
-        }
-
-        correctIndexRef.current = ansIdx;
-
-        // Question Prompt
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.fillText(quizProps.q || '', 60, 135);
-
-        options.forEach((opt: string, idx: number) => {
-          const bx = 60;
-          const by = 175 + idx * 72;
-          const bw = 960;
-          const bh = 56;
-
-          interactiveButtonsRef.current.push({ id: `option_${idx}`, x: bx, y: by, w: bw, h: bh, idx });
-
-          if (selectedAnswerRef.current === idx) {
-            ctx.fillStyle = idx === correctIndexRef.current ? '#ecfdf5' : '#fff7ed';
-            ctx.fillRect(bx, by, bw, bh);
-            ctx.strokeStyle = idx === correctIndexRef.current ? '#10b981' : '#f97316';
-            ctx.lineWidth = 2;
-          } else {
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(bx, by, bw, bh);
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1.5;
-          }
-
-          ctx.strokeRect(bx, by, bw, bh);
-
-          ctx.fillStyle = '#1e293b';
-          ctx.font = '500 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          ctx.fillText(`Option ${String.fromCharCode(65 + idx)}:   ${opt}`, bx + 24, by + 35);
-        });
-
-        // Feedback & Next Button
-        if (selectedAnswerRef.current !== null) {
-          const isCorrect = selectedAnswerRef.current === correctIndexRef.current;
-
-          ctx.fillStyle = isCorrect ? '#059669' : '#ea580c';
-          ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          const msg = isCorrect
-            ? '🎉 Brilliant work! That is correct!'
-            : '💡 Great effort! Take a look at this hint:';
-          ctx.fillText(msg, 60, 490);
-
-          if (!isCorrect && hintTextRef.current) {
-            ctx.fillStyle = '#475569';
-            ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-            ctx.fillText(hintTextRef.current, 60, 525);
-          }
-
-          const nbx = 60;
-          const nby = 575;
-          const nbw = 220;
-          const nbh = 48;
-
-          interactiveButtonsRef.current.push({ id: 'btn_next', x: nbx, y: nby, w: nbw, h: nbh });
-
-          ctx.fillStyle = '#2563eb';
-          ctx.fillRect(nbx, nby, nbw, nbh);
-          ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-          ctx.fillText('Next Question ➔', nbx + 36, nby + 30);
-        }
+      } else {
+        const props = extractKwargs(root);
+        prompt = props.prompt || props.q || '';
+        const rawOpts = props.options || props.opts;
+        const parsed = Array.isArray(rawOpts) && rawOpts[0] === 'list' ? rawOpts.slice(1) : (Array.isArray(rawOpts) ? rawOpts : []);
+        rawOptions = parsed
+          .map((opt: any) => String(opt).replace(/^["']|["']$/g, '').trim())
+          .filter((opt: string) => opt && opt !== ',' && opt !== ';');
+        originalAnsIdx = Number(props['answer-key'] ?? props.ans) || 0;
       }
+    }
+
+    const targetCorrectValue = rawOptions[originalAnsIdx] ?? rawOptions[0];
+
+    // Client-side deterministic option shuffling
+    let displayOptions = rawOptions;
+    if (correctIndexRef.current === null && rawOptions.length > 0) {
+      const shuffled = [...rawOptions].sort(() => Math.random() - 0.5);
+      displayOptions = shuffled;
+      correctIndexRef.current = shuffled.indexOf(targetCorrectValue);
+      if (Array.isArray(root)) {
+        (root as any)._shuffled = shuffled;
+      }
+    } else if (root && (root as any)._shuffled) {
+      displayOptions = (root as any)._shuffled;
+    }
+
+    // Wrapped Question Prompt
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 20px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    const lastPromptY = wrapText(ctx, prompt || 'Choose the correct answer:', 60, 125, 960, 28);
+
+    // Options dynamically positioned below question text
+    const optionsStartY = Math.max(175, lastPromptY + 30);
+
+    displayOptions.forEach((opt: string, idx: number) => {
+      const bx = 60;
+      const by = optionsStartY + idx * 68;
+      const bw = 960;
+      const bh = 54;
+
+      interactiveButtonsRef.current.push({ id: `option_${idx}`, x: bx, y: by, w: bw, h: bh, idx });
+
+      if (selectedAnswerRef.current === idx) {
+        ctx.fillStyle = idx === correctIndexRef.current ? '#ecfdf5' : '#fff7ed';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = idx === correctIndexRef.current ? '#10b981' : '#f97316';
+        ctx.lineWidth = 2;
+      } else {
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1.5;
+      }
+
+      ctx.strokeRect(bx, by, bw, bh);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.font = '500 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(`Option ${String.fromCharCode(65 + idx)}:   ${opt}`, bx + 24, by + 34);
+    });
+
+    // Feedback & Next Action
+    if (selectedAnswerRef.current !== null) {
+      const isCorrect = selectedAnswerRef.current === correctIndexRef.current;
+
+      ctx.fillStyle = isCorrect ? '#059669' : '#ea580c';
+      ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(
+        isCorrect ? '🎉 Correct! Archetype validated.' : '💡 Let’s try another one!',
+        60,
+        optionsStartY + displayOptions.length * 68 + 30
+      );
+
+      const nbx = 60;
+      const nby = optionsStartY + displayOptions.length * 68 + 55;
+      const nbw = 220;
+      const nbh = 48;
+
+      interactiveButtonsRef.current.push({ id: 'btn_next', x: nbx, y: nby, w: nbw, h: nbh });
+
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(nbx, nby, nbw, nbh);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('Next Question ➔', nbx + 36, nby + 30);
     }
   };
 
-  const dispatchIntent = () => {
+const dispatchIntent = () => {
     if (!channelRef.current || channelRef.current.readyState !== 'open') return;
     rawAstStreamRef.current = '';
     compiledASTRef.current = null;
     selectedAnswerRef.current = null;
+    correctIndexRef.current = null;
     hintTextRef.current = null;
     renderScreen();
 
-    const intent = `Generate a kid-friendly practice quiz for Key Stage: "${selectedKeyStage}", Subject: "${selectedSubject}", Topic: "${selectedUnit}" in S-expression format.`;
+    const seed = Math.floor(Math.random() * 10000);
+    const nonce = Date.now().toString(36).slice(-4);
+
+    const intent = `Subject: "${selectedSubject}", Topic: "${selectedUnit}", Key Stage: "${selectedKeyStage}" (Seed #${seed}-${nonce})`;
+    
     channelRef.current.send(intent);
   };
 
@@ -313,10 +368,8 @@ export default function NeuralLabCanvas() {
           if (btn.idx === correctIndexRef.current) {
             setScore((s) => s + 1);
             setStreak((st) => st + 1);
-            hintTextRef.current = null;
           } else {
             setStreak(0);
-            hintTextRef.current = `Tip: Review the core concept of "${selectedUnit}" and try again!`;
           }
           renderScreen();
         }
@@ -341,20 +394,29 @@ export default function NeuralLabCanvas() {
           channelRef.current = channel;
 
           channel.onopen = () => {
-            setStatus('Ready to Learn');
             setIsReady(true);
+            setStatus('Hypervisor Linked');
             setTimeout(() => {
               dispatchIntent();
-            }, 200);
+            }, 100);
           };
 
-          channel.onmessage = (msg) => {
+channel.onmessage = (msg) => {
             if (msg.data === '__EOF__') {
               try {
-                const tokens = tokenize(rawAstStreamRef.current);
-                compiledASTRef.current = parseSExpr(tokens);
+                const cleanRaw = rawAstStreamRef.current
+                  .replace(/```[a-z]*/gi, '')
+                  .replace(/```/g, '')
+                  .trim();
+
+                const tokens = tokenize(cleanRaw);
+                const rawParsed = parseSExpr(tokens);
+
+                if (Array.isArray(rawParsed)) {
+                  compiledASTRef.current = rawParsed;
+                }
               } catch (err) {
-                console.error('AST Parse Error:', err);
+                console.error('AST Parse/Graft Error:', err);
               }
               renderScreen();
             } else {

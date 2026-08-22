@@ -1,0 +1,6 @@
+;; /static/nano-map.ast
+(registry:manifest
+  (:node "quiz:mcq"          :path "/static/patterns/mcq.ast"          :slots (:prompt :options :answer-key))
+  (:node "quiz:fill-blank"   :path "/static/patterns/fill-blank.ast"   :slots (:prefix :suffix :expected-value))
+  (:node "quiz:numeric"      :path "/static/patterns/numeric.ast"      :slots (:prompt :precision :expected-num :margin))
+  (:node "quiz:pair-sort"    :path "/static/patterns/pair-sort.ast"    :slots (:items :targets :mapping)))

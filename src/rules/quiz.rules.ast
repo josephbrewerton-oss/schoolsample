@@ -1,0 +1,20 @@
+(ruleset :target "worker.html" :version "1.0.0"
+  (grammar
+    (template "(view :title \"{{title}}\" :body (quiz :q \"{{question}}\" :opts (list {{options}}) :ans {{answerIndex}}))")
+    (forbidden
+      (pattern "Option A:")
+      (pattern "Option B:")
+      (pattern "A.")
+      (pattern "B.")
+      (pattern "C.")
+      (pattern "D.")))
+  
+  (constraints
+    (rule :id "clean_question" :body ":q MUST contain ONLY the question string. Never list choices inside :q.")
+    (rule :id "option_cardinality" :body ":opts MUST contain a list of exactly 4 choices.")
+    (rule :id "zero_index_answer" :body ":ans MUST be the 0-based integer index (0, 1, 2, or 3) of the correct choice.")
+    (rule :id "syntax_purity" :body "Keep AST keywords (:title, :body, :q, :opts, :ans, list, view, quiz) in ASCII English."))
+  
+  (locales
+    (lang :code "en" :name "English")
+    (lang :code "yo" :name "Yoruba (Èdè Yorùbá)")))

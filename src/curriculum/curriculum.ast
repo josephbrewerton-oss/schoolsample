@@ -1,0 +1,24 @@
+(curriculum :country "UK" :framework "KeyStage"
+  (stage :id "ks2" :title "Key Stage 2"
+    (subject :id "maths" :title "Mathematics"
+      (topic :id "fractions-decimals" :title "Fractions and Decimals"
+        ;; Operational rules for question generation
+        (rules
+          (constraint :type :no-leak ":q must not contain option labels")
+          (constraint :type :opts-count 4)
+          (constraint :type :ans-index :zero-based))
+        
+        ;; Seed nodes and question map templates
+        (seeds
+          (item :id "frac-01" 
+                :concept "equivalence" 
+                :difficulty 1
+                :template (quiz :q "Which fraction is equivalent to {{val}}?" 
+                                :opts (list "{{opt0}}" "{{opt1}}" "{{opt2}}" "{{opt3}}") 
+                                :ans 0))
+          (item :id "frac-02" 
+                :concept "simplification" 
+                :difficulty 2
+                :template (quiz :q "Simplify {{num}}/{{den}} to its lowest terms." 
+                                :opts (list "{{opt0}}" "{{opt1}}" "{{opt2}}" "{{opt3}}") 
+                                :ans 0)))))))

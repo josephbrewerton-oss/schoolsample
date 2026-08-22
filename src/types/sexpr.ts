@@ -7,3 +7,8 @@ export interface SExprNode {
 }
 
 export type SExprAST = SExprNode | SExprAtom;
+
+declare module '*.ast' {
+  const content: string;
+  export default content;
+}

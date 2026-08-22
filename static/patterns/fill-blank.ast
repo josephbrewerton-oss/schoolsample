@@ -1,0 +1,11 @@
+(pattern:def :id "quiz:fill-blank"
+  (ui:card :class "quiz-card"
+    (ui:text-run
+      (ui:span :bind :prefix)
+      (ui:input-inline :id "blank-input" :placeholder "...")
+      (ui:span :bind :suffix))
+    (behavior:fsm :id "eval-fsm"
+      (state :initial "pending"
+        (on "SUBMIT" (eval:compare :target "blank-input" :expected :expected-value :normalize-case true))
+        (on "CORRECT" (audio:play "feedback-success") (transition "success"))
+        (on "INCORRECT" (audio:play "feedback-fail") (transition "retry"))))))

@@ -10,18 +10,86 @@
   <pre id="log">&gt; Probing Gemini Nano runtime...\n</pre>
 
   <script type="module">
+    import { buildPrompt } from './promptStrategies.js';
     const log = (msg) => {
       console.log(msg);
       const el = document.getElementById('log');
       if (el) el.textContent += msg + '\n';
     };
 
+    // --- IndexedDB Jotter (Append-Only Event Ledger) ---
+    const DB_NAME = 'SchoolAiJotter';
+    const STORE_NAME = 'session_events';
+
+    function getDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, { autoIncrement: true, keyPath: 'id' });
+            store.createIndex('sessionId', 'sessionId', { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function recordJotterEvent(sessionId, actor, payload, nodePath = '') {
+      try {
+        const db = await getDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).add({
+          sessionId: sessionId || 'default_session',
+          actor,
+          payload,
+          nodePath,
+          timestamp: Date.now(),
+        });
+      } catch (err) {
+        console.warn('Jotter write failed:', err);
+      }
+    }
+
+    async function readRecentJotterAst(sessionId, limit = 4) {
+      try {
+        const db = await getDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const index = store.index('sessionId');
+          const req = index.getAll(IDBKeyRange.only(sessionId || 'default_session'));
+          req.onsuccess = () => {
+            const events = (req.result || []).slice(-limit);
+            if (!events.length) return resolve('(jotter empty)');
+            const ast = `(jotter\n${events.map(e => `  (${e.actor} :payload "${String(e.payload).replace(/"/g, "'")}")`).join('\n')}\n)`;
+            resolve(ast);
+          };
+          req.onerror = () => resolve('(jotter empty)');
+        });
+      } catch {
+        return '(jotter empty)';
+      }
+    }
+
+    // --- Neural Bus & WebRTC State ---
     const bus = new BroadcastChannel('webrtc-neural-signaling');
     const langBus = new BroadcastChannel('neural_hypervisor_bus');
     
     let pc, channel, nanoSession;
     let isExecuting = false;
     let currentLang = 'en';
+
+    const LANG_MAP = {
+      en: { name: 'English', ex: 'Which fraction is equivalent to 1/2?' },
+      sw: { name: 'Kiswahili', ex: 'Ni sehemu gani inayolingana na 1/2?' },
+      yo: { name: 'Yoruba (Èdè Yorùbá)', ex: 'Idamẹta wo ni o dọgba pẹlu 1/2?' },
+      ig: 'Igbo (Asụsụ Igbo)',
+      ha: 'Hausa',
+      zu: 'isiZulu',
+      am: 'Amharic',
+    };
 
     langBus.onmessage = (e) => {
       if (e.data?.type === 'SET_LANGUAGE' && e.data.lang) {
@@ -38,18 +106,20 @@ async function getSession() {
   if (nanoSession) return nanoSession;
   const LM = resolveLanguageModel();
   if (!LM) return null;
+  const config = {
+    systemPrompt: 'You are an educational quiz generator and S-expression compiler.',
+    temperature: 0.8,
+    topK: 3
+  };
   try {
-    // Satisfy Chrome's supported language schema
     nanoSession = await LM.create({
-      systemPrompt: 'You are an educational quiz generator and S-expression compiler.',
+      ...config,
       expectedInputs: [{ type: 'text', languages: ['en'] }],
       expectedOutputs: [{ type: 'text', languages: ['en'] }],
     });
     return nanoSession;
   } catch {
-    nanoSession = await LM.create({
-      systemPrompt: 'You are an educational quiz generator and S-expression compiler.',
-    });
+    nanoSession = await LM.create(config);
     return nanoSession;
   }
 }
@@ -78,79 +148,58 @@ async function getSession() {
 
           if (session) {
             try {
-const LANG_MAP = {
-  en: { name: 'English', ex: 'Which fraction is equivalent to 1/2?' },
-  sw: { name: 'Kiswahili', ex: 'Ni sehemu gani inayolingana na 1/2?' },
-  yo: { name: 'Yoruba (Èdè Yorùbá)', ex: 'Idamẹta wo ni o dọgba pẹlu 1/2?' },
-  ig: 'Igbo (Asụsụ Igbo)',
-  ha: 'Hausa',
-  zu: 'isiZulu',
-  am: 'Amharic',
-};
+              const langInfo = LANG_MAP[currentLang] || LANG_MAP.en;
+              const langName = typeof langInfo === 'object' ? langInfo.name : langInfo;
 
-const langInfo = LANG_MAP[currentLang] || LANG_MAP.en;
-const langName = typeof langInfo === 'object' ? langInfo.name : langInfo;
+              const prompt = buildPrompt(userPrompt, langName);
+              const raw = await session.prompt(prompt);
 
-const prompt = `Task: Create a 4-choice quiz question for ${userPrompt}.
+              const firstParen = raw.indexOf('(');
+              const lastParen = raw.lastIndexOf(')');
 
-LANGUAGE REQUIREMENT:
-- Write the question string :q and options :opts in ${langName}.
-- AST tags (:title, :body, :q, :opts, :ans, list, view, quiz) MUST remain in ASCII English.
+              if (firstParen !== -1 && lastParen !== -1) {
+                generatedAST = raw.substring(firstParen, lastParen + 1).trim();
+              } else {
+                generatedAST = raw.replace(/```lisp|```/g, '').trim();
+              }
 
-STRICT SYNTAX RULES:
-1. :q MUST contain ONLY the question prompt. Do NOT list the choices (A, B, C, D) inside :q.
-2. :opts MUST contain a list of exactly 4 choices.
-3. :ans MUST be the 0-based integer index (0, 1, 2, or 3) of the correct choice.
-4. Output ONLY the raw single-line S-expression.
-
-Format:
-(view :title "Quiz" :body (quiz :q "What is 3/4 as a decimal?" :opts (list "0.75" "0.5" "0.25" "0.8") :ans 0))`;
-
-          const raw = await session.prompt(prompt);
-
-          const firstParen = raw.indexOf('(');
-          const lastParen = raw.lastIndexOf(')');
-
-          if (firstParen !== -1 && lastParen !== -1) {
-            generatedAST = raw.substring(firstParen, lastParen + 1).trim();
-          } else {
-            generatedAST = raw.replace(/```lisp|```/g, '').trim();
+              log(`> Nano Generated: ${generatedAST}`);
+            } catch (pErr) {
+              log(`! Prompt error: ${pErr.message}`);
+            }
           }
 
-          log(`> Nano Generated: ${generatedAST}`);
-        } catch (pErr) {
-          log(`! Prompt error: ${pErr.message}`);
+          // Fallback AST
+          // Inside worker.html channel.onmessage before sending:
+          if (!generatedAST || !generatedAST.includes(':prompt') || !generatedAST.includes(':options')) {
+           generatedAST = '(:route "quiz:mcq" :prompt "Which fraction is equivalent to 0.75?" :options (list "3/4" "1/2" "2/5" "3/5") :answer-key 0)';
+          log('> Fallback schema dispatched.');
+          }
+
+          await recordJotterEvent('default_session', 'system', `generated_quiz: ${userPrompt}`);
+
+          if (channel && channel.readyState === 'open') {
+            channel.send(generatedAST);
+            channel.send('__EOF__');
+          }
+        } catch (err) {
+          log(`! Execution Error: ${err.message}`);
+        } finally {
+          isExecuting = false;
         }
-      }
+      };
 
-      // Safe fallback AST if model takes too long or fails
-      if (!generatedAST || !generatedAST.startsWith('(')) {
-        generatedAST = '(view :title "Mathematics: Fractions & Decimals" :body (quiz :q "Which fraction is equivalent to 0.75?" :opts (list "3/4" "1/2" "2/5" "3/5") :ans 0))';
-        log('> Dispatched default fallback AST.');
-      }
+      pc.onicecandidate = (e) => {
+        if (e.candidate) bus.postMessage({ type: 'candidate', candidate: e.candidate.toJSON() });
+      };
 
-      if (channel && channel.readyState === 'open') {
-        channel.send(generatedAST);
-        channel.send('__EOF__');
-      }
-    } catch (err) {
-      log(`! Execution Error: ${err.message}`);
-    } finally {
-      isExecuting = false;
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      bus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
+      log('> Fresh offer broadcasted.');
     }
-  };
 
-  pc.onicecandidate = (e) => {
-    if (e.candidate) bus.postMessage({ type: 'candidate', candidate: e.candidate.toJSON() });
-  };
-
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  bus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
-  log('> Fresh offer broadcasted.');
-}
-
-async function init() {
+    async function init() {
       await getSession();
       log('> Gemini Nano Session: LOCKED & ONLINE.');
       bus.postMessage({ type: 'daemon_ready' });
@@ -171,25 +220,27 @@ async function init() {
       } else if (e.data.type === 'tutor_query') {
         try {
           const session = await getSession();
-const LANG_MAP = {
-          en: { name: 'English', ex: 'Which fraction is equivalent to 1/2?' },
-          sw: { name: 'Kiswahili', ex: 'Ni sehemu gani inayolingana na 1/2?' },
-          yo: { name: 'Yoruba (Èdè Yorùbá)', ex: 'Idamẹta wo ni o dọgba pẹlu 1/2?' },
-          ig: 'Igbo (Asụsụ Igbo)',
-          ha: 'Hausa',
-          zu: 'isiZulu',
-          am: 'Amharic',
-        };
+          const sessionId = e.data.sessionId || 'default_session';
+          const studentInput = e.data.prompt;
 
-        const langInfo = LANG_MAP[currentLang] || LANG_MAP.en;
-        const langName = typeof langInfo === 'object' ? langInfo.name : langInfo;
+          await recordJotterEvent(sessionId, 'student', studentInput);
+          const jotterContext = await readRecentJotterAst(sessionId, 4);
 
-        const tutorPrompt = `You are a school tutor. You MUST write your response entirely in ${langName}.
-        Explain briefly (max 2 short sentences) in ${langName} without giving away the answer:
-        Student: ${e.data.prompt}
-        Tutor (${langName}):`;
+          const langInfo = LANG_MAP[currentLang] || LANG_MAP.en;
+          const langName = typeof langInfo === 'object' ? langInfo.name : langInfo;
+
+          const tutorPrompt = `You are a school tutor. You MUST write your response entirely in ${langName}.
+Previous student session diary:
+${jotterContext}
+
+Student's current question: "${studentInput}"
+
+Explain briefly (max 2 short sentences) in ${langName} without giving away the answer:
+Tutor (${langName}):`;
 
           const reply = session ? await session.prompt(tutorPrompt) : "Let's work through this step by step!";
+          await recordJotterEvent(sessionId, 'nano', reply);
+
           bus.postMessage({ type: 'tutor_response', text: reply });
         } catch (err) {
           bus.postMessage({ type: 'tutor_response', text: "Let's think carefully about the problem and try again!" });
