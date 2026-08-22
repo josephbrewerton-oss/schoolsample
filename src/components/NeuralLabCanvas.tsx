@@ -39,41 +39,53 @@ export default function NeuralLabCanvas() {
   streakRef.current = streak;
 
   // --- RESILIENT AST PARSER ---
-  const parseAstDirectly = (raw: string) => {
-    try {
-      // 1. Extract prompt before options tag boundary
-      const promptMatch = raw.match(/:prompt\s+"([\s\S]*?)"(?=\s*:options|\s*:answer-key|\s*\))/i) 
-        || raw.match(/:prompt\s+"([^"]+)"/i);
+const parseAstDirectly = (raw: string) => {
+  try {
+    // 1. Extract prompt
+    const promptMatch = raw.match(/:prompt\s+"([\s\S]*?)"(?=\s*:options|\s*:answer-key|\s*\))/i) 
+      || raw.match(/:prompt\s+"([^"]+)"/i)
+      || raw.match(/:prompt\s+([^\(\)]+)/i);
 
-      let cleanPrompt = promptMatch ? promptMatch[1] : '';
-      cleanPrompt = cleanPrompt.replace(/:route[\s\S]*$/i, '').trim();
+    let cleanPrompt = promptMatch ? promptMatch[1] : '';
+    cleanPrompt = cleanPrompt.replace(/:route[\s\S]*$/i, '').trim();
 
-      // 2. Extract options list array
-      const optionsBlockMatch = raw.match(/:options\s+\((?:list\s+)?([\s\S]*?)\)/i);
-      const options: string[] = [];
+    // 2. Extract options block
+    const optionsBlockMatch = raw.match(/:options\s*\((?:list\s+)?([\s\S]*?)\)(?=\s*:answer-key|\s*\)|\s*$)/i);
+    const options: string[] = [];
 
-      if (optionsBlockMatch) {
-        const optRegex = /"([^"]+)"/g;
-        let m: RegExpExecArray | null;
-        while ((m = optRegex.exec(optionsBlockMatch[1])) !== null) {
-          options.push(m[1].trim());
-        }
+    if (optionsBlockMatch) {
+      const blockContent = optionsBlockMatch[1].trim();
+      
+      // Try extracting quoted strings first
+      const optRegex = /"([^"]+)"/g;
+      let m: RegExpExecArray | null;
+      while ((m = optRegex.exec(blockContent)) !== null) {
+        options.push(m[1].trim());
       }
 
-      // 3. Extract answer key
-      const keyMatch = raw.match(/:answer-key\s+(\d+)/i);
-      const answerKey = keyMatch ? parseInt(keyMatch[1], 10) : 0;
-
-      return {
-        prompt: cleanPrompt || 'Select the correct answer:',
-        options: options.length >= 2 ? options : ['Option A', 'Option B', 'Option C', 'Option D'],
-        answerKey: answerKey
-      };
-    } catch (e) {
-      console.error('Direct AST Parse Error:', e);
-      return null;
+      // If no quoted strings found, split by whitespace or s-expression tokens
+      if (options.length === 0) {
+        const rawTokens = blockContent.split(/\s+/).filter(t => t && t !== 'list');
+        rawTokens.forEach(token => {
+          options.push(token.replace(/^["']|["']$/g, '').trim());
+        });
+      }
     }
-  };
+
+    // 3. Extract answer key
+    const keyMatch = raw.match(/:answer-key\s+(\d+)/i);
+    const answerKey = keyMatch ? parseInt(keyMatch[1], 10) : 0;
+
+    return {
+      prompt: cleanPrompt || 'Select the correct answer:',
+      options: options.length >= 2 ? options : ['Option A', 'Option B', 'Option C', 'Option D'],
+      answerKey: answerKey
+    };
+  } catch (e) {
+    console.error('Direct AST Parse Error:', e);
+    return null;
+  }
+};
 
   const tokenize = (input: string) => {
     return input
@@ -283,22 +295,28 @@ export default function NeuralLabCanvas() {
     }
   };
 
-  const dispatchIntent = () => {
-    if (!channelRef.current || channelRef.current.readyState !== 'open') return;
-    rawAstStreamRef.current = '';
-    compiledASTRef.current = null;
-    selectedAnswerRef.current = null;
-    correctIndexRef.current = null;
-    hintTextRef.current = null;
-    renderScreen();
+const dispatchIntent = (
+  ks = selectedKeyStage,
+  subj = selectedSubject,
+  unit = selectedUnit
+) => {
+  if (!channelRef.current || channelRef.current.readyState !== 'open') return;
+  rawAstStreamRef.current = '';
+  compiledASTRef.current = null;
+  selectedAnswerRef.current = null;
+  correctIndexRef.current = null;
+  hintTextRef.current = null;
+  renderScreen();
 
-    const seed = Math.floor(Math.random() * 10000);
-    const nonce = Date.now().toString(36).slice(-4);
+  const seed = Math.floor(Math.random() * 10000);
+  const nonce = Date.now().toString(36).slice(-4);
 
-    const intent = `Subject: "${selectedSubject}", Topic: "${selectedUnit}", Key Stage: "${selectedKeyStage}" (Seed #${seed}-${nonce})`;
-    channelRef.current.send(intent);
-  };
+  // Store the active title explicitly alongside the request
+  (window as any).__ACTIVE_TOPIC_HEADER = `${subj}: ${unit}`;
 
+  const intent = `Subject: "${subj}", Topic: "${unit}", Key Stage: "${ks}" (Seed #${seed}-${nonce})`;
+  channelRef.current.send(intent);
+};
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
