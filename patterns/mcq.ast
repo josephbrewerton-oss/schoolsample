@@ -1,0 +1,9 @@
+(pattern:def :id "quiz:mcq"
+  (ui:card :class "quiz-card"
+    (ui:text :variant "h2" :bind :prompt)
+    (ui:choice-group :name "mcq-options" :bind :options)
+    (behavior:fsm :id "eval-fsm"
+      (state :initial "pending"
+        (on "SELECT" (eval:compare :target :selection :expected :answer-key))
+        (on "CORRECT" (audio:play "feedback-success") (transition "success"))
+        (on "INCORRECT" (audio:play "feedback-fail") (transition "retry"))))))
