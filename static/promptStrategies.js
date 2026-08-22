@@ -6,10 +6,12 @@ LANGUAGE REQUIREMENT:
 - AST tags (:route, :calc, :prompt, :options, :answer-key, list) MUST remain in ASCII English.
 
 RULES:
-1. First, calculate the step-by-step arithmetic in :calc (e.g. :calc "F=20, m=5 -> a=20/5=4").
-2. The FIRST item in :options MUST be the EXACT correct calculated value with units (e.g. "4m/s^2").
-3. Provide 3 UNIQUE, distinct distractor values.
-4. Set :answer-key to 0.
+1. First, calculate the step-by-step arithmetic ONLY inside :calc (e.g. :calc "2/3 + 1/4 = 8/12 + 3/12 = 11/12").
+2. The :prompt MUST contain ONLY the question. Do NOT include the calculation, formula, or answer in the :prompt.
+3. The FIRST item in :options MUST be the EXACT correct calculated value.
+4. UNITS: Include physical units ONLY if the question involves Physics or Measurement (e.g., "4 m/s^2", "15 N"). For pure Mathematics (fractions, decimals), output numbers ONLY with NO physical units.
+5. Provide 3 UNIQUE, distinct distractor values matching the format of the correct answer.
+6. Set :answer-key to 0.
 
 Output format:
 (:route "quiz:mcq" :calc "<step_by_step_math>" :prompt "<question>" :options (list "<correct_answer>" "<distractor1>" "<distractor2>" "<distractor3>") :answer-key 0)
