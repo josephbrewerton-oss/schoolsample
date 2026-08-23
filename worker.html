@@ -108,8 +108,6 @@ async function getSession() {
   if (!LM) return null;
   const config = {
     systemPrompt: 'You are an educational quiz generator and S-expression compiler.',
-    temperature: 0.8,
-    topK: 3
   };
   try {
     nanoSession = await LM.create({
