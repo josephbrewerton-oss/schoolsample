@@ -7,6 +7,17 @@ export function parseSExpr(input: string): SExprAST {
   function parseNode(): SExprAST {
     const token = tokens[cursor++];
     if (token === '(') {
+      // Lookahead: check if next token is a keyword argument or an array of items
+      const next = tokens[cursor];
+      if (typeof next === 'string' && (next.startsWith(':') || next.startsWith('"') || !isNaN(Number(next)))) {
+        const items: any[] = [];
+        while (cursor < tokens.length && tokens[cursor] !== ')') {
+          items.push(parseNode());
+        }
+        cursor++; // consume ')'
+        return items;
+      }
+
       const tag = tokens[cursor++];
       const props: Record<string, any> = {};
       const children: (SExprNode | any)[] = [];
@@ -30,7 +41,7 @@ export function parseSExpr(input: string): SExprAST {
     if (token === 'false') return false;
     if (token === 'nil' || token === 'null') return null;
     if (!isNaN(Number(token))) return Number(token);
-    if (token.startsWith('"') && token.endsWith('"')) return token.slice(1, -1);
+    if (token && token.startsWith('"') && token.endsWith('"')) return token.slice(1, -1);
     return token;
   }
 
