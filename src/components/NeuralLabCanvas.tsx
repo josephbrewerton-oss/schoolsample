@@ -46,6 +46,12 @@ export default function NeuralLabCanvas() {
     sendIntent(ks, sub, u);
   };
 
+  React.useEffect(() => {
+    if (isReady && !activeQuestion) {
+      requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
+    }
+  }, [isReady]);  
+
   const handleSelectOption = (idx: number) => {
     if (selectedAnswer === correctIndex) return;
     setSelectedAnswer(idx);
@@ -68,6 +74,14 @@ export default function NeuralLabCanvas() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
+      {/* Background WebRTC Daemon Worker Frame */}
+      <iframe
+        src="/schoolsample/worker.html"
+        style={{ display: 'none', width: 0, height: 0, border: 'none' }}
+        title="WebRTC Neural Worker Daemon"
+        aria-hidden="true"
+      />
+
       <CurriculumSelector
         keyStage={selectedKeyStage}
         subject={selectedSubject}
@@ -98,7 +112,7 @@ export default function NeuralLabCanvas() {
         onDownloadReport={handleExportReport}
       />
 
-<div style={{
+      <div style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: '16px',

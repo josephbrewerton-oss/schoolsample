@@ -12,40 +12,49 @@ export default function NanoAssistantPanel({ contextTopic, currentQuestion }: Na
   ]);
   const [input, setInput] = useState('');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  
+  const voiceEnabledRef = useRef(voiceEnabled);
+  voiceEnabledRef.current = voiceEnabled;
+
   const busRef = useRef<BroadcastChannel | null>(null);
+  const isQueryingRef = useRef(false);
 
   useEffect(() => {
-    // Re-use your existing internal WebRTC / BroadcastChannel signaling bus
     const bus = new BroadcastChannel('webrtc-neural-signaling');
     busRef.current = bus;
 
     bus.onmessage = (e) => {
       if (e.data.type === 'tutor_response') {
+        isQueryingRef.current = false;
         const reply = e.data.text;
         setMessages((prev) => [...prev, { sender: 'Prof. Turing', text: reply }]);
         
-        // Optional: Web Speech API synthesis for voice output
-        if (voiceEnabled && 'speechSynthesis' in window) {
+        if (voiceEnabledRef.current && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel(); // Stop any pending speech
           const utterance = new SpeechSynthesisUtterance(reply);
           window.speechSynthesis.speak(utterance);
         }
       }
     };
 
-    return () => bus.close();
-  }, [voiceEnabled]);
+    return () => {
+      bus.close();
+    };
+  }, []);
 
   const handleAsk = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isQueryingRef.current) return;
     
     const userMsg = input.trim();
+    isQueryingRef.current = true;
     setMessages((prev) => [...prev, { sender: 'Pupil', text: userMsg }]);
     setInput('');
 
-    // Dispatch prompt to worker.html with topic context
     busRef.current?.postMessage({
       type: 'tutor_query',
-      prompt: `Role: Kid-friendly tutor. Topic: "${contextTopic || 'Math'}". Current Question: "${currentQuestion || ''}". Pupil asks: "${userMsg}". Give a concise 1-2 sentence guiding clue without giving away the direct final answer.`
+      prompt: userMsg,
+      topic: contextTopic || 'General',
+      questionContext: currentQuestion || ''
     });
   };
 
@@ -60,7 +69,7 @@ export default function NanoAssistantPanel({ contextTopic, currentQuestion }: Na
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#f59e0b' }}>
-          ⚡ Prof. Turing [Gemini Nano]
+          🤖 Prof. Turing [Gemini Nano]
         </span>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
@@ -83,7 +92,6 @@ export default function NanoAssistantPanel({ contextTopic, currentQuestion }: Na
         </div>
       </div>
 
-      {/* Terminal Chat Stream */}
       <div style={{
         background: '#020617',
         border: '1px solid #0f172a',
@@ -98,12 +106,11 @@ export default function NanoAssistantPanel({ contextTopic, currentQuestion }: Na
       }}>
         {messages.map((m, i) => (
           <div key={i} style={{ color: m.sender === 'Prof. Turing' ? '#4ade80' : '#38bdf8', marginBottom: '4px' }}>
-            🤖 <strong>{m.sender}:</strong> {m.text}
+            <strong>{m.sender}:</strong> {m.text}
           </div>
         ))}
       </div>
 
-      {/* Input Box */}
       <div style={{ display: 'flex', gap: '8px' }}>
         <input
           type="text"

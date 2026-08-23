@@ -39,15 +39,10 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
           const channel = ev.channel;
           channelRef.current = channel;
 
-            channel.onopen = () => {
-            setIsReady(true);
-            setStatus('Engine Ready');
-            // Auto-trigger initial question once channel is open
-            const seed = Math.floor(Math.random() * 10000);
-            const nonce = Date.now().toString(36).slice(-4);
-            const initialIntent = `Subject: "Mathematics", Topic: "Fractions and Decimals", Key Stage: "Key Stage 2" (Seed #${seed}-${nonce})`;
-            channel.send(initialIntent);
-          };
+channel.onopen = () => {
+  setIsReady(true);
+  setStatus('Engine Ready');
+};
 
           channel.onmessage = (msg) => {
             if (msg.data === '__EOF__') {
