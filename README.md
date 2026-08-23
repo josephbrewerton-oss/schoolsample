@@ -1,7 +1,8 @@
 <!--
 Copyright (c) 2026 Joseph Brewerton
 Licensed under GNU AGPLv3 / Commercial Dual-License.
--->
+
+-->Dedicated to St Joseph, and created in the spirit of the Catholic Church’s preferential option for the poor—providing equitable access to learning for all.
 
 # ⚡ St Joseph's Edge Learning Engine
 
