@@ -51,6 +51,7 @@ export const CurriculumSelector: React.FC<Props> = ({
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
         <select
+          aria-label="Select Key Stage"
           value={keyStage}
           onChange={(e) => onKeyStageChange(e.target.value)}
           style={{
@@ -70,6 +71,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         </select>
 
         <select
+          aria-label="Select Subject"
           value={subject}
           onChange={(e) => onSubjectChange(e.target.value)}
           style={{
@@ -89,6 +91,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         </select>
 
         <select
+          aria-label="Select Unit or Topic"
           value={unit}
           onChange={(e) => onUnitChange(e.target.value)}
           style={{
@@ -108,6 +111,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         </select>
 
         <button
+          aria-label="Generate New Question"
           onClick={onNewQuestion}
           style={{
             background: '#2563eb',
@@ -127,6 +131,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginLeft: '4px' }}>
           <input
             type="text"
+            aria-label="Session or Lesson Name"
             value={sessionId}
             onChange={(e) => onSessionIdChange(e.target.value)}
             placeholder="Lesson name"
@@ -142,6 +147,7 @@ export const CurriculumSelector: React.FC<Props> = ({
             }}
           />
           <button
+            aria-label="Download Local Diagnostic Summary Report"
             onClick={onDownloadReport}
             title="Download Local Diagnostic Summary"
             style={{
@@ -161,6 +167,8 @@ export const CurriculumSelector: React.FC<Props> = ({
       </div>
 
       <span
+        role="status"
+        aria-live="polite"
         style={{
           fontSize: '0.85rem',
           fontWeight: 600,
