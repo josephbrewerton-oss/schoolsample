@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { extractQuestionFromStream, ExtractedQuestion } from '../utils/astQuestionExtractor';
 
+export interface DispatchContext {
+  keyStageId?: string;
+  subjectId?: string;
+  topicId?: string;
+  keyStageTitle: string;
+  subjectTitle: string;
+  topicTitle: string;
+}
+
 export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void) {
   const [isReady, setIsReady] = useState(false);
   const [status, setStatus] = useState('Connecting to Daemon...');
@@ -9,15 +18,45 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
   const busRef = useRef<BroadcastChannel | null>(null);
   const rawStreamRef = useRef('');
 
-  const sendIntent = useCallback((ks: string, subj: string, unit: string) => {
+  const onNewQuestionRef = useRef(onNewQuestion);
+  onNewQuestionRef.current = onNewQuestion;
+
+  const activeContextRef = useRef<DispatchContext>({
+    keyStageTitle: 'Key Stage 2',
+    subjectTitle: 'Mathematics',
+    topicTitle: 'Fractions and Decimals'
+  });
+
+  const sendIntent = useCallback((
+    ks: string,
+    subj: string,
+    unit: string,
+    ksId?: string,
+    subjId?: string,
+    unitId?: string
+  ) => {
     rawStreamRef.current = '';
+
+    activeContextRef.current = {
+      keyStageTitle: ks,
+      subjectTitle: subj,
+      topicTitle: unit,
+      keyStageId: ksId,
+      subjectId: subjId,
+      topicId: unitId
+    };
+
     if (!channelRef.current || channelRef.current.readyState !== 'open') {
       busRef.current?.postMessage({ type: 'peer_ready' });
       return;
     }
+
     const seed = Math.floor(Math.random() * 10000);
     const nonce = Date.now().toString(36).slice(-4);
-    const intent = `Subject: "${subj}", Topic: "${unit}", Key Stage: "${ks}" (Seed #${seed}-${nonce})`;
+    const reqId = `req_${subjId || subj.toLowerCase().slice(0, 3)}_${nonce}`;
+
+    // ID-anchored intent payload with explicit machine tags
+    const intent = `Subject: "${subj}", Topic: "${unit}", Key Stage: "${ks}", SubjectId: "${subjId || ''}", TopicId: "${unitId || ''}", RequestId: "${reqId}" (Seed #${seed})`;
     channelRef.current.send(intent);
   }, []);
 
@@ -39,15 +78,18 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
           const channel = ev.channel;
           channelRef.current = channel;
 
-channel.onopen = () => {
-  setIsReady(true);
-  setStatus('Engine Ready');
-};
+          channel.onopen = () => {
+            setIsReady(true);
+            setStatus('Engine Ready');
+          };
 
           channel.onmessage = (msg) => {
             if (msg.data === '__EOF__') {
-              const question = extractQuestionFromStream(rawStreamRef.current);
-              if (question) onNewQuestion(question);
+              const { subjectTitle, topicTitle } = activeContextRef.current;
+              const question = extractQuestionFromStream(rawStreamRef.current, subjectTitle, topicTitle);
+              if (question) {
+                onNewQuestionRef.current(question);
+              }
               rawStreamRef.current = '';
             } else {
               rawStreamRef.current += msg.data;
@@ -87,7 +129,7 @@ channel.onopen = () => {
       bus.close();
       if (pcRef.current) pcRef.current.close();
     };
-  }, [onNewQuestion]);
+  }, []);
 
   return { isReady, status, sendIntent };
 }

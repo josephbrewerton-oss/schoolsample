@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { OAK_CURRICULUM_CATALOGUE, DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { useWebRTCNeuralBus } from '../hooks/useWebRTCNeuralBus';
@@ -23,7 +23,17 @@ export default function NeuralLabCanvas() {
     unit: string;
   } | null>(null);
 
-  // Live state reference to prevent stale closure captures
+  // Helper to lookup canonical machine IDs from OAK_CURRICULUM_CATALOGUE
+  const resolveIds = (ksTitle: string, subTitle: string, unitTitle: string) => {
+    const stageEntry = Object.values(OAK_CURRICULUM_CATALOGUE).find((s) => s.title === ksTitle);
+    const ksId = stageEntry?.id || 'ks2';
+    const subEntry = stageEntry?.subjects.find((sub) => sub.title === subTitle);
+    const subId = subEntry?.id || 'maths';
+    const unitEntry = subEntry?.topics.find((t) => t.title === unitTitle);
+    const unitId = unitEntry?.id || 'fractions-decimals';
+    return { ksId, subId, unitId };
+  };
+
   const selectionRef = useRef({
     keyStage: selectedKeyStage,
     subject: selectedSubject,
@@ -60,10 +70,12 @@ export default function NeuralLabCanvas() {
     setActiveQuestion(null);
     setSelectedAnswer(null);
     setCorrectIndex(null);
-    sendIntent(ks, sub, u);
+
+    const { ksId, subId, unitId } = resolveIds(ks, sub, u);
+    sendIntent(ks, sub, u, ksId, subId, unitId);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isReady && !activeQuestion) {
       requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
     }
@@ -91,7 +103,6 @@ export default function NeuralLabCanvas() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-      {/* Background WebRTC Daemon Worker Frame */}
       <iframe
         src="/schoolsample/worker.html"
         style={{ display: 'none', width: 0, height: 0, border: 'none' }}
@@ -155,33 +166,9 @@ export default function NeuralLabCanvas() {
               ⚡ Fast-splicing AST question archetype...
             </div>
             <div style={{ width: '75%', height: '20px', background: '#f1f5f9', borderRadius: '6px' }} />
-            <div
-              style={{
-                width: '100%',
-                height: '52px',
-                background: '#f8fafc',
-                borderRadius: '10px',
-                border: '1px solid #e2e8f0',
-              }}
-            />
-            <div
-              style={{
-                width: '100%',
-                height: '52px',
-                background: '#f8fafc',
-                borderRadius: '10px',
-                border: '1px solid #e2e8f0',
-              }}
-            />
-            <div
-              style={{
-                width: '100%',
-                height: '52px',
-                background: '#f8fafc',
-                borderRadius: '10px',
-                border: '1px solid #e2e8f0',
-              }}
-            />
+            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
           </div>
         ) : (
           <QuestionCard
