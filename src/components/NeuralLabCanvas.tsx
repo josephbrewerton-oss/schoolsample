@@ -4,11 +4,13 @@ import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { useWebRTCNeuralBus } from '../hooks/useWebRTCNeuralBus';
 import { ExtractedQuestion } from '../utils/astQuestionExtractor';
+import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
 
 export default function NeuralLabCanvas() {
   const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 2');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [selectedUnit, setSelectedUnit] = useState('Fractions and Decimals');
+  const [sessionId, setSessionId] = useState('Lesson 1');
 
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -55,6 +57,15 @@ export default function NeuralLabCanvas() {
     }
   };
 
+  const handleExportReport = async () => {
+    try {
+      const summary = await generateSessionReport(sessionId);
+      downloadReportAsHtml(summary);
+    } catch (err) {
+      console.error('Failed to generate diagnostic report:', err);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
       <CurriculumSelector
@@ -63,6 +74,7 @@ export default function NeuralLabCanvas() {
         unit={selectedUnit}
         status={status}
         isReady={isReady}
+        sessionId={sessionId}
         onKeyStageChange={(ks) => {
           const firstSub = Object.keys(DEFAULT_OAK_CATALOGUE[ks] || {})[0] || '';
           const firstUnit = DEFAULT_OAK_CATALOGUE[ks]?.[firstSub]?.[0] || '';
@@ -81,20 +93,30 @@ export default function NeuralLabCanvas() {
           setSelectedUnit(u);
           requestQuestion(selectedKeyStage, selectedSubject, u);
         }}
+        onSessionIdChange={setSessionId}
         onNewQuestion={() => requestQuestion()}
+        onDownloadReport={handleExportReport}
       />
 
-      <div style={{
+<div style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
         borderRadius: '16px',
         padding: '2rem',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-        minHeight: '480px'
+        minHeight: '540px',
+        boxSizing: 'border-box'
       }}>
         {!activeQuestion ? (
-          <div style={{ padding: '4rem 1rem', textAlign: 'center', color: '#64748b', fontSize: '1.25rem' }}>
-            ⚡ Fast-splicing AST question archetype...
+          <div style={{ height: '440px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 600, color: '#64748b' }}>
+              ⚡ Fast-splicing AST question archetype...
+            </div>
+            {/* Structural skeleton to preserve identical vertical height */}
+            <div style={{ width: '75%', height: '20px', background: '#f1f5f9', borderRadius: '6px' }} />
+            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
           </div>
         ) : (
           <QuestionCard

@@ -8,8 +8,12 @@ export type ASTNode = {
  * Tokenizes raw S-expression strings into symbols, keywords, strings, and parenthesis.
  */
 function tokenize(input: string): string[] {
-  // Strip comments (;; ...)
-  const sanitized = input.replace(/;;.*$/gm, '');
+  // Strip comments (;; ...) and descriptive LLM image placeholders
+  const sanitized = input
+    .replace(/;;.*$/gm, '')
+    .replace(/<image[^>]*>/gi, '')
+    .replace(/\[image[^\]]*\]/gi, '');
+
   const tokens: string[] = [];
   const regex = /\s*([()"]|:[a-zA-Z0-9_-]+|[^\s()":]+)/g;
   let match: RegExpExecArray | null;
@@ -37,15 +41,36 @@ function tokenize(input: string): string[] {
 }
 
 /**
- * Recursively parses token stream into an AST node tree.
+ * Recursively parses token stream into an AST node tree or structured literal list.
  */
 export function parseAST(source: string): ASTNode | null {
   const tokens = tokenize(source);
   let cursor = 0;
 
-  function parseExpression(): any {
-    const token = tokens[cursor++];
-    if (token !== '(') return null;
+  function parseList(): any {
+    if (tokens[cursor] !== '(') return null;
+    cursor++; // consume '('
+
+    const firstToken = tokens[cursor];
+
+    // If it starts with a keyword or list token, parse as a list / kwargs container
+    if (firstToken && firstToken.startsWith(':')) {
+      const props: Record<string, any> = {};
+      while (cursor < tokens.length && tokens[cursor] !== ')') {
+        const keyToken = tokens[cursor++];
+        if (keyToken.startsWith(':')) {
+          const key = keyToken.slice(1);
+          if (tokens[cursor] === '(') {
+            props[key] = parseList();
+          } else {
+            const val = tokens[cursor++];
+            props[key] = val && val.startsWith('"') ? JSON.parse(val) : val;
+          }
+        }
+      }
+      if (tokens[cursor] === ')') cursor++;
+      return props;
+    }
 
     const tag = tokens[cursor++];
     const node: ASTNode = { tag, props: {}, children: [] };
@@ -56,15 +81,14 @@ export function parseAST(source: string): ASTNode | null {
       if (current.startsWith(':')) {
         const key = current.slice(1);
         cursor++;
-        const valToken = tokens[cursor];
-        if (valToken === '(') {
-          node.props[key] = parseExpression();
+        if (tokens[cursor] === '(') {
+          node.props[key] = parseList();
         } else {
-          cursor++;
-          node.props[key] = valToken.startsWith('"') ? JSON.parse(valToken) : valToken;
+          const valToken = tokens[cursor++];
+          node.props[key] = valToken && valToken.startsWith('"') ? JSON.parse(valToken) : valToken;
         }
       } else if (current === '(') {
-        node.children.push(parseExpression());
+        node.children.push(parseList());
       } else {
         cursor++;
         node.children.push(current.startsWith('"') ? JSON.parse(current) : current);
@@ -75,5 +99,5 @@ export function parseAST(source: string): ASTNode | null {
     return node;
   }
 
-  return parseExpression();
+  return parseList();
 }

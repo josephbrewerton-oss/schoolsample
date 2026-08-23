@@ -7,10 +7,13 @@ interface Props {
   unit: string;
   status: string;
   isReady: boolean;
+  sessionId: string;
   onKeyStageChange: (ks: string) => void;
   onSubjectChange: (sub: string) => void;
   onUnitChange: (unit: string) => void;
+  onSessionIdChange: (name: string) => void;
   onNewQuestion: () => void;
+  onDownloadReport: () => void;
 }
 
 export const CurriculumSelector: React.FC<Props> = ({
@@ -19,55 +22,88 @@ export const CurriculumSelector: React.FC<Props> = ({
   unit,
   status,
   isReady,
+  sessionId,
   onKeyStageChange,
   onSubjectChange,
   onUnitChange,
-  onNewQuestion
+  onSessionIdChange,
+  onNewQuestion,
+  onDownloadReport
 }) => {
   const availableSubjects = Object.keys(DEFAULT_OAK_CATALOGUE[keyStage] || {});
   const availableUnits = DEFAULT_OAK_CATALOGUE[keyStage]?.[subject] || [];
 
   return (
-    <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '12px',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      background: '#ffffff',
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      padding: '1rem 1.25rem',
-      marginBottom: '1.5rem'
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '12px',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        padding: '1rem 1.25rem',
+        marginBottom: '1.5rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      }}
+    >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
         <select
           value={keyStage}
           onChange={(e) => onKeyStageChange(e.target.value)}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600, color: '#1e3a8a' }}
+          style={{
+            padding: '0.45rem 0.75rem',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            fontWeight: 600,
+            color: '#1e3a8a',
+            background: '#f8fafc'
+          }}
         >
           {Object.keys(DEFAULT_OAK_CATALOGUE).map((ks) => (
-            <option key={ks} value={ks}>{ks}</option>
+            <option key={ks} value={ks}>
+              {ks}
+            </option>
           ))}
         </select>
 
         <select
           value={subject}
           onChange={(e) => onSubjectChange(e.target.value)}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontWeight: 600, color: '#0f172a' }}
+          style={{
+            padding: '0.45rem 0.75rem',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            fontWeight: 600,
+            color: '#0f172a',
+            background: '#f8fafc'
+          }}
         >
           {availableSubjects.map((sub) => (
-            <option key={sub} value={sub}>{sub}</option>
+            <option key={sub} value={sub}>
+              {sub}
+            </option>
           ))}
         </select>
 
         <select
           value={unit}
           onChange={(e) => onUnitChange(e.target.value)}
-          style={{ padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#334155', maxWidth: '280px' }}
+          style={{
+            padding: '0.45rem 0.75rem',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            color: '#334155',
+            background: '#f8fafc',
+            maxWidth: '260px'
+          }}
         >
           {availableUnits.map((u) => (
-            <option key={u} value={u}>{u}</option>
+            <option key={u} value={u}>
+              {u}
+            </option>
           ))}
         </select>
 
@@ -79,23 +115,62 @@ export const CurriculumSelector: React.FC<Props> = ({
             fontWeight: 600,
             border: 'none',
             borderRadius: '8px',
-            padding: '0.5rem 1.25rem',
-            cursor: 'pointer'
+            padding: '0.5rem 1.15rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
           }}
         >
           New Question
         </button>
+
+        {/* Session Tag & Report Download */}
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginLeft: '4px' }}>
+          <input
+            type="text"
+            value={sessionId}
+            onChange={(e) => onSessionIdChange(e.target.value)}
+            placeholder="Lesson name"
+            title="Session Name for Local Jotter"
+            style={{
+              padding: '0.45rem 0.65rem',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+              fontWeight: 500,
+              fontSize: '0.85rem',
+              width: '120px',
+              background: '#f8fafc'
+            }}
+          />
+          <button
+            onClick={onDownloadReport}
+            title="Download Local Diagnostic Summary"
+            style={{
+              background: '#f1f5f9',
+              color: '#334155',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              padding: '0.45rem 0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            📥 Report
+          </button>
+        </div>
       </div>
 
-      <span style={{
-        fontSize: '0.85rem',
-        fontWeight: 600,
-        padding: '0.35rem 0.75rem',
-        borderRadius: '9999px',
-        background: isReady ? '#ecfdf5' : '#fef3c7',
-        color: isReady ? '#059669' : '#d97706',
-        border: `1px solid ${isReady ? '#a7f3d0' : '#fde68a'}`
-      }}>
+      <span
+        style={{
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          padding: '0.35rem 0.75rem',
+          borderRadius: '9999px',
+          background: isReady ? '#ecfdf5' : '#fef3c7',
+          color: isReady ? '#059669' : '#d97706',
+          border: `1px solid ${isReady ? '#a7f3d0' : '#fde68a'}`
+        }}
+      >
         ● {status}
       </span>
     </div>
