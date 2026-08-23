@@ -1,10 +1,16 @@
+import { ASTFlowGovernor } from '../engine/astGovernor';
+
 export interface ExtractedQuestion {
   prompt: string;
   options: string[];
   answerKey: number;
 }
 
-export function extractQuestionFromStream(rawStream: string): ExtractedQuestion | null {
+export function extractQuestionFromStream(
+  rawStream: string,
+  subject: string = '',
+  topic: string = ''
+): ExtractedQuestion | null {
   const cleanRaw = rawStream
     .replace(/```[a-z]*/gi, '')
     .replace(/```/g, '')
@@ -14,6 +20,9 @@ export function extractQuestionFromStream(rawStream: string): ExtractedQuestion 
                cleanRaw.match(/:prompt\s+([^\(\):]+)/i)?.[1] ||
                'Select the correct answer:';
   prompt = prompt.replace(/:route[\s\S]*$/i, '').trim();
+
+  const scratchpad = cleanRaw.match(/:scratchpad\s+"([^"]+)"/i)?.[1] || '';
+  const route = cleanRaw.match(/:route\s+"([^"]+)"/i)?.[1] || 'quiz:mcq';
 
   let options: string[] = [];
   const optionsBlockMatch = cleanRaw.match(/:options\s*\((?:list\s+)?([\s\S]*?)\)(?=\s*:answer-key|\s*\)|\s*$)/i);
@@ -34,7 +43,21 @@ export function extractQuestionFromStream(rawStream: string): ExtractedQuestion 
   const keyMatch = cleanRaw.match(/:answer-key\s+(\d+)/i);
   const answerKey = keyMatch ? parseInt(keyMatch[1], 10) : 0;
 
-  if (options.length < 2) return null;
+  // Pass extracted raw properties to the Flow Governor
+  const governed = ASTFlowGovernor.govern(
+    { route, scratchpad, prompt, options, answerKey },
+    subject,
+    topic
+  );
 
-  return { prompt, options, answerKey };
+  if (!governed.isValid || !governed.sanitizedQuestion) {
+    console.warn(`[AST Flow Governor Rejection]: ${governed.rejectionReason}`);
+    return null;
+  }
+
+  return {
+    prompt: governed.sanitizedQuestion.prompt,
+    options: governed.sanitizedQuestion.options,
+    answerKey: governed.sanitizedQuestion.answerKey,
+  };
 }
