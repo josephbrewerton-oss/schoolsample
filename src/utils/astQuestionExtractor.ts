@@ -1,63 +1,47 @@
-import { ASTFlowGovernor } from '../engine/astGovernor';
+// src/utils/astQuestionExtractor.ts
 
 export interface ExtractedQuestion {
   prompt: string;
   options: string[];
   answerKey: number;
+  scratchpad?: string;
 }
 
-export function extractQuestionFromStream(
-  rawStream: string,
-  subject: string = '',
-  topic: string = ''
-): ExtractedQuestion | null {
-  const cleanRaw = rawStream
-    .replace(/```[a-z]*/gi, '')
-    .replace(/```/g, '')
-    .trim();
+export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | null {
+  if (!rawLisp || typeof rawLisp !== 'string') return null;
 
-  let prompt = cleanRaw.match(/:prompt\s+"([^"]+)"/i)?.[1] ||
-               cleanRaw.match(/:prompt\s+([^\(\):]+)/i)?.[1] ||
-               'Select the correct answer:';
-  prompt = prompt.replace(/:route[\s\S]*$/i, '').trim();
+  try {
+    const clean = rawLisp.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '').trim();
 
-  const scratchpad = cleanRaw.match(/:scratchpad\s+"([^"]+)"/i)?.[1] || '';
-  const route = cleanRaw.match(/:route\s+"([^"]+)"/i)?.[1] || 'quiz:mcq';
+    const promptMatch = clean.match(/:prompt\s+"([^"]+)"/i);
+    const optionsMatch = clean.match(/:options\s+\((?:list\s+)?([^)]+)\)/i);
+    const answerKeyMatch = clean.match(/:answer-key\s+(\d+)/i);
+    const scratchpadMatch = clean.match(/:scratchpad\s+"([^"]+)"/i);
 
-  let options: string[] = [];
-  const optionsBlockMatch = cleanRaw.match(/:options\s*\((?:list\s+)?([\s\S]*?)\)(?=\s*:answer-key|\s*\)|\s*$)/i);
-
-  if (optionsBlockMatch) {
-    const blockContent = optionsBlockMatch[1].trim();
-    const quotedMatches = blockContent.match(/"([^"]+)"/g);
-    if (quotedMatches && quotedMatches.length > 0) {
-      options = quotedMatches.map(s => s.replace(/^"|"$/g, '').trim());
-    } else {
-      options = blockContent
-        .split(/\s+/)
-        .filter(t => t && t !== 'list')
-        .map(t => t.replace(/^["']|["']$/g, '').trim());
+    if (!promptMatch || !optionsMatch) {
+      return null;
     }
-  }
 
-  const keyMatch = cleanRaw.match(/:answer-key\s+(\d+)/i);
-  const answerKey = keyMatch ? parseInt(keyMatch[1], 10) : 0;
+    const prompt = promptMatch[1].trim();
+    
+    // Parse the string items out of :options (list "A" "B" "C" "D")
+    const optionMatches = [...optionsMatch[1].matchAll(/"([^"]+)"/g)].map((m) => m[1].trim());
 
-  // Pass extracted raw properties to the Flow Governor
-  const governed = ASTFlowGovernor.govern(
-    { route, scratchpad, prompt, options, answerKey },
-    subject,
-    topic
-  );
+    if (optionMatches.length < 2) {
+      return null;
+    }
 
-  if (!governed.isValid || !governed.sanitizedQuestion) {
-    console.warn(`[AST Flow Governor Rejection]: ${governed.rejectionReason}`);
+    const answerKey = answerKeyMatch ? parseInt(answerKeyMatch[1], 10) : 0;
+    const scratchpad = scratchpadMatch ? scratchpadMatch[1] : undefined;
+
+    return {
+      prompt,
+      options: optionMatches,
+      answerKey: isNaN(answerKey) ? 0 : answerKey,
+      scratchpad,
+    };
+  } catch (err) {
+    console.error('[AST Extractor] Parse error:', err);
     return null;
   }
-
-  return {
-    prompt: governed.sanitizedQuestion.prompt,
-    options: governed.sanitizedQuestion.options,
-    answerKey: governed.sanitizedQuestion.answerKey,
-  };
 }
