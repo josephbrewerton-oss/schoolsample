@@ -23,6 +23,15 @@ export default function NeuralLabCanvas() {
     unit: string;
   } | null>(null);
 
+  const isGeneratingRef = useRef(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const selectionRef = useRef({
+    keyStage: selectedKeyStage,
+    subject: selectedSubject,
+    unit: selectedUnit,
+  });
+
   const resolveIds = (ksTitle: string, subTitle: string, unitTitle: string) => {
     const stageEntry = Object.values(OAK_CURRICULUM_CATALOGUE).find((s) => s.title === ksTitle);
     const ksId = stageEntry?.id || 'ks2';
@@ -33,13 +42,9 @@ export default function NeuralLabCanvas() {
     return { ksId, subId, unitId };
   };
 
-  const selectionRef = useRef({
-    keyStage: selectedKeyStage,
-    subject: selectedSubject,
-    unit: selectedUnit,
-  });
-
   const handleNewQuestion = useCallback((q: ExtractedQuestion) => {
+    isGeneratingRef.current = false;
+
     const targetValue = q.options[q.answerKey] ?? q.options[0];
     const shuffled = [...q.options].sort(() => Math.random() - 0.5);
 
@@ -61,16 +66,26 @@ export default function NeuralLabCanvas() {
     u = selectionRef.current.unit
   ) => {
     selectionRef.current = { keyStage: ks, subject: sub, unit: u };
-    setActiveQuestion(null);
-    setSelectedAnswer(null);
-    setCorrectIndex(null);
 
-    const { ksId, subId, unitId } = resolveIds(ks, sub, u);
-    sendIntent(ks, sub, u, ksId, subId, unitId);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      if (isGeneratingRef.current) return;
+      isGeneratingRef.current = true;
+
+      setActiveQuestion(null);
+      setSelectedAnswer(null);
+      setCorrectIndex(null);
+
+      const { ksId, subId, unitId } = resolveIds(ks, sub, u);
+      sendIntent(ks, sub, u, ksId, subId, unitId);
+    }, 150);
   };
 
   useEffect(() => {
-    if (isReady && !activeQuestion) {
+    if (isReady && !activeQuestion && !isGeneratingRef.current) {
       requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
     }
   }, [isReady]);

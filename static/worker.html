@@ -18,48 +18,34 @@
       const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
       const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
 
-      // Inside getAiModelSession in static/worker.html
-const options = {
-  expectedOutputs: [{ type: 'text', languages: ['en'] }]
-};
+      const options = {
+        expectedOutputs: [{ type: 'text', languages: ['en'] }]
+      };
 
-      // 1. Modern Chrome ai.languageModel
       if (aiHost?.languageModel) {
         try {
           if (typeof aiHost.languageModel.capabilities === 'function') {
             const caps = await aiHost.languageModel.capabilities();
             if (caps.available === 'no') return null;
           }
-          return await aiHost.languageModel.create({
-            expectedOutputs: [{ language: 'en' }]
-          });
+          return await aiHost.languageModel.create(options);
         } catch {
           try {
             return await aiHost.languageModel.create();
           } catch (err) {
-            console.warn('[Worker Daemon] ai.languageModel creation failed:', err);
+            console.warn('[Worker Daemon] ai.languageModel create fallback failed:', err);
           }
         }
       }
 
-      // 2. Global window.LanguageModel
       if (GlobalLM?.create) {
         try {
-          return await GlobalLM.create({
-            expectedOutputs: [{ language: 'en' }]
-          });
+          return await GlobalLM.create(options);
         } catch {
           try {
             return await GlobalLM.create();
           } catch {}
         }
-      }
-
-      // 3. Fallback to assistant namespace
-      if (aiHost?.assistant?.create) {
-        try {
-          return await aiHost.assistant.create();
-        } catch {}
       }
 
       return null;
@@ -72,7 +58,7 @@ const options = {
       isConnecting = true;
 
       if (pc) {
-        pc.close();
+        try { pc.close(); } catch {}
       }
 
       console.log('[Worker Daemon] Creating WebRTC Offer...');
@@ -102,9 +88,8 @@ const options = {
           session = await getAiModelSession();
 
           if (!session) {
-            console.warn('[Worker Daemon] No supported Gemini Nano / Prompt API found.');
             if (dc.readyState === 'open') {
-              dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "OK" "Retry" "Help" "Exit") :answer-key 0)');
+              dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "Retry" "Help") :answer-key 0)');
               dc.send('__EOF__');
             }
             return;
@@ -124,9 +109,7 @@ const options = {
           }
         } finally {
           if (session && typeof session.destroy === 'function') {
-            try {
-              session.destroy();
-            } catch {}
+            try { session.destroy(); } catch {}
           }
         }
       };
@@ -163,9 +146,7 @@ const options = {
           if (pc.remoteDescription && pc.signalingState !== 'closed') {
             await pc.addIceCandidate(new RTCIceCandidate(e.data.candidate));
           }
-        } catch (err) {
-          console.error('[Worker Daemon] ICE Candidate Error:', err);
-        }
+        } catch {}
       }
     };
 

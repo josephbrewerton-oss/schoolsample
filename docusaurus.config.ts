@@ -7,17 +7,25 @@ const config: Config = {
   tagline: 'Education for All — Offline-First Curriculum Engine',
   favicon: 'img/favicon.ico',
 
-  // Production URL and baseUrl for GitHub Pages
   url: 'https://josephbrewerton-oss.github.io',
   baseUrl: '/schoolsample/',
 
-  // GitHub Pages deployment config
   organizationName: 'josephbrewerton-oss',
   projectName: 'schoolsample',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
-  // Load WebRTC client script across all pages using relative path
+  // Injects process global before any bundled scripts evaluate
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: {
+        type: 'text/javascript',
+      },
+      innerHTML: 'window.process = window.process || { env: { NODE_ENV: "production" } };',
+    },
+  ],
+
   scripts: [
     {
       src: 'js/webrtc-agent.js',
@@ -36,7 +44,6 @@ const config: Config = {
     [
       'classic',
       {
-        // Docs engine disabled — routes now resolve cleanly to src/pages/
         docs: false,
         blog: {
           showReadingTime: true,
