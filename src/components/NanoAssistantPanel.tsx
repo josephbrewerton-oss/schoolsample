@@ -1,16 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface TuringTutorProps {
   activePrompt?: string;
   activeTopic?: string;
+  contextTopic?: string;
 }
 
-export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutorProps) {
+export function TuringTutor({
+  activePrompt = '',
+  activeTopic = '',
+  contextTopic = '',
+}: TuringTutorProps) {
+  const currentTopic = activeTopic || contextTopic || 'General Studies';
+
   const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
-    { role: 'turing', text: 'I am here to guide your steps! Ask me if you get stuck.' }
+    { role: 'turing', text: 'I am here to guide your steps! Ask me if you get stuck.' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+
+  // Load UK English Voice
+  useEffect(() => {
+    const updateVoices = () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        const ukVoice =
+          voices.find(
+            (v) =>
+              v.lang === 'en-GB' ||
+              v.name.toLowerCase().includes('united kingdom') ||
+              v.name.toLowerCase().includes('british')
+          ) || voices[0];
+        voiceRef.current = ukVoice || null;
+      }
+    };
+
+    updateVoices();
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
+  }, []);
+
+  const cleanThoughtArtifacts = (raw: string): string => {
+    return raw
+      .replace(/^[\s\S]*?\*\*Response:\*\*/i, '') // Strip preceding reasoning headers
+      .replace(/^[\s\S]*?(?:Okay,?\s+I\s+understand!|Here(?:'s|\s+is)\s+a\s+hint:?)/i, '')
+      .replace(/\((?:Since|Based on|If they|Note).*?\)/gi, '') // Strip parenthetical CoT
+      .replace(/\*\*.*?\*\*/g, '') // Strip bold meta tags
+      .replace(/^(?:Hint|Tutor Hint|Prof\. Turing):\s*/i, '')
+      .trim();
+  };
+
+  const speak = (text: string) => {
+    if (!voiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (voiceRef.current) utterance.voice = voiceRef.current;
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handleAsk = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -31,10 +82,10 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
         throw new Error('Prompt API not detected');
       }
 
-      // Spec-compliant create options
       const options = {
         expectedOutputs: [{ type: 'text', languages: ['en'] }],
-        systemPrompt: 'You are Prof. Turing, a helpful UK school maths tutor. Give a concise hint under 20 words. Never state the final numerical answer directly.'
+        systemPrompt:
+          'You are Prof. Turing, a UK school tutor. Never explain your thought process. Never output "Okay, I understand" or planning steps. Output only a direct, encouraging hint under 20 words.',
       };
 
       try {
@@ -43,7 +94,7 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
         session = await targetFactory.create();
       }
 
-      const promptContext = `Pupil asked: "${query}". Context topic: ${activeTopic || 'Maths'}, question: "${activePrompt || ''}". Hint:`;
+      const promptContext = `Topic: "${currentTopic}". Current Question: "${activePrompt || 'General Practice'}". Pupil asks: "${query}". Provide a one-sentence hint:`;
 
       setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
       setLoading(false);
@@ -59,27 +110,34 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
             accumulated += chunk;
           }
 
+          const cleaned = cleanThoughtArtifacts(accumulated);
           setMessages((prev) => {
             const updated = [...prev];
-            updated[updated.length - 1] = { role: 'turing', text: accumulated.trimStart() };
+            updated[updated.length - 1] = {
+              role: 'turing',
+              text: cleaned || 'Thinking through the concept...',
+            };
             return updated;
           });
         }
+        const finalClean = cleanThoughtArtifacts(accumulated) || 'Think about the core rule for this topic!';
+        speak(finalClean);
       } else {
         const reply = await session.prompt(promptContext);
+        const finalClean = cleanThoughtArtifacts(reply) || 'Think about the core rule for this topic!';
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: 'turing', text: reply.trim() };
+          updated[updated.length - 1] = { role: 'turing', text: finalClean };
           return updated;
         });
+        speak(finalClean);
       }
     } catch (err) {
       console.error('[Turing Tutor Error]:', err);
+      const fallbackText = 'Break the problem down into smaller steps and review the key terms!';
       setMessages((prev) => {
         const updated = [...prev];
         const last = updated[updated.length - 1];
-        const fallbackText = 'Remember to line up the decimal places carefully before adding or dividing!';
-
         if (last && last.role === 'turing' && !last.text) {
           updated[updated.length - 1] = { role: 'turing', text: fallbackText };
         } else {
@@ -87,6 +145,7 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
         }
         return updated;
       });
+      speak(fallbackText);
     } finally {
       if (session && typeof session.destroy === 'function') {
         try {
@@ -106,14 +165,31 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
         padding: '1rem',
         marginTop: '1.5rem',
         color: '#f8fafc',
-        fontFamily: 'monospace'
+        fontFamily: 'monospace',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
         <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 Prof. Turing [Gemini Nano]</span>
-        <span style={{ fontSize: '0.75rem', background: '#065f46', color: '#34d399', padding: '2px 8px', borderRadius: '6px' }}>
-          100% Client-Side
-        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            style={{
+              fontSize: '0.75rem',
+              background: voiceEnabled ? '#047857' : '#334155',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '2px 8px',
+              cursor: 'pointer',
+            }}
+          >
+            {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+          </button>
+          <span style={{ fontSize: '0.75rem', background: '#065f46', color: '#34d399', padding: '2px 8px', borderRadius: '6px' }}>
+            100% Client-Side
+          </span>
+        </div>
       </div>
 
       <div style={{ minHeight: '60px', maxHeight: '140px', overflowY: 'auto', marginBottom: '0.75rem' }}>
@@ -138,7 +214,7 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
             border: '1px solid #334155',
             color: '#ffffff',
             borderRadius: '6px',
-            padding: '6px 12px'
+            padding: '6px 12px',
           }}
         />
         <button
@@ -150,7 +226,7 @@ export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutor
             border: 'none',
             borderRadius: '6px',
             padding: '6px 16px',
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           Ask
