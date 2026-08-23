@@ -1,62 +1,71 @@
 // static/promptStrategies.js
 
 export const PROMPT_BUILDERS = {
-  calculation: (subject, topic, langName, keyStage) => `Task: Generate a multiple-choice question for Key Stage ${keyStage}.
+  calculation: (subject, topic, langName, keyStage, topicId) => `You are an automated UK National Curriculum Mathematics question generator for Key Stage ${keyStage}.
+
 Subject: ${subject}
-Topic: ${topic}
+Topic: ${topic} (TopicId: ${topicId || 'maths'})
+Language: ${langName}
 
-LANGUAGE: ${langName}
+CRITICAL RULES:
+1. Compute the exact solution step-by-step in :scratchpad first.
+2. In :options (list ...), ITEM 0 MUST BE the EXACT computed answer from :scratchpad.
+3. Items 1, 2, and 3 MUST be incorrect distractors.
+4. :answer-key MUST ALWAYS be 0.
+5. Output ONLY the raw Lisp S-expression. No explanations, no markdown ticks.
 
-INSTRUCTIONS:
-1. Work out the exact mathematical steps inside :scratchpad before writing options.
-2. Ensure the strictly correct mathematical answer is always placed in slot 0 of :options.
-3. Provide 3 plausible distractor answers representing common Key Stage ${keyStage} student mistakes.
-4. Set :answer-key to 0.
+EXAMPLE:
+Prompt: Fractions
+Output: (:route "quiz:mcq" :scratchpad "1/4 + 1/2 = 1/4 + 2/4 = 3/4" :prompt "Calculate 1/4 + 1/2 in simplest form." :options (list "3/4" "2/6" "1/2" "3/8") :answer-key 0)
 
-Output format:
-(:route "quiz:mcq" :scratchpad "<step-by-step arithmetic calculation>" :prompt "<Question text>" :options (list "<correct_answer>" "<distractor_1>" "<distractor_2>" "<distractor_3>") :answer-key 0)
+EXAMPLE:
+Prompt: Decimals
+Output: (:route "quiz:mcq" :scratchpad "0.75 + 0.25 = 1.00" :prompt "What is 0.75 + 0.25?" :options (list "1.00" "0.90" "0.80" "1.05") :answer-key 0)
 
-Example:
-(:route "quiz:mcq" :scratchpad "0.6 = 6/10 = 3/5 in simplest form" :prompt "Which fraction is equivalent to 0.6 in its simplest form?" :options (list "3/5" "1/2" "4/10" "2/10") :answer-key 0)
-
+Generate ONE question for "${topic}":
 Output:`,
 
-  factual: (subject, topic, langName, keyStage) => `Task: Generate a conceptual multiple-choice quiz question for Key Stage ${keyStage}.
-Subject: ${subject}
-Topic: ${topic}
+  factual: (subject, topic, langName, keyStage, subjectId, topicId) => `You are an automated UK National Curriculum test generator for Key Stage ${keyStage}.
 
-LANGUAGE: ${langName}
+Subject: ${subject} (SubjectId: ${subjectId || 'humanities'})
+Topic: ${topic} (TopicId: ${topicId || 'topic'})
+Language: ${langName}
 
-INSTRUCTIONS:
-1. Verify the factual accuracy inside :scratchpad first.
-2. Question MUST test knowledge strictly about "${topic}" in ${subject}. Never output unrelated math problems.
-3. Put the strictly correct factual answer in slot 0 of :options.
-4. Provide 3 plausible incorrect options related to ${topic}.
-5. Set :answer-key to 0.
+CRITICAL RULES:
+1. State the curriculum fact in :scratchpad.
+2. Focus strictly on "${topic}". No math calculations.
+3. In :options (list ...), ITEM 0 MUST BE the correct factual answer.
+4. Items 1, 2, and 3 MUST be incorrect distractors.
+5. :answer-key MUST ALWAYS be 0.
+6. Output ONLY the raw Lisp S-expression.
 
-Output format:
-(:route "quiz:mcq" :scratchpad "<verified fact summary>" :prompt "<Question text>" :options (list "<correct_answer>" "<distractor_1>" "<distractor_2>" "<distractor_3>") :answer-key 0)
+EXAMPLE:
+Output: (:route "quiz:mcq" :scratchpad "The Great Fire of London started on Pudding Lane in 1666." :prompt "Where did the Great Fire of London begin in 1666?" :options (list "Pudding Lane" "Baker Street" "Fleet Street" "Tower Bridge") :answer-key 0)
 
+Generate ONE question for "${topic}":
 Output:`
 };
 
 export function buildPrompt(userPrompt, langName = 'English') {
-  // 1. Extract explicit subject and topic from the intent format
   const subjMatch = userPrompt.match(/Subject:\s*"([^"]+)"/i);
   const topicMatch = userPrompt.match(/Topic:\s*"([^"]+)"/i);
   const ksMatch = userPrompt.match(/Key Stage:\s*"([^"]+)"|Key Stage\s*([1-4])/i);
+  const subjIdMatch = userPrompt.match(/SubjectId:\s*"([^"]*)"/i);
+  const topicIdMatch = userPrompt.match(/TopicId:\s*"([^"]*)"/i);
 
-  const subject = subjMatch ? subjMatch[1] : 'General Science';
-  const topic = topicMatch ? topicMatch[1] : 'Core Concepts';
-  const keyStage = ksMatch ? (ksMatch[1] || `KS${ksMatch[2]}`) : 'KS3';
+  const subject = subjMatch ? subjMatch[1] : 'Mathematics';
+  const topic = topicMatch ? topicMatch[1] : 'Fractions and Decimals';
+  const keyStage = ksMatch ? (ksMatch[1] || `KS${ksMatch[2]}`) : 'KS2';
+  const subjectId = subjIdMatch ? subjIdMatch[1].toLowerCase() : '';
+  const topicId = topicIdMatch ? topicIdMatch[1].toLowerCase() : '';
 
-  // 2. Pure maths routing only
-  const isPureMath = /^(mathematics|maths)$/i.test(subject.trim()) ||
-    /\b(algebra|fractions|decimals|arithmetic|geometry|percentages|ratio|equations)\b/i.test(topic);
+  const isPureMath = subjectId === 'maths' || 
+    /^(mathematics|maths)$/i.test(subject.trim()) ||
+    /\b(algebra|fractions|decimals|arithmetic|geometry|percentages|ratio|equations|numbers)\b/i.test(topicId || topic);
 
   if (isPureMath) {
-    return PROMPT_BUILDERS.calculation(subject, topic, langName, keyStage);
+    return PROMPT_BUILDERS.calculation(subject, topic, langName, keyStage, topicId);
   }
 
-  return PROMPT_BUILDERS.factual(subject, topic, langName, keyStage);
+  return PROMPT_BUILDERS.factual(subject, topic, langName, keyStage, subjectId, topicId);
 }

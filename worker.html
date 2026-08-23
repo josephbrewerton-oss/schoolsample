@@ -1,74 +1,176 @@
-// static/promptStrategies.js
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Neural WebRTC Daemon</title>
+</head>
+<body>
+  <script type="module">
+    import { buildPrompt } from './promptStrategies.js';
 
-export const PROMPT_BUILDERS = {
-  calculation: (subject, topic, langName, keyStage) => `You are a strict UK National Curriculum Mathematics test author for Key Stage ${keyStage}.
+    console.log('[Worker Daemon] Booting WebRTC Daemon...');
+    const bus = new BroadcastChannel('webrtc-neural-signaling');
+    let pc = null;
+    let activeChannel = null;
+    let isConnecting = false;
 
-Subject: ${subject}
-Topic: ${topic}
-Target Language: ${langName}
+    async function getAiModelSession() {
+      const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
+      const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
 
-MANDATORY RULES:
-1. First, write down the complete arithmetic solution in :scratchpad with every intermediate step.
-2. In :options, slot 0 MUST BE the exact solution calculated in :scratchpad.
-3. Slots 1, 2, and 3 MUST be distinct, believable wrong answers (distractors). Never duplicate numbers.
-4. Set :answer-key to 0.
-5. Output ONLY the Lisp S-expression. No explanations or markdown blocks.
-
-FEW-SHOT EXAMPLES:
-
-Example 1 (Fractions):
-(:route "quiz:mcq" :scratchpad "1/2 + 1/4 = 2/4 + 1/4 = 3/4" :prompt "What is 1/2 + 1/4 in simplest form?" :options (list "3/4" "2/6" "1/8" "2/4") :answer-key 0)
-
-Example 2 (Algebra):
-(:route "quiz:mcq" :scratchpad "3x + 5 = 20 => 3x = 15 => x = 5" :prompt "Solve for x: 3x + 5 = 20" :options (list "5" "15" "3" "25") :answer-key 0)
-
-Example 3 (Decimals & Percentages):
-(:route "quiz:mcq" :scratchpad "3/5 = (3 * 20)/(5 * 20) = 60/100 = 60%" :prompt "What is 3/5 expressed as a percentage?" :options (list "60%" "35%" "30%" "75%") :answer-key 0)
-
-Generate ONE new question for Topic: "${topic}" (${keyStage}):
-Output:`,
-
-  factual: (subject, topic, langName, keyStage) => `You are a UK National Curriculum test author for Key Stage ${keyStage}.
-
-Subject: ${subject}
-Topic: ${topic}
-Target Language: ${langName}
-
-MANDATORY RULES:
-1. Verify the core curriculum fact in :scratchpad first.
-2. Question MUST focus strictly on "${topic}" in ${subject}.
-3. Slot 0 in :options MUST be the factually correct statement.
-4. Slots 1, 2, and 3 MUST be distinct, plausible misconceptions related to ${topic}.
-5. Set :answer-key to 0.
-6. Output ONLY the Lisp S-expression.
-
-FEW-SHOT EXAMPLES:
-
-Example 1 (History):
-(:route "quiz:mcq" :scratchpad "James Watt improved Thomas Newcomen's steam engine design in 1776, enabling efficient rotary power." :prompt "Which inventor made critical improvements to the steam engine during the Industrial Revolution?" :options (list "James Watt" "Alexander Graham Bell" "Thomas Edison" "Isambard Kingdom Brunel") :answer-key 0)
-
-Example 2 (Science):
-(:route "quiz:mcq" :scratchpad "Photosynthesis converts carbon dioxide and water into glucose and oxygen using light." :prompt "What gas is released as a byproduct during plant photosynthesis?" :options (list "Oxygen" "Carbon dioxide" "Nitrogen" "Methane") :answer-key 0)
-
-Generate ONE new question for Topic: "${topic}" (${keyStage}):
-Output:`
+      // Inside getAiModelSession in static/worker.html
+const options = {
+  expectedOutputs: [{ type: 'text', languages: ['en'] }]
 };
 
-export function buildPrompt(userPrompt, langName = 'English') {
-  const subjMatch = userPrompt.match(/Subject:\s*"([^"]+)"/i);
-  const topicMatch = userPrompt.match(/Topic:\s*"([^"]+)"/i);
-  const ksMatch = userPrompt.match(/Key Stage:\s*"([^"]+)"|Key Stage\s*([1-4])/i);
+      // 1. Modern Chrome ai.languageModel
+      if (aiHost?.languageModel) {
+        try {
+          if (typeof aiHost.languageModel.capabilities === 'function') {
+            const caps = await aiHost.languageModel.capabilities();
+            if (caps.available === 'no') return null;
+          }
+          return await aiHost.languageModel.create({
+            expectedOutputs: [{ language: 'en' }]
+          });
+        } catch {
+          try {
+            return await aiHost.languageModel.create();
+          } catch (err) {
+            console.warn('[Worker Daemon] ai.languageModel creation failed:', err);
+          }
+        }
+      }
 
-  const subject = subjMatch ? subjMatch[1] : 'Mathematics';
-  const topic = topicMatch ? topicMatch[1] : 'Fractions and Decimals';
-  const keyStage = ksMatch ? (ksMatch[1] || `KS${ksMatch[2]}`) : 'KS2';
+      // 2. Global window.LanguageModel
+      if (GlobalLM?.create) {
+        try {
+          return await GlobalLM.create({
+            expectedOutputs: [{ language: 'en' }]
+          });
+        } catch {
+          try {
+            return await GlobalLM.create();
+          } catch {}
+        }
+      }
 
-  const isPureMath = /^(mathematics|maths)$/i.test(subject.trim()) ||
-    /\b(algebra|fractions|decimals|arithmetic|geometry|percentages|ratio|equations|numbers)\b/i.test(topic);
+      // 3. Fallback to assistant namespace
+      if (aiHost?.assistant?.create) {
+        try {
+          return await aiHost.assistant.create();
+        } catch {}
+      }
 
-  if (isPureMath) {
-    return PROMPT_BUILDERS.calculation(subject, topic, langName, keyStage);
-  }
+      return null;
+    }
 
-  return PROMPT_BUILDERS.factual(subject, topic, langName, keyStage);
-}
+    async function createOffer() {
+      if (isConnecting) return;
+      if (activeChannel && activeChannel.readyState === 'open') return;
+
+      isConnecting = true;
+
+      if (pc) {
+        pc.close();
+      }
+
+      console.log('[Worker Daemon] Creating WebRTC Offer...');
+      pc = new RTCPeerConnection();
+
+      const dc = pc.createDataChannel('neural-bus');
+      activeChannel = dc;
+
+      dc.onopen = () => {
+        isConnecting = false;
+        console.log('[Worker Daemon] DataChannel OPEN. Connected to Hypervisor.');
+      };
+
+      dc.onclose = () => {
+        isConnecting = false;
+        console.log('[Worker Daemon] DataChannel CLOSED.');
+      };
+
+      dc.onmessage = async (event) => {
+        const intent = event.data;
+        console.log('[Worker Daemon] Received Intent:', intent);
+
+        let session = null;
+        try {
+          const prompt = buildPrompt(intent);
+          console.log('[Worker Daemon] Prompting on-device model...');
+          session = await getAiModelSession();
+
+          if (!session) {
+            console.warn('[Worker Daemon] No supported Gemini Nano / Prompt API found.');
+            if (dc.readyState === 'open') {
+              dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "OK" "Retry" "Help" "Exit") :answer-key 0)');
+              dc.send('__EOF__');
+            }
+            return;
+          }
+
+          const response = await session.prompt(prompt);
+          console.log('[Worker Daemon] Model Output:\n', response);
+
+          if (dc.readyState === 'open') {
+            dc.send(response);
+            dc.send('__EOF__');
+          }
+        } catch (err) {
+          console.error('[Worker Daemon] Generation Error:', err);
+          if (dc.readyState === 'open') {
+            dc.send('__EOF__');
+          }
+        } finally {
+          if (session && typeof session.destroy === 'function') {
+            try {
+              session.destroy();
+            } catch {}
+          }
+        }
+      };
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          bus.postMessage({ type: 'candidate', candidate: e.candidate.toJSON() });
+        }
+      };
+
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        bus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
+      } catch (err) {
+        isConnecting = false;
+        console.error('[Worker Daemon] Failed to create offer:', err);
+      }
+    }
+
+    bus.onmessage = async (e) => {
+      if (e.data.type === 'peer_ready') {
+        createOffer();
+      } else if (e.data.type === 'answer' && pc) {
+        if (pc.signalingState === 'have-local-offer') {
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(e.data.sdp));
+          } catch (err) {
+            console.error('[Worker Daemon] setRemoteDescription error:', err);
+          }
+        }
+      } else if (e.data.type === 'candidate' && pc && e.data.candidate) {
+        try {
+          if (pc.remoteDescription && pc.signalingState !== 'closed') {
+            await pc.addIceCandidate(new RTCIceCandidate(e.data.candidate));
+          }
+        } catch (err) {
+          console.error('[Worker Daemon] ICE Candidate Error:', err);
+        }
+      }
+    };
+
+    bus.postMessage({ type: 'daemon_ready' });
+    console.log('[Worker Daemon] Listening on BroadcastChannel.');
+  </script>
+</body>
+</html>
