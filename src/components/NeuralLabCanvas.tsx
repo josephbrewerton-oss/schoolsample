@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { OAK_CURRICULUM_CATALOGUE, DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
@@ -22,6 +23,8 @@ export default function NeuralLabCanvas() {
     subject: string;
     unit: string;
   } | null>(null);
+
+  const workerUrl = useBaseUrl('/worker.html');
 
   // Helper to lookup canonical machine IDs from OAK_CURRICULUM_CATALOGUE
   const resolveIds = (ksTitle: string, subTitle: string, unitTitle: string) => {
@@ -103,12 +106,13 @@ export default function NeuralLabCanvas() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-      <iframe
-        src="/schoolsample/worker.html"
-        style={{ display: 'none', width: 0, height: 0, border: 'none' }}
-        title="WebRTC Neural Worker Daemon"
-        aria-hidden="true"
-      />
+<iframe
+  src={workerUrl}
+  style={{ display: 'none', width: 0, height: 0, border: 'none' }}
+  title="WebRTC Neural Worker Daemon"
+  aria-hidden="true"
+  allow="cross-origin-isolated; language-model"
+/>
 
       <CurriculumSelector
         keyStage={selectedKeyStage}
@@ -166,9 +170,33 @@ export default function NeuralLabCanvas() {
               ⚡ Fast-splicing AST question archetype...
             </div>
             <div style={{ width: '75%', height: '20px', background: '#f1f5f9', borderRadius: '6px' }} />
-            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
-            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
-            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+            <div
+              style={{
+                width: '100%',
+                height: '52px',
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                height: '52px',
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                height: '52px',
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+              }}
+            />
           </div>
         ) : (
           <QuestionCard

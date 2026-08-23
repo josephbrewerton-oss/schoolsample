@@ -1,148 +1,163 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 
-interface NanoAssistantProps {
-  contextTopic?: string;
-  currentQuestion?: string;
-  onHintReceived?: (hint: string) => void;
+interface TuringTutorProps {
+  activePrompt?: string;
+  activeTopic?: string;
 }
 
-export default function NanoAssistantPanel({ contextTopic, currentQuestion }: NanoAssistantProps) {
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([
-    { sender: 'Prof. Turing', text: 'I am here to guide your steps! Ask me if you get stuck.' }
+export function TuringTutor({ activePrompt = '', activeTopic = '' }: TuringTutorProps) {
+  const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
+    { role: 'turing', text: 'I am here to guide your steps! Ask me if you get stuck.' }
   ]);
   const [input, setInput] = useState('');
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  
-  const voiceEnabledRef = useRef(voiceEnabled);
-  voiceEnabledRef.current = voiceEnabled;
+  const [loading, setLoading] = useState(false);
 
-  const busRef = useRef<BroadcastChannel | null>(null);
-  const isQueryingRef = useRef(false);
+  const handleAsk = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const query = input.trim();
+    if (!query || loading) return;
 
-  useEffect(() => {
-    const bus = new BroadcastChannel('webrtc-neural-signaling');
-    busRef.current = bus;
-
-    bus.onmessage = (e) => {
-      if (e.data.type === 'tutor_response') {
-        isQueryingRef.current = false;
-        const reply = e.data.text;
-        setMessages((prev) => [...prev, { sender: 'Prof. Turing', text: reply }]);
-        
-        if (voiceEnabledRef.current && 'speechSynthesis' in window) {
-          window.speechSynthesis.cancel(); // Stop any pending speech
-          const utterance = new SpeechSynthesisUtterance(reply);
-          window.speechSynthesis.speak(utterance);
-        }
-      }
-    };
-
-    return () => {
-      bus.close();
-    };
-  }, []);
-
-  const handleAsk = () => {
-    if (!input.trim() || isQueryingRef.current) return;
-    
-    const userMsg = input.trim();
-    isQueryingRef.current = true;
-    setMessages((prev) => [...prev, { sender: 'Pupil', text: userMsg }]);
+    setMessages((prev) => [...prev, { role: 'pupil', text: query }]);
     setInput('');
+    setLoading(true);
 
-    busRef.current?.postMessage({
-      type: 'tutor_query',
-      prompt: userMsg,
-      topic: contextTopic || 'General',
-      questionContext: currentQuestion || ''
-    });
+    let session: any = null;
+    try {
+      const aiHost = (window as any).ai || (self as any).ai || (window.parent as any)?.ai;
+      const GlobalLM = (window as any).LanguageModel || (window.parent as any)?.LanguageModel;
+      const targetFactory = aiHost?.languageModel || GlobalLM;
+
+      if (!targetFactory) {
+        throw new Error('Prompt API not detected');
+      }
+
+      // Spec-compliant create options
+      const options = {
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        systemPrompt: 'You are Prof. Turing, a helpful UK school maths tutor. Give a concise hint under 20 words. Never state the final numerical answer directly.'
+      };
+
+      try {
+        session = await targetFactory.create(options);
+      } catch {
+        session = await targetFactory.create();
+      }
+
+      const promptContext = `Pupil asked: "${query}". Context topic: ${activeTopic || 'Maths'}, question: "${activePrompt || ''}". Hint:`;
+
+      setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
+      setLoading(false);
+
+      let accumulated = '';
+
+      if (typeof session.promptStreaming === 'function') {
+        const stream = session.promptStreaming(promptContext);
+        for await (const chunk of stream) {
+          if (chunk.startsWith(accumulated)) {
+            accumulated = chunk;
+          } else {
+            accumulated += chunk;
+          }
+
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = { role: 'turing', text: accumulated.trimStart() };
+            return updated;
+          });
+        }
+      } else {
+        const reply = await session.prompt(promptContext);
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: 'turing', text: reply.trim() };
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('[Turing Tutor Error]:', err);
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        const fallbackText = 'Remember to line up the decimal places carefully before adding or dividing!';
+
+        if (last && last.role === 'turing' && !last.text) {
+          updated[updated.length - 1] = { role: 'turing', text: fallbackText };
+        } else {
+          updated.push({ role: 'turing', text: fallbackText });
+        }
+        return updated;
+      });
+    } finally {
+      if (session && typeof session.destroy === 'function') {
+        try {
+          session.destroy();
+        } catch {}
+      }
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{
-      background: '#090d16',
-      border: '1px solid #1e293b',
-      borderRadius: '12px',
-      padding: '1.25rem',
-      marginTop: '1.5rem',
-      color: '#f8fafc'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#f59e0b' }}>
-          🤖 Prof. Turing [Gemini Nano]
+    <div
+      style={{
+        background: '#0a0e17',
+        border: '1px solid #1e293b',
+        borderRadius: '12px',
+        padding: '1rem',
+        marginTop: '1.5rem',
+        color: '#f8fafc',
+        fontFamily: 'monospace'
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+        <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 Prof. Turing [Gemini Nano]</span>
+        <span style={{ fontSize: '0.75rem', background: '#065f46', color: '#34d399', padding: '2px 8px', borderRadius: '6px' }}>
+          100% Client-Side
         </span>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => setVoiceEnabled(!voiceEnabled)}
-            style={{
-              background: voiceEnabled ? '#065f46' : '#334155',
-              color: '#ffffff',
-              fontSize: '0.75rem',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.25rem 0.6rem',
-              cursor: 'pointer'
-            }}
-          >
-            {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
-          </button>
-          <span style={{ background: '#1e293b', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', color: '#94a3b8' }}>
-            100% Client-Side
-          </span>
-        </div>
       </div>
 
-      <div style={{
-        background: '#020617',
-        border: '1px solid #0f172a',
-        borderRadius: '8px',
-        padding: '0.75rem',
-        minHeight: '80px',
-        maxHeight: '160px',
-        overflowY: 'auto',
-        fontFamily: 'monospace',
-        fontSize: '0.88rem',
-        marginBottom: '0.75rem'
-      }}>
+      <div style={{ minHeight: '60px', maxHeight: '140px', overflowY: 'auto', marginBottom: '0.75rem' }}>
         {messages.map((m, i) => (
-          <div key={i} style={{ color: m.sender === 'Prof. Turing' ? '#4ade80' : '#38bdf8', marginBottom: '4px' }}>
-            <strong>{m.sender}:</strong> {m.text}
+          <div key={i} style={{ margin: '4px 0', color: m.role === 'turing' ? '#4ade80' : '#38bdf8' }}>
+            <strong>{m.role === 'turing' ? 'Prof. Turing: ' : 'pupil: '}</strong>
+            {m.text}
           </div>
         ))}
+        {loading && <div style={{ color: '#94a3b8' }}>Prof. Turing is thinking...</div>}
       </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
           placeholder="Ask a question or explain your reasoning..."
           style={{
             flex: 1,
             background: '#020617',
             border: '1px solid #334155',
+            color: '#ffffff',
             borderRadius: '6px',
-            color: '#f8fafc',
-            padding: '0.5rem 0.75rem',
-            fontSize: '0.88rem'
+            padding: '6px 12px'
           }}
         />
         <button
-          onClick={handleAsk}
+          type="submit"
+          disabled={loading}
           style={{
             background: '#2563eb',
             color: '#ffffff',
             border: 'none',
             borderRadius: '6px',
-            padding: '0.5rem 1rem',
-            fontWeight: 600,
+            padding: '6px 16px',
             cursor: 'pointer'
           }}
         >
           Ask
         </button>
-      </div>
+      </form>
     </div>
   );
 }
+
+export default TuringTutor;

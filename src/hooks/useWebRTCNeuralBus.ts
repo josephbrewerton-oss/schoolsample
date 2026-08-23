@@ -1,15 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { extractQuestionFromStream, ExtractedQuestion } from '../utils/astQuestionExtractor';
 
-export interface DispatchContext {
-  keyStageId?: string;
-  subjectId?: string;
-  topicId?: string;
-  keyStageTitle: string;
-  subjectTitle: string;
-  topicTitle: string;
-}
-
 export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void) {
   const [isReady, setIsReady] = useState(false);
   const [status, setStatus] = useState('Connecting to Daemon...');
@@ -21,7 +12,7 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
   const onNewQuestionRef = useRef(onNewQuestion);
   onNewQuestionRef.current = onNewQuestion;
 
-  const activeContextRef = useRef<DispatchContext>({
+  const activeContextRef = useRef({
     keyStageTitle: 'Key Stage 2',
     subjectTitle: 'Mathematics',
     topicTitle: 'Fractions and Decimals'
@@ -29,21 +20,18 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
 
   const sendIntent = useCallback((
     ks: string,
-    subj: string,
+    sub: string,
     unit: string,
     ksId?: string,
-    subjId?: string,
+    subId?: string,
     unitId?: string
   ) => {
     rawStreamRef.current = '';
 
     activeContextRef.current = {
       keyStageTitle: ks,
-      subjectTitle: subj,
-      topicTitle: unit,
-      keyStageId: ksId,
-      subjectId: subjId,
-      topicId: unitId
+      subjectTitle: sub,
+      topicTitle: unit
     };
 
     if (!channelRef.current || channelRef.current.readyState !== 'open') {
@@ -52,11 +40,7 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
     }
 
     const seed = Math.floor(Math.random() * 10000);
-    const nonce = Date.now().toString(36).slice(-4);
-    const reqId = `req_${subjId || subj.toLowerCase().slice(0, 3)}_${nonce}`;
-
-    // ID-anchored intent payload with explicit machine tags
-    const intent = `Subject: "${subj}", Topic: "${unit}", Key Stage: "${ks}", SubjectId: "${subjId || ''}", TopicId: "${unitId || ''}", RequestId: "${reqId}" (Seed #${seed})`;
+    const intent = `Subject: "${sub}", Topic: "${unit}", Key Stage: "${ks}", SubjectId: "${subId || ''}", TopicId: "${unitId || ''}" (Seed #${seed})`;
     channelRef.current.send(intent);
   }, []);
 
@@ -68,8 +52,9 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
       if (e.data.type === 'daemon_ready') {
         bus.postMessage({ type: 'peer_ready' });
       } else if (e.data.type === 'offer') {
-        if (pcRef.current && pcRef.current.signalingState !== 'closed' && pcRef.current.signalingState !== 'stable') return;
-        if (pcRef.current) pcRef.current.close();
+        if (pcRef.current) {
+          pcRef.current.close();
+        }
 
         const pc = new RTCPeerConnection();
         pcRef.current = pc;
@@ -81,6 +66,11 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
           channel.onopen = () => {
             setIsReady(true);
             setStatus('Engine Ready');
+          };
+
+          channel.onclose = () => {
+            setIsReady(false);
+            setStatus('Connecting to Daemon...');
           };
 
           channel.onmessage = (msg) => {
@@ -107,27 +97,22 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
         bus.postMessage({ type: 'answer', sdp: pc.localDescription.toJSON() });
       } else if (e.data.type === 'candidate' && pcRef.current && e.data.candidate) {
         try {
-          if (pcRef.current.remoteDescription) {
+          if (pcRef.current.remoteDescription && pcRef.current.signalingState !== 'closed') {
             await pcRef.current.addIceCandidate(new RTCIceCandidate(e.data.candidate));
           }
         } catch {}
       }
     };
 
-    const syncInterval = setInterval(() => {
-      if (channelRef.current?.readyState === 'open') {
-        clearInterval(syncInterval);
-      } else {
-        bus.postMessage({ type: 'peer_ready' });
-      }
-    }, 1200);
-
+    // Trigger offer request
     bus.postMessage({ type: 'peer_ready' });
 
     return () => {
-      clearInterval(syncInterval);
       bus.close();
-      if (pcRef.current) pcRef.current.close();
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
     };
   }, []);
 

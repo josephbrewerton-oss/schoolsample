@@ -16,25 +16,122 @@ export interface GovernedQuestion {
  * AST Flow Governor: Evaluates, verifies, and sanitizes generated AST trees.
  */
 export class ASTFlowGovernor {
+  private static gcd(x: number, y: number): number {
+    return !y ? x : this.gcd(y, x % y);
+  }
+
   /**
-   * Deterministic Fraction/Arithmetic Reducer
+   * Deterministic Fraction/Decimal/Arithmetic Solver
    */
-  private static verifyArithmetic(prompt: string, scratchpad = ''): string | null {
-    // Check simple fraction addition pattern: a/b + c/d
-    const fracMatch = prompt.match(/(\d+)\/(\d+)\s*\+\s*(\d+)\/(\d+)/);
-    if (fracMatch) {
-      const [, a, b, c, d] = fracMatch.map(Number);
-      const commonDenominator = b * d;
-      const numerator = a * d + c * b;
-      
-      // Simplify
-      const gcd = (x: number, y: number): number => (!y ? x : gcd(y, x % y));
-      const divisor = gcd(numerator, commonDenominator);
+  private static verifyArithmetic(rawPrompt: any, rawScratchpad: any = ''): string | null {
+    const prompt = String(rawPrompt || '');
+    const scratchpad = String(rawScratchpad || '');
+
+    // 1. Decimal to simplest fraction (e.g. "0.6 as a fraction")
+    const decToFracMatch = prompt.match(/([\d\.]+)\s+as\s+a\s+fraction/i);
+    if (decToFracMatch) {
+      const val = parseFloat(decToFracMatch[1]);
+      if (!isNaN(val)) {
+        const decParts = decToFracMatch[1].split('.');
+        const decimalPlaces = decParts[1] ? decParts[1].length : 0;
+        const denominator = Math.pow(10, decimalPlaces);
+        const numerator = Math.round(val * denominator);
+
+        const divisor = this.gcd(numerator, denominator);
+        const simpNum = numerator / divisor;
+        const simpDen = denominator / divisor;
+
+        return simpDen === 1 ? `${simpNum}` : `${simpNum}/${simpDen}`;
+      }
+    }
+
+    // 2. Fraction Multiplication: (a/b) * (c/d) or a/b * c/d
+    const fracMulMatch = prompt.match(/\(?(\d+)\/(\d+)\)?\s*[\*xX×]\s*\(?(\d+)\/(\d+)\)?/);
+    if (fracMulMatch) {
+      const [, a, b, c, d] = fracMulMatch.map(Number);
+      const numerator = a * c;
+      const denominator = b * d;
+
+      const divisor = this.gcd(numerator, denominator);
       const simpNum = numerator / divisor;
-      const simpDen = commonDenominator / divisor;
-      
+      const simpDen = denominator / divisor;
+
       return simpDen === 1 ? `${simpNum}` : `${simpNum}/${simpDen}`;
     }
+
+    // 3. Fraction Addition / Subtraction: a/b +/- c/d
+    const fracAddMatch = prompt.match(/\(?(\d+)\/(\d+)\)?\s*([\+\-])\s*\(?(\d+)\/(\d+)\)?/);
+    if (fracAddMatch) {
+      const [, a, b, op, c, d] = fracAddMatch;
+      const numA = Number(a), denB = Number(b), numC = Number(c), denD = Number(d);
+      const commonDenominator = denB * denD;
+      const numerator = op === '+' 
+        ? (numA * denD + numC * denB) 
+        : (numA * denD - numC * denB);
+
+      const divisor = this.gcd(Math.abs(numerator), commonDenominator);
+      const simpNum = numerator / divisor;
+      const simpDen = commonDenominator / divisor;
+
+      return simpDen === 1 ? `${simpNum}` : `${simpNum}/${simpDen}`;
+    }
+
+    // 4. Decimal Division: e.g. "0.5/2"
+    const decDivMatch = prompt.match(/([\d\.]+)\s*\/\s*(\d+)/);
+    if (decDivMatch) {
+      const decVal = parseFloat(decDivMatch[1]);
+      const divisorVal = parseInt(decDivMatch[2], 10);
+      
+      if (!isNaN(decVal) && !isNaN(divisorVal) && divisorVal !== 0) {
+        const decParts = decDivMatch[1].split('.');
+        const decimalPlaces = decParts[1] ? decParts[1].length : 0;
+        const factor = Math.pow(10, decimalPlaces);
+
+        const intNum = Math.round(decVal * factor);
+        const intDen = divisorVal * factor;
+
+        const d = this.gcd(intNum, intDen);
+        const simpNum = intNum / d;
+        const simpDen = intDen / d;
+
+        return simpDen === 1 ? `${simpNum}` : `${simpNum}/${simpDen}`;
+      }
+    }
+
+    // 5. Decimal / Integer Arithmetic: e.g. "0.75 + 0.25"
+    const basicMathMatch = prompt.match(/([\d\.]+)\s*([\+\-\*\/])\s*([\d\.]+)/);
+    if (basicMathMatch) {
+      const num1 = parseFloat(basicMathMatch[1]);
+      const op = basicMathMatch[2];
+      const num2 = parseFloat(basicMathMatch[3]);
+
+      if (!isNaN(num1) && !isNaN(num2)) {
+        let result: number | null = null;
+        switch (op) {
+          case '+': result = num1 + num2; break;
+          case '-': result = num1 - num2; break;
+          case '*': result = num1 * num2; break;
+          case '/': result = num2 !== 0 ? num1 / num2 : null; break;
+        }
+
+        if (result !== null) {
+          const fixedDecimals = Math.max(
+            (basicMathMatch[1].split('.')[1] || '').length,
+            (basicMathMatch[3].split('.')[1] || '').length
+          );
+          return fixedDecimals > 0 ? result.toFixed(fixedDecimals) : String(result);
+        }
+      }
+    }
+
+    // 6. Scratchpad fallback: "... = 1/3"
+    if (scratchpad) {
+      const padEqMatch = scratchpad.match(/=\s*([0-9\.\/%a-zA-Z\s]+)$/);
+      if (padEqMatch) {
+        return padEqMatch[1].trim();
+      }
+    }
+
     return null;
   }
 
@@ -46,8 +143,10 @@ export class ASTFlowGovernor {
     expectedSubject: string,
     expectedTopic: string
   ): GovernedQuestion {
+    const cleanPrompt = String(raw?.prompt || '').trim();
+
     // 1. Structural Schema Validation
-    if (!raw.prompt || !Array.isArray(raw.options) || raw.options.length < 2) {
+    if (!cleanPrompt || !Array.isArray(raw?.options) || raw.options.length < 2) {
       return {
         isValid: false,
         sanitizedQuestion: null,
@@ -61,7 +160,7 @@ export class ASTFlowGovernor {
       return {
         isValid: false,
         sanitizedQuestion: null,
-        rejectionReason: 'AST Distractor Failure: Duplicate options collapsed pool below minimum threshold',
+        rejectionReason: 'AST Distractor Failure: Duplicate options collapsed pool below threshold',
       };
     }
 
@@ -70,27 +169,36 @@ export class ASTFlowGovernor {
       ? raw.answerKey
       : 0;
 
-    const evaluatedMath = this.verifyArithmetic(raw.prompt, raw.scratchpad);
-    if (evaluatedMath) {
-      const mathIndex = sanitizedOptions.indexOf(evaluatedMath);
-      if (mathIndex !== -1) {
-        targetAnswerKey = mathIndex;
+    const evaluatedSolution = this.verifyArithmetic(cleanPrompt, raw.scratchpad);
+    if (evaluatedSolution) {
+      const matchedIdx = sanitizedOptions.findIndex(opt => {
+        const cleanedOpt = opt.trim().toLowerCase();
+        const cleanedSol = evaluatedSolution.toLowerCase();
+        if (cleanedOpt === cleanedSol) return true;
+        const numOpt = parseFloat(cleanedOpt);
+        const numSol = parseFloat(cleanedSol);
+        return !isNaN(numOpt) && !isNaN(numSol) && numOpt === numSol;
+      });
+
+      if (matchedIdx !== -1) {
+        targetAnswerKey = matchedIdx;
       } else {
-        // Inject verified correct answer into slot 0 if Nano hallucinated completely
-        sanitizedOptions[0] = evaluatedMath;
+        sanitizedOptions[0] = evaluatedSolution;
         targetAnswerKey = 0;
       }
     }
 
     // 4. Subject/Topic Keyword Heuristic Firewall
-    const isMathSubject = /math/i.test(expectedSubject) || /fraction|decimal|algebra|arithmetic/i.test(expectedTopic);
-    const hasMathSymbols = /[0-9\+\-\*\/\=xX]/.test(raw.prompt);
+    const cleanSubject = String(expectedSubject || '');
+    const cleanTopic = String(expectedTopic || '');
+    const isMathSubject = /math/i.test(cleanSubject) || /fraction|decimal|algebra|arithmetic|percentage/i.test(cleanTopic);
+    const hasMathSymbols = /[0-9\+\-\*\/\=]/.test(cleanPrompt);
 
-    if (!isMathSubject && hasMathSymbols && !raw.prompt.toLowerCase().includes(expectedTopic.toLowerCase())) {
+    if (!isMathSubject && hasMathSymbols && !cleanPrompt.toLowerCase().includes(cleanTopic.toLowerCase())) {
       return {
         isValid: false,
         sanitizedQuestion: null,
-        rejectionReason: `AST Topic Bleed: Received math-heavy tokens during "${expectedTopic}" context`,
+        rejectionReason: `AST Topic Bleed: Received math tokens during "${cleanTopic}" context`,
       };
     }
 
@@ -98,8 +206,8 @@ export class ASTFlowGovernor {
       isValid: true,
       sanitizedQuestion: {
         route: raw.route || 'quiz:mcq',
-        scratchpad: raw.scratchpad || '',
-        prompt: raw.prompt.trim(),
+        scratchpad: String(raw.scratchpad || ''),
+        prompt: cleanPrompt,
         options: sanitizedOptions,
         answerKey: targetAnswerKey,
       },
