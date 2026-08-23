@@ -7,15 +7,17 @@ Topic: ${topic}
 
 LANGUAGE: ${langName}
 
-RULES:
-1. Question must be strictly on the topic "${topic}".
-2. State ONLY the question in :prompt.
-3. Put the strictly correct answer in slot 0 of :options.
-4. Distractors must be common student misconceptions for ${keyStage}.
-5. Set :answer-key to 0.
+INSTRUCTIONS:
+1. Work out the exact mathematical steps inside :scratchpad before writing options.
+2. Ensure the strictly correct mathematical answer is always placed in slot 0 of :options.
+3. Provide 3 plausible distractor answers representing common Key Stage ${keyStage} student mistakes.
+4. Set :answer-key to 0.
 
 Output format:
-(:route "quiz:mcq" :prompt "<Question text>" :options (list "<correct_answer>" "<distractor_1>" "<distractor_2>" "<distractor_3>") :answer-key 0)
+(:route "quiz:mcq" :scratchpad "<step-by-step arithmetic calculation>" :prompt "<Question text>" :options (list "<correct_answer>" "<distractor_1>" "<distractor_2>" "<distractor_3>") :answer-key 0)
+
+Example:
+(:route "quiz:mcq" :scratchpad "0.6 = 6/10 = 3/5 in simplest form" :prompt "Which fraction is equivalent to 0.6 in its simplest form?" :options (list "3/5" "1/2" "4/10" "2/10") :answer-key 0)
 
 Output:`,
 
@@ -25,14 +27,15 @@ Topic: ${topic}
 
 LANGUAGE: ${langName}
 
-RULES:
-1. Question MUST test knowledge strictly about "${topic}" in ${subject}. Never output unrelated math problems.
-2. Put the strictly correct factual answer in slot 0 of :options.
-3. Provide 3 plausible incorrect options related to ${topic}.
-4. Set :answer-key to 0.
+INSTRUCTIONS:
+1. Verify the factual accuracy inside :scratchpad first.
+2. Question MUST test knowledge strictly about "${topic}" in ${subject}. Never output unrelated math problems.
+3. Put the strictly correct factual answer in slot 0 of :options.
+4. Provide 3 plausible incorrect options related to ${topic}.
+5. Set :answer-key to 0.
 
 Output format:
-(:route "quiz:mcq" :prompt "<Question text>" :options (list "<correct_answer>" "<distractor_1>" "<distractor_2>" "<distractor_3>") :answer-key 0)
+(:route "quiz:mcq" :scratchpad "<verified fact summary>" :prompt "<Question text>" :options (list "<correct_answer>" "<distractor_1>" "<distractor_2>" "<distractor_3>") :answer-key 0)
 
 Output:`
 };
