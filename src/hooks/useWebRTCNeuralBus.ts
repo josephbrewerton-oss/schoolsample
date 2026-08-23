@@ -18,33 +18,33 @@ export function useWebRTCNeuralBus(onNewQuestion: (q: ExtractedQuestion) => void
     topicTitle: 'Fractions and Decimals'
   });
 
-  const sendIntent = useCallback((
-    ks: string,
-    sub: string,
-    unit: string,
-    ksId?: string | number,
-    subId?: string | number,
-    unitId?: string | number
-  ) => {
-    rawStreamRef.current = '';
+// src/hooks/useWebRTCNeuralBus.ts
+const sendIntent = useCallback((
+  ks: string,
+  sub: string,
+  unit: string,
+  ksId?: string | number,
+  subId?: string | number,
+  unitId?: string | number
+) => {
+  rawStreamRef.current = '';
 
-    activeContextRef.current = {
-      keyStageTitle: ks,
-      subjectTitle: sub,
-      topicTitle: unit
-    };
+  activeContextRef.current = {
+    keyStageTitle: ks,
+    subjectTitle: sub,
+    topicTitle: unit
+  };
 
-    const seed = Math.floor(Math.random() * 10000);
-    const intent = `Subject: "${sub}", Topic: "${unit}", Key Stage: "${ks}", SubjectId: "${ksId ?? ''}", TopicId: "${unitId ?? ''}" (Seed #${seed})`;
+  const seed = Math.floor(Math.random() * 10000);
+  // Correctly map subId to SubjectId
+  const intent = `Subject: "${sub}", Topic: "${unit}", Key Stage: "${ks}", SubjectId: "${subId ?? ''}", TopicId: "${unitId ?? ''}" (Seed #${seed})`;
 
-    if (channelRef.current && channelRef.current.readyState === 'open') {
-      channelRef.current.send(intent);
-    } else {
-      console.warn('[WebRTC Bus] Data channel not ready. Signaling peer...');
-      busRef.current?.postMessage({ type: 'peer_ready' });
-    }
-  }, []);
-
+  if (channelRef.current && channelRef.current.readyState === 'open') {
+    channelRef.current.send(intent);
+  } else {
+    busRef.current?.postMessage({ type: 'peer_ready' });
+  }
+}, []);
   useEffect(() => {
     const bus = new BroadcastChannel('webrtc-neural-signaling');
     busRef.current = bus;
