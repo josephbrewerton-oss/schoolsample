@@ -30,10 +30,14 @@ Language: ${langName}
 STRICT CONSTRAINTS:
 1. Subject is ${subject}. DO NOT output math equations, variables (x, y), or arithmetic.
 2. Formulate a multiple-choice question testing knowledge of "${topic}".
-3. In :options (list ...), ITEM 0 MUST BE the correct answer.
-4. Items 1, 2, and 3 MUST be incorrect plausible distractors.
-5. :answer-key MUST ALWAYS be 0.
-6. Output ONLY the raw Lisp S-expression.
+3. State the correct answer fact clearly in :scratchpad first.
+4. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER stated in :scratchpad.
+5. Items 1, 2, and 3 MUST be incorrect plausible distractors.
+6. :answer-key MUST ALWAYS be 0.
+7. Output ONLY the raw Lisp S-expression.
+
+EXAMPLE (Science / Physics):
+Output: (:route "quiz:mcq" :scratchpad "Magnetic force or magnetism causes magnets to attract magnetic materials." :prompt "What force causes a magnet to attract iron?" :options (list "Magnetic force" "Air resistance" "Friction" "Gravity") :answer-key 0)
 
 EXAMPLE (History):
 Output: (:route "quiz:mcq" :scratchpad "The steam engine powered the factories during the Industrial Revolution." :prompt "Which technological innovation was central to the Industrial Revolution?" :options (list "Steam Engine" "Printing Press" "Microscope" "Telegraph") :answer-key 0)
