@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
@@ -23,6 +23,19 @@ export default function NeuralLabCanvas() {
     unit: string;
   } | null>(null);
 
+  // Live state reference to prevent stale closure captures
+  const selectionRef = useRef({
+    keyStage: selectedKeyStage,
+    subject: selectedSubject,
+    unit: selectedUnit,
+  });
+
+  selectionRef.current = {
+    keyStage: selectedKeyStage,
+    subject: selectedSubject,
+    unit: selectedUnit,
+  };
+
   const handleNewQuestion = useCallback((q: ExtractedQuestion) => {
     const targetValue = q.options[q.answerKey] ?? q.options[0];
     const shuffled = [...q.options].sort(() => Math.random() - 0.5);
@@ -32,14 +45,18 @@ export default function NeuralLabCanvas() {
     setActiveQuestion({
       prompt: q.prompt,
       displayOptions: shuffled,
-      subject: selectedSubject,
-      unit: selectedUnit
+      subject: selectionRef.current.subject,
+      unit: selectionRef.current.unit,
     });
-  }, [selectedSubject, selectedUnit]);
+  }, []);
 
   const { isReady, status, sendIntent } = useWebRTCNeuralBus(handleNewQuestion);
 
-  const requestQuestion = (ks = selectedKeyStage, sub = selectedSubject, u = selectedUnit) => {
+  const requestQuestion = (
+    ks = selectionRef.current.keyStage,
+    sub = selectionRef.current.subject,
+    u = selectionRef.current.unit
+  ) => {
     setActiveQuestion(null);
     setSelectedAnswer(null);
     setCorrectIndex(null);
@@ -50,14 +67,14 @@ export default function NeuralLabCanvas() {
     if (isReady && !activeQuestion) {
       requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
     }
-  }, [isReady]);  
+  }, [isReady]);
 
   const handleSelectOption = (idx: number) => {
     if (selectedAnswer === correctIndex) return;
     setSelectedAnswer(idx);
     if (idx === correctIndex) {
-      setScore(s => s + 1);
-      setStreak(st => st + 1);
+      setScore((s) => s + 1);
+      setStreak((st) => st + 1);
     } else {
       setStreak(0);
     }
@@ -112,25 +129,59 @@ export default function NeuralLabCanvas() {
         onDownloadReport={handleExportReport}
       />
 
-      <div style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '16px',
-        padding: '2rem',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-        minHeight: '540px',
-        boxSizing: 'border-box'
-      }}>
+      <div
+        style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '16px',
+          padding: '2rem',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+          minHeight: '540px',
+          boxSizing: 'border-box',
+        }}
+      >
         {!activeQuestion ? (
-          <div style={{ height: '440px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '16px' }}>
+          <div
+            style={{
+              height: '440px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '16px',
+            }}
+          >
             <div style={{ fontSize: '1.2rem', fontWeight: 600, color: '#64748b' }}>
               ⚡ Fast-splicing AST question archetype...
             </div>
-            {/* Structural skeleton to preserve identical vertical height */}
             <div style={{ width: '75%', height: '20px', background: '#f1f5f9', borderRadius: '6px' }} />
-            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
-            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
-            <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
+            <div
+              style={{
+                width: '100%',
+                height: '52px',
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                height: '52px',
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+              }}
+            />
+            <div
+              style={{
+                width: '100%',
+                height: '52px',
+                background: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0',
+              }}
+            />
           </div>
         ) : (
           <QuestionCard
