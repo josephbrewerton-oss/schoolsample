@@ -13,28 +13,24 @@
     let pc = null;
     let activeChannel = null;
     let isConnecting = false;
+    let isBusy = false;
 
-    async function getAiModelSession() {
+    async function createFreshSession(systemInstruction) {
       const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
       const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
 
       const options = {
+        systemPrompt: systemInstruction,
         expectedOutputs: [{ type: 'text', languages: ['en'] }]
       };
 
       if (aiHost?.languageModel) {
         try {
-          if (typeof aiHost.languageModel.capabilities === 'function') {
-            const caps = await aiHost.languageModel.capabilities();
-            if (caps.available === 'no') return null;
-          }
           return await aiHost.languageModel.create(options);
         } catch {
           try {
             return await aiHost.languageModel.create();
-          } catch (err) {
-            console.warn('[Worker Daemon] ai.languageModel create fallback failed:', err);
-          }
+          } catch {}
         }
       }
 
@@ -78,14 +74,22 @@
       };
 
       dc.onmessage = async (event) => {
+        if (isBusy) {
+          console.warn('[Worker Daemon] Busy, skipping duplicate intent:', event.data);
+          return;
+        }
+
         const intent = event.data;
+        isBusy = true;
         console.log('[Worker Daemon] Received Intent:', intent);
 
         let session = null;
         try {
           const prompt = buildPrompt(intent);
           console.log('[Worker Daemon] Prompting on-device model...');
-          session = await getAiModelSession();
+
+          // Fresh session per generation ensures zero cross-subject memory drift
+          session = await createFreshSession("You are a UK National Curriculum test generator. Output valid Lisp S-expressions.");
 
           if (!session) {
             if (dc.readyState === 'open') {
@@ -108,6 +112,7 @@
             dc.send('__EOF__');
           }
         } finally {
+          isBusy = false;
           if (session && typeof session.destroy === 'function') {
             try { session.destroy(); } catch {}
           }
