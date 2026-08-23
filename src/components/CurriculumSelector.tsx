@@ -8,8 +8,8 @@ interface Props {
   status: string;
   isReady: boolean;
   sessionId: string;
-  onKeyStageChange: (ks: string) => void;
-  onSubjectChange: (sub: string) => void;
+  onKeyStageChange: (ks: string, firstSub: string, firstUnit: string) => void;
+  onSubjectChange: (sub: string, firstUnit: string) => void;
   onUnitChange: (unit: string) => void;
   onSessionIdChange: (name: string) => void;
   onNewQuestion: () => void;
@@ -28,10 +28,26 @@ export const CurriculumSelector: React.FC<Props> = ({
   onUnitChange,
   onSessionIdChange,
   onNewQuestion,
-  onDownloadReport
+  onDownloadReport,
 }) => {
   const availableSubjects = Object.keys(DEFAULT_OAK_CATALOGUE[keyStage] || {});
-  const availableUnits = DEFAULT_OAK_CATALOGUE[keyStage]?.[subject] || [];
+  const safeSubject = availableSubjects.includes(subject) ? subject : (availableSubjects[0] || '');
+  const availableUnits = DEFAULT_OAK_CATALOGUE[keyStage]?.[safeSubject] || [];
+  const safeUnit = availableUnits.includes(unit) ? unit : (availableUnits[0] || '');
+
+  const handleStageSelect = (newKs: string) => {
+    const subjects = Object.keys(DEFAULT_OAK_CATALOGUE[newKs] || {});
+    const firstSub = subjects[0] || '';
+    const units = DEFAULT_OAK_CATALOGUE[newKs]?.[firstSub] || [];
+    const firstUnit = units[0] || '';
+    onKeyStageChange(newKs, firstSub, firstUnit);
+  };
+
+  const handleSubjectSelect = (newSub: string) => {
+    const units = DEFAULT_OAK_CATALOGUE[keyStage]?.[newSub] || [];
+    const firstUnit = units[0] || '';
+    onSubjectChange(newSub, firstUnit);
+  };
 
   return (
     <div
@@ -46,21 +62,22 @@ export const CurriculumSelector: React.FC<Props> = ({
         borderRadius: '12px',
         padding: '1rem 1.25rem',
         marginBottom: '1.5rem',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+        {/* Key Stage */}
         <select
           aria-label="Select Key Stage"
           value={keyStage}
-          onChange={(e) => onKeyStageChange(e.target.value)}
+          onChange={(e) => handleStageSelect(e.target.value)}
           style={{
             padding: '0.45rem 0.75rem',
             borderRadius: '8px',
             border: '1px solid #cbd5e1',
             fontWeight: 600,
             color: '#1e3a8a',
-            background: '#f8fafc'
+            background: '#f8fafc',
           }}
         >
           {Object.keys(DEFAULT_OAK_CATALOGUE).map((ks) => (
@@ -70,17 +87,18 @@ export const CurriculumSelector: React.FC<Props> = ({
           ))}
         </select>
 
+        {/* Subject */}
         <select
           aria-label="Select Subject"
-          value={subject}
-          onChange={(e) => onSubjectChange(e.target.value)}
+          value={safeSubject}
+          onChange={(e) => handleSubjectSelect(e.target.value)}
           style={{
             padding: '0.45rem 0.75rem',
             borderRadius: '8px',
             border: '1px solid #cbd5e1',
             fontWeight: 600,
             color: '#0f172a',
-            background: '#f8fafc'
+            background: '#f8fafc',
           }}
         >
           {availableSubjects.map((sub) => (
@@ -90,9 +108,10 @@ export const CurriculumSelector: React.FC<Props> = ({
           ))}
         </select>
 
+        {/* Unit */}
         <select
           aria-label="Select Unit or Topic"
-          value={unit}
+          value={safeUnit}
           onChange={(e) => onUnitChange(e.target.value)}
           style={{
             padding: '0.45rem 0.75rem',
@@ -100,7 +119,7 @@ export const CurriculumSelector: React.FC<Props> = ({
             border: '1px solid #cbd5e1',
             color: '#334155',
             background: '#f8fafc',
-            maxWidth: '260px'
+            maxWidth: '260px',
           }}
         >
           {availableUnits.map((u) => (
@@ -113,6 +132,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         <button
           aria-label="Generate New Question"
           onClick={onNewQuestion}
+          disabled={!isReady}
           style={{
             background: '#2563eb',
             color: '#ffffff',
@@ -120,8 +140,8 @@ export const CurriculumSelector: React.FC<Props> = ({
             border: 'none',
             borderRadius: '8px',
             padding: '0.5rem 1.15rem',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
+            cursor: isReady ? 'pointer' : 'not-allowed',
+            fontSize: '0.9rem',
           }}
         >
           New Question
@@ -143,7 +163,7 @@ export const CurriculumSelector: React.FC<Props> = ({
               fontWeight: 500,
               fontSize: '0.85rem',
               width: '120px',
-              background: '#f8fafc'
+              background: '#f8fafc',
             }}
           />
           <button
@@ -158,7 +178,7 @@ export const CurriculumSelector: React.FC<Props> = ({
               padding: '0.45rem 0.75rem',
               fontWeight: 600,
               cursor: 'pointer',
-              fontSize: '0.85rem'
+              fontSize: '0.85rem',
             }}
           >
             📥 Report
@@ -176,7 +196,7 @@ export const CurriculumSelector: React.FC<Props> = ({
           borderRadius: '9999px',
           background: isReady ? '#ecfdf5' : '#fef3c7',
           color: isReady ? '#059669' : '#d97706',
-          border: `1px solid ${isReady ? '#a7f3d0' : '#fde68a'}`
+          border: `1px solid ${isReady ? '#a7f3d0' : '#fde68a'}`,
         }}
       >
         ● {status}

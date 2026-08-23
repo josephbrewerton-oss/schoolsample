@@ -7,9 +7,9 @@ import { ExtractedQuestion } from '../utils/astQuestionExtractor';
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
 
 export default function NeuralLabCanvas() {
-  const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 2');
-  const [selectedSubject, setSelectedSubject] = useState('Mathematics');
-  const [selectedUnit, setSelectedUnit] = useState('Fractions and Decimals');
+  const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 3');
+  const [selectedSubject, setSelectedSubject] = useState('History');
+  const [selectedUnit, setSelectedUnit] = useState('The Norman Conquest (1066)');
   const [sessionId, setSessionId] = useState('Lesson 1');
 
   const [score, setScore] = useState(0);
@@ -32,13 +32,14 @@ export default function NeuralLabCanvas() {
     unit: selectedUnit,
   });
 
+  const slugify = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
   const resolveIds = (ksTitle: string, subTitle: string, unitTitle: string) => {
-    const stageEntry = Object.values(OAK_CURRICULUM_CATALOGUE).find((s) => s.title === ksTitle);
-    const ksId = stageEntry?.id || 'ks2';
-    const subEntry = stageEntry?.subjects.find((sub) => sub.title === subTitle);
-    const subId = subEntry?.id || 'maths';
-    const unitEntry = subEntry?.topics.find((t) => t.title === unitTitle);
-    const unitId = unitEntry?.id || 'fractions-decimals';
+    // Dynamic fallback that matches actual subject/unit rather than defaulting to maths
+    const ksId = slugify(ksTitle) || 'ks3';
+    const subId = slugify(subTitle) || 'history';
+    const unitId = slugify(unitTitle) || 'norman-conquest';
     return { ksId, subId, unitId };
   };
 
@@ -81,7 +82,7 @@ export default function NeuralLabCanvas() {
 
       const { ksId, subId, unitId } = resolveIds(ks, sub, u);
       sendIntent(ks, sub, u, ksId, subId, unitId);
-    }, 150);
+    }, 120);
   };
 
   useEffect(() => {
@@ -119,26 +120,23 @@ export default function NeuralLabCanvas() {
         status={status}
         isReady={isReady}
         sessionId={sessionId}
-        onKeyStageChange={(ks) => {
-          const firstSub = Object.keys(DEFAULT_OAK_CATALOGUE[ks] || {})[0] || '';
-          const firstUnit = DEFAULT_OAK_CATALOGUE[ks]?.[firstSub]?.[0] || '';
-          setSelectedKeyStage(ks);
+        onKeyStageChange={(newKs, firstSub, firstUnit) => {
+          setSelectedKeyStage(newKs);
           setSelectedSubject(firstSub);
           setSelectedUnit(firstUnit);
-          requestQuestion(ks, firstSub, firstUnit);
+          requestQuestion(newKs, firstSub, firstUnit);
         }}
-        onSubjectChange={(sub) => {
-          const firstUnit = DEFAULT_OAK_CATALOGUE[selectedKeyStage]?.[sub]?.[0] || '';
-          setSelectedSubject(sub);
+        onSubjectChange={(newSub, firstUnit) => {
+          setSelectedSubject(newSub);
           setSelectedUnit(firstUnit);
-          requestQuestion(selectedKeyStage, sub, firstUnit);
+          requestQuestion(selectedKeyStage, newSub, firstUnit);
         }}
-        onUnitChange={(u) => {
-          setSelectedUnit(u);
-          requestQuestion(selectedKeyStage, selectedSubject, u);
+        onUnitChange={(newUnit) => {
+          setSelectedUnit(newUnit);
+          requestQuestion(selectedKeyStage, selectedSubject, newUnit);
         }}
         onSessionIdChange={setSessionId}
-        onNewQuestion={() => requestQuestion()}
+        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
         onDownloadReport={handleExportReport}
       />
 
