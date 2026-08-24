@@ -1,9 +1,8 @@
+// src/components/NeuralLabCanvas.tsx
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { OAK_CURRICULUM_CATALOGUE, DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
-import { useWebRTCNeuralBus } from '../hooks/useWebRTCNeuralBus';
-import { ExtractedQuestion } from '../utils/astQuestionExtractor';
+import { useWebRTCNeuralBus, QuestionPayload } from '../hooks/useWebRTCNeuralBus';
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
 
 export default function NeuralLabCanvas() {
@@ -24,70 +23,46 @@ export default function NeuralLabCanvas() {
   } | null>(null);
 
   const isGeneratingRef = useRef(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const selectionRef = useRef({
-    keyStage: selectedKeyStage,
-    subject: selectedSubject,
-    unit: selectedUnit,
-  });
 
   const slugify = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-  const resolveIds = (ksTitle: string, subTitle: string, unitTitle: string) => {
-    // Dynamic fallback that matches actual subject/unit rather than defaulting to maths
-    const ksId = slugify(ksTitle) || 'ks3';
-    const subId = slugify(subTitle) || 'history';
-    const unitId = slugify(unitTitle) || 'norman-conquest';
-    return { ksId, subId, unitId };
-  };
-
-  const handleNewQuestion = useCallback((q: ExtractedQuestion) => {
+  const handleNewQuestion = useCallback((payload: QuestionPayload) => {
     isGeneratingRef.current = false;
+    const { question, subject, unit } = payload;
 
-    const targetValue = q.options[q.answerKey] ?? q.options[0];
-    const shuffled = [...q.options].sort(() => Math.random() - 0.5);
+    const targetValue = question.options[question.answerKey] ?? question.options[0];
+    const shuffled = [...question.options].sort(() => Math.random() - 0.5);
 
     setCorrectIndex(shuffled.indexOf(targetValue));
     setSelectedAnswer(null);
     setActiveQuestion({
-      prompt: q.prompt,
+      prompt: question.prompt,
       displayOptions: shuffled,
-      subject: selectionRef.current.subject,
-      unit: selectionRef.current.unit,
+      subject: subject,
+      unit: unit,
     });
   }, []);
 
   const { isReady, status, sendIntent } = useWebRTCNeuralBus(handleNewQuestion);
 
-  const requestQuestion = (
-    ks = selectionRef.current.keyStage,
-    sub = selectionRef.current.subject,
-    u = selectionRef.current.unit
-  ) => {
-    selectionRef.current = { keyStage: ks, subject: sub, unit: u };
+  const requestQuestion = (ks = selectedKeyStage, sub = selectedSubject, u = selectedUnit) => {
+    isGeneratingRef.current = true;
+    setActiveQuestion(null);
+    setSelectedAnswer(null);
+    setCorrectIndex(null);
 
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+    const ksId = slugify(ks) || 'ks3';
+    const subId = slugify(sub) || 'history';
+    const unitId = slugify(u) || 'norman-conquest';
 
-    debounceTimerRef.current = setTimeout(() => {
-      if (isGeneratingRef.current) return;
-      isGeneratingRef.current = true;
-
-      setActiveQuestion(null);
-      setSelectedAnswer(null);
-      setCorrectIndex(null);
-
-      const { ksId, subId, unitId } = resolveIds(ks, sub, u);
-      sendIntent(ks, sub, u, ksId, subId, unitId);
-    }, 120);
+    sendIntent(ks, sub, u, ksId, subId, unitId);
   };
 
+  // Initial boot trigger once daemon is ready
   useEffect(() => {
     if (isReady && !activeQuestion && !isGeneratingRef.current) {
-      requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
+      requestQuestion('Key Stage 3', 'History', 'The Norman Conquest (1066)');
     }
   }, [isReady]);
 
@@ -181,7 +156,7 @@ export default function NeuralLabCanvas() {
             score={score}
             streak={streak}
             onSelectOption={handleSelectOption}
-            onNextQuestion={() => requestQuestion()}
+            onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
           />
         )}
       </div>

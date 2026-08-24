@@ -105,13 +105,14 @@ export function buildPrompt(userPrompt, langName = 'English') {
     return PROMPT_BUILDERS.maths(subject, topic, langName, keyStage, topicId);
   }
 
-  // Science routing (Physics, Chemistry, Biology)
+// Science routing (Physics, Chemistry, Biology)
   if (
     subjectId === 'science' ||
     subjectId === 'physics' ||
     subjectId === 'chemistry' ||
     subjectId === 'biology' ||
-    /\b(forces|magnet|electricity|photosynthesis|plant|cell|atom|chemical|energy|wave|ecology)\b/i.test(topicId || topic)
+    /^(science|physics|chemistry|biology)$/i.test(subject) ||
+    /\b(forces|magnet|electric|electrolysis|photosynthesis|plant|cell|atom|chemical|energy|wave|ecology|acid|reaction)\b/i.test(topicId || topic)
   ) {
     return PROMPT_BUILDERS.science(subject, topic, langName, keyStage, topicId);
   }

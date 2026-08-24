@@ -30,6 +30,15 @@ const DEFAULT_FALLBACK_VIEW = `(view :className "card padding--md margin-vert--m
     (explanation "14 + 13 = (10 + 10) + (4 + 3) = 20 + 7 = 27."))
   (ai-tutor :persona "Prof. Turing" :engine "Gemini Nano" :greeting "I am here to guide your addition steps! Ask me if you get stuck."))`;
 
+const GENERATING_PLACEHOLDER_VIEW = `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "⚡ Synthesizing Practice Node...")
+  (callout :variant "warning" "Formulating pedagogical distractors and verifying AST constraints.")
+  (stepper
+    (step (text "Selecting curriculum domain..."))
+    (step (text "Dispatching prompt to browser runtime..."))
+    (step (text "Compiling S-Expression AST...")))
+  (ai-tutor :persona "Local Governor" :engine "Gemini Nano" :greeting "Generating your question now..."))`;
+
 export default function DynamicLessonViewer({
   defaultPhase,
   defaultSubject,
@@ -157,11 +166,41 @@ useEffect(() => {
     return streamItems.filter((i) => i.subject === selectedSubject);
   }, [streamItems, selectedSubject]);
 
+  
+// --- Binary 1+1+1 Selection Flags ---
+  const flagPhase = selectedPhase !== 'ALL' ? 1 : 0;
+  const flagSubject = selectedSubject !== 'ALL' ? 1 : 0;
+  const flagTopic = activeViewPath.length > 0 ? 1 : 0;
+  const isFullyQualified = (flagPhase + flagSubject + flagTopic) === 3;
+
   const handleAction = (action: string, payload?: any) => {
-    // Dispatch to non-blocking CSP channel
+    if (action === 'NEXT_QUESTION' || action === 'GENERATE') {
+      // 0 state: Selection incomplete -> show hardcoded placeholder
+      if (!isFullyQualified) {
+        setRawSource(GENERATING_PLACEHOLDER_VIEW);
+        setCurrentAst(parseSExpr(GENERATING_PLACEHOLDER_VIEW));
+        return;
+      }
+
+      // 1 state: Fully qualified -> show placeholder card immediately, then dispatch inference
+      setRawSource(GENERATING_PLACEHOLDER_VIEW);
+      setCurrentAst(parseSExpr(GENERATING_PLACEHOLDER_VIEW));
+
+      Channels.UI_ACTIONS.send({
+        action,
+        payload: {
+          ...payload,
+          phase: selectedPhase,
+          subject: selectedSubject,
+          viewPath: activeViewPath,
+        },
+      });
+      return;
+    }
+
+    // Pass through non-generation UI actions
     Channels.UI_ACTIONS.send({ action, payload });
   };
-
 return (
     <div style={{ maxWidth: '840px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
       
