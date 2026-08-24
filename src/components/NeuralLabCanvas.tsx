@@ -88,32 +88,35 @@ export default function NeuralLabCanvas() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-      <CurriculumSelector
-        keyStage={selectedKeyStage}
-        subject={selectedSubject}
-        unit={selectedUnit}
-        status={status}
-        isReady={isReady}
-        sessionId={sessionId}
-        onKeyStageChange={(newKs, firstSub, firstUnit) => {
-          setSelectedKeyStage(newKs);
-          setSelectedSubject(firstSub);
-          setSelectedUnit(firstUnit);
-          requestQuestion(newKs, firstSub, firstUnit);
-        }}
-        onSubjectChange={(newSub, firstUnit) => {
-          setSelectedSubject(newSub);
-          setSelectedUnit(firstUnit);
-          requestQuestion(selectedKeyStage, newSub, firstUnit);
-        }}
-        onUnitChange={(newUnit) => {
-          setSelectedUnit(newUnit);
-          requestQuestion(selectedKeyStage, selectedSubject, newUnit);
-        }}
-        onSessionIdChange={setSessionId}
-        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
-        onDownloadReport={handleExportReport}
-      />
+<CurriculumSelector
+  keyStage={selectedKeyStage}
+  subject={selectedSubject}
+  unit={selectedUnit}
+  status={status}
+  isReady={isReady}
+  sessionId={sessionId}
+  onKeyStageChange={(newKs, firstSub, firstUnit) => {
+    const sub = firstSub || 'Science';
+    const unit = firstUnit || 'Forces and Magnets';
+    setSelectedKeyStage(newKs);
+    setSelectedSubject(sub);
+    setSelectedUnit(unit);
+    requestQuestion(newKs, sub, unit);
+  }}
+  onSubjectChange={(newSub, firstUnit) => {
+    const unit = firstUnit || 'General';
+    setSelectedSubject(newSub);
+    setSelectedUnit(unit);
+    requestQuestion(selectedKeyStage, newSub, unit);
+  }}
+  onUnitChange={(newUnit) => {
+    setSelectedUnit(newUnit);
+    requestQuestion(selectedKeyStage, selectedSubject, newUnit);
+  }}
+  onSessionIdChange={setSessionId}
+  onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+  onDownloadReport={handleExportReport}
+/>
 
       <div
         style={{

@@ -14,6 +14,7 @@
     let activeChannel = null;
     let isConnecting = false;
     let isBusy = false;
+    let pendingIntent = null;
 
     async function createFreshSession(systemInstruction) {
       const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
@@ -47,6 +48,77 @@
       return null;
     }
 
+    async function processIntent(intent, dc) {
+      isBusy = true;
+      console.log('[Worker Daemon] Processing Intent:', intent);
+
+      let session = null;
+      try {
+        const prompt = buildPrompt(intent);
+        console.log('[Worker Daemon] Prompting on-device model...');
+
+        // Fresh session per generation ensures zero cross-subject memory drift
+        session = await createFreshSession("You are a UK National Curriculum test generator. Output valid Lisp S-expressions.");
+
+        if (!session) {
+          if (dc.readyState === 'open') {
+            dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "Retry" "Help") :answer-key 0)');
+            dc.send('__EOF__');
+          }
+          return;
+        }
+
+        const response = await session.prompt(prompt);
+        console.log('[Worker Daemon] Model Output:\n', response);
+
+        // --- S-Expression Structural Sanitizer ---
+        let sanitized = response
+          .replace(/```(?:lisp|scheme)?/gi, '')
+          .replace(/```/g, '')
+          .trim();
+
+        if (!sanitized.startsWith('(')) {
+          sanitized = `(${sanitized}`;
+        }
+        if (!sanitized.endsWith(')')) {
+          sanitized = `${sanitized})`;
+        }
+
+        if (!sanitized.startsWith('(:route')) {
+          sanitized = sanitized.replace(/^\(/, '(:route "quiz:mcq" ');
+        }
+
+        if (!sanitized.includes(':prompt')) {
+          sanitized = sanitized.replace(
+            ':scratchpad',
+            ':prompt "Which statement best describes this concept?" :scratchpad'
+          );
+        }
+
+        if (dc.readyState === 'open') {
+          dc.send(sanitized);
+          dc.send('__EOF__');
+        }
+      } catch (err) {
+        console.error('[Worker Daemon] Generation Error:', err);
+        if (dc.readyState === 'open') {
+          dc.send('__EOF__');
+        }
+      } finally {
+        isBusy = false;
+        if (session && typeof session.destroy === 'function') {
+          try { session.destroy(); } catch {}
+        }
+
+        // Drain queue if a newer intent arrived during inference
+        if (pendingIntent) {
+          const next = pendingIntent;
+          pendingIntent = null;
+          processIntent(next, dc);
+        }
+      }
+    }
+
     async function createOffer() {
       if (isConnecting) return;
       if (activeChannel && activeChannel.readyState === 'open') return;
@@ -75,72 +147,12 @@
 
       dc.onmessage = async (event) => {
         if (isBusy) {
-          console.warn('[Worker Daemon] Busy, skipping duplicate intent:', event.data);
+          console.log('[Worker Daemon] Busy: queuing latest intent...');
+          pendingIntent = event.data;
           return;
         }
 
-        const intent = event.data;
-        isBusy = true;
-        console.log('[Worker Daemon] Received Intent:', intent);
-
-        let session = null;
-        try {
-          const prompt = buildPrompt(intent);
-          console.log('[Worker Daemon] Prompting on-device model...');
-
-          // Fresh session per generation ensures zero cross-subject memory drift
-          session = await createFreshSession("You are a UK National Curriculum test generator. Output valid Lisp S-expressions.");
-
-          if (!session) {
-            if (dc.readyState === 'open') {
-              dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "Retry" "Help") :answer-key 0)');
-              dc.send('__EOF__');
-            }
-            return;
-          }
-
-const response = await session.prompt(prompt);
-          console.log('[Worker Daemon] Model Output:\n', response);
-
-          // --- S-Expression Structural Sanitizer ---
-          let sanitized = response
-            .replace(/```(?:lisp|scheme)?/gi, '')
-            .replace(/```/g, '')
-            .trim();
-
-          if (!sanitized.startsWith('(')) {
-            sanitized = `(${sanitized}`;
-          }
-          if (!sanitized.endsWith(')')) {
-            sanitized = `${sanitized})`;
-          }
-
-          if (!sanitized.startsWith('(:route')) {
-            sanitized = sanitized.replace(/^\(/, '(:route "quiz:mcq" ');
-          }
-
-          if (!sanitized.includes(':prompt')) {
-            sanitized = sanitized.replace(
-              ':scratchpad',
-              ':prompt "Which statement best describes this concept?" :scratchpad'
-            );
-          }
-
-          if (dc.readyState === 'open') {
-            dc.send(sanitized);
-            dc.send('__EOF__');
-          }
-        } catch (err) {
-          console.error('[Worker Daemon] Generation Error:', err);
-          if (dc.readyState === 'open') {
-            dc.send('__EOF__');
-          }
-        } finally {
-          isBusy = false;
-          if (session && typeof session.destroy === 'function') {
-            try { session.destroy(); } catch {}
-          }
-        }
+        processIntent(event.data, dc);
       };
 
       pc.onicecandidate = (e) => {
