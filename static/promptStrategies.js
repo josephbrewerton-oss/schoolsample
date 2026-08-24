@@ -76,7 +76,7 @@ Generate ONE question for "${topic}":
 Output:`;
   },
 
-  // 2. SCIENCE (Physics, Chemistry, Biology)
+// 2. SCIENCE (Physics, Chemistry, Biology)
   science: (subject, topic, langName, keyStage, topicId) => {
     const focus = pickRandom(PEDAGOGICAL_ARCHETYPES.science);
     const entropy = Math.floor(Math.random() * 100000);
@@ -94,11 +94,13 @@ Target Reading Level & Tone: ${ageRule}
 CRITICAL RULES:
 1. Write the scientific fact/law clearly in :scratchpad first.
 2. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER matching the science in :scratchpad.
-3. Items 1, 2, and 3 MUST be plausible scientific distractors.
+3. Items 1, 2, and 3 MUST be plausible scientific distractors that match the exact entity type of Item 0.
 4. :answer-key MUST ALWAYS be 0.
-5. NEGATIVE CONSTRAINT: Do NOT ask basic "Which has the longest/shortest..." recall questions if higher-order application is possible. Target '${focus}'.
-6. Strictly adhere to the Target Reading Level & Tone: "${ageRule}".
-7. Output ONLY the raw Lisp S-expression. No markdown.
+5. STRICT MCQ FORMAT: Do NOT include open-ended instructions like "Explain your reasoning", "Justify your answer", or "Show calculations" in the question stem.
+6. SYLLABUS CEILING: Keep strictly within UK Key Stage ${keyStage} science. Do NOT introduce university/A-Level concepts (e.g. no Planck equations, quantum mechanics, or wavenumbers unless explicitly required by Key Stage 4).
+7. NEGATIVE CONSTRAINT: Do NOT ask basic "Which has the longest/shortest..." recall questions if higher-order application is possible. Target '${focus}'.
+8. Strictly adhere to the Target Reading Level & Tone: "${ageRule}".
+9. Output ONLY the raw Lisp S-expression. No markdown.
 
 EXAMPLE:
 Output: (:route "quiz:mcq" :scratchpad "Microwaves penetrate atmosphere with minimal scattering, making them ideal for satellite communication." :prompt "Why are microwaves preferred over standard radio waves for direct satellite communications?" :options (list "They penetrate the atmosphere without excessive scattering" "They travel faster than the speed of light" "They carry no electromagnetic energy" "They reflect completely off the upper atmosphere") :answer-key 0)
