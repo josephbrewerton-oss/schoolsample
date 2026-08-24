@@ -166,7 +166,25 @@ useEffect(() => {
     return streamItems.filter((i) => i.subject === selectedSubject);
   }, [streamItems, selectedSubject]);
 
-  
+  // Auto-select first subject when phase changes
+  useEffect(() => {
+    if (availableSubjects.length > 0 && !availableSubjects.includes(selectedSubject)) {
+      setSelectedSubject(availableSubjects[0]);
+    }
+  }, [availableSubjects, selectedSubject]);
+
+  // Auto-select first lesson view when filtered lessons change
+  useEffect(() => {
+    if (filteredLessons.length > 0) {
+      const isCurrentPathValid = filteredLessons.some(
+        (item) => `/sys/views/${item.id}.lisp` === activeViewPath
+      );
+      if (!isCurrentPathValid) {
+        setActiveViewPath(`/sys/views/${filteredLessons[0].id}.lisp`);
+      }
+    }
+  }, [filteredLessons, activeViewPath]);
+
 // --- Binary 1+1+1 Selection Flags ---
   const flagPhase = selectedPhase !== 'ALL' ? 1 : 0;
   const flagSubject = selectedSubject !== 'ALL' ? 1 : 0;

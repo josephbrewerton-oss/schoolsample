@@ -387,9 +387,18 @@ function QuizNode({
     (c) => typeof c === 'object' && c !== null && c.tag === 'question'
   ) as SExprNode | undefined;
 
-  const optionNodes = children.filter(
+  const rawOptionNodes = children.filter(
     (c) => typeof c === 'object' && c !== null && c.tag === 'option'
   ) as SExprNode[];
+
+  const optionNodes = React.useMemo(() => {
+    const items = [...rawOptionNodes];
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }, [props.id, children]);
 
   const explanationNode = children.find(
     (c) => typeof c === 'object' && c !== null && c.tag === 'explanation'
