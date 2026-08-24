@@ -161,11 +161,11 @@ Language: ${langName}
 Target Reading Level & Tone: ${ageRule}
 
 CRITICAL RULES:
-1. State the grammar rule, definition, or literary device in :scratchpad first.
-2. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER stated in :scratchpad.
-3. Items 1, 2, and 3 MUST be incorrect grammatical or literary distractors.
+1. Write the correct grammatical, literary, or punctuation rule clearly in :scratchpad first.
+2. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER directly matching what you stated in :scratchpad. It is mandatory that Item 0 is the single correct answer.
+3. Items 1, 2, and 3 MUST be plausible incorrect distractors. NEVER put an incorrect option or distractor into position 0.
 4. :answer-key MUST ALWAYS be 0.
-5. Focus on '${focus}'.
+5. Use standard UK English terminology (e.g., 'inverted commas' or 'speech marks', 'full stop' instead of 'period').
 6. Strictly adhere to the Target Reading Level & Tone: "${ageRule}".
 7. Output ONLY the raw Lisp S-expression. No markdown.
 
