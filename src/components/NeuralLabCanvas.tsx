@@ -18,6 +18,7 @@ export default function NeuralLabCanvas() {
   const [activeQuestion, setActiveQuestion] = useState<{
     prompt: string;
     displayOptions: string[];
+    keyStage: string;
     subject: string;
     unit: string;
   } | null>(null);
@@ -29,7 +30,7 @@ export default function NeuralLabCanvas() {
 
   const handleNewQuestion = useCallback((payload: QuestionPayload) => {
     isGeneratingRef.current = false;
-    const { question, subject, unit } = payload;
+    const { question, keyStage, subject, unit } = payload;
 
     const targetValue = question.options[question.answerKey] ?? question.options[0];
     const shuffled = [...question.options].sort(() => Math.random() - 0.5);
@@ -39,10 +40,11 @@ export default function NeuralLabCanvas() {
     setActiveQuestion({
       prompt: question.prompt,
       displayOptions: shuffled,
+      keyStage: keyStage || selectedKeyStage,
       subject: subject,
       unit: unit,
     });
-  }, []);
+  }, [selectedKeyStage]);
 
   const { isReady, status, sendIntent } = useWebRTCNeuralBus(handleNewQuestion);
 
@@ -86,37 +88,44 @@ export default function NeuralLabCanvas() {
     }
   };
 
+  // Derived state: question is only valid if it matches the active dropdown selection
+  const isQuestionAligned =
+    activeQuestion !== null &&
+    activeQuestion.keyStage === selectedKeyStage &&
+    activeQuestion.subject === selectedSubject &&
+    activeQuestion.unit === selectedUnit;
+
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-<CurriculumSelector
-  keyStage={selectedKeyStage}
-  subject={selectedSubject}
-  unit={selectedUnit}
-  status={status}
-  isReady={isReady}
-  sessionId={sessionId}
-  onKeyStageChange={(newKs, firstSub, firstUnit) => {
-    const sub = firstSub || 'Science';
-    const unit = firstUnit || 'Forces and Magnets';
-    setSelectedKeyStage(newKs);
-    setSelectedSubject(sub);
-    setSelectedUnit(unit);
-    requestQuestion(newKs, sub, unit);
-  }}
-  onSubjectChange={(newSub, firstUnit) => {
-    const unit = firstUnit || 'General';
-    setSelectedSubject(newSub);
-    setSelectedUnit(unit);
-    requestQuestion(selectedKeyStage, newSub, unit);
-  }}
-  onUnitChange={(newUnit) => {
-    setSelectedUnit(newUnit);
-    requestQuestion(selectedKeyStage, selectedSubject, newUnit);
-  }}
-  onSessionIdChange={setSessionId}
-  onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
-  onDownloadReport={handleExportReport}
-/>
+      <CurriculumSelector
+        keyStage={selectedKeyStage}
+        subject={selectedSubject}
+        unit={selectedUnit}
+        status={status}
+        isReady={isReady}
+        sessionId={sessionId}
+        onKeyStageChange={(newKs, firstSub, firstUnit) => {
+          const sub = firstSub || 'Science';
+          const unit = firstUnit || 'Forces and Magnets';
+          setSelectedKeyStage(newKs);
+          setSelectedSubject(sub);
+          setSelectedUnit(unit);
+          requestQuestion(newKs, sub, unit);
+        }}
+        onSubjectChange={(newSub, firstUnit) => {
+          const unit = firstUnit || 'General';
+          setSelectedSubject(newSub);
+          setSelectedUnit(unit);
+          requestQuestion(selectedKeyStage, newSub, unit);
+        }}
+        onUnitChange={(newUnit) => {
+          setSelectedUnit(newUnit);
+          requestQuestion(selectedKeyStage, selectedSubject, newUnit);
+        }}
+        onSessionIdChange={setSessionId}
+        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+        onDownloadReport={handleExportReport}
+      />
 
       <div
         style={{
@@ -129,7 +138,7 @@ export default function NeuralLabCanvas() {
           boxSizing: 'border-box',
         }}
       >
-        {!activeQuestion ? (
+        {!isQuestionAligned ? (
           <div
             style={{
               height: '440px',
@@ -141,7 +150,7 @@ export default function NeuralLabCanvas() {
             }}
           >
             <div style={{ fontSize: '1.2rem', fontWeight: 600, color: '#64748b' }}>
-              ⚡ Fast-splicing AST question archetype...
+              ⚡ Fast-splicing AST question archetype for {selectedSubject}: {selectedUnit}...
             </div>
             <div style={{ width: '75%', height: '20px', background: '#f1f5f9', borderRadius: '6px' }} />
             <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
