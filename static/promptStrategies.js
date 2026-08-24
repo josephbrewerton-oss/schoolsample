@@ -131,8 +131,8 @@ Target Reading Level & Tone: ${ageRule}
 
 CRITICAL RULES:
 1. State the historical, geographical, or cultural fact in :scratchpad first.
-2. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER stated in :scratchpad.
-3. Items 1, 2, and 3 MUST be plausible but historically/geographically incorrect distractors.
+2. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER stated in :scratchpad. It is mandatory that Item 0 is the single true fact.
+3. Items 1, 2, and 3 MUST be plausible but historically/geographically incorrect distractors. NEVER place an incorrect option, joke, or distractor in position 0.
 4. :answer-key MUST ALWAYS be 0.
 5. Focus on '${focus}'. Avoid generic dates/places unless assessing causation or significance.
 6. Strictly adhere to the Target Reading Level & Tone: "${ageRule}".
