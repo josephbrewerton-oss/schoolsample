@@ -99,11 +99,35 @@
             return;
           }
 
-          const response = await session.prompt(prompt);
+const response = await session.prompt(prompt);
           console.log('[Worker Daemon] Model Output:\n', response);
 
+          // --- S-Expression Structural Sanitizer ---
+          let sanitized = response
+            .replace(/```(?:lisp|scheme)?/gi, '')
+            .replace(/```/g, '')
+            .trim();
+
+          if (!sanitized.startsWith('(')) {
+            sanitized = `(${sanitized}`;
+          }
+          if (!sanitized.endsWith(')')) {
+            sanitized = `${sanitized})`;
+          }
+
+          if (!sanitized.startsWith('(:route')) {
+            sanitized = sanitized.replace(/^\(/, '(:route "quiz:mcq" ');
+          }
+
+          if (!sanitized.includes(':prompt')) {
+            sanitized = sanitized.replace(
+              ':scratchpad',
+              ':prompt "Which statement best describes this concept?" :scratchpad'
+            );
+          }
+
           if (dc.readyState === 'open') {
-            dc.send(response);
+            dc.send(sanitized);
             dc.send('__EOF__');
           }
         } catch (err) {
