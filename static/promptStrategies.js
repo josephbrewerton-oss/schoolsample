@@ -100,7 +100,12 @@ CRITICAL RULES:
 6. SYLLABUS CEILING: Keep strictly within UK Key Stage ${keyStage} science. Do NOT introduce university/A-Level concepts (e.g. no Planck equations, quantum mechanics, or wavenumbers unless explicitly required by Key Stage 4).
 7. NEGATIVE CONSTRAINT: Do NOT ask basic "Which has the longest/shortest..." recall questions if higher-order application is possible. Target '${focus}'.
 8. Strictly adhere to the Target Reading Level & Tone: "${ageRule}".
-9. Output ONLY the raw Lisp S-expression. No markdown.
+
+9. CHEMISTRY EQUATIONS: If balancing equations or writing reactions:
+   - Use ONLY valid, real-world chemical reactions (e.g. 2H2 + O2 -> 2H2O, or electrolysis: 2H2O -> 2H2 + O2).
+   - Only change balancing coefficients (numbers in front), NEVER change the chemical subscripts or compound formulas in the options.
+10. TOPIC GROUNDING: The question MUST strictly test the chosen topic '${topic}' (e.g. cathode/anode reactions, molten vs aqueous ions for Electrolysis).
+11. Output ONLY the raw Lisp S-expression. No markdown.
 
 EXAMPLE:
 Output: (:route "quiz:mcq" :scratchpad "Microwaves penetrate atmosphere with minimal scattering, making them ideal for satellite communication." :prompt "Why are microwaves preferred over standard radio waves for direct satellite communications?" :options (list "They penetrate the atmosphere without excessive scattering" "They travel faster than the speed of light" "They carry no electromagnetic energy" "They reflect completely off the upper atmosphere") :answer-key 0)
