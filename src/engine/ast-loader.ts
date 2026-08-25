@@ -1,5 +1,7 @@
+// src/engine/ast-loader.ts
 import { getVfsView, saveVfsView } from '../services/dbStore';
 import { OakStage, OakSubject, OakTopic } from '../curriculum/oakCatalogue';
+import { runLocalInference } from './EdgeCognitiveEngine';
 
 export type ASTNode = {
   tag: string;
@@ -11,7 +13,6 @@ export type ASTNode = {
  * Tokenizes raw S-expression strings into symbols, keywords, strings, and parenthesis.
  */
 function tokenize(input: string): string[] {
-  // Strip comments (;; ...) and descriptive LLM image placeholders
   const sanitized = input
     .replace(/;;.*$/gm, '')
     .replace(/<image[^>]*>/gi, '')
@@ -56,7 +57,6 @@ export function parseAST(source: string): ASTNode | null {
 
     const firstToken = tokens[cursor];
 
-    // If it starts with a keyword or list token, parse as a list / kwargs container
     if (firstToken && firstToken.startsWith(':')) {
       const props: Record<string, any> = {};
       while (cursor < tokens.length && tokens[cursor] !== ')') {
@@ -107,7 +107,7 @@ export function parseAST(source: string): ASTNode | null {
 
 /**
  * Resolves a curriculum topic AST: checks IndexedDB VFS first,
- * falling back to Gemini Nano JIT synthesis via Prompt API.
+ * falling back to local on-device inference.
  */
 export async function resolveTopicAST(
   stage: OakStage,
@@ -116,22 +116,12 @@ export async function resolveTopicAST(
 ): Promise<{ raw: string; ast: ASTNode | null }> {
   const vfsPath = `/sys/curriculum/${stage.id}/${subject.id}/${topic.id}.lisp`;
 
-  // 1. IndexedDB VFS Cache Lookup
   const cachedLisp = await getVfsView(vfsPath);
   if (cachedLisp) {
     return {
       raw: cachedLisp,
       ast: parseAST(cachedLisp),
     };
-  }
-
-  // 2. On-Device Gemini Nano Prompt API Synthesis
-  const aiHost = (window as any).ai || (self as any).ai || (window.parent as any)?.ai;
-  const GlobalLM = (window as any).LanguageModel || (window.parent as any)?.LanguageModel;
-  const targetFactory = aiHost?.languageModel || GlobalLM;
-
-  if (!targetFactory) {
-    throw new Error('Local Prompt API / Gemini Nano engine unavailable.');
   }
 
   const systemPrompt = `You are a deterministic S-expression generator. Output ONLY a valid Lisp AST formatted as (view ...) containing (stepper ...) and (quiz ...). Do not include markdown formatting or commentary.`;
@@ -151,32 +141,17 @@ Format strictly:
     (option (text "Distractor 3"))
     (explanation (text "Diagnostic rationale."))))`;
 
-  let session: any = null;
-  try {
-    try {
-      session = await targetFactory.create({ systemPrompt });
-    } catch {
-      session = await targetFactory.create();
-    }
+  const rawResult = await runLocalInference(prompt, systemPrompt);
 
-    const rawResult: string = await session.prompt(prompt);
-    const cleanLisp = rawResult
-      .replace(/```(?:lisp|scheme)?/gi, '')
-      .replace(/```/g, '')
-      .trim();
+  const cleanLisp = rawResult
+    .replace(/```(?:lisp|scheme)?/gi, '')
+    .replace(/```/g, '')
+    .trim();
 
-    // 3. Save to local IndexedDB VFS
-    await saveVfsView(vfsPath, cleanLisp);
+  await saveVfsView(vfsPath, cleanLisp);
 
-    return {
-      raw: cleanLisp,
-      ast: parseAST(cleanLisp),
-    };
-  } finally {
-    if (session && typeof session.destroy === 'function') {
-      try {
-        session.destroy();
-      } catch {}
-    }
-  }
+  return {
+    raw: cleanLisp,
+    ast: parseAST(cleanLisp),
+  };
 }

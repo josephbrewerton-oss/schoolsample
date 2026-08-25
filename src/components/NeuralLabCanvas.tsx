@@ -6,13 +6,39 @@ import { useWebRTCNeuralBus, QuestionPayload } from '../hooks/useWebRTCNeuralBus
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 
+import { buildUniversalPrompt } from '@site/static/promptStrategies';
+import { parseAST } from '../engine/ast-loader';
+import { ASTFlowGovernor, RawASTQuestion } from '../engine/astGovernor';
+import { runLocalInference } from '../engine/EdgeCognitiveEngine';
+
+function normalizeASTToQuestion(parsed: any): RawASTQuestion | null {
+  if (!parsed) return null;
+
+  let options: string[] = [];
+  if (Array.isArray(parsed.options)) {
+    options = parsed.options.map((o: any) => (typeof o === 'object' ? o.children?.[0] || '' : String(o)));
+  } else if (parsed.options?.children && Array.isArray(parsed.options.children)) {
+    options = parsed.options.children.map((c: any) => (typeof c === 'object' ? c.children?.[0] || '' : String(c)));
+  }
+
+  const prompt = typeof parsed.prompt === 'object' ? parsed.prompt?.children?.[0] || '' : String(parsed.prompt || '');
+  const scratchpad = typeof parsed.scratchpad === 'object' ? parsed.scratchpad?.children?.[0] || '' : String(parsed.scratchpad || '');
+  const answerKey = Number(parsed['answer-key'] ?? parsed.answerKey ?? 0);
+
+  return {
+    route: parsed.route || 'quiz:mcq',
+    prompt: prompt.trim(),
+    scratchpad: scratchpad.trim(),
+    options: options.filter(Boolean),
+    answerKey: isNaN(answerKey) ? 0 : answerKey,
+  };
+}
+
 export default function NeuralLabCanvas() {
-  // Read initial curriculum preference from localStorage (defaulting to uk_oak)
   const [curriculumSetting, setCurriculumSetting] = useState<CurriculumProviderKey>(() => {
     return (localStorage.getItem('curriculum_standard') as CurriculumProviderKey) || 'uk_oak';
   });
 
-  // Listen for changes made in Settings & Access modal / tabs
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
@@ -24,7 +50,6 @@ export default function NeuralLabCanvas() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [curriculumSetting]);
 
-  // Derive available taxonomy tree based on active curriculum scope
   const curriculumTree = useMemo(() => {
     return getActiveCurriculumTree(curriculumSetting);
   }, [curriculumSetting]);
@@ -69,13 +94,14 @@ export default function NeuralLabCanvas() {
     });
   }, [selectedKeyStage]);
 
-  const { isReady, status, sendIntent } = useWebRTCNeuralBus(handleNewQuestion);
+  const { isReady, status } = useWebRTCNeuralBus(handleNewQuestion);
 
-  const requestQuestion = (
+  const requestQuestion = async (
     ks = selectedKeyStage, 
     sub = selectedSubject, 
     u = selectedUnit
   ) => {
+    if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
     setActiveQuestion(null);
     setSelectedAnswer(null);
@@ -85,16 +111,54 @@ export default function NeuralLabCanvas() {
     const subId = slugify(sub) || 'science';
     const unitId = slugify(u) || 'atomic-structure';
 
-    // Dispatches curriculum standard alongside key IDs over WebRTC neural bus
-    sendIntent(ks, sub, u, ksId, subId, unitId, curriculumSetting);
+    try {
+      const prompt = buildUniversalPrompt({
+        subject: sub,
+        topic: u,
+        keyStage: ks,
+        subjectId: subId,
+        topicId: unitId,
+        curriculum: curriculumSetting
+      });
+
+      console.log('[Prompt Generated]:', prompt);
+      const rawContent = await runLocalInference(prompt);
+      console.log('[Raw AI Response]:', rawContent);
+
+      const parsedNode = parseAST(rawContent);
+      console.log('[Parsed AST]:', parsedNode);
+
+      const normalized = normalizeASTToQuestion(parsedNode);
+
+      if (normalized) {
+        const governed = ASTFlowGovernor.govern(normalized, sub, u);
+        console.log('[Governor Result]:', governed);
+
+        if (governed.isValid && governed.sanitizedQuestion) {
+          handleNewQuestion({
+            question: governed.sanitizedQuestion,
+            keyStage: ks,
+            subject: sub,
+            unit: u
+          });
+          return;
+        } else {
+          console.warn('[AST Governor Rejection]:', governed.rejectionReason);
+        }
+      }
+    } catch (err) {
+      console.error('[Question Generation Error]:', err);
+    } finally {
+      isGeneratingRef.current = false;
+    }
   };
 
-  // Initial boot trigger once daemon is ready
+  // Immediate initial question trigger on mount
   useEffect(() => {
-    if (isReady && !activeQuestion && !isGeneratingRef.current) {
+    if (!activeQuestion && !isGeneratingRef.current) {
       requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
     }
-  }, [isReady]);
+  }, []);
 
   const handleSelectOption = (idx: number) => {
     if (selectedAnswer === correctIndex) return;
@@ -116,7 +180,6 @@ export default function NeuralLabCanvas() {
     }
   };
 
-  // Derived state: question is only valid if it matches the active selection
   const isQuestionAligned =
     activeQuestion !== null &&
     activeQuestion.keyStage === selectedKeyStage &&
@@ -130,7 +193,7 @@ export default function NeuralLabCanvas() {
         subject={selectedSubject}
         unit={selectedUnit}
         status={status}
-        isReady={isReady}
+        isReady={isReady || true}
         sessionId={sessionId}
         curriculumTree={curriculumTree}
         onKeyStageChange={(newKs, firstSub, firstUnit) => {

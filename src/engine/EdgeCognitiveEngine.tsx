@@ -1,4 +1,52 @@
+// src/engine/EdgeCognitiveEngine.tsx
 import React, { useState, useRef, useEffect } from 'react';
+
+/**
+ * Executes on-device LLM inference using Chrome's Prompt API (Gemini Nano)
+ * with a 6-second timeout race and deterministic AST fallback.
+ */
+export async function runLocalInference(prompt: string, systemPrompt?: string): Promise<string> {
+  const fallbackAST = `(:route "quiz:mcq" :scratchpad "Atoms consist of protons and neutrons in the central nucleus, with electrons orbiting in outer shells." :prompt "Which subatomic particles are located inside the nucleus of an atom?" :options (list "Protons and Neutrons" "Electrons and Neutrons" "Electrons only" "Protons and Electrons") :answer-key 0)`;
+
+  const aiHost = (window as any).ai || (self as any).ai;
+  const GlobalLM = (window as any).LanguageModel;
+  const targetFactory = aiHost?.languageModel || GlobalLM;
+
+  if (!targetFactory) {
+    console.warn('[AI Engine] Prompt API unavailable, using deterministic fallback.');
+    return fallbackAST;
+  }
+
+  const inferencePromise = (async () => {
+    let session: any = null;
+    try {
+      if (typeof targetFactory.capabilities === 'function') {
+        const caps = await targetFactory.capabilities();
+        if (caps.available === 'no') return fallbackAST;
+      }
+
+      session = systemPrompt
+        ? await targetFactory.create({ systemPrompt })
+        : await targetFactory.create();
+
+      const response = await session.prompt(prompt);
+      return response || fallbackAST;
+    } finally {
+      if (session && typeof session.destroy === 'function') {
+        try { session.destroy(); } catch {}
+      }
+    }
+  })();
+
+  const timeoutPromise = new Promise<string>((resolve) =>
+    setTimeout(() => {
+      console.warn('[AI Engine] Inference timed out after 6s. Resolving fallback AST.');
+      resolve(fallbackAST);
+    }, 6000)
+  );
+
+  return Promise.race([inferencePromise, timeoutPromise]);
+}
 
 export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfig?: any }) {
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
@@ -11,15 +59,12 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 1. Auto-scrolls the terminal output box as tokens stream in
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [terminalLogs]);
 
   const triggerStream = async (promptText: string) => {
     setIsProcessing(true);
-
-    // 2. Smoothly keeps this whole interaction box visible on screen
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     setTerminalLogs((prev) => [
@@ -85,7 +130,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       ref={containerRef}
       style={{ marginTop: '1.5rem', background: '#0f172a', borderRadius: '12px', padding: '1.5rem', color: '#fff' }}
     >
-      {/* Quick Lesson Buttons */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <button
           type="button"
@@ -110,7 +154,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
         </button>
       </div>
 
-      {/* Query Form */}
       <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem' }}>
         <input
           type="text"
@@ -128,7 +171,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
         </button>
       </form>
 
-      {/* Terminal Display */}
       <div
         style={{
           background: '#020617',
