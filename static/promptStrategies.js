@@ -26,18 +26,28 @@ const REGIONAL_CONSTRAINTS = {
 export const SUBJECT_DEFINITIONS = {
   maths: {
     category: "Mathematics",
-    aliases: ['maths', 'mathematics', 'algebra', 'geometry', 'arithmetic', 'fractions', 'decimals', 'percentages', 'ratio', 'equations', 'numbers', 'trigonometry', 'statistics'],
+    aliases: [
+      'maths', 'mathematics', 'algebra', 'geometry', 'arithmetic', 'fractions', 
+      'decimals', 'percentages', 'ratio', 'equations', 'numbers', 'trigonometry', 
+      'statistics', 'circle', 'circle theorems', 'tangent', 'chord', 'subtended', 
+      'arc', 'radius', 'diameter', 'pythagoras', 'quadratic', 'probability'
+    ],
     archetypes: [
       "Multi-step problem solving",
+      "Geometric property deduction / Theorem application",
       "Real-world word problem application",
       "Inverse problem (working backwards from a result)",
       "Spot the arithmetic / conceptual error"
     ],
     specificRules: [
-      "Compute the exact numeric or algebraic solution step-by-step in :scratchpad first.",
-      "Distractors (Items 1, 2, 3) must represent common student arithmetic errors."
+      "TOPIC FIDELITY: Strictly generate a question testing the exact Topic specified (e.g., if Topic is 'Circle Theorems', the question MUST test angles, arcs, chords, or tangents).",
+      "Compute the exact numeric or geometric step-by-step solution in :scratchpad first.",
+      "Distractors (Items 1, 2, 3) must represent common student mathematical misconceptions.",
+      "SYLLABUS BOUNDARY (KS4 GCSE): Use DEGREES (0°–360°) for angle and sector questions. NEVER use radians.",
+      "DISTRACTOR DIVERSITY: All 4 options in :options (list ...) MUST be distinctly different numbers or expressions. NEVER output identical options.",
+      "DISTRACTOR GENERATION: Create plausible arithmetic mistakes for Items 1, 2, and 3 (e.g. forgetting to square the radius, omitting the 1/2 factor, or multiplying instead of dividing)."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "1/4 + 1/2 = 1/4 + 2/4 = 3/4" :prompt "Calculate 1/4 + 1/2 in simplest form." :options (list "3/4" "2/6" "1/2" "3/8") :answer-key 0)'
+    example: '(:route "quiz:mcq" :scratchpad "The angle subtended by an arc at the center is twice the angle subtended at the circumference. 35 * 2 = 70 degrees." :prompt "An angle subtended at the circumference of a circle is 35°. What is the angle subtended by the same arc at the center?" :options (list "70°" "35°" "17.5°" "140°") :answer-key 0)'
   },
 
   science: {
@@ -108,12 +118,14 @@ export const SUBJECT_DEFINITIONS = {
 
 const BASE_CORE_RULES = `
 CRITICAL INVARIANTS:
-1. In :scratchpad, write ONLY the factual explanation or mathematical calculation steps (e.g., "12000 * 3 = 36000 km"). NEVER repeat the question, and NEVER write a question mark (?) in the scratchpad.
-2. In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER directly matching the explanation in :scratchpad.
-3. Items 1, 2, and 3 MUST be plausible distractors matching the exact entity type of Item 0. NEVER place an incorrect option or distractor in position 0.
-4. :answer-key MUST ALWAYS be 0.
-5. STRICT MCQ FORMAT: Do NOT include open-ended instructions like "Explain your reasoning", "Justify your answer", or "Show calculations" in the question stem.
-6. Output ONLY the raw Lisp S-expression. No markdown, no introductory text, no ticks.
+1. TOPIC INTEGRITY: You MUST test the specified Topic. Do not drift into unrelated subjects or adjacent units.
+2. SCRATCHPAD REASONING: In :scratchpad, write ONLY the factual explanation or mathematical calculation steps (e.g., "35 * 2 = 70 degrees"). NEVER write a question mark (?) in the scratchpad.
+3. PROMPT ISOLATION: The :prompt field must contain ONLY the clean question stem. NEVER include choices, option letters (A, B, C, D), or numbers (1), 2)) inside :prompt.
+4. OPTION SLOT 0: In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER directly matching the solution in :scratchpad.
+5. DISTRACTORS: Items 1, 2, and 3 MUST be plausible distractors matching the exact data type of Item 0. NEVER place an incorrect option in position 0.
+6. :answer-key MUST ALWAYS be 0.
+7. STRICT MCQ FORMAT: Do NOT include open-ended requests like "Explain your reasoning" or "Show your work".
+8. Output ONLY the raw Lisp S-expression. No markdown quotes, backticks, or extra text.
 `.trim();
 
 function resolveKeyStageRule(rawKs) {
@@ -138,7 +150,7 @@ export function buildUniversalPrompt(params) {
     curriculum = 'uk_oak'
   } = params;
 
-  // Resolve config via direct match or alias search across subject, subjectId, topic, topicId
+  // Search corpus across subject, subjectId, topic, topicId
   const searchCorpus = `${subjectId} ${subject} ${topicId} ${topic}`.toLowerCase();
   
   const matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(key => {
@@ -155,8 +167,8 @@ export function buildUniversalPrompt(params) {
   return `You are an automated educational assessment ${subConfig.category} question generator for Level ${keyStage}.
 [Entropy-Seed: ${entropy}]
 
-Subject: ${subject}
-Topic: ${topic} (TopicId: ${topicId || 'general'})
+Target Subject: ${subject}
+Target Topic: ${topic} (TopicId: ${topicId || 'general'})
 Pedagogical Focus: ${focus}
 Language: ${langName}
 Target Reading Level & Tone: ${ageRule}

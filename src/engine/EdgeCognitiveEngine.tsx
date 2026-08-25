@@ -2,15 +2,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 /**
+ * Resolves the active Prompt API factory across specification variants.
+ */
+function getLanguageModelFactory(): any {
+  if (typeof (window as any).LanguageModel !== 'undefined') {
+    return (window as any).LanguageModel;
+  }
+  if (typeof (self as any).LanguageModel !== 'undefined') {
+    return (self as any).LanguageModel;
+  }
+  const aiHost = (window as any).ai || (self as any).ai;
+  return aiHost?.languageModel || null;
+}
+
+/**
  * Executes on-device LLM inference using Chrome's Prompt API (Gemini Nano)
- * with a 6-second timeout race and deterministic AST fallback.
+ * with strict sampling control, language attestations, 6s race timeout, and fallback.
  */
 export async function runLocalInference(prompt: string, systemPrompt?: string): Promise<string> {
   const fallbackAST = `(:route "quiz:mcq" :scratchpad "Atoms consist of protons and neutrons in the central nucleus, with electrons orbiting in outer shells." :prompt "Which subatomic particles are located inside the nucleus of an atom?" :options (list "Protons and Neutrons" "Electrons and Neutrons" "Electrons only" "Protons and Electrons") :answer-key 0)`;
 
-  const aiHost = (window as any).ai || (self as any).ai;
-  const GlobalLM = (window as any).LanguageModel;
-  const targetFactory = aiHost?.languageModel || GlobalLM;
+  const targetFactory = getLanguageModelFactory();
 
   if (!targetFactory) {
     console.warn('[AI Engine] Prompt API unavailable, using deterministic fallback.');
@@ -20,20 +32,36 @@ export async function runLocalInference(prompt: string, systemPrompt?: string): 
   const inferencePromise = (async () => {
     let session: any = null;
     try {
-      if (typeof targetFactory.capabilities === 'function') {
+      if (typeof targetFactory.availability === 'function') {
+        const status = await targetFactory.availability();
+        if (status === 'no' || status === 'unavailable') return fallbackAST;
+      } else if (typeof targetFactory.capabilities === 'function') {
         const caps = await targetFactory.capabilities();
-        if (caps.available === 'no') return fallbackAST;
+        if (caps?.available === 'no') return fallbackAST;
       }
 
-      session = systemPrompt
-        ? await targetFactory.create({ systemPrompt })
-        : await targetFactory.create();
+      const sessionOptions: Record<string, any> = {
+        expectedInputs: [{ type: 'text', languages: ['en'] }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        temperature: 0.2,
+        topK: 3,
+      };
 
+      if (systemPrompt) {
+        sessionOptions.systemPrompt = systemPrompt;
+      }
+
+      session = await targetFactory.create(sessionOptions);
       const response = await session.prompt(prompt);
       return response || fallbackAST;
+    } catch (err) {
+      console.warn('[AI Engine Error]', err);
+      return fallbackAST;
     } finally {
       if (session && typeof session.destroy === 'function') {
-        try { session.destroy(); } catch {}
+        try {
+          session.destroy();
+        } catch {}
       }
     }
   })();
@@ -50,7 +78,7 @@ export async function runLocalInference(prompt: string, systemPrompt?: string): 
 
 export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfig?: any }) {
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    '⚡ WebGPU runtime initialized.',
+    '⚡ WebGPU / On-Device Runtime Initialized.',
     'Ready. Select a lesson topic or enter a query below.'
   ]);
   const [inputQuery, setInputQuery] = useState('');
@@ -73,17 +101,18 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       '⚡ Connecting to on-device Gemini Nano...',
     ]);
 
+    let session: any = null;
     try {
-      const aiObj = (window as any).ai || (window as any).LanguageModel;
+      const targetFactory = getLanguageModelFactory();
 
-      if (aiObj) {
-        const session = (window as any).ai?.languageModel
-          ? await (window as any).ai.languageModel.create({
-              systemPrompt: "You are a concise, Socratic tutor for primary school students. Extract one narrow rule or question to guide the student. Never give the direct answer. Maximum 20 words.",
-            })
-          : await (window as any).LanguageModel.create({
-              systemPrompt: "You are a concise, Socratic tutor for primary school students. Extract one narrow rule or question to guide the student. Never give the direct answer. Maximum 20 words.",
-            });
+      if (targetFactory) {
+        session = await targetFactory.create({
+          systemPrompt: "You are a concise, Socratic tutor for primary school students. Extract one narrow rule or question to guide the student. Never give the direct answer. Maximum 20 words.",
+          expectedInputs: [{ type: 'text', languages: ['en'] }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
+          temperature: 0.2,
+          topK: 3
+        });
 
         const stream = session.promptStreaming(promptText);
         let fullResponse = '';
@@ -107,9 +136,14 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       console.warn('[Nano Inference Error]', err);
       setTerminalLogs((prev) => [
         ...prev,
-        `⚠️ [Fallback Tutor]: Let's look at the first step together. Try adding the ones column first.`,
+        `⚠️ [Fallback Tutor]: Let's look at the first step together. Try breaking down the core concepts first.`,
       ]);
     } finally {
+      if (session && typeof session.destroy === 'function') {
+        try {
+          session.destroy();
+        } catch {}
+      }
       setIsProcessing(false);
     }
   };
