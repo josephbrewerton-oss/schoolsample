@@ -48,17 +48,31 @@
       return null;
     }
 
-    async function processIntent(intent, dc) {
+    async function processIntent(rawIntent, dc) {
       isBusy = true;
-      console.log('[Worker Daemon] Processing Intent:', intent);
+      console.log('[Worker Daemon] Processing Intent:', rawIntent);
 
       let session = null;
       try {
-        const prompt = buildPrompt(intent);
-        console.log('[Worker Daemon] Prompting on-device model...');
+        let parsedIntent = rawIntent;
+        if (typeof rawIntent === 'string') {
+          try {
+            parsedIntent = JSON.parse(rawIntent);
+          } catch {
+            parsedIntent = rawIntent;
+          }
+        }
+
+        const prompt = buildPrompt(parsedIntent);
+        console.log('[Worker Daemon] Prompting on-device model with prompt:\n', prompt);
+
+        const isUK = parsedIntent?.curriculum === 'uk_oak';
+        const systemInstruction = isUK
+          ? "You are an educational assessment test generator for UK National Curriculum (Oak). Output valid Lisp S-expressions."
+          : "You are an educational assessment test generator for International / Universal standards. Output valid Lisp S-expressions.";
 
         // Fresh session per generation ensures zero cross-subject memory drift
-        session = await createFreshSession("You are a UK National Curriculum test generator. Output valid Lisp S-expressions.");
+        session = await createFreshSession(systemInstruction);
 
         if (!session) {
           if (dc.readyState === 'open') {
