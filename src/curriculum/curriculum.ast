@@ -1,24 +1,105 @@
-(curriculum :country "UK" :framework "KeyStage"
-  (stage :id "ks2" :title "Key Stage 2"
-    (subject :id "maths" :title "Mathematics"
-      (topic :id "fractions-decimals" :title "Fractions and Decimals"
-        ;; Operational rules for question generation
-        (rules
-          (constraint :type :no-leak ":q must not contain option labels")
-          (constraint :type :opts-count 4)
-          (constraint :type :ans-index :zero-based))
-        
-        ;; Seed nodes and question map templates
-        (seeds
-          (item :id "frac-01" 
-                :concept "equivalence" 
-                :difficulty 1
-                :template (quiz :q "Which fraction is equivalent to {{val}}?" 
-                                :opts (list "{{opt0}}" "{{opt1}}" "{{opt2}}" "{{opt3}}") 
-                                :ans 0))
-          (item :id "frac-02" 
-                :concept "simplification" 
-                :difficulty 2
-                :template (quiz :q "Simplify {{num}}/{{den}} to its lowest terms." 
-                                :opts (list "{{opt0}}" "{{opt1}}" "{{opt2}}" "{{opt3}}") 
-                                :ans 0)))))))
+// src/components/CurriculumSelector.tsx
+import React from 'react';
+import { StandardStage } from '../curriculum/curriculumAdapter';
+
+interface CurriculumSelectorProps {
+  keyStage: string;
+  subject: string;
+  unit: string;
+  status: string;
+  isReady: boolean;
+  sessionId: string;
+  curriculumTree: Record<string, StandardStage>;
+  onKeyStageChange: (ks: string, defaultSubject?: string, defaultUnit?: string) => void;
+  onSubjectChange: (sub: string, defaultUnit?: string) => void;
+  onUnitChange: (unit: string) => void;
+  onSessionIdChange: (id: string) => void;
+  onNewQuestion: () => void;
+  onDownloadReport: () => void;
+}
+
+export const CurriculumSelector: React.FC<CurriculumSelectorProps> = ({
+  keyStage,
+  subject,
+  unit,
+  status,
+  isReady,
+  sessionId,
+  curriculumTree,
+  onKeyStageChange,
+  onSubjectChange,
+  onUnitChange,
+  onSessionIdChange,
+  onNewQuestion,
+  onDownloadReport,
+}) => {
+  // Find active stage node
+  const activeStageEntry = Object.values(curriculumTree).find((s) => s.title === keyStage) 
+    || Object.values(curriculumTree)[0];
+
+  const subjects = activeStageEntry ? activeStageEntry.subjects : [];
+  const activeSubject = subjects.find((s) => s.title === subject) || subjects[0];
+  const topics = activeSubject ? activeSubject.topics : [];
+
+  return (
+    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+      {/* Key Stage Dropdown */}
+      <select
+        value={activeStageEntry?.title || keyStage}
+        onChange={(e) => {
+          const nextStage = Object.values(curriculumTree).find((s) => s.title === e.target.value);
+          const firstSub = nextStage?.subjects[0]?.title;
+          const firstTop = nextStage?.subjects[0]?.topics[0]?.title;
+          onKeyStageChange(e.target.value, firstSub, firstTop);
+        }}
+        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+      >
+        {Object.values(curriculumTree).map((stage) => (
+          <option key={stage.id} value={stage.title}>{stage.title}</option>
+        ))}
+      </select>
+
+      {/* Subject Dropdown */}
+      <select
+        value={activeSubject?.title || subject}
+        onChange={(e) => {
+          const nextSub = subjects.find((s) => s.title === e.target.value);
+          const firstTop = nextSub?.topics[0]?.title;
+          onSubjectChange(e.target.value, firstTop);
+        }}
+        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+      >
+        {subjects.map((s) => (
+          <option key={s.id} value={s.title}>{s.title}</option>
+        ))}
+      </select>
+
+      {/* Topic / Unit Dropdown */}
+      <select
+        value={unit}
+        onChange={(e) => onUnitChange(e.target.value)}
+        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+      >
+        {topics.map((t) => (
+          <option key={t.id} value={t.title}>{t.title}</option>
+        ))}
+      </select>
+
+      <button
+        onClick={onNewQuestion}
+        disabled={!isReady}
+        style={{
+          padding: '8px 16px',
+          background: isReady ? '#2563eb' : '#94a3b8',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '8px',
+          fontWeight: 600,
+          cursor: isReady ? 'pointer' : 'not-allowed'
+        }}
+      >
+        New Question
+      </button>
+    </div>
+  );
+};

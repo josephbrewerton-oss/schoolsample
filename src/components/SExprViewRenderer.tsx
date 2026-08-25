@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+// src/components/SExprViewRenderer.tsx
+import React, { useState, useEffect } from 'react';
 import { SExprAST, SExprNode } from '../types/sexpr';
 
 interface Props {
@@ -114,6 +115,19 @@ function AiTutorNode({
   props: Record<string, any>;
   onAction?: (action: string, payload?: any) => void;
 }) {
+  const [curriculumStandard, setCurriculumStandard] = useState<string>(() => {
+    return (typeof window !== 'undefined' && localStorage.getItem('curriculum_standard')) || 'uk_oak';
+  });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const standard = localStorage.getItem('curriculum_standard') || 'uk_oak';
+      setCurriculumStandard(standard);
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   const [logs, setLogs] = useState<Array<{ role: 'student' | 'tutor' | 'system'; text: string }>>([
     {
       role: 'tutor',
@@ -124,6 +138,9 @@ function AiTutorNode({
   const [busy, setBusy] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const isUK = curriculumStandard === 'uk_oak';
+  const resolvedLang = props.lang || (isUK ? 'en-GB' : 'en-US');
 
   const speak = (text: string) => {
     if (!voiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -136,11 +153,11 @@ function AiTutorNode({
     const utterance = new SpeechSynthesisUtterance(clean);
     utterance.pitch = Number(props.voicePitch) || 1.0;
     utterance.rate = Number(props.voiceRate) || 1.0;
-    utterance.lang = props.lang || 'en-US';
+    utterance.lang = resolvedLang;
 
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
-      const preferredVoice = voices.find((v) => v.lang.startsWith(utterance.lang.slice(0, 2))) || voices[0];
+      const preferredVoice = voices.find((v) => v.lang.startsWith(resolvedLang.slice(0, 2))) || voices[0];
       if (preferredVoice) utterance.voice = preferredVoice;
     }
 
@@ -173,22 +190,23 @@ function AiTutorNode({
         prompt: userText,
         persona: props.persona || 'Tutor',
         context: props.context || '',
+        curriculum: curriculumStandard,
       });
     }
+
+    const regionalSystemRule = isUK
+      ? 'Use standard UK English and UK schooling terminology.'
+      : 'Use globally neutral English and SI metric units.';
+
+    const systemPrompt = `You are a concise, Socratic tutor. ${regionalSystemRule} Guide the student with 1 short question or rule under 15 words. Never give the direct answer.`;
 
     try {
       const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
 
       if (aiObj) {
         const session = await (aiObj.create
-          ? aiObj.create({
-              systemPrompt:
-                'You are a concise, Socratic tutor for primary school students. Guide the student with 1 short question or rule under 15 words. Never give the direct answer.',
-            })
-          : (window as any).ai.languageModel.create({
-              systemPrompt:
-                'You are a concise, Socratic tutor for primary school students. Guide the student with 1 short question or rule under 15 words. Never give the direct answer.',
-            }));
+          ? aiObj.create({ systemPrompt })
+          : (window as any).ai.languageModel.create({ systemPrompt }));
 
         let accumulated = '';
         const stream = session.promptStreaming(userText);
@@ -221,7 +239,7 @@ function AiTutorNode({
       }
     } catch (err) {
       console.warn('[Nano Inference Error]', err);
-      const fallback = `Let's focus on the first place value column.`;
+      const fallback = `Let's focus on the first step of this problem.`;
       setLogs((prev) => {
         const next = [...prev];
         next[next.length - 1] = { role: 'tutor', text: fallback };
@@ -245,7 +263,7 @@ function AiTutorNode({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
         <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.85rem' }}>
-          ⚡ {props.persona || 'AI Socratic Tutor'} [{props.engine || 'On-Device Edge'}]
+          ⚡ {props.persona || 'AI Socratic Tutor'} [{isUK ? 'UK / Oak' : 'International'}]
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
@@ -353,8 +371,6 @@ function AiTutorNode({
     </div>
   );
 }
-
-// --- Interactive Quiz Component Node ---
 
 // --- Interactive Quiz Component Node ---
 
@@ -588,7 +604,7 @@ function StepperNode({
             className={`button ${isFinalStep ? 'button--primary' : 'button--secondary'} button--sm`}
             onClick={handleNext}
           >
-            {isFinalStep ? 'Try Practice Question 👇' : 'Next ▶'}
+            {isFinalStep ? 'Practice Question 👇' : 'Next ▶'}
           </button>
         </div>
       </div>

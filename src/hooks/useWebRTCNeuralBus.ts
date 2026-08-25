@@ -7,6 +7,7 @@ export interface QuestionPayload {
   keyStage: string;
   subject: string;
   unit: string;
+  curriculum?: string;
 }
 
 export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) => void) {
@@ -17,12 +18,18 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
   const channelRef = useRef<RTCDataChannel | null>(null);
   const busRef = useRef<BroadcastChannel | null>(null);
   const rawStreamRef = useRef<string>('');
-  
+
   // Track currently in-flight context so when response arrives it pairs accurately
-  const inFlightContextRef = useRef<{ keyStage: string; subject: string; unit: string }>({
+  const inFlightContextRef = useRef<{
+    keyStage: string;
+    subject: string;
+    unit: string;
+    curriculum: string;
+  }>({
     keyStage: 'Key Stage 3',
-    subject: 'History',
-    unit: 'The Norman Conquest (1066)'
+    subject: 'Science',
+    unit: 'Atomic Structure & Periodic Table',
+    curriculum: 'uk_oak',
   });
 
   const onQuestionReadyRef = useRef(onQuestionReady);
@@ -56,14 +63,15 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
         if (chunk === '__EOF__') {
           const fullText = rawStreamRef.current;
           rawStreamRef.current = '';
-          
+
           const extracted = extractQuestionFromAst(fullText);
           if (extracted) {
             onQuestionReadyRef.current({
               question: extracted,
               keyStage: inFlightContextRef.current.keyStage,
               subject: inFlightContextRef.current.subject,
-              unit: inFlightContextRef.current.unit
+              unit: inFlightContextRef.current.unit,
+              curriculum: inFlightContextRef.current.curriculum,
             });
           }
           return;
@@ -104,26 +112,34 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
     };
   }, []);
 
-  const sendIntent = useCallback((
-    ks: string,
-    sub: string,
-    unit: string,
-    ksId: string,
-    subId: string,
-    unitId: string
-  ) => {
-    rawStreamRef.current = '';
-    inFlightContextRef.current = { keyStage: ks, subject: sub, unit };
+  const sendIntent = useCallback(
+    (
+      keyStage: string,
+      subject: string,
+      unit: string,
+      keyStageId: string,
+      subjectId: string,
+      unitId: string,
+      curriculum: string = 'uk_oak'
+    ) => {
+      inFlightContextRef.current = { keyStage, subject, unit, curriculum };
 
-    const seed = Math.floor(Math.random() * 10000);
-    const intent = `Subject: "${sub}", Topic: "${unit}", Key Stage: "${ks}", SubjectId: "${subId}", TopicId: "${unitId}" (Seed #${seed})`;
-
-    if (channelRef.current && channelRef.current.readyState === 'open') {
-      channelRef.current.send(intent);
-    } else {
-      busRef.current?.postMessage({ type: 'peer_ready' });
-    }
-  }, []);
+      if (channelRef.current?.readyState === 'open') {
+        const intentPayload = {
+          type: 'GENERATE_INTENT',
+          keyStage,
+          subject,
+          unit,
+          keyStageId,
+          subjectId,
+          unitId,
+          curriculum,
+        };
+        channelRef.current.send(JSON.stringify(intentPayload));
+      }
+    },
+    []
+  );
 
   return { isReady, status, sendIntent };
 }

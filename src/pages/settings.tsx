@@ -1,3 +1,4 @@
+// src/pages/settings.tsx
 import React, { useState, useEffect } from "react";
 import Layout from "@theme/Layout";
 import { AVAILABLE_MODELS, loadModel } from "@site/src/utils/aiEngine";
@@ -6,6 +7,8 @@ import { parseSExpr } from "@site/src/utils/sexprParser";
 import { SExprAST } from "@site/src/types/sexpr";
 import { getVfsView, saveVfsView, bootstrapVfsViews } from "@site/src/services/dbStore";
 import { Channels } from "@site/src/utils/channelBus";
+import { useCurriculumStandard } from "@site/src/hooks/useCurriculumStandard";
+import { CurriculumProviderKey } from "@site/src/data/curriculumRegistry";
 
 const DEFAULT_CHEAT_SHEET_VIEW = `(view :className "card padding--md margin-bottom--md"
   (header :level 3 "Dynamic Cheat Sheet (VFS Loaded)")
@@ -16,6 +19,9 @@ const DEFAULT_CHEAT_SHEET_VIEW = `(view :className "card padding--md margin-bott
   (button :action "system:ping" :payload "vfs-node-01" "Test Action"))`;
 
 export default function SettingsPage(): JSX.Element {
+  // Curriculum Standard state
+  const [curriculumStandard, setCurriculumStandard] = useCurriculumStandard();
+
   // AI Engine states
   const [selectedModel, setSelectedModel] = useState<string>("gemini-nano");
   const [status, setStatus] = useState<string>("Ready");
@@ -96,7 +102,7 @@ export default function SettingsPage(): JSX.Element {
     }
   };
 
-    const handleVfsAction = (action: string, payload?: any) => {
+  const handleVfsAction = (action: string, payload?: any) => {
     Channels.UI_ACTIONS.send({ action, payload });
   };
 
@@ -119,7 +125,65 @@ export default function SettingsPage(): JSX.Element {
           Preferences and VFS file trees are stored 100% locally on this device.
         </p>
 
-        {/* Section 1: Accessibility */}
+        {/* Section 1: Curriculum Framework Standard */}
+        <section style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginTop: "1.5rem" }}>
+          <h2>📚 Curriculum Standard & Regional Scope</h2>
+          <p style={{ fontSize: "0.9rem", opacity: 0.85, marginBottom: "1rem" }}>
+            Select the curriculum taxonomy framework and regional constraints for on-device question generation.
+          </p>
+
+          <select
+            value={curriculumStandard}
+            onChange={(e) => setCurriculumStandard(e.target.value as CurriculumProviderKey)}
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              border: "1px solid var(--ifm-color-emphasis-400)",
+              fontSize: "0.95rem",
+              background: "var(--ifm-background-surface-color)",
+              color: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            <option value="uk_oak">UK National Curriculum (Oak National Academy)</option>
+            <option value="international">International / Universal (Cambridge & IB Aligned)</option>
+          </select>
+
+          <div
+            style={{
+              marginTop: "1rem",
+              padding: "0.85rem 1rem",
+              borderRadius: "6px",
+              background: curriculumStandard === "uk_oak" ? "rgba(37, 99, 235, 0.08)" : "rgba(16, 185, 129, 0.08)",
+              borderLeft: curriculumStandard === "uk_oak" ? "4px solid #2563eb" : "4px solid #10b981",
+              fontSize: "0.85rem",
+            }}
+          >
+            {curriculumStandard === "uk_oak" ? (
+              <>
+                <strong>🇬🇧 UK National Curriculum Active:</strong>
+                <ul style={{ margin: "0.4rem 0 0", paddingLeft: "1.2rem" }}>
+                  <li>Key Stage 1–4 hierarchical taxonomy with UK-specific topics.</li>
+                  <li>Standard British English spelling (<em>colour, neutralise</em>) and currency (£/p).</li>
+                  <li>UK schooling terminology (<em>full stop, speech marks</em>).</li>
+                </ul>
+              </>
+            ) : (
+              <>
+                <strong>🌐 International / Universal Curriculum Active:</strong>
+                <ul style={{ margin: "0.4rem 0 0", paddingLeft: "1.2rem" }}>
+                  <li>Filters out region-locked UK modules while retaining universal STEM & humanities.</li>
+                  <li>Strict SI Metric units (m, kg, s, °C) and universal trade entities.</li>
+                  <li>Globally neutral academic English.</li>
+                </ul>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Section 2: Accessibility */}
         <section style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginTop: "1.5rem" }}>
           <h2>👁️ Visual & Low-Vision Support</h2>
           
@@ -161,7 +225,7 @@ export default function SettingsPage(): JSX.Element {
           </div>
         </section>
 
-        {/* Section 2: Teacher / Facilitator Mode */}
+        {/* Section 3: Teacher / Facilitator Mode */}
         <section style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginTop: "1.5rem" }}>
           <h2>🎓 Teacher & Facilitator Mode</h2>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "0.75rem" }}>
@@ -183,7 +247,7 @@ export default function SettingsPage(): JSX.Element {
           </div>
         </section>
 
-        {/* Section 3: AI Engine Selection */}
+        {/* Section 4: AI Engine Selection */}
         <section style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginTop: "1.5rem" }}>
           <h2>🤖 On-Device AI Engine</h2>
           <p style={{ fontSize: "0.9rem", opacity: 0.85 }}>
@@ -221,7 +285,7 @@ export default function SettingsPage(): JSX.Element {
           </div>
         </section>
 
-        {/* Section 4: Live VFS S-Expression Engine */}
+        {/* Section 5: Live VFS S-Expression Engine */}
         <section style={{ border: "1px solid var(--ifm-color-emphasis-300)", borderRadius: "8px", padding: "1.25rem", marginTop: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
             <h2>📑 IndexedDB VFS View: <code>/sys/views/cheat_sheet.lisp</code></h2>

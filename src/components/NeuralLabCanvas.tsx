@@ -1,14 +1,37 @@
 // src/components/NeuralLabCanvas.tsx
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { useWebRTCNeuralBus, QuestionPayload } from '../hooks/useWebRTCNeuralBus';
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
+import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 
 export default function NeuralLabCanvas() {
+  // Read initial curriculum preference from localStorage (defaulting to uk_oak)
+  const [curriculumSetting, setCurriculumSetting] = useState<CurriculumProviderKey>(() => {
+    return (localStorage.getItem('curriculum_standard') as CurriculumProviderKey) || 'uk_oak';
+  });
+
+  // Listen for changes made in Settings & Access modal / tabs
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
+      if (saved && saved !== curriculumSetting) {
+        setCurriculumSetting(saved);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [curriculumSetting]);
+
+  // Derive available taxonomy tree based on active curriculum scope
+  const curriculumTree = useMemo(() => {
+    return getActiveCurriculumTree(curriculumSetting);
+  }, [curriculumSetting]);
+
   const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 3');
-  const [selectedSubject, setSelectedSubject] = useState('History');
-  const [selectedUnit, setSelectedUnit] = useState('The Norman Conquest (1066)');
+  const [selectedSubject, setSelectedSubject] = useState('Science');
+  const [selectedUnit, setSelectedUnit] = useState('Atomic Structure & Periodic Table');
   const [sessionId, setSessionId] = useState('Lesson 1');
 
   const [score, setScore] = useState(0);
@@ -48,23 +71,28 @@ export default function NeuralLabCanvas() {
 
   const { isReady, status, sendIntent } = useWebRTCNeuralBus(handleNewQuestion);
 
-  const requestQuestion = (ks = selectedKeyStage, sub = selectedSubject, u = selectedUnit) => {
+  const requestQuestion = (
+    ks = selectedKeyStage, 
+    sub = selectedSubject, 
+    u = selectedUnit
+  ) => {
     isGeneratingRef.current = true;
     setActiveQuestion(null);
     setSelectedAnswer(null);
     setCorrectIndex(null);
 
     const ksId = slugify(ks) || 'ks3';
-    const subId = slugify(sub) || 'history';
-    const unitId = slugify(u) || 'norman-conquest';
+    const subId = slugify(sub) || 'science';
+    const unitId = slugify(u) || 'atomic-structure';
 
-    sendIntent(ks, sub, u, ksId, subId, unitId);
+    // Dispatches curriculum standard alongside key IDs over WebRTC neural bus
+    sendIntent(ks, sub, u, ksId, subId, unitId, curriculumSetting);
   };
 
   // Initial boot trigger once daemon is ready
   useEffect(() => {
     if (isReady && !activeQuestion && !isGeneratingRef.current) {
-      requestQuestion('Key Stage 3', 'History', 'The Norman Conquest (1066)');
+      requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
     }
   }, [isReady]);
 
@@ -88,7 +116,7 @@ export default function NeuralLabCanvas() {
     }
   };
 
-  // Derived state: question is only valid if it matches the active dropdown selection
+  // Derived state: question is only valid if it matches the active selection
   const isQuestionAligned =
     activeQuestion !== null &&
     activeQuestion.keyStage === selectedKeyStage &&
@@ -104,9 +132,10 @@ export default function NeuralLabCanvas() {
         status={status}
         isReady={isReady}
         sessionId={sessionId}
+        curriculumTree={curriculumTree}
         onKeyStageChange={(newKs, firstSub, firstUnit) => {
           const sub = firstSub || 'Science';
-          const unit = firstUnit || 'Forces and Magnets';
+          const unit = firstUnit || 'Atomic Structure & Periodic Table';
           setSelectedKeyStage(newKs);
           setSelectedSubject(sub);
           setSelectedUnit(unit);
