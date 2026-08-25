@@ -3,6 +3,7 @@ import Layout from '@theme/Layout';
 import NeuralLabCanvas from '../components/NeuralLabCanvas';
 import NanoAssistantPanel from '../components/NanoAssistantPanel';
 import { LanguageSelector } from '@site/src/engine/operational-language';
+import { logProgress, saveVerifiedAST } from '../services/dbStore';
 
 export default function PracticeLabPage() {
   const [mounted, setMounted] = useState(false);
@@ -26,6 +27,21 @@ export default function PracticeLabPage() {
       lang: newLang,
     });
   };
+
+  const handleOptionSelect = (optionIndex: number) => {
+  const isCorrect = optionIndex === currentChallenge.answerKey;
+
+  // Persist to student_progress so Prof. Turing has working memory
+  logProgress({
+    cohortCode: 'default_cohort',
+    challengeId: currentChallenge.id || 'challenge_active',
+    topicId: activeTopicKey || 'science_atomic_structure',
+    answeredAt: Date.now(),
+    isCorrect,
+    userAnswer: currentChallenge.options[optionIndex],
+    errorTag: isCorrect ? undefined : 'concept_misconception'
+  }).catch(console.error);
+};
 
   return (
     <Layout title="Practice Lab" description="On-Device Neural Hypervisor">

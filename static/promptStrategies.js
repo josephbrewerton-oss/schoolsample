@@ -23,6 +23,39 @@ const REGIONAL_CONSTRAINTS = {
 `.trim()
 };
 
+/**
+ * Explicit Question Stem Operators to anchor small on-device models
+ */
+const QUESTION_FRAME_ROUTING = {
+  maths: [
+    { stem: 'Calculate / Evaluate', pattern: 'Direct computation (e.g., "Calculate the value of...", "Determine the size of angle...")' },
+    { stem: 'Geometric Deduction', pattern: 'Theorem application (e.g., "Given circle with arc X, what is angle Y?")' },
+    { stem: 'Inverse Formulation', pattern: 'Working backwards (e.g., "If the total area of a sector is X, find the radius...")' },
+    { stem: 'Identify Property', pattern: 'Direct rule check (e.g., "Which geometric theorem describes...")' }
+  ],
+  science: [
+    { stem: 'Causal Mechanism (Why/How)', pattern: 'Explain phenomenon (e.g., "Why does...", "How does structure X enable function Y?")' },
+    { stem: 'Predict the Outcome (What happens)', pattern: 'Scenario intervention (e.g., "What happens to the rate of reaction if temperature increases?")' },
+    { stem: 'Identify Component (Which)', pattern: 'Structure or law definition (e.g., "Which organelle is responsible for...", "Which force acts...")' },
+    { stem: 'Quantitative Relation', pattern: 'Formula application (e.g., "Calculate the energy transferred when...")' }
+  ],
+  languages: [
+    { stem: 'Identify Device / Technique', pattern: 'Device recognition (e.g., "Which literary technique is used in the phrase...")' },
+    { stem: 'Punctuation & Grammar Correction', pattern: 'Syntax rule check (e.g., "Which sentence correctly places the subordinate clause?")' },
+    { stem: 'Tone & Connotation', pattern: 'Semantic inference (e.g., "What emotion does the author evoke by choosing the word...")' }
+  ],
+  computing: [
+    { stem: 'Trace / State Value', pattern: 'Code tracing (e.g., "What is the final value of variable X after loop termination?")' },
+    { stem: 'Binary / Denary Conversion', pattern: 'Data representation evaluation (e.g., "Convert binary value X to denary:")' },
+    { stem: 'Identify Error / Protocol', pattern: 'Diagnostic evaluation (e.g., "Which network layer is responsible for...")' }
+  ],
+  humanities: [
+    { stem: 'Causal Significance (Why)', pattern: 'Cause and effect (e.g., "Why did event X lead to consequence Y?")' },
+    { stem: 'Historical / Geographical Identification', pattern: 'Direct fact check (e.g., "Which treaty concluded...", "What type of plate boundary...")' },
+    { stem: 'Source & Perspective Evaluation', pattern: 'Significance assessment (e.g., "What was the primary impact of law X on society?")' }
+  ]
+};
+
 export const SUBJECT_DEFINITIONS = {
   maths: {
     category: "Mathematics",
@@ -160,7 +193,12 @@ export function buildUniversalPrompt(params) {
 
   const subConfig = SUBJECT_DEFINITIONS[matchedKey];
   const focus = pickRandom(subConfig.archetypes);
+  
+  // Pick deterministic Question Stem Route
+  const frameList = QUESTION_FRAME_ROUTING[matchedKey] || QUESTION_FRAME_ROUTING.humanities;
   const entropy = Math.floor(Math.random() * 100000);
+  const selectedFrame = frameList[entropy % frameList.length];
+
   const ageRule = resolveKeyStageRule(keyStage);
   const regionalRule = REGIONAL_CONSTRAINTS[curriculum] || REGIONAL_CONSTRAINTS.uk_oak;
 
@@ -169,6 +207,8 @@ export function buildUniversalPrompt(params) {
 
 Target Subject: ${subject}
 Target Topic: ${topic} (TopicId: ${topicId || 'general'})
+Question Construction Route: ${selectedFrame.stem}
+Question Style Requirement: ${selectedFrame.pattern}
 Pedagogical Focus: ${focus}
 Language: ${langName}
 Target Reading Level & Tone: ${ageRule}

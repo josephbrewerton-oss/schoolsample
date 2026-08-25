@@ -1,5 +1,10 @@
 // src/engine/ast-loader.ts
-import { getVfsView, saveVfsView } from '../services/dbStore';
+import { 
+  getVfsView, 
+  saveVfsView, 
+  getRandomCachedAST, 
+  saveVerifiedAST 
+} from '../services/dbStore';
 import { OakStage, OakSubject, OakTopic } from '../curriculum/oakCatalogue';
 import { runLocalInference } from './EdgeCognitiveEngine';
 
@@ -106,16 +111,17 @@ export function parseAST(source: string): ASTNode | null {
 }
 
 /**
- * Resolves a curriculum topic AST: checks IndexedDB VFS first,
- * falling back to local on-device inference.
+ * Resolves a curriculum topic AST: checks VFS view -> AST Bank -> Gemini Nano inference.
  */
 export async function resolveTopicAST(
   stage: OakStage,
   subject: OakSubject,
   topic: OakTopic
 ): Promise<{ raw: string; ast: ASTNode | null }> {
+  const topicKey = `${subject.id}_${topic.id}`.toLowerCase();
   const vfsPath = `/sys/curriculum/${stage.id}/${subject.id}/${topic.id}.lisp`;
 
+  // 1. Level 1 Cache: Check VFS store
   const cachedLisp = await getVfsView(vfsPath);
   if (cachedLisp) {
     return {
@@ -124,6 +130,17 @@ export async function resolveTopicAST(
     };
   }
 
+  // 2. Level 2 Cache: Check verified synthetic AST bank
+  const cachedAST = await getRandomCachedAST(topicKey);
+  if (cachedAST) {
+    await saveVfsView(vfsPath, cachedAST);
+    return {
+      raw: cachedAST,
+      ast: parseAST(cachedAST),
+    };
+  }
+
+  // 3. Fallback to grounded On-Device Inference
   const systemPrompt = `You are a deterministic S-expression generator. Output ONLY a valid Lisp AST formatted as (view ...) containing (stepper ...) and (quiz ...). Do not include markdown formatting or commentary.`;
 
   const prompt = `Create an interactive lesson for UK ${stage.title}, Subject: ${subject.title}, Topic: "${topic.title}".
@@ -141,14 +158,17 @@ Format strictly:
     (option (text "Distractor 3"))
     (explanation (text "Diagnostic rationale."))))`;
 
-  const rawResult = await runLocalInference(prompt, systemPrompt);
+  // Pass topicKey to allow dynamic adapter grounding
+  const rawResult = await runLocalInference(prompt, systemPrompt, topicKey);
 
   const cleanLisp = rawResult
     .replace(/```(?:lisp|scheme)?/gi, '')
     .replace(/```/g, '')
     .trim();
 
+  // Persist to both VFS and verified AST bank
   await saveVfsView(vfsPath, cleanLisp);
+  await saveVerifiedAST(topicKey, cleanLisp);
 
   return {
     raw: cleanLisp,
