@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   openLocalDB, 
   bootstrapTopicAdapters,
-  getTopicAdapter,
   saveVerifiedAST, 
   getRandomCachedAST,
   getTuringDiagnosticSummary 
@@ -23,35 +22,16 @@ function getLanguageModelFactory(): any {
   return aiHost?.languageModel || null;
 }
 
-async function generateGroundedAST(promptText, topicKey) {
-  const fullPrompt = `${promptText}\n\n${AST_TEMPLATES.mcq.promptStructure}`;
-  
-  const rawCompletion = await session.prompt(fullPrompt);
-  
-  // If the model omitted the root syntax, re-attach the deterministic AST skeleton
-  let finalAST = rawCompletion.trim();
-  if (!finalAST.startsWith('(:route')) {
-    finalAST = `(:route "quiz:mcq" :scratchpad "${finalAST}`;
-  }
-  
-  // Clean dangling quotes or brackets
-  if (!finalAST.endsWith(')')) {
-    finalAST = finalAST.replace(/\)*$/, '') + ' :answer-key 0)';
-  }
-
-  return finalAST;
-}
-
 /**
  * Executes on-device LLM inference using Chrome's Prompt API (Gemini Nano)
- * with strict sampling control, dynamic in-context adapters, 6s race timeout, and AST bank fallback.
+ * with strict sampling control, dynamic AST validation, and fallback handling.
  */
 export async function runLocalInference(
   prompt: string, 
   systemPrompt?: string, 
   topicKey: string = 'science_atomic_structure'
 ): Promise<string> {
-  const defaultFallbackAST = `(:route "quiz:mcq" :scratchpad "Atoms consist of protons and neutrons in the central nucleus, with electrons orbiting in outer shells." :prompt "Which subatomic particles are located inside the nucleus of an atom?" :options (list "Protons and Neutrons" "Electrons and Neutrons" "Electrons only" "Protons and Electrons") :answer-key 0)`;
+  const defaultFallbackAST = `(:route "quiz:mcq" :scratchpad "Atoms consist of protons and neutrons in the central nucleus, with electrons orbiting in outer shells." :prompt "Which subatomic particles are located inside the nucleus of an atom?" :options (list "Protons and Neutrons" "Electrons and Neutrons" "Electrons only" "Protons and Electrons") :hint "Think about which particles reside in the central dense core." :answer-key 0)`;
 
   // 1. Check IndexedDB AST cache for zero-latency fallback
   let fallbackAST = defaultFallbackAST;
@@ -67,24 +47,6 @@ export async function runLocalInference(
   if (!targetFactory) {
     console.warn('[AI Engine] Prompt API unavailable, using cached/deterministic fallback.');
     return fallbackAST;
-  }
-
-  // 2. Fetch dynamic adapter guardrails for the topic to ground Gemini Nano
-  let groundedPrompt = prompt;
-  try {
-    const adapter = await getTopicAdapter(topicKey.toLowerCase());
-    if (adapter) {
-      groundedPrompt = `[Curriculum Guardrails]: ${adapter.curriculumGuardrails.join('; ')}
-[Known Misconceptions to test as wrong options]: ${adapter.commonMisconceptions.join(', ')}
-[Exemplar AST Structure]:
-${adapter.exemplarAST}
-
-[Task]:
-${prompt}
-Generate output in strict Lisp S-expression format:`;
-    }
-  } catch (err) {
-    console.warn('[Adapter Grounding Warning] Failed fetching adapter, using raw prompt:', err);
   }
 
   const inferencePromise = (async () => {
@@ -106,15 +68,26 @@ Generate output in strict Lisp S-expression format:`;
       };
 
       sessionOptions.systemPrompt = systemPrompt || 
-        "You are an expert curriculum compiler. Output ONLY a valid Lisp S-expression following the provided structure. Never output conversational preamble.";
+        "You are an expert curriculum compiler. Output ONLY a valid Lisp S-expression adhering to the requested topic. Never output markdown backticks or conversational text.";
 
       session = await targetFactory.create(sessionOptions);
-      const response = await session.prompt(groundedPrompt);
+      const rawResponse = await session.prompt(prompt);
       
-      if (response && response.includes('(:route "quiz:mcq"')) {
-        // Auto-save compiler-valid response to the synthetic AST Bank
-        saveVerifiedAST(topicKey.toLowerCase(), response).catch(console.error);
-        return response;
+      let sanitized = (rawResponse || '')
+        .replace(/```(?:lisp|scheme)?/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+      const firstParen = sanitized.indexOf('(');
+      const lastParen = sanitized.lastIndexOf(')');
+
+      if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+        sanitized = sanitized.substring(firstParen, lastParen + 1);
+      }
+
+      if (sanitized && sanitized.includes(':prompt') && sanitized.includes(':options')) {
+        saveVerifiedAST(topicKey.toLowerCase(), sanitized).catch(console.error);
+        return sanitized;
       }
       return fallbackAST;
     } catch (err) {
@@ -131,9 +104,9 @@ Generate output in strict Lisp S-expression format:`;
 
   const timeoutPromise = new Promise<string>((resolve) =>
     setTimeout(() => {
-      console.warn('[AI Engine] Inference timed out after 6s. Resolving fallback AST.');
+      console.warn('[AI Engine] Inference timed out after 8s. Resolving fallback AST.');
       resolve(fallbackAST);
-    }, 20000)
+    }, 8000)
   );
 
   return Promise.race([inferencePromise, timeoutPromise]);
@@ -149,7 +122,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize DB and bootstrap gold-standard adapters on mount
   useEffect(() => {
     openLocalDB()
       .then(() => bootstrapTopicAdapters())
@@ -185,7 +157,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
 
     let session: any = null;
     try {
-      // Fetch recent diagnostic misconception summary from IndexedDB
       const diagnostics = await getTuringDiagnosticSummary(topicId);
       const errorContext = diagnostics.commonErrors.length > 0 
         ? ` Note student previously struggled with: ${diagnostics.commonErrors.join(', ')}.`
@@ -195,7 +166,7 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
 
       if (targetFactory) {
         session = await targetFactory.create({
-          systemPrompt: `You are Prof. Turing, a concise Socratic tutor. Extract one narrow rule or question to guide the student. Never give the direct answer.${errorContext} Maximum 20 words.`,
+          systemPrompt: `You are Prof. Turing, a concise Socratic tutor. Guide the student conceptually without giving away the direct answer.${errorContext} Keep responses under 25 words.`,
           expectedInputs: [{ type: 'text', languages: ['en'] }],
           expectedOutputs: [{ type: 'text', languages: ['en'] }],
           temperature: 0.2,

@@ -23,11 +23,23 @@ export const QuestionCard: React.FC<Props> = ({
   score,
   streak,
   onSelectOption,
-  onNextQuestion
+  onNextQuestion,
 }) => {
+  const isResolvedCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+      {/* Subject & Score Banner */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid #f1f5f9',
+          paddingBottom: '1rem',
+          marginBottom: '1.5rem',
+        }}
+      >
         <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1e3a8a', margin: 0 }}>
           {subject}: {unit}
         </h2>
@@ -36,10 +48,20 @@ export const QuestionCard: React.FC<Props> = ({
         </div>
       </div>
 
-      <div style={{ fontSize: '1.35rem', fontWeight: 700, color: '#0f172a', marginBottom: '1.75rem', lineHeight: 1.5 }}>
+      {/* Question Prompt Stem */}
+      <div
+        style={{
+          fontSize: '1.35rem',
+          fontWeight: 700,
+          color: '#0f172a',
+          marginBottom: '1.75rem',
+          lineHeight: 1.5,
+        }}
+      >
         {prompt}
       </div>
 
+      {/* Option Stack */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {displayOptions.map((opt, idx) => {
           const isSelected = selectedAnswer === idx;
@@ -64,6 +86,8 @@ export const QuestionCard: React.FC<Props> = ({
           return (
             <button
               key={idx}
+              type="button"
+              disabled={isResolvedCorrect}
               onClick={() => onSelectOption(idx)}
               style={{
                 display: 'flex',
@@ -73,40 +97,64 @@ export const QuestionCard: React.FC<Props> = ({
                 background: bg,
                 border: `2px solid ${border}`,
                 borderRadius: '10px',
-                cursor: selectedAnswer === correctIndex ? 'default' : 'pointer',
+                cursor: isResolvedCorrect ? 'default' : 'pointer',
                 textAlign: 'left',
                 fontSize: '1.05rem',
                 fontWeight: 500,
                 color: textColor,
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                opacity: isResolvedCorrect && !isSelected ? 0.6 : 1,
               }}
             >
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                borderRadius: '6px',
-                background: isSelected ? border : '#e2e8f0',
-                color: isSelected ? '#ffffff' : '#475569',
-                fontWeight: 700,
-                fontSize: '0.9rem'
-              }}>
+              {/* Option Letter Tag */}
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '6px',
+                  background: isSelected ? border : '#e2e8f0',
+                  color: isSelected ? '#ffffff' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                }}
+              >
                 {String.fromCharCode(65 + idx)}
               </span>
-              <span>{opt}</span>
+
+              {/* Option Text */}
+              <span style={{ flex: 1 }}>{opt}</span>
             </button>
           );
         })}
       </div>
 
+      {/* Bottom Feedback Action Strip */}
       {selectedAnswer !== null && (
-        <div style={{ marginTop: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ fontSize: '1.15rem', fontWeight: 700, color: selectedAnswer === correctIndex ? '#059669' : '#ea580c' }}>
-            {selectedAnswer === correctIndex ? '🎉 Correct! Well done.' : '💡 Try again or pick another option!'}
+        <div
+          style={{
+            marginTop: '1.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              color: isResolvedCorrect ? '#059669' : '#ea580c',
+            }}
+          >
+            {isResolvedCorrect ? '🎉 Correct! Well done.' : '💡 Try again or pick another option!'}
           </div>
+
           <button
+            type="button"
             onClick={onNextQuestion}
             style={{
               background: '#2563eb',
@@ -116,7 +164,7 @@ export const QuestionCard: React.FC<Props> = ({
               borderRadius: '8px',
               padding: '0.75rem 1.5rem',
               cursor: 'pointer',
-              fontSize: '1rem'
+              fontSize: '1rem',
             }}
           >
             Next Question ➔

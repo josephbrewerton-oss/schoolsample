@@ -63,36 +63,28 @@ const config: Config = {
     ],
   ],
 
-  plugins: [
-    [
-      '@docusaurus/plugin-pwa',
-      {
-        debug: false,
-        offlineModeActivationStrategies: [
-          'appInstalled',
-          'standalone',
-          'queryString',
-        ],
-        pwaHead: [
-          {
-            tagName: 'link',
-            rel: 'icon',
-            href: '/img/favicon.ico',
-          },
-          {
-            tagName: 'link',
-            rel: 'manifest',
-            href: '/manifest.json',
-          },
-          {
-            tagName: 'meta',
-            name: 'theme-color',
-            content: '#1e3a8a',
-          },
-        ],
-      },
-    ],
+// docusaurus.config.js
+plugins: [
+  [
+    '@docusaurus/plugin-pwa',
+    {
+      debug: false,
+      offlineModeActivationStrategies: ['appInstalled', 'standalone', 'queryString'],
+      pwaHead: [
+        {
+          tagName: 'link',
+          rel: 'icon',
+          href: '/img/docusaurus.png',
+        },
+        {
+          tagName: 'link',
+          rel: 'manifest',
+          href: '/manifest.json',
+        },
+      ],
+    },
   ],
+],
 
   themeConfig: {
     image: 'img/docusaurus-social-card.jpg',

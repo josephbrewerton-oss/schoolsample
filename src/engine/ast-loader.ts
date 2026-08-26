@@ -17,35 +17,63 @@ export type ASTNode = {
 /**
  * Tokenizes raw S-expression strings into symbols, keywords, strings, and parenthesis.
  */
+// In src/engine/ast-loader.ts -> tokenize()
 function tokenize(input: string): string[] {
   const sanitized = input
+    .replace(/```(?:lisp|scheme)?/gi, '')
+    .replace(/```/g, '')
     .replace(/;;.*$/gm, '')
-    .replace(/<image[^>]*>/gi, '')
-    .replace(/\[image[^\]]*\]/gi, '');
+    .trim();
 
   const tokens: string[] = [];
-  const regex = /\s*([()"]|:[a-zA-Z0-9_-]+|[^\s()":]+)/g;
-  let match: RegExpExecArray | null;
+  let i = 0;
 
-  while ((match = regex.exec(sanitized)) !== null) {
-    if (match[1] === '"') {
+  while (i < sanitized.length) {
+    const char = sanitized[i];
+
+    // 1. Skip whitespace
+    if (/\s/.test(char)) {
+      i++;
+      continue;
+    }
+
+    // 2. Consume full quoted strings (preserve all inner parentheses/symbols)
+    if (char === '"') {
       let str = '';
-      let escaped = false;
-      while (regex.lastIndex < sanitized.length) {
-        const char = sanitized[regex.lastIndex++];
-        if (char === '\\' && !escaped) {
-          escaped = true;
+      i++; // skip opening quote
+      while (i < sanitized.length) {
+        if (sanitized[i] === '\\' && i + 1 < sanitized.length) {
+          str += sanitized[i + 1];
+          i += 2;
           continue;
         }
-        if (char === '"' && !escaped) break;
-        str += char;
-        escaped = false;
+        if (sanitized[i] === '"') {
+          i++; // skip closing quote
+          break;
+        }
+        str += sanitized[i];
+        i++;
       }
       tokens.push(JSON.stringify(str));
-    } else {
-      tokens.push(match[1]);
+      continue;
     }
+
+    // 3. Structural delimiters
+    if (char === '(' || char === ')') {
+      tokens.push(char);
+      i++;
+      continue;
+    }
+
+    // 4. Atoms, keywords, and identifiers
+    let atom = '';
+    while (i < sanitized.length && !/\s|[()"]/.test(sanitized[i])) {
+      atom += sanitized[i];
+      i++;
+    }
+    if (atom) tokens.push(atom);
   }
+
   return tokens;
 }
 

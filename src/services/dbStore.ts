@@ -1,3 +1,4 @@
+// src/services/dbStore.ts
 import { DomainManifest } from '../types/learning-ast';
 
 const DB_NAME = 'EdgeLearningEngineDB';
@@ -16,18 +17,18 @@ export interface StudentRecord {
   answeredAt: number;
   isCorrect: boolean;
   userAnswer: string;
-  errorTag?: string; // e.g. 'subtended_vs_circumference', 'arithmetic_sign'
+  errorTag?: string;
 }
 
 export interface VfsViewRecord {
-  path: string;       // Key path: e.g., '/sys/views/cheat_sheet.lisp'
-  content: string;    // Raw S-expression source
-  updatedAt: number;  // Timestamp
+  path: string;
+  content: string;
+  updatedAt: number;
 }
 
 export interface TopicAdapterRecord {
-  topicKey: string;           // Key: e.g., 'ks4_maths_circle_theorems'
-  exemplarAST: string;        // Gold-standard Lisp AST few-shot
+  topicKey: string;
+  exemplarAST: string;
   curriculumGuardrails: string[];
   commonMisconceptions: string[];
   updatedAt: number;
@@ -87,6 +88,9 @@ export function openLocalDB(): Promise<IDBDatabase> {
   });
 }
 
+// Alias for backwards compatibility
+export const getDB = openLocalDB;
+
 // --- Manifest Operations ---
 
 export async function saveManifest(manifest: DomainManifest): Promise<void> {
@@ -124,9 +128,6 @@ export async function logProgress(record: StudentRecord): Promise<void> {
   });
 }
 
-/**
- * Generates an aggregated diagnostic summary of student struggles to ground Prof. Turing.
- */
 export async function getTuringDiagnosticSummary(topicId: string): Promise<{ accuracy: number; commonErrors: string[] }> {
   const db = await openLocalDB();
   return new Promise((resolve, reject) => {
@@ -182,7 +183,7 @@ export async function getTopicAdapter(topicKey: string): Promise<TopicAdapterRec
 export const DEFAULT_TOPIC_ADAPTERS: TopicAdapterRecord[] = [
   {
     topicKey: 'science_atomic_structure',
-    exemplarAST: '(:route "quiz:mcq" :scratchpad "Isotopes are atoms of the same element with different numbers of neutrons, giving them different mass numbers." :prompt "Why do different isotopes of the same element have different mass numbers?" :options (list "They have different numbers of neutrons" "They have different numbers of protons" "They have different numbers of electrons" "Their electrons have different masses") :answer-key 0)',
+    exemplarAST: '(:route "quiz:mcq" :scratchpad "Isotopes are atoms of the same element with different numbers of neutrons, giving them different mass numbers." :prompt "Why do different isotopes of the same element have different mass numbers?" :options (list "They have different numbers of neutrons" "They have different numbers of protons" "They have different numbers of electrons" "Their electrons have different masses") :hint "Consider which subatomic particle in the nucleus varies without altering atomic number." :answer-key 0)',
     curriculumGuardrails: [
       'Protons = positive (relative mass 1)',
       'Neutrons = neutral (relative mass 1)',
@@ -194,7 +195,7 @@ export const DEFAULT_TOPIC_ADAPTERS: TopicAdapterRecord[] = [
   },
   {
     topicKey: 'physics_newtons_laws',
-    exemplarAST: '(:route "quiz:mcq" :scratchpad "Newton\'s First Law states an object remains at constant velocity unless acted upon by a resultant force." :prompt "What happens to a moving spacecraft when all engine thrust stops in deep space?" :options (list "It continues moving at a constant velocity" "It gradually slows down to a stop" "It instantly halts" "It changes direction") :answer-key 0)',
+    exemplarAST: '(:route "quiz:mcq" :scratchpad "Newton\'s First Law states an object remains at constant velocity unless acted upon by a resultant force." :prompt "What happens to a moving spacecraft when all engine thrust stops in deep space?" :options (list "It continues moving at a constant velocity" "It gradually slows down to a stop" "It instantly halts" "It changes direction") :hint "Remember that no friction or resultant force opposes motion in deep space." :answer-key 0)',
     curriculumGuardrails: [
       'F = ma',
       'Objects keep moving at constant velocity unless resultant force acts',
@@ -214,7 +215,8 @@ export async function bootstrapTopicAdapters(): Promise<void> {
     }
   }
 }
-// --- Verified Synthetic AST Bank Operations ---
+
+// --- Verified Synthetic AST Bank & Buffer Operations ---
 
 export async function saveVerifiedAST(topicKey: string, rawAST: string): Promise<void> {
   const db = await openLocalDB();
@@ -229,6 +231,63 @@ export async function saveVerifiedAST(topicKey: string, rawAST: string): Promise
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
+}
+
+// src/services/dbStore.ts
+
+export async function getBufferedQuestion(topicKey: string): Promise<string | null> {
+  try {
+    const db = await openLocalDB();
+    return new Promise((resolve) => {
+      // 1. Open readwrite transaction so we can consume the record
+      const tx = db.transaction(STORE_AST_BANK, 'readwrite');
+      const store = tx.objectStore(STORE_AST_BANK);
+      const index = store.index('topicKey');
+      const req = index.getAll(topicKey);
+
+      req.onsuccess = () => {
+        const results = (req.result as CachedASTRecord[]) || [];
+        if (results.length === 0) return resolve(null);
+
+        // 2. Take the first question
+        const chosen = results[0];
+
+        // 3. Delete it so it is never served twice
+        if (chosen.id !== undefined) {
+          store.delete(chosen.id);
+        }
+
+        resolve(chosen.rawAST);
+      };
+      
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    console.warn('[dbStore] Buffer lookup error:', err);
+    return null;
+  }
+}
+
+export async function checkAndReplenishBuffer(
+  topicKey: string, 
+  minThreshold: number = 3,
+  triggerWorker: (key: string) => Promise<void>
+): Promise<void> {
+  try {
+    const db = await openLocalDB();
+    const tx = db.transaction(STORE_AST_BANK, 'readonly');
+    const store = tx.objectStore(STORE_AST_BANK);
+    const index = store.index('topicKey');
+    const countReq = index.count(topicKey);
+
+    countReq.onsuccess = () => {
+      if (countReq.result < minThreshold) {
+        triggerWorker(topicKey).catch(console.error);
+      }
+    };
+  } catch (err) {
+    console.warn('[dbStore] Buffer check error:', err);
+  }
 }
 
 export async function getRandomCachedAST(topicKey: string): Promise<string | null> {

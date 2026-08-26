@@ -1,3 +1,4 @@
+// src/components/TuringTutor.tsx
 import React, { useState, useEffect, useRef } from 'react';
 
 interface TuringTutorProps {
@@ -19,9 +20,20 @@ export function TuringTutor({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const voiceEnabledRef = useRef(voiceEnabled);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const terminalEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Load UK English Voice
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
+
+  // Auto-scroll terminal
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  // UK English Voice
   useEffect(() => {
     const updateVoices = () => {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -43,18 +55,8 @@ export function TuringTutor({
     }
   }, []);
 
-  const cleanThoughtArtifacts = (raw: string): string => {
-    return raw
-      .replace(/^[\s\S]*?\*\*Response:\*\*/i, '') // Strip preceding reasoning headers
-      .replace(/^[\s\S]*?(?:Okay,?\s+I\s+understand!|Here(?:'s|\s+is)\s+a\s+hint:?)/i, '')
-      .replace(/\((?:Since|Based on|If they|Note).*?\)/gi, '') // Strip parenthetical CoT
-      .replace(/\*\*.*?\*\*/g, '') // Strip bold meta tags
-      .replace(/^(?:Hint|Tutor Hint|Prof\. Turing):\s*/i, '')
-      .trim();
-  };
-
   const speak = (text: string) => {
-    if (!voiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!voiceEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     if (voiceRef.current) utterance.voice = voiceRef.current;
@@ -62,6 +64,34 @@ export function TuringTutor({
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
   };
+
+  const cleanThoughtArtifacts = (raw: string): string => {
+    return raw
+      .replace(/^[\s\S]*?\*\*Response:\*\*/i, '')
+      .replace(/^[\s\S]*?(?:Okay,?\s+here['’]?s\s+(?:a\s+)?socratic\s+hint[^:]*:\s*|Here(?:'s|\s+is)\s+a\s+hint:?)/i, '')
+      .replace(/\((?:Since|Based on|If they|Note).*?\)/gi, '')
+      .replace(/\*\*.*?\*\*/g, '')
+      .replace(/^"(.*)"$/, '$1')
+      .replace(/^(?:Hint|Tutor Hint|Prof\. Turing):\s*/i, '')
+      .trim();
+  };
+
+  // Persistent BroadcastChannel listener
+  useEffect(() => {
+    const channel = new BroadcastChannel('neural_hypervisor_bus');
+
+    channel.onmessage = (event) => {
+      if (event.data?.type === 'TURING_FEEDBACK' && event.data.message) {
+        const cleaned = cleanThoughtArtifacts(event.data.message);
+        setMessages((prev) => [...prev, { role: 'turing', text: cleaned }]);
+        speak(cleaned);
+      }
+    };
+
+    return () => {
+      channel.close();
+    };
+  }, []);
 
   const handleAsk = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -85,7 +115,7 @@ export function TuringTutor({
       const options = {
         expectedOutputs: [{ type: 'text', languages: ['en'] }],
         systemPrompt:
-          'You are Prof. Turing, a UK school tutor. Never explain your thought process. Never output "Okay, I understand" or planning steps. Output only a direct, encouraging hint under 20 words.',
+          'You are Prof. Turing, an encouraging UK secondary school science and maths tutor. Never output planning thoughts, meta tags, or greeting fluff. Respond with a single concise Socratic hint under 25 words that guides the student without giving away the direct answer.',
       };
 
       try {
@@ -94,7 +124,7 @@ export function TuringTutor({
         session = await targetFactory.create();
       }
 
-      const promptContext = `Topic: "${currentTopic}". Current Question: "${activePrompt || 'General Practice'}". Pupil asks: "${query}". Provide a one-sentence hint:`;
+      const promptContext = `Topic: "${currentTopic}". Context Stem: "${activePrompt || 'Assessment Practice'}". Student Query: "${query}". Provide a 1-sentence Socratic hint:`;
 
       setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
       setLoading(false);
@@ -115,7 +145,7 @@ export function TuringTutor({
             const updated = [...prev];
             updated[updated.length - 1] = {
               role: 'turing',
-              text: cleaned || 'Thinking through the concept...',
+              text: cleaned || 'Examining the concept...',
             };
             return updated;
           });
@@ -134,7 +164,7 @@ export function TuringTutor({
       }
     } catch (err) {
       console.error('[Turing Tutor Error]:', err);
-      const fallbackText = 'Break the problem down into smaller steps and review the key terms!';
+      const fallbackText = 'Break the problem down into its core components and test each condition step-by-step.';
       setMessages((prev) => {
         const updated = [...prev];
         const last = updated[updated.length - 1];
@@ -200,6 +230,7 @@ export function TuringTutor({
           </div>
         ))}
         {loading && <div style={{ color: '#94a3b8' }}>Prof. Turing is thinking...</div>}
+        <div ref={terminalEndRef} />
       </div>
 
       <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
@@ -226,7 +257,8 @@ export function TuringTutor({
             border: 'none',
             borderRadius: '6px',
             padding: '6px 16px',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
           }}
         >
           Ask

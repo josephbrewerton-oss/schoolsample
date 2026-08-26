@@ -49,6 +49,20 @@ export default function NeuralLabCanvas() {
 
   const workerUrl = useBaseUrl('/worker.html');
 
+  // Stable BroadcastChannel references to eliminate GC teardown race conditions
+  const hypervisorBusRef = useRef<BroadcastChannel | null>(null);
+  const voiceBusRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    hypervisorBusRef.current = new BroadcastChannel('neural_hypervisor_bus');
+    voiceBusRef.current = new BroadcastChannel('neural_voice_bus');
+
+    return () => {
+      hypervisorBusRef.current?.close();
+      voiceBusRef.current?.close();
+    };
+  }, []);
+
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
@@ -89,6 +103,18 @@ export default function NeuralLabCanvas() {
 
   const slugify = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  const sanitizeHint = (raw?: string): string => {
+    if (!raw) return 'Review the core definition and eliminate options that contradict the rule.';
+    return raw
+      .replace(/^[\s\S]*?\*\*Response:\*\*/i, '')
+      .replace(/^[\s\S]*?(?:Okay,?\s+here['’]?s\s+(?:a\s+)?socratic\s+hint[^:]*:\s*|Here(?:'s|\s+is)\s+a\s+hint:?)/i, '')
+      .replace(/\((?:Since|Based on|If they|Note).*?\)/gi, '')
+      .replace(/\*\*.*?\*\*/g, '')
+      .replace(/^"(.*)"$/, '$1')
+      .replace(/^(?:Hint|Tutor Hint|Prof\. Turing):\s*/i, '')
+      .trim();
+  };
 
   const handleNewQuestion = useCallback((payload: QuestionPayload & { hint?: string }) => {
     setIsGenerating(false);
@@ -155,7 +181,7 @@ export default function NeuralLabCanvas() {
       // 2. BUS PATH: Dispatch intent to background WebRTC Daemon if active
       if (sendIntent && isReady) {
         const sent = sendIntent(ks, sub, u, ksId, subId, unitId, curriculumSetting);
-        if (sent) return; // Handled asynchronously by handleNewQuestion
+        if (sent) return;
       }
 
       // 3. IN-PAGE FALLBACK: Local Edge Engine execution
@@ -215,24 +241,26 @@ export default function NeuralLabCanvas() {
 
     setSelectedAnswer(idx);
     const isCorrect = idx === correctIndex;
-    const channel = new BroadcastChannel('neural_hypervisor_bus');
+
+    const feedbackText = isCorrect
+      ? 'Spot on! Correct conceptual deduction.'
+      : sanitizeHint(activeQuestion.hint);
+
+    const feedbackPayload = {
+      type: 'TURING_FEEDBACK',
+      message: feedbackText,
+      isCorrect,
+    };
+
+    // Instant Socratic notification across both bus channels
+    hypervisorBusRef.current?.postMessage(feedbackPayload);
+    voiceBusRef.current?.postMessage(feedbackPayload);
 
     if (isCorrect) {
       setScore((s) => s + 1);
       setStreak((st) => st + 1);
-
-      channel.postMessage({
-        type: 'TURING_FEEDBACK',
-        message: 'Spot on! Correct conceptual deduction.'
-      });
     } else {
       setStreak(0);
-      const clue = activeQuestion.hint || 'Review the core definition and eliminate options that contradict the rule.';
-      
-      channel.postMessage({
-        type: 'TURING_FEEDBACK',
-        message: clue
-      });
     }
 
     const topicId = `${slugify(activeQuestion.subject)}_${slugify(activeQuestion.unit)}`;
@@ -245,8 +273,6 @@ export default function NeuralLabCanvas() {
       userAnswer: activeQuestion.displayOptions[idx],
       errorTag: isCorrect ? undefined : 'concept_misconception'
     }).catch(console.error);
-
-    setTimeout(() => channel.close(), 100);
   };
 
   const handleExportReport = async () => {
@@ -348,7 +374,7 @@ export default function NeuralLabCanvas() {
         )}
       </div>
 
-      {/* Background WebRTC Daemon (Layout mounted with zero footprint) */}
+      {/* Background WebRTC Daemon */}
       <iframe
         src={workerUrl}
         tabIndex={-1}

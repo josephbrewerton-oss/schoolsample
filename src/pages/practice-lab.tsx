@@ -3,7 +3,6 @@ import Layout from '@theme/Layout';
 import NeuralLabCanvas from '../components/NeuralLabCanvas';
 import NanoAssistantPanel from '../components/NanoAssistantPanel';
 import { LanguageSelector } from '@site/src/engine/operational-language';
-import { logProgress, saveVerifiedAST } from '../services/dbStore';
 
 export default function PracticeLabPage() {
   const [mounted, setMounted] = useState(false);
@@ -26,22 +25,8 @@ export default function PracticeLabPage() {
       type: 'SET_LANGUAGE',
       lang: newLang,
     });
+    channel.close();
   };
-
-  const handleOptionSelect = (optionIndex: number) => {
-  const isCorrect = optionIndex === currentChallenge.answerKey;
-
-  // Persist to student_progress so Prof. Turing has working memory
-  logProgress({
-    cohortCode: 'default_cohort',
-    challengeId: currentChallenge.id || 'challenge_active',
-    topicId: activeTopicKey || 'science_atomic_structure',
-    answeredAt: Date.now(),
-    isCorrect,
-    userAnswer: currentChallenge.options[optionIndex],
-    errorTag: isCorrect ? undefined : 'concept_misconception'
-  }).catch(console.error);
-};
 
   return (
     <Layout title="Practice Lab" description="On-Device Neural Hypervisor">
@@ -61,11 +46,11 @@ export default function PracticeLabPage() {
             <LanguageSelector currentLang={currentLang} onSelect={handleLanguageChange} />
           </div>
 
-          {/* S-Expression Canvas Engine */}
+          {/* S-Expression Canvas Engine (Handles Buffered ASTs & Zero-AI Grading) */}
           <NeuralLabCanvas />
 
-          {/* Decoupled AI Tutor Assistant */}
-          <NanoAssistantPanel contextTopic="Key Stage 2 Mathematics" />
+          {/* Decoupled AI Tutor Assistant (Listens to Socratic Hint Events) */}
+          <NanoAssistantPanel contextTopic="Key Stage 3 Science" />
         </main>
       ) : (
         <div style={{ maxWidth: '1100px', margin: '3rem auto', textAlign: 'center', color: '#64748b', fontFamily: 'sans-serif' }}>
