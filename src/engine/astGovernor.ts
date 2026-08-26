@@ -1,3 +1,5 @@
+// src/engine/astGovernor.ts
+
 export interface RawASTQuestion {
   route?: string;
   scratchpad?: string;
@@ -23,7 +25,9 @@ export class ASTFlowGovernor {
   public static sanitizePromptText(rawPrompt: string): string {
     if (!rawPrompt) return '';
     return rawPrompt
-      // Strip trailing choice patterns like ":\n\nA) 1\nB) 5...", "A) ... 1) ...", or "is:\n\n1)"
+      // Strip inline option sequences like "A) Oxygen B) Carbon C) Sodium D) Nitrogen"
+      .replace(/\s+[A-Da-d1-4][\)\.:\-]\s+.*$/s, '')
+      // Strip trailing choice patterns like ":\n\nA) 1\nB) 5..."
       .replace(/(:\s*)?(\\n|\r|\n)*[A-Da-d1-4][\)\.:\-].*$/s, '')
       // Strip any lingering escaped newlines
       .replace(/\\n/g, ' ')
@@ -160,7 +164,7 @@ export class ASTFlowGovernor {
     expectedTopic: string
   ): GovernedQuestion {
     // 1. Sanitize and clean raw prompt stem
-const cleanPrompt = this.sanitizePromptText(String(raw?.prompt || ''));
+    const cleanPrompt = this.sanitizePromptText(String(raw?.prompt || ''));
 
     // 2. Structural Schema Validation
     if (!cleanPrompt || !Array.isArray(raw?.options) || raw.options.length < 2) {
@@ -210,17 +214,19 @@ const cleanPrompt = this.sanitizePromptText(String(raw?.prompt || ''));
     }
 
     // 5. Subject/Topic Keyword Heuristic Firewall
-    const cleanSubject = String(expectedSubject || '');
-    const cleanTopic = String(expectedTopic || '');
+    const cleanSubject = String(expectedSubject || '').toLowerCase();
+    const cleanTopic = String(expectedTopic || '').toLowerCase();
     const isMathSubject = /math|geometry|circle|trig/i.test(cleanSubject) || 
       /fraction|decimal|algebra|arithmetic|percentage|circle|theorem|equation|root/i.test(cleanTopic);
-    const hasMathSymbols = /[0-9\+\-\*\/\=\^]/.test(cleanPrompt);
 
-    if (!isMathSubject && hasMathSymbols && !cleanPrompt.toLowerCase().includes(cleanTopic.toLowerCase())) {
+    // Match mathematical equations (e.g. "x + y =", "3 * 4", "solve for x") rather than simple digits
+    const hasMathOperators = /\b(calculate|solve\s+for|fraction|numerator|denominator|hypotenuse|pythagoras|algebraic)\b|[\+\*\/=]\s*\d+/i.test(cleanPrompt);
+
+    if (!isMathSubject && hasMathOperators && !cleanPrompt.toLowerCase().includes(cleanTopic)) {
       return {
         isValid: false,
         sanitizedQuestion: null,
-        rejectionReason: `AST Topic Bleed: Received math tokens during "${cleanTopic}" context`,
+        rejectionReason: `AST Topic Bleed: Detected pure mathematical arithmetic in non-math context.`,
       };
     }
 

@@ -1,5 +1,6 @@
 // src/components/NeuralLabCanvas.tsx
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { useWebRTCNeuralBus, QuestionPayload } from '../hooks/useWebRTCNeuralBus';
@@ -46,6 +47,8 @@ export default function NeuralLabCanvas() {
     return (localStorage.getItem('curriculum_standard') as CurriculumProviderKey) || 'uk_oak';
   });
 
+  const workerUrl = useBaseUrl('/worker.html');
+
   useEffect(() => {
     const handleStorageChange = () => {
       const saved = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
@@ -70,6 +73,7 @@ export default function NeuralLabCanvas() {
   const [streak, setStreak] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [activeQuestion, setActiveQuestion] = useState<{
     id?: string;
     prompt: string;
@@ -87,6 +91,7 @@ export default function NeuralLabCanvas() {
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   const handleNewQuestion = useCallback((payload: QuestionPayload & { hint?: string }) => {
+    setIsGenerating(false);
     const { question, keyStage, subject, unit } = payload;
 
     const targetValue = question.options[question.answerKey] ?? question.options[0];
@@ -106,7 +111,7 @@ export default function NeuralLabCanvas() {
     });
   }, [selectedKeyStage]);
 
-  const { isReady, status } = useWebRTCNeuralBus(handleNewQuestion);
+  const { isReady, status, sendIntent } = useWebRTCNeuralBus(handleNewQuestion);
 
   const requestQuestion = async (
     ks = selectedKeyStage, 
@@ -114,8 +119,7 @@ export default function NeuralLabCanvas() {
     u = selectedUnit
   ) => {
     const requestId = ++activeRequestIdRef.current;
-
-    setActiveQuestion(null);
+    setIsGenerating(true);
     setSelectedAnswer(null);
     setCorrectIndex(null);
 
@@ -148,7 +152,13 @@ export default function NeuralLabCanvas() {
         }
       }
 
-      // 2. SLOW PATH: Generate fresh AST via local Edge Cognitive Engine
+      // 2. BUS PATH: Dispatch intent to background WebRTC Daemon if active
+      if (sendIntent && isReady) {
+        const sent = sendIntent(ks, sub, u, ksId, subId, unitId, curriculumSetting);
+        if (sent) return; // Handled asynchronously by handleNewQuestion
+      }
+
+      // 3. IN-PAGE FALLBACK: Local Edge Engine execution
       const prompt = buildUniversalPrompt({
         subject: sub,
         topic: u,
@@ -164,17 +174,12 @@ export default function NeuralLabCanvas() {
 
       console.log('[Raw AI Response]:', rawContent);
       const parsedNode = parseAST(rawContent);
-      console.log('[Parsed AST]:', parsedNode);
-
       const normalized = normalizeASTToQuestion(parsedNode);
 
       if (normalized) {
         const governed = ASTFlowGovernor.govern(normalized, sub, u);
-        console.log('[Governor Result]:', governed);
-
         if (governed.isValid && governed.sanitizedQuestion) {
           saveVerifiedAST(topicKey, rawContent).catch(console.error);
-
           const hintText = normalized.hint || (parsedNode as any)?.hint || '';
 
           handleNewQuestion({
@@ -196,14 +201,12 @@ export default function NeuralLabCanvas() {
       if (requestId === activeRequestIdRef.current) {
         console.error('[Question Generation Error]:', err);
       }
+    } finally {
+      if (requestId === activeRequestIdRef.current && !isReady) {
+        setIsGenerating(false);
+      }
     }
   };
-
-  useEffect(() => {
-    if (!activeQuestion) {
-      requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
-    }
-  }, []);
 
   const handleSelectOption = (idx: number) => {
     if (selectedAnswer === correctIndex || !activeQuestion || correctIndex === null) {
@@ -224,7 +227,6 @@ export default function NeuralLabCanvas() {
       });
     } else {
       setStreak(0);
-
       const clue = activeQuestion.hint || 'Review the core definition and eliminate options that contradict the rule.';
       
       channel.postMessage({
@@ -256,47 +258,32 @@ export default function NeuralLabCanvas() {
     }
   };
 
-  const isQuestionAligned =
-    activeQuestion !== null &&
-    activeQuestion.keyStage === selectedKeyStage &&
-    activeQuestion.subject === selectedSubject &&
-    activeQuestion.unit === selectedUnit;
-
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-<CurriculumSelector
-  keyStage={selectedKeyStage}
-  subject={selectedSubject}
-  unit={selectedUnit}
-  status={status}
-  isReady={isReady || true}
-  sessionId={sessionId}
-  curriculumTree={curriculumTree}
-  onKeyStageChange={(newKs, firstSub, firstUnit) => {
-    // Retain current selections if firstSub/firstUnit are not provided
-    const nextSub = firstSub || selectedSubject;
-    const nextUnit = firstUnit || selectedUnit;
-    
-    setSelectedKeyStage(newKs);
-    setSelectedSubject(nextSub);
-    setSelectedUnit(nextUnit);
-    requestQuestion(newKs, nextSub, nextUnit);
-  }}
-  onSubjectChange={(newSub, firstUnit) => {
-    const nextUnit = firstUnit || selectedUnit;
-    
-    setSelectedSubject(newSub);
-    setSelectedUnit(nextUnit);
-    requestQuestion(selectedKeyStage, newSub, nextUnit);
-  }}
-  onUnitChange={(newUnit) => {
-    setSelectedUnit(newUnit);
-    requestQuestion(selectedKeyStage, selectedSubject, newUnit);
-  }}
-  onSessionIdChange={setSessionId}
-  onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
-  onDownloadReport={handleExportReport}
-/>
+      <CurriculumSelector
+        keyStage={selectedKeyStage}
+        subject={selectedSubject}
+        unit={selectedUnit}
+        status={status}
+        isReady={isReady}
+        sessionId={sessionId}
+        curriculumTree={curriculumTree}
+        onKeyStageChange={(newKs, firstSub, firstUnit) => {
+          setSelectedKeyStage(newKs);
+          if (firstSub) setSelectedSubject(firstSub);
+          if (firstUnit) setSelectedUnit(firstUnit);
+        }}
+        onSubjectChange={(newSub, firstUnit) => {
+          setSelectedSubject(newSub);
+          if (firstUnit) setSelectedUnit(firstUnit);
+        }}
+        onUnitChange={(newUnit) => {
+          setSelectedUnit(newUnit);
+        }}
+        onSessionIdChange={setSessionId}
+        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+        onDownloadReport={handleExportReport}
+      />
 
       <div
         style={{
@@ -309,7 +296,7 @@ export default function NeuralLabCanvas() {
           boxSizing: 'border-box',
         }}
       >
-        {!isQuestionAligned ? (
+        {isGenerating ? (
           <div
             style={{
               height: '440px',
@@ -328,7 +315,7 @@ export default function NeuralLabCanvas() {
             <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
             <div style={{ width: '100%', height: '52px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }} />
           </div>
-        ) : (
+        ) : activeQuestion ? (
           <QuestionCard
             subject={activeQuestion.subject}
             unit={activeQuestion.unit}
@@ -341,8 +328,41 @@ export default function NeuralLabCanvas() {
             onSelectOption={handleSelectOption}
             onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
           />
+        ) : (
+          <div
+            style={{
+              height: '440px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '12px',
+              color: '#64748b'
+            }}
+          >
+            <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>Ready to Practice</div>
+            <div style={{ fontSize: '0.95rem' }}>
+              Select your Stage, Subject, and Unit above, then click <strong>New Question</strong> to begin.
+            </div>
+          </div>
         )}
       </div>
+
+      {/* Background WebRTC Daemon (Layout mounted with zero footprint) */}
+      <iframe
+        src={workerUrl}
+        tabIndex={-1}
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          opacity: 0,
+          pointerEvents: 'none',
+          border: 'none',
+        }}
+        title="neural-worker-daemon"
+      />
     </div>
   );
 }
