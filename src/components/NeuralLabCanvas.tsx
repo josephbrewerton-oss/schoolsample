@@ -10,8 +10,13 @@ import { buildUniversalPrompt } from '@site/static/promptStrategies';
 import { parseAST } from '../engine/ast-loader';
 import { ASTFlowGovernor, RawASTQuestion } from '../engine/astGovernor';
 import { runLocalInference } from '../engine/EdgeCognitiveEngine';
+import { logProgress, getBufferedQuestion, saveVerifiedAST } from '../services/dbStore';
 
-function normalizeASTToQuestion(parsed: any): RawASTQuestion | null {
+interface NormalizedQuestion extends RawASTQuestion {
+  hint?: string;
+}
+
+function normalizeASTToQuestion(parsed: any): NormalizedQuestion | null {
   if (!parsed) return null;
 
   let options: string[] = [];
@@ -23,12 +28,14 @@ function normalizeASTToQuestion(parsed: any): RawASTQuestion | null {
 
   const prompt = typeof parsed.prompt === 'object' ? parsed.prompt?.children?.[0] || '' : String(parsed.prompt || '');
   const scratchpad = typeof parsed.scratchpad === 'object' ? parsed.scratchpad?.children?.[0] || '' : String(parsed.scratchpad || '');
+  const hint = typeof parsed.hint === 'object' ? parsed.hint?.children?.[0] || '' : String(parsed.hint || '');
   const answerKey = Number(parsed['answer-key'] ?? parsed.answerKey ?? 0);
 
   return {
     route: parsed.route || 'quiz:mcq',
     prompt: prompt.trim(),
     scratchpad: scratchpad.trim(),
+    hint: hint.trim(),
     options: options.filter(Boolean),
     answerKey: isNaN(answerKey) ? 0 : answerKey,
   };
@@ -64,20 +71,22 @@ export default function NeuralLabCanvas() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<{
+    id?: string;
     prompt: string;
     displayOptions: string[];
+    rawOptions: string[];
+    hint?: string;
     keyStage: string;
     subject: string;
     unit: string;
   } | null>(null);
 
-  const isGeneratingRef = useRef(false);
+  const activeRequestIdRef = useRef(0);
 
   const slugify = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-  const handleNewQuestion = useCallback((payload: QuestionPayload) => {
-    isGeneratingRef.current = false;
+  const handleNewQuestion = useCallback((payload: QuestionPayload & { hint?: string }) => {
     const { question, keyStage, subject, unit } = payload;
 
     const targetValue = question.options[question.answerKey] ?? question.options[0];
@@ -86,8 +95,11 @@ export default function NeuralLabCanvas() {
     setCorrectIndex(shuffled.indexOf(targetValue));
     setSelectedAnswer(null);
     setActiveQuestion({
+      id: question.id,
       prompt: question.prompt,
       displayOptions: shuffled,
+      rawOptions: question.options,
+      hint: (question as any).hint || payload.hint,
       keyStage: keyStage || selectedKeyStage,
       subject: subject,
       unit: unit,
@@ -101,8 +113,8 @@ export default function NeuralLabCanvas() {
     sub = selectedSubject, 
     u = selectedUnit
   ) => {
-    if (isGeneratingRef.current) return;
-    isGeneratingRef.current = true;
+    const requestId = ++activeRequestIdRef.current;
+
     setActiveQuestion(null);
     setSelectedAnswer(null);
     setCorrectIndex(null);
@@ -110,8 +122,33 @@ export default function NeuralLabCanvas() {
     const ksId = slugify(ks) || 'ks3';
     const subId = slugify(sub) || 'science';
     const unitId = slugify(u) || 'atomic-structure';
+    const topicKey = `${ksId}_${subId}_${unitId}`;
 
     try {
+      // 1. FAST PATH: Check IndexedDB buffer cache
+      const cachedRawAST = await getBufferedQuestion(topicKey);
+      if (requestId !== activeRequestIdRef.current) return;
+
+      if (cachedRawAST) {
+        const parsedCached = parseAST(cachedRawAST);
+        const normalizedCached = normalizeASTToQuestion(parsedCached);
+        if (normalizedCached) {
+          const hintText = normalizedCached.hint || (parsedCached as any)?.hint || '';
+          handleNewQuestion({
+            question: {
+              ...normalizedCached,
+              hint: hintText
+            },
+            keyStage: ks,
+            subject: sub,
+            unit: u,
+            hint: hintText
+          });
+          return;
+        }
+      }
+
+      // 2. SLOW PATH: Generate fresh AST via local Edge Cognitive Engine
       const prompt = buildUniversalPrompt({
         subject: sub,
         topic: u,
@@ -123,8 +160,9 @@ export default function NeuralLabCanvas() {
 
       console.log('[Prompt Generated]:', prompt);
       const rawContent = await runLocalInference(prompt);
-      console.log('[Raw AI Response]:', rawContent);
+      if (requestId !== activeRequestIdRef.current) return;
 
+      console.log('[Raw AI Response]:', rawContent);
       const parsedNode = parseAST(rawContent);
       console.log('[Parsed AST]:', parsedNode);
 
@@ -135,11 +173,19 @@ export default function NeuralLabCanvas() {
         console.log('[Governor Result]:', governed);
 
         if (governed.isValid && governed.sanitizedQuestion) {
+          saveVerifiedAST(topicKey, rawContent).catch(console.error);
+
+          const hintText = normalized.hint || (parsedNode as any)?.hint || '';
+
           handleNewQuestion({
-            question: governed.sanitizedQuestion,
+            question: { 
+              ...governed.sanitizedQuestion, 
+              hint: hintText 
+            },
             keyStage: ks,
             subject: sub,
-            unit: u
+            unit: u,
+            hint: hintText
           });
           return;
         } else {
@@ -147,28 +193,58 @@ export default function NeuralLabCanvas() {
         }
       }
     } catch (err) {
-      console.error('[Question Generation Error]:', err);
-    } finally {
-      isGeneratingRef.current = false;
+      if (requestId === activeRequestIdRef.current) {
+        console.error('[Question Generation Error]:', err);
+      }
     }
   };
 
-  // Immediate initial question trigger on mount
   useEffect(() => {
-    if (!activeQuestion && !isGeneratingRef.current) {
+    if (!activeQuestion) {
       requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
     }
   }, []);
 
   const handleSelectOption = (idx: number) => {
-    if (selectedAnswer === correctIndex) return;
+    if (selectedAnswer === correctIndex || !activeQuestion || correctIndex === null) {
+      return;
+    }
+
     setSelectedAnswer(idx);
-    if (idx === correctIndex) {
+    const isCorrect = idx === correctIndex;
+    const channel = new BroadcastChannel('neural_hypervisor_bus');
+
+    if (isCorrect) {
       setScore((s) => s + 1);
       setStreak((st) => st + 1);
+
+      channel.postMessage({
+        type: 'TURING_FEEDBACK',
+        message: 'Spot on! Correct conceptual deduction.'
+      });
     } else {
       setStreak(0);
+
+      const clue = activeQuestion.hint || 'Review the core definition and eliminate options that contradict the rule.';
+      
+      channel.postMessage({
+        type: 'TURING_FEEDBACK',
+        message: clue
+      });
     }
+
+    const topicId = `${slugify(activeQuestion.subject)}_${slugify(activeQuestion.unit)}`;
+    logProgress({
+      cohortCode: sessionId || 'default_cohort',
+      challengeId: activeQuestion.id || `ch_${Date.now()}`,
+      topicId: topicId,
+      answeredAt: Date.now(),
+      isCorrect,
+      userAnswer: activeQuestion.displayOptions[idx],
+      errorTag: isCorrect ? undefined : 'concept_misconception'
+    }).catch(console.error);
+
+    setTimeout(() => channel.close(), 100);
   };
 
   const handleExportReport = async () => {
@@ -188,36 +264,39 @@ export default function NeuralLabCanvas() {
 
   return (
     <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-      <CurriculumSelector
-        keyStage={selectedKeyStage}
-        subject={selectedSubject}
-        unit={selectedUnit}
-        status={status}
-        isReady={isReady || true}
-        sessionId={sessionId}
-        curriculumTree={curriculumTree}
-        onKeyStageChange={(newKs, firstSub, firstUnit) => {
-          const sub = firstSub || 'Science';
-          const unit = firstUnit || 'Atomic Structure & Periodic Table';
-          setSelectedKeyStage(newKs);
-          setSelectedSubject(sub);
-          setSelectedUnit(unit);
-          requestQuestion(newKs, sub, unit);
-        }}
-        onSubjectChange={(newSub, firstUnit) => {
-          const unit = firstUnit || 'General';
-          setSelectedSubject(newSub);
-          setSelectedUnit(unit);
-          requestQuestion(selectedKeyStage, newSub, unit);
-        }}
-        onUnitChange={(newUnit) => {
-          setSelectedUnit(newUnit);
-          requestQuestion(selectedKeyStage, selectedSubject, newUnit);
-        }}
-        onSessionIdChange={setSessionId}
-        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
-        onDownloadReport={handleExportReport}
-      />
+<CurriculumSelector
+  keyStage={selectedKeyStage}
+  subject={selectedSubject}
+  unit={selectedUnit}
+  status={status}
+  isReady={isReady || true}
+  sessionId={sessionId}
+  curriculumTree={curriculumTree}
+  onKeyStageChange={(newKs, firstSub, firstUnit) => {
+    // Retain current selections if firstSub/firstUnit are not provided
+    const nextSub = firstSub || selectedSubject;
+    const nextUnit = firstUnit || selectedUnit;
+    
+    setSelectedKeyStage(newKs);
+    setSelectedSubject(nextSub);
+    setSelectedUnit(nextUnit);
+    requestQuestion(newKs, nextSub, nextUnit);
+  }}
+  onSubjectChange={(newSub, firstUnit) => {
+    const nextUnit = firstUnit || selectedUnit;
+    
+    setSelectedSubject(newSub);
+    setSelectedUnit(nextUnit);
+    requestQuestion(selectedKeyStage, newSub, nextUnit);
+  }}
+  onUnitChange={(newUnit) => {
+    setSelectedUnit(newUnit);
+    requestQuestion(selectedKeyStage, selectedSubject, newUnit);
+  }}
+  onSessionIdChange={setSessionId}
+  onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+  onDownloadReport={handleExportReport}
+/>
 
       <div
         style={{

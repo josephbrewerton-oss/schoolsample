@@ -1,6 +1,8 @@
-import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import { themes as prismThemes } from 'prism-react-renderer';
+import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+
+const isProd = process.env.NODE_ENV === 'production';
 
 const config: Config = {
   title: 'St Joseph',
@@ -15,7 +17,6 @@ const config: Config = {
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
-  // Injects process global before any bundled scripts evaluate
   headTags: [
     {
       tagName: 'script',
@@ -59,6 +60,37 @@ const config: Config = {
           customCss: './src/css/custom.css',
         },
       } satisfies Preset.Options,
+    ],
+  ],
+
+  plugins: [
+    [
+      '@docusaurus/plugin-pwa',
+      {
+        debug: false,
+        offlineModeActivationStrategies: [
+          'appInstalled',
+          'standalone',
+          'queryString',
+        ],
+        pwaHead: [
+          {
+            tagName: 'link',
+            rel: 'icon',
+            href: '/img/favicon.ico',
+          },
+          {
+            tagName: 'link',
+            rel: 'manifest',
+            href: '/manifest.json',
+          },
+          {
+            tagName: 'meta',
+            name: 'theme-color',
+            content: '#1e3a8a',
+          },
+        ],
+      },
     ],
   ],
 
@@ -125,25 +157,6 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
-
-  plugins: [
-    [
-      '@docusaurus/plugin-pwa',
-      {
-        debug: false,
-        offlineModeActivationStrategies: [
-          'appInstalled',
-          'standalone',
-          'queryString',
-        ],
-        pwaHead: [
-          { tagName: 'link', rel: 'icon', href: '/schoolsample/img/logo.svg' },
-          { tagName: 'link', rel: 'manifest', href: '/schoolsample/manifest.json' },
-          { tagName: 'meta', name: 'theme-color', content: '#2563eb' },
-        ],
-      },
-    ],
-  ],
 };
 
 export default config;

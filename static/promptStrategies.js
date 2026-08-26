@@ -131,7 +131,7 @@ export const SUBJECT_DEFINITIONS = {
       "Write the correct grammatical, literary, or punctuation rule clearly in :scratchpad first.",
       "Follow regional dialect and terminology specified under REGIONAL & CURRICULUM CONSTRAINTS."
     ],
-  example: `(:route "quiz:mcq" :scratchpad "A metaphor asserts that one thing is another without using 'like' or 'as'." :prompt "Which literary device directly asserts that one thing is another rather than using comparative words like 'as'?" :options (list "Metaphor" "Simile" "Personification" "Alliteration") :hint "Consider which device equates two concepts directly without using 'like' or 'as'." :answer-key 0)`
+    example: `(:route "quiz:mcq" :scratchpad "A metaphor asserts that one thing is another without using 'like' or 'as'." :prompt "Which literary device directly asserts that one thing is another rather than using comparative words like 'as'?" :options (list "Metaphor" "Simile" "Personification" "Alliteration") :hint "Consider which device equates two concepts directly without using 'like' or 'as'." :answer-key 0)`
   },
 
   computing: {
@@ -158,19 +158,22 @@ export const SUBJECT_DEFINITIONS = {
     aliases: [
       'humanities', 'history', 'geography', 'citizenship', 're', 
       'religious-education', 'economics', 'egypt', 'pharaohs', 'rome', 'victorian', 
-      'ancient'
+      'ancient', 'living-memory', 'changes within living memory'
     ],
     archetypes: [
       "Cause and consequence / Impact assessment",
       "Source analysis / Perspective comparison",
       "Chronological turning point / Significance",
-      "Key definition applied to a specific historical/geographical case"
+      "Key definition applied to a specific historical/geographical case",
+      "Concrete historical comparison (past vs present daily life)"
     ],
     specificRules: [
       "State the historical, geographical, or cultural fact in :scratchpad first.",
-      "Avoid generic trivia dates/places unless assessing causation or significance."
+      "Avoid generic trivia dates/places unless assessing causation or significance.",
+      "FOR KS1 & KS2: Focus on concrete, relatable differences in daily life (e.g. household items, toys, school, transport, communication). NEVER ask for 4-digit calendar years or exact treaty dates at KS1/KS2.",
+      "FOR KS3 & KS4: Emphasize socioeconomic impact, source reliability, territorial changes, and ideological turning points."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "The Nile flooded annually, depositing rich silt that enabled agriculture in Ancient Egypt." :prompt "Why was the annual flooding of the River Nile essential for the Ancient Egyptian civilization?" :options (list "It deposited fertile black silt for agriculture" "It prevented trade ships from entering" "It formed deep gold mines" "It stopped pyramids from sinking") :hint "Think about how river sediment acted as natural fertilizer for crops." :answer-key 0)'
+    example: '(:route "quiz:mcq" :scratchpad "In the past, before modern electric appliances, washing clothes required hand scrubbing with washboards." :prompt "How did people wash clothes at home before modern electric washing machines were invented?" :options (list "Using a washboard and tub by hand" "Using an automated smartphone app" "By dry cleaning everything in microwave ovens" "With solar-powered laser cleaners") :hint "Think about the tools used before electrical motors were in every home." :answer-key 0)'
   }
 };
 
@@ -211,12 +214,20 @@ export function buildUniversalPrompt(params) {
     curriculum = 'uk_oak'
   } = params;
 
-  const searchCorpus = `${subjectId} ${subject} ${topicId} ${topic}`.toLowerCase();
-  
-  const matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(key => {
-    if (key === subjectId.toLowerCase() || key === subject.toLowerCase()) return true;
-    return SUBJECT_DEFINITIONS[key].aliases.some(alias => searchCorpus.includes(alias));
-  }) || 'humanities';
+  const cleanSubject = (subjectId || subject || '').toLowerCase().trim();
+  const cleanTopic = (topicId || topic || '').toLowerCase().trim();
+
+  // 1. Direct key match or subject alias match first
+  let matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(
+    key => key === cleanSubject || SUBJECT_DEFINITIONS[key].aliases.some(alias => alias === cleanSubject || cleanSubject.includes(alias))
+  );
+
+  // 2. Fallback to topic search if subject did not match
+  if (!matchedKey) {
+    matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(key =>
+      SUBJECT_DEFINITIONS[key].aliases.some(alias => cleanTopic.includes(alias) || alias.includes(cleanTopic))
+    ) || 'humanities';
+  }
 
   const subConfig = SUBJECT_DEFINITIONS[matchedKey];
   const focus = pickRandom(subConfig.archetypes);

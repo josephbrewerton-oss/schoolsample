@@ -23,6 +23,25 @@ function getLanguageModelFactory(): any {
   return aiHost?.languageModel || null;
 }
 
+async function generateGroundedAST(promptText, topicKey) {
+  const fullPrompt = `${promptText}\n\n${AST_TEMPLATES.mcq.promptStructure}`;
+  
+  const rawCompletion = await session.prompt(fullPrompt);
+  
+  // If the model omitted the root syntax, re-attach the deterministic AST skeleton
+  let finalAST = rawCompletion.trim();
+  if (!finalAST.startsWith('(:route')) {
+    finalAST = `(:route "quiz:mcq" :scratchpad "${finalAST}`;
+  }
+  
+  // Clean dangling quotes or brackets
+  if (!finalAST.endsWith(')')) {
+    finalAST = finalAST.replace(/\)*$/, '') + ' :answer-key 0)';
+  }
+
+  return finalAST;
+}
+
 /**
  * Executes on-device LLM inference using Chrome's Prompt API (Gemini Nano)
  * with strict sampling control, dynamic in-context adapters, 6s race timeout, and AST bank fallback.
@@ -114,7 +133,7 @@ Generate output in strict Lisp S-expression format:`;
     setTimeout(() => {
       console.warn('[AI Engine] Inference timed out after 6s. Resolving fallback AST.');
       resolve(fallbackAST);
-    }, 6000)
+    }, 20000)
   );
 
   return Promise.race([inferencePromise, timeoutPromise]);
