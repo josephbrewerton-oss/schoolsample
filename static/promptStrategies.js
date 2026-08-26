@@ -3,8 +3,8 @@
 const KEY_STAGE_CONSTRAINTS = {
   KS1: "Ages 5-7 (Primary). Short simple sentences, everyday words, basic concrete items (e.g. apples, coins). No technical jargon.",
   KS2: "Ages 7-11 (Middle Primary). Simple sentence structures, foundational subject terms. One-step reasoning or simple arithmetic only.",
-  KS3: "Ages 11-14 (Lower Secondary / Middle Years). Formal definitions, standard formulas, two-step reasoning. Standard secondary tone.",
-  KS4: "Ages 14-16 (Upper Secondary / GCSE / IGCSE standard). Rigorous terminology, multi-step calculations with standard units, subtle distractor traps."
+  KS3: "Ages 11-14 (Lower Secondary). Core foundational concepts only. DO NOT use advanced GCSE/A-Level concepts (e.g. no photons, quantum transitions, moles, or advanced kinematics). Use electron shells/energy levels, not quantum orbits.",
+  KS4: "Ages 14-16 (Upper Secondary / GCSE standard). Rigorous terminology, quantitative relations, multi-step calculations with standard units, subtle distractor traps."
 };
 
 const REGIONAL_CONSTRAINTS = {
@@ -23,9 +23,18 @@ const REGIONAL_CONSTRAINTS = {
 `.trim()
 };
 
-/**
- * Explicit Question Stem Operators to anchor small on-device models
- */
+export const AST_TEMPLATES = {
+  mcq: {
+    prefix: '(:route "quiz:mcq" :scratchpad "',
+    promptStructure: `Complete the following S-expression. Fill in ONLY the values for :scratchpad, :prompt, :options, and :hint.
+
+Template to complete:
+(:route "quiz:mcq" :scratchpad "<STEP_BY_STEP_FACT>" :prompt "<QUESTION_STEM>" :options (list "<CORRECT_ANSWER>" "<DISTRACTOR_1>" "<DISTRACTOR_2>" "<DISTRACTOR_3>") :hint "<SOCRATIC_HINT>" :answer-key 0)
+
+Begin immediately with the scratchpad text:`
+  }
+};
+
 const QUESTION_FRAME_ROUTING = {
   maths: [
     { stem: 'Calculate / Evaluate', pattern: 'Direct computation (e.g., "Calculate the value of...", "Determine the size of angle...")' },
@@ -73,36 +82,45 @@ export const SUBJECT_DEFINITIONS = {
       "Spot the arithmetic / conceptual error"
     ],
     specificRules: [
-      "TOPIC FIDELITY: Strictly generate a question testing the exact Topic specified (e.g., if Topic is 'Circle Theorems', the question MUST test angles, arcs, chords, or tangents).",
+      "TOPIC FIDELITY: Strictly generate a question testing the exact Topic specified.",
       "Compute the exact numeric or geometric step-by-step solution in :scratchpad first.",
       "Distractors (Items 1, 2, 3) must represent common student mathematical misconceptions.",
-      "SYLLABUS BOUNDARY (KS4 GCSE): Use DEGREES (0°–360°) for angle and sector questions. NEVER use radians.",
-      "DISTRACTOR DIVERSITY: All 4 options in :options (list ...) MUST be distinctly different numbers or expressions. NEVER output identical options.",
-      "DISTRACTOR GENERATION: Create plausible arithmetic mistakes for Items 1, 2, and 3 (e.g. forgetting to square the radius, omitting the 1/2 factor, or multiplying instead of dividing)."
+      "SYLLABUS BOUNDARY: Use standard school units and degrees (0°-360°).",
+      "DISTRACTOR DIVERSITY: All 4 options in :options (list ...) MUST be distinctly different numbers or expressions."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "The angle subtended by an arc at the center is twice the angle subtended at the circumference. 35 * 2 = 70 degrees." :prompt "An angle subtended at the circumference of a circle is 35°. What is the angle subtended by the same arc at the center?" :options (list "70°" "35°" "17.5°" "140°") :answer-key 0)'
+    example: '(:route "quiz:mcq" :scratchpad "Angle subtended at center is twice angle at circumference. 35 * 2 = 70 degrees." :prompt "An angle subtended at the circumference of a circle is 35°. What is the angle subtended by the same arc at the center?" :options (list "70°" "35°" "17.5°" "140°") :hint "Recall the relationship between the angle at the center and the angle at the circumference for the same arc." :answer-key 0)'
   },
 
   science: {
     category: "Science",
-    aliases: ['science', 'physics', 'chemistry', 'biology', 'forces', 'magnet', 'electric', 'electrolysis', 'photosynthesis', 'plant', 'cell', 'atom', 'chemical', 'energy', 'wave', 'ecology', 'acid', 'reaction'],
+    aliases: [
+      'science', 'physics', 'chemistry', 'biology', 'forces', 'magnet', 'electric', 
+      'electrolysis', 'photosynthesis', 'plant', 'cell', 'atom', 'chemical', 'energy', 
+      'wave', 'ecology', 'acid', 'reaction', 'atomic structure', 'periodic table', 
+      'isotope', 'subatomic'
+    ],
     archetypes: [
       "Calculation / Formula application (e.g. solve for unknown with units)",
-      "Practical scenario / Diagnostic error (e.g. troubleshoot a lab setup or explain an observed phenomenon)",
-      "Common misconception trap (distractor 1 must target a standard student error)",
-      "Comparative analysis (e.g. relative frequencies, energy states, or properties)"
+      "Practical scenario / Diagnostic error (troubleshoot a lab setup)",
+      "Common misconception trap",
+      "Structure and function / Subatomic component identification"
     ],
     specificRules: [
-      "SYLLABUS CEILING: Keep strictly within secondary school level. Do NOT introduce university/advanced research concepts.",
-      "CHEMISTRY EQUATIONS: If balancing equations or writing reactions, use only valid real-world chemical reactions. Only change balancing coefficients, NEVER change chemical subscripts or compound formulas.",
+      "SYLLABUS CEILING: Strictly adapt to Key Stage level. For KS3: stick to basic atomic structure (protons, neutrons, electrons in shells 2,8,8), periodic table groups/periods, and simple conservation of mass. Never introduce photons, excitation, or quantum mechanics at KS3.",
+      "ATOMIC STRUCTURE CONSTRAINTS: Protons (+1, mass 1), Neutrons (neutral, mass 1), Electrons (-1, negligible mass). Use the term 'shells' or 'energy levels', never classical 'planetary orbits'.",
+      "CHEMISTRY EQUATIONS: If balancing equations or writing reactions, use valid chemical formulas without changing subscripts.",
       "TOPIC GROUNDING: Strictly test the chosen topic."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "Microwaves penetrate atmosphere with minimal scattering, making them ideal for satellite communication." :prompt "Why are microwaves preferred over standard radio waves for direct satellite communications?" :options (list "They penetrate the atmosphere without excessive scattering" "They travel faster than the speed of light" "They carry no electromagnetic energy" "They reflect completely off the upper atmosphere") :answer-key 0)'
+    example: '(:route "quiz:mcq" :scratchpad "Enzymes denature at high temperatures because heat alters their active site shape." :prompt "What happens to enzyme activity when temperature rises significantly above the optimum level?" :options (list "The enzyme denatures and activity drops" "Activity increases exponentially" "The enzyme creates more substrates" "The reaction rate remains constant") :hint "Think about how extreme heat changes the structural shape of the active site." :answer-key 0)'
   },
 
   languages: {
     category: "Languages & Literature",
-    aliases: ['english', 'english-language', 'english-literature', 'french', 'spanish', 'german', 'grammar', 'punctuation', 'spelling', 'metaphor', 'literature', 'poem', 'comprehension'],
+    aliases: [
+      'english', 'english-language', 'english-literature', 'french', 'spanish', 
+      'german', 'grammar', 'punctuation', 'spelling', 'metaphor', 'literature', 
+      'poem', 'comprehension'
+    ],
     archetypes: [
       "Contextual passage analysis / Device identification",
       "Subtle grammatical error correction",
@@ -113,12 +131,15 @@ export const SUBJECT_DEFINITIONS = {
       "Write the correct grammatical, literary, or punctuation rule clearly in :scratchpad first.",
       "Follow regional dialect and terminology specified under REGIONAL & CURRICULUM CONSTRAINTS."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "A metaphor directly asserts that one thing is another without using \'like\' or \'as\'." :prompt "Which literary device directly compares two things by stating one is the other?" :options (list "Metaphor" "Simile" "Alliteration" "Personification") :answer-key 0)'
+  example: `(:route "quiz:mcq" :scratchpad "A metaphor asserts that one thing is another without using 'like' or 'as'." :prompt "Which literary device directly asserts that one thing is another rather than using comparative words like 'as'?" :options (list "Metaphor" "Simile" "Personification" "Alliteration") :hint "Consider which device equates two concepts directly without using 'like' or 'as'." :answer-key 0)`
   },
 
   computing: {
     category: "Computer Science & IT",
-    aliases: ['computing', 'computer-science', 'programming', 'it', 'algorithms', 'binary', 'logic', 'python', 'scratch'],
+    aliases: [
+      'computing', 'computer-science', 'programming', 'it', 'algorithms', 
+      'binary', 'logic', 'python', 'scratch'
+    ],
     archetypes: [
       "Trace code / predict variable state at line N",
       "Identify logical vs syntax errors in pseudocode",
@@ -129,12 +150,16 @@ export const SUBJECT_DEFINITIONS = {
       "Trace intermediate execution states directly in :scratchpad before writing options.",
       "Use language-agnostic pseudocode or standard Python syntax."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "Binary 00001010 = 8 + 2 = 10 in denary." :prompt "Convert the 8-bit binary value 00001010 to denary (base 10):" :options (list "10" "12" "6" "20") :answer-key 0)'
+    example: '(:route "quiz:mcq" :scratchpad "Binary 00001010 = 8 + 2 = 10 in denary." :prompt "Convert the 8-bit binary value 00001010 to denary (base 10):" :options (list "10" "12" "6" "20") :hint "Add together the place values for the bit positions containing a 1." :answer-key 0)'
   },
 
   humanities: {
     category: "Humanities & Social Sciences",
-    aliases: ['humanities', 'history', 'geography', 'citizenship', 're', 'religious-education', 'economics'],
+    aliases: [
+      'humanities', 'history', 'geography', 'citizenship', 're', 
+      'religious-education', 'economics', 'egypt', 'pharaohs', 'rome', 'victorian', 
+      'ancient'
+    ],
     archetypes: [
       "Cause and consequence / Impact assessment",
       "Source analysis / Perspective comparison",
@@ -145,20 +170,23 @@ export const SUBJECT_DEFINITIONS = {
       "State the historical, geographical, or cultural fact in :scratchpad first.",
       "Avoid generic trivia dates/places unless assessing causation or significance."
     ],
-    example: '(:route "quiz:mcq" :scratchpad "William of Normandy defeated King Harold Godwinson at the Battle of Hastings in 1066." :prompt "Where did the decisive battle between William the Conqueror and King Harold take place in 1066?" :options (list "Battle of Hastings" "Battle of Stamford Bridge" "Battle of Bannockburn" "Battle of Waterloo") :answer-key 0)'
+    example: '(:route "quiz:mcq" :scratchpad "The Nile flooded annually, depositing rich silt that enabled agriculture in Ancient Egypt." :prompt "Why was the annual flooding of the River Nile essential for the Ancient Egyptian civilization?" :options (list "It deposited fertile black silt for agriculture" "It prevented trade ships from entering" "It formed deep gold mines" "It stopped pyramids from sinking") :hint "Think about how river sediment acted as natural fertilizer for crops." :answer-key 0)'
   }
 };
 
 const BASE_CORE_RULES = `
 CRITICAL INVARIANTS:
-1. TOPIC INTEGRITY: You MUST test the specified Topic. Do not drift into unrelated subjects or adjacent units.
-2. SCRATCHPAD REASONING: In :scratchpad, write ONLY the factual explanation or mathematical calculation steps (e.g., "35 * 2 = 70 degrees"). NEVER write a question mark (?) in the scratchpad.
-3. PROMPT ISOLATION: The :prompt field must contain ONLY the clean question stem. NEVER include choices, option letters (A, B, C, D), or numbers (1), 2)) inside :prompt.
-4. OPTION SLOT 0: In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER directly matching the solution in :scratchpad.
-5. DISTRACTORS: Items 1, 2, and 3 MUST be plausible distractors matching the exact data type of Item 0. NEVER place an incorrect option in position 0.
-6. :answer-key MUST ALWAYS be 0.
-7. STRICT MCQ FORMAT: Do NOT include open-ended requests like "Explain your reasoning" or "Show your work".
-8. Output ONLY the raw Lisp S-expression. No markdown quotes, backticks, or extra text.
+1. TOPIC INTEGRITY: You MUST test the specified Topic. Do NOT switch to an unrelated subject.
+2. SCRATCHPAD REASONING: In :scratchpad, calculate or state the exact rule/fact step-by-step.
+3. PROMPT ISOLATION: The :prompt field must contain ONLY clean text inside double quotes. Never use unescaped parentheses inside the prompt string.
+4. OPTION SLOT 0: In :options (list ...), ITEM 0 MUST BE THE EXACT CORRECT ANSWER.
+5. DISTRACTORS: Items 1, 2, and 3 MUST be plausible distractors matching the exact data type of Item 0.
+6. SOCRATIC HINT: In :hint, write a concise, one-sentence conceptual clue that guides a confused student without revealing the answer.
+7. :answer-key MUST ALWAYS be 0.
+8. Output ONLY the raw Lisp S-expression.
+
+OUTPUT SCHEMA:
+(:route "quiz:mcq" :scratchpad "<FACT_OR_STEPS>" :prompt "<QUESTION_STEM>" :options (list "<CORRECT>" "<DISTRACTOR_1>" "<DISTRACTOR_2>" "<DISTRACTOR_3>") :hint "<SOCRATIC_CLUE>" :answer-key 0)
 `.trim();
 
 function resolveKeyStageRule(rawKs) {
@@ -183,7 +211,6 @@ export function buildUniversalPrompt(params) {
     curriculum = 'uk_oak'
   } = params;
 
-  // Search corpus across subject, subjectId, topic, topicId
   const searchCorpus = `${subjectId} ${subject} ${topicId} ${topic}`.toLowerCase();
   
   const matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(key => {
@@ -194,7 +221,6 @@ export function buildUniversalPrompt(params) {
   const subConfig = SUBJECT_DEFINITIONS[matchedKey];
   const focus = pickRandom(subConfig.archetypes);
   
-  // Pick deterministic Question Stem Route
   const frameList = QUESTION_FRAME_ROUTING[matchedKey] || QUESTION_FRAME_ROUTING.humanities;
   const entropy = Math.floor(Math.random() * 100000);
   const selectedFrame = frameList[entropy % frameList.length];
@@ -222,16 +248,13 @@ SUBJECT SPECIFIC RULES:
 ${subConfig.specificRules.map(r => `- ${r}`).join('\n')}
 - Strictly adhere to Target Reading Level: "${ageRule}".
 
-EXAMPLE:
+DOMAIN GOLD-STANDARD EXAMPLE FOR ${subConfig.category.toUpperCase()}:
 Output: ${subConfig.example}
 
-Generate ONE question for "${subject} - ${topic}":
+Generate ONE unique question strictly testing "${subject} - ${topic}":
 Output:`.trim();
 }
 
-/**
- * Backward compatibility wrapper for existing callers
- */
 export function buildPrompt(userPrompt, langName = 'English', curriculumOverride = null) {
   if (typeof userPrompt === 'object' && userPrompt !== null) {
     return buildUniversalPrompt({
@@ -245,7 +268,6 @@ export function buildPrompt(userPrompt, langName = 'English', curriculumOverride
     });
   }
 
-  // String parsing fallback for legacy string-based callers
   const subjMatch = userPrompt.match(/Subject:\s*"([^"]+)"/i);
   const topicMatch = userPrompt.match(/Topic:\s*"([^"]+)"/i);
   const ksMatch = userPrompt.match(/Key Stage:\s*"([^"]+)"|Key Stage\s*([1-4])/i);
