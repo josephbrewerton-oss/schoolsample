@@ -6,145 +6,27 @@
 </head>
 <body>
   <script type="module">
-    import { buildPrompt } from './promptStrategies.js';
+    import { buildUniversalPrompt } from './promptStrategies.js';
 
-    console.log('[Worker Daemon] Booting WebRTC Daemon...');
+    console.log('[Worker Daemon] Booting WebRTC Daemon at:', window.location.href);
+
     const bus = new BroadcastChannel('webrtc-neural-signaling');
     let pc = null;
     let activeChannel = null;
     let isConnecting = false;
     let isBusy = false;
-    let pendingIntent = null;
 
-    async function createFreshSession(systemInstruction) {
-      const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
-      const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
-
-      const options = {
-        systemPrompt: systemInstruction,
-        expectedOutputs: [{ type: 'text', languages: ['en'] }]
-      };
-
-      if (aiHost?.languageModel) {
-        try {
-          return await aiHost.languageModel.create(options);
-        } catch {
-          try {
-            return await aiHost.languageModel.create();
-          } catch {}
-        }
-      }
-
-      if (GlobalLM?.create) {
-        try {
-          return await GlobalLM.create(options);
-        } catch {
-          try {
-            return await GlobalLM.create();
-          } catch {}
-        }
-      }
-
-      return null;
-    }
-
-    async function processIntent(rawIntent, dc) {
-      isBusy = true;
-      console.log('[Worker Daemon] Processing Intent:', rawIntent);
-
-      let session = null;
-      try {
-        let parsedIntent = rawIntent;
-        if (typeof rawIntent === 'string') {
-          try {
-            parsedIntent = JSON.parse(rawIntent);
-          } catch {
-            parsedIntent = rawIntent;
-          }
-        }
-
-        const prompt = buildPrompt(parsedIntent);
-        console.log('[Worker Daemon] Prompting on-device model with prompt:\n', prompt);
-
-        const isUK = parsedIntent?.curriculum === 'uk_oak';
-        const systemInstruction = isUK
-          ? "You are an educational assessment test generator for UK National Curriculum (Oak). Output valid Lisp S-expressions."
-          : "You are an educational assessment test generator for International / Universal standards. Output valid Lisp S-expressions.";
-
-        // Fresh session per generation ensures zero cross-subject memory drift
-        session = await createFreshSession(systemInstruction);
-
-        if (!session) {
-          if (dc.readyState === 'open') {
-            dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "Retry" "Help") :answer-key 0)');
-            dc.send('__EOF__');
-          }
-          return;
-        }
-
-        const response = await session.prompt(prompt);
-        console.log('[Worker Daemon] Model Output:\n', response);
-
-        // --- S-Expression Structural Sanitizer ---
-        let sanitized = response
-          .replace(/```(?:lisp|scheme)?/gi, '')
-          .replace(/```/g, '')
-          .trim();
-
-        if (!sanitized.startsWith('(')) {
-          sanitized = `(${sanitized}`;
-        }
-        if (!sanitized.endsWith(')')) {
-          sanitized = `${sanitized})`;
-        }
-
-        if (!sanitized.startsWith('(:route')) {
-          sanitized = sanitized.replace(/^\(/, '(:route "quiz:mcq" ');
-        }
-
-        if (!sanitized.includes(':prompt')) {
-          sanitized = sanitized.replace(
-            ':scratchpad',
-            ':prompt "Which statement best describes this concept?" :scratchpad'
-          );
-        }
-
-        if (dc.readyState === 'open') {
-          dc.send(sanitized);
-          dc.send('__EOF__');
-        }
-      } catch (err) {
-        console.error('[Worker Daemon] Generation Error:', err);
-        if (dc.readyState === 'open') {
-          dc.send('__EOF__');
-        }
-      } finally {
-        isBusy = false;
-        if (session && typeof session.destroy === 'function') {
-          try { session.destroy(); } catch {}
-        }
-
-        // Drain queue if a newer intent arrived during inference
-        if (pendingIntent) {
-          const next = pendingIntent;
-          pendingIntent = null;
-          processIntent(next, dc);
-        }
-      }
-    }
-
-    async function createOffer() {
-      if (isConnecting) return;
+    async function initAndOffer() {
       if (activeChannel && activeChannel.readyState === 'open') return;
+      if (isConnecting) return;
 
       isConnecting = true;
-
       if (pc) {
         try { pc.close(); } catch {}
       }
 
-      console.log('[Worker Daemon] Creating WebRTC Offer...');
-      pc = new RTCPeerConnection();
+      console.log('[Worker Daemon] Initializing PeerConnection & DataChannel...');
+      pc = new RTCPeerConnection({ iceServers: [] });
 
       const dc = pc.createDataChannel('neural-bus');
       activeChannel = dc;
@@ -160,12 +42,7 @@
       };
 
       dc.onmessage = async (event) => {
-        if (isBusy) {
-          console.log('[Worker Daemon] Busy: queuing latest intent...');
-          pendingIntent = event.data;
-          return;
-        }
-
+        if (isBusy) return;
         processIntent(event.data, dc);
       };
 
@@ -178,35 +55,116 @@
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
+        console.log('[Worker Daemon] Broadcasting Offer to Hypervisor...');
         bus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
       } catch (err) {
         isConnecting = false;
-        console.error('[Worker Daemon] Failed to create offer:', err);
+        console.error('[Worker Daemon] Offer creation failed:', err);
       }
     }
 
     bus.onmessage = async (e) => {
-      if (e.data.type === 'peer_ready') {
-        createOffer();
-      } else if (e.data.type === 'answer' && pc) {
+      const data = e.data;
+      if (!data) return;
+
+      if (data.type === 'peer_ready') {
+        initAndOffer();
+      } else if (data.type === 'answer' && pc) {
         if (pc.signalingState === 'have-local-offer') {
           try {
-            await pc.setRemoteDescription(new RTCSessionDescription(e.data.sdp));
+            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
           } catch (err) {
-            console.error('[Worker Daemon] setRemoteDescription error:', err);
+            console.warn('[Worker Daemon] Answer error:', err);
           }
         }
-      } else if (e.data.type === 'candidate' && pc && e.data.candidate) {
+      } else if (data.type === 'candidate' && pc && data.candidate) {
         try {
           if (pc.remoteDescription && pc.signalingState !== 'closed') {
-            await pc.addIceCandidate(new RTCIceCandidate(e.data.candidate));
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
           }
         } catch {}
       }
     };
 
+    async function createFreshSession(systemInstruction) {
+      const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
+      const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
+
+      const options = {
+        systemPrompt: systemInstruction,
+        expectedOutputs: [{ type: 'text', languages: ['en'] }]
+      };
+
+      if (aiHost?.languageModel) {
+        try { return await aiHost.languageModel.create(options); } catch {
+          try { return await aiHost.languageModel.create(); } catch {}
+        }
+      }
+      if (GlobalLM?.create) {
+        try { return await GlobalLM.create(options); } catch {
+          try { return await GlobalLM.create(); } catch {}
+        }
+      }
+      return null;
+    }
+
+    async function processIntent(rawIntent, dc) {
+      isBusy = true;
+      let session = null;
+      try {
+        let parsed = rawIntent;
+        if (typeof rawIntent === 'string') {
+          try { parsed = JSON.parse(rawIntent); } catch {}
+        }
+
+        const prompt = buildUniversalPrompt({
+          subject: parsed.subject || parsed.sub || 'Science',
+          topic: parsed.unit || parsed.topic || 'General',
+          keyStage: parsed.keyStage || parsed.ks || 'KS3',
+          curriculum: parsed.curriculum || 'uk_oak'
+        });
+
+        const systemInstruction = "You are an educational assessment test generator. Generate valid Lisp S-expressions strictly matching the requested topic.";
+        session = await createFreshSession(systemInstruction);
+
+        if (!session) {
+          if (dc.readyState === 'open') {
+            dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "Retry" "Help") :answer-key 0)');
+            dc.send('__EOF__');
+          }
+          return;
+        }
+
+        const response = await session.prompt(prompt);
+        let sanitized = response
+          .replace(/```(?:lisp|scheme)?/gi, '')
+          .replace(/```/g, '')
+          .trim();
+
+        const firstParen = sanitized.indexOf('(');
+        const lastParen = sanitized.lastIndexOf(')');
+
+        if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+          sanitized = sanitized.substring(firstParen, lastParen + 1);
+        }
+
+        if (dc.readyState === 'open') {
+          dc.send(sanitized);
+          dc.send('__EOF__');
+        }
+      } catch (err) {
+        console.error('[Worker Daemon] Generation Error:', err);
+        if (dc.readyState === 'open') dc.send('__EOF__');
+      } finally {
+        isBusy = false;
+        if (session && typeof session.destroy === 'function') {
+          try { session.destroy(); } catch {}
+        }
+      }
+    }
+
+    // Announce ready immediately
     bus.postMessage({ type: 'daemon_ready' });
-    console.log('[Worker Daemon] Listening on BroadcastChannel.');
   </script>
 </body>
 </html>
