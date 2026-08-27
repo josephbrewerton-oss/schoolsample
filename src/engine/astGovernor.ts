@@ -175,28 +175,53 @@ export class ASTFlowGovernor {
       };
     }
 
-    // 3. Distractor De-duplication & Collapse Guard
-    const sanitizedOptions = Array.from(
-      new Set(raw.options.map(opt => String(opt).trim()))
-    ).filter(Boolean);
+    // 3. Distractor De-duplication, Syntax Scrubbing & Degeneracy Guard
+    const cleanedOptions = raw.options
+      .map((opt) => {
+        let text = String(opt || '').trim();
+        // Remove option prefixes like "A)", "1.", "(B)"
+        text = text.replace(/^[\(\[]?[A-Da-d1-4][\)\]\.\:\-\s]+\s*/, '');
+        // Strip escaped slashes and quotes
+        text = text.replace(/^\\+/, '').replace(/^"+|"+$/g, '').trim();
+        return text;
+      })
+      .filter((opt) => {
+        const lower = opt.toLowerCase();
+        // Reject single-character symbols, bare slashes, empty strings, and exemplar bleed
+        if (opt.length <= 1 || opt === '\\' || opt === '/') return false;
+        if (lower.includes('said amelia') || lower.includes('said tom')) return false;
+        return true;
+      });
 
-    // Reject if distractors collapsed into duplicates (e.g. 4x identical answers)
-    if (sanitizedOptions.length < 3) {
+    // Enforce case-insensitive uniqueness check
+    const seenLower = new Set<string>();
+    const uniqueOptions: string[] = [];
+
+    for (const opt of cleanedOptions) {
+      const lower = opt.toLowerCase();
+      if (!seenLower.has(lower)) {
+        seenLower.add(lower);
+        uniqueOptions.push(opt);
+      }
+    }
+
+    // Reject if distractors collapsed into repetitive loops
+    if (uniqueOptions.length < 3) {
       return {
         isValid: false,
         sanitizedQuestion: null,
-        rejectionReason: `AST Distractor Collapse: Fewer than 3 unique options generated (${sanitizedOptions.length} unique found).`,
+        rejectionReason: `AST Distractor Collapse: Fewer than 3 valid unique options found (${uniqueOptions.length} valid).`,
       };
     }
 
     // 4. Deterministic Arithmetic Correction
-    let targetAnswerKey = typeof raw.answerKey === 'number' && raw.answerKey >= 0 && raw.answerKey < sanitizedOptions.length
+    let targetAnswerKey = typeof raw.answerKey === 'number' && raw.answerKey >= 0 && raw.answerKey < uniqueOptions.length
       ? raw.answerKey
       : 0;
 
     const evaluatedSolution = this.verifyArithmetic(cleanPrompt, raw.scratchpad);
     if (evaluatedSolution) {
-      const matchedIdx = sanitizedOptions.findIndex(opt => {
+      const matchedIdx = uniqueOptions.findIndex(opt => {
         const cleanedOpt = opt.trim().toLowerCase();
         const cleanedSol = evaluatedSolution.toLowerCase();
         if (cleanedOpt === cleanedSol) return true;
@@ -208,7 +233,7 @@ export class ASTFlowGovernor {
       if (matchedIdx !== -1) {
         targetAnswerKey = matchedIdx;
       } else {
-        sanitizedOptions[0] = evaluatedSolution;
+        uniqueOptions[0] = evaluatedSolution;
         targetAnswerKey = 0;
       }
     }
@@ -236,7 +261,7 @@ export class ASTFlowGovernor {
         route: raw.route || 'quiz:mcq',
         scratchpad: String(raw.scratchpad || ''),
         prompt: cleanPrompt,
-        options: sanitizedOptions,
+        options: uniqueOptions,
         answerKey: targetAnswerKey,
       },
     };

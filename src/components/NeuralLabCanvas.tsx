@@ -12,6 +12,7 @@ import { parseAST } from '../engine/ast-loader';
 import { ASTFlowGovernor, RawASTQuestion } from '../engine/astGovernor';
 import { runLocalInference } from '../engine/EdgeCognitiveEngine';
 import { logProgress, getBufferedQuestion, saveVerifiedAST } from '../services/dbStore';
+import { PromptASTPreparser } from '../engine/promptAstparser';
 
 interface NormalizedQuestion extends RawASTQuestion {
   hint?: string;
@@ -185,16 +186,15 @@ export default function NeuralLabCanvas() {
       }
 
       // 3. IN-PAGE FALLBACK: Local Edge Engine execution
-      const prompt = buildUniversalPrompt({
+// 3. IN-PAGE FALLBACK: Local Edge Engine execution with AST Pre-Parsing
+      const prompt = PromptASTPreParser.parseForInference({
         subject: sub,
         topic: u,
         keyStage: ks,
-        subjectId: subId,
-        topicId: unitId,
-        curriculum: curriculumSetting
+        curriculum: curriculumSetting,
       });
 
-      console.log('[Prompt Generated]:', prompt);
+      console.log('[Token-Optimized AST Prompt]:', prompt);
       const rawContent = await runLocalInference(prompt);
       if (requestId !== activeRequestIdRef.current) return;
 

@@ -109,6 +109,11 @@ plugins: [
           position: 'left',
         },
         {
+          to: '/learning-zone',
+          label: 'Learning Zone',
+          position: 'left',
+        },
+        {
           to: '/settings',
           label: '⚙️ Settings & Access',
           position: 'right',

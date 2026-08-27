@@ -1,18 +1,38 @@
 // src/components/TuringTutor.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { buildSocraticSeedPrompt } from '@site/static/promptStrategies';
 
 interface TuringTutorProps {
   activePrompt?: string;
   activeTopic?: string;
   contextTopic?: string;
+  seedKey?: string;
+  keyStage?: string;
+  subject?: string;
+  unit?: string;
 }
 
 export function TuringTutor({
   activePrompt = '',
   activeTopic = '',
   contextTopic = '',
+  seedKey = '',
+  keyStage = 'KS3',
+  subject = 'Science',
+  unit = 'Atomic Structure'
 }: TuringTutorProps) {
-  const currentTopic = activeTopic || contextTopic || 'General Studies';
+  const currentTopic = activeTopic || contextTopic || unit || 'General Studies';
+
+  // Automatically derive or fallback the seed coordinate key
+  const effectiveSeedKey = seedKey || (() => {
+    const ks = keyStage.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sub = subject.toLowerCase().includes('math') ? 'mat' : 
+                subject.toLowerCase().includes('comp') ? 'com' : 'sci';
+    const topicSlug = currentTopic.toLowerCase().includes('plant') ? 'plants' :
+                     currentTopic.toLowerCase().includes('add') ? 'addition' :
+                     currentTopic.toLowerCase().includes('force') ? 'forces' : 'atomic';
+    return `${ks.includes('ks') ? ks : 'ks3'}:${sub}:${topicSlug}`;
+  })();
 
   const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
     { role: 'turing', text: 'I am here to guide your steps! Ask me if you get stuck.' },
@@ -33,7 +53,7 @@ export function TuringTutor({
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // UK English Voice
+  // UK English Voice synthesis
   useEffect(() => {
     const updateVoices = () => {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -76,7 +96,7 @@ export function TuringTutor({
       .trim();
   };
 
-  // Persistent BroadcastChannel listener
+  // Persistent BroadcastChannel listener for multi-component signals
   useEffect(() => {
     const channel = new BroadcastChannel('neural_hypervisor_bus');
 
@@ -112,19 +132,23 @@ export function TuringTutor({
         throw new Error('Prompt API not detected');
       }
 
-      const options = {
-        expectedOutputs: [{ type: 'text', languages: ['en'] }],
-        systemPrompt:
-          'You are Prof. Turing, an encouraging UK secondary school science and maths tutor. Never output planning thoughts, meta tags, or greeting fluff. Respond with a single concise Socratic hint under 25 words that guides the student without giving away the direct answer.',
-      };
-
-      try {
-        session = await targetFactory.create(options);
-      } catch {
-        session = await targetFactory.create();
+      // Check availability with standard flat parameters
+      if (typeof targetFactory.availability === 'function') {
+        await targetFactory.availability({
+          expectedInputLanguages: ['en'],
+          expectedOutputLanguages: ['en']
+        });
       }
 
-      const promptContext = `Topic: "${currentTopic}". Context Stem: "${activePrompt || 'Assessment Practice'}". Student Query: "${query}". Provide a 1-sentence Socratic hint:`;
+      // Modern W3C session options (No legacy arrays or deprecated params)
+      session = await targetFactory.create({
+        systemPrompt: 'You are Prof. Turing, a concise UK Socratic tutor. Never deliver lectures, lesson plans, summaries, or lists. Reply in ONE single question under 20 words guiding the pupil.',
+        expectedInputLanguages: ['en'],
+        expectedOutputLanguages: ['en']
+      });
+
+      // Build ultra-dense steering prompt anchored to the Oak Seed coordinate
+      const promptContext = buildSocraticSeedPrompt(effectiveSeedKey, query);
 
       setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
       setLoading(false);

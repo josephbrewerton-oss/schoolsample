@@ -7,6 +7,7 @@ import {
   getRandomCachedAST,
   getTuringDiagnosticSummary 
 } from '../services/dbStore';
+import { resolveSeedCoordinate } from '@site/static/promptStrategies';
 
 /**
  * Resolves the active Prompt API factory across specification variants.
@@ -23,18 +24,30 @@ function getLanguageModelFactory(): any {
 }
 
 /**
+ * Generates an instant, route-appropriate fallback AST based on topicKey.
+ */
+function generateContextualFallback(topicKey: string, isQuiz: boolean): string {
+  const seed = resolveSeedCoordinate(topicKey);
+
+  if (isQuiz) {
+    return `(:route "quiz:mcq" :scratchpad "${seed.axiom}" :prompt "${seed.pivot}" :options (list "${seed.axiom}" "Incorrect alternative 1" "Incorrect alternative 2" "Incorrect alternative 3") :hint "Consider the core principle." :answer-key 0)`;
+  }
+
+  return `(:route "lesson:view" :axiom "${seed.axiom}" :trap "${seed.trap}" :pivot "${seed.pivot}")`;
+}
+
+/**
  * Executes on-device LLM inference using Chrome's Prompt API (Gemini Nano)
- * with strict sampling control, dynamic AST validation, and fallback handling.
+ * across both Practice Lab (Quizzes) and Learning Zone (Lesson Nodes).
  */
 export async function runLocalInference(
   prompt: string, 
   systemPrompt?: string, 
-  topicKey: string = 'science_atomic_structure'
+  topicKey: string = 'ks3:sci:atomic'
 ): Promise<string> {
-  const defaultFallbackAST = `(:route "quiz:mcq" :scratchpad "Atoms consist of protons and neutrons in the central nucleus, with electrons orbiting in outer shells." :prompt "Which subatomic particles are located inside the nucleus of an atom?" :options (list "Protons and Neutrons" "Electrons and Neutrons" "Electrons only" "Protons and Electrons") :hint "Think about which particles reside in the central dense core." :answer-key 0)`;
+  const isQuizRequest = prompt.includes('quiz:mcq') || !prompt.includes('lesson:view');
+  let fallbackAST = generateContextualFallback(topicKey, isQuizRequest);
 
-  // 1. Check IndexedDB AST cache for zero-latency fallback
-  let fallbackAST = defaultFallbackAST;
   try {
     const cached = await getRandomCachedAST(topicKey.toLowerCase());
     if (cached) fallbackAST = cached;
@@ -45,32 +58,33 @@ export async function runLocalInference(
   const targetFactory = getLanguageModelFactory();
 
   if (!targetFactory) {
-    console.warn('[AI Engine] Prompt API unavailable, using cached/deterministic fallback.');
     return fallbackAST;
   }
 
   const inferencePromise = (async () => {
     let session: any = null;
     try {
+      // 1. Availability check (flat parameters)
       if (typeof targetFactory.availability === 'function') {
-        const status = await targetFactory.availability();
+        const status = await targetFactory.availability({
+          expectedInputLanguages: ['en'],
+          expectedOutputLanguages: ['en']
+        });
         if (status === 'no' || status === 'unavailable') return fallbackAST;
       } else if (typeof targetFactory.capabilities === 'function') {
         const caps = await targetFactory.capabilities();
         if (caps?.available === 'no') return fallbackAST;
       }
 
-      const sessionOptions: Record<string, any> = {
-        expectedInputs: [{ type: 'text', languages: ['en'] }],
-        expectedOutputs: [{ type: 'text', languages: ['en'] }],
-        temperature: 0.2,
-        topK: 3,
-      };
+      // 2. Session creation (flat parameters)
+      session = await targetFactory.create({
+        systemPrompt: systemPrompt || 
+          "You are an expert Oak Curriculum compiler. Output ONLY a valid Lisp S-expression. Never output markdown backticks or conversational text.",
+        expectedInputLanguages: ['en'],
+        expectedOutputLanguages: ['en']
+      });
 
-      sessionOptions.systemPrompt = systemPrompt || 
-        "You are an expert curriculum compiler. Output ONLY a valid Lisp S-expression adhering to the requested topic. Never output markdown backticks or conversational text.";
-
-      session = await targetFactory.create(sessionOptions);
+      // 3. Execution
       const rawResponse = await session.prompt(prompt);
       
       let sanitized = (rawResponse || '')
@@ -85,10 +99,15 @@ export async function runLocalInference(
         sanitized = sanitized.substring(firstParen, lastParen + 1);
       }
 
-      if (sanitized && sanitized.includes(':prompt') && sanitized.includes(':options')) {
+      // 4. Multi-route AST Validation
+      const isQuizValid = sanitized.includes(':prompt') && sanitized.includes(':options');
+      const isLessonValid = sanitized.includes(':axiom') && sanitized.includes(':trap');
+
+      if (isQuizValid || isLessonValid) {
         saveVerifiedAST(topicKey.toLowerCase(), sanitized).catch(console.error);
         return sanitized;
       }
+
       return fallbackAST;
     } catch (err) {
       console.warn('[AI Engine Error]', err);
@@ -104,9 +123,8 @@ export async function runLocalInference(
 
   const timeoutPromise = new Promise<string>((resolve) =>
     setTimeout(() => {
-      console.warn('[AI Engine] Inference timed out after 8s. Resolving fallback AST.');
       resolve(fallbackAST);
-    }, 8000)
+    }, 6000)
   );
 
   return Promise.race([inferencePromise, timeoutPromise]);
@@ -121,6 +139,7 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const activeSessionRef = useRef<any>(null);
 
   useEffect(() => {
     openLocalDB()
@@ -139,13 +158,21 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
           '⚠️ IndexedDB initialization failed. Running in memory-only mode.'
         ]);
       });
+
+    return () => {
+      if (activeSessionRef.current && typeof activeSessionRef.current.destroy === 'function') {
+        try {
+          activeSessionRef.current.destroy();
+        } catch {}
+      }
+    };
   }, []);
 
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [terminalLogs]);
 
-  const triggerStream = async (promptText: string, topicId: string = 'science_atomic_structure') => {
+  const triggerStream = async (promptText: string, topicId: string = 'ks3:sci:atomic') => {
     setIsProcessing(true);
     containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
@@ -155,7 +182,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       '⚡ Querying student diagnostic state and connecting to Gemini Nano...',
     ]);
 
-    let session: any = null;
     try {
       const diagnostics = await getTuringDiagnosticSummary(topicId);
       const errorContext = diagnostics.commonErrors.length > 0 
@@ -165,13 +191,26 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       const targetFactory = getLanguageModelFactory();
 
       if (targetFactory) {
-        session = await targetFactory.create({
+        if (typeof targetFactory.availability === 'function') {
+          await targetFactory.availability({
+            expectedInputLanguages: ['en'],
+            expectedOutputLanguages: ['en'],
+          });
+        }
+
+        if (activeSessionRef.current && typeof activeSessionRef.current.destroy === 'function') {
+          try {
+            activeSessionRef.current.destroy();
+          } catch {}
+        }
+
+        const session = await targetFactory.create({
           systemPrompt: `You are Prof. Turing, a concise Socratic tutor. Guide the student conceptually without giving away the direct answer.${errorContext} Keep responses under 25 words.`,
-          expectedInputs: [{ type: 'text', languages: ['en'] }],
-          expectedOutputs: [{ type: 'text', languages: ['en'] }],
-          temperature: 0.2,
-          topK: 3
+          expectedInputLanguages: ['en'],
+          expectedOutputLanguages: ['en'],
         });
+
+        activeSessionRef.current = session;
 
         const stream = session.promptStreaming(promptText);
         let fullResponse = '';
@@ -198,11 +237,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
         `⚠️ [Fallback Tutor]: Let's look at the first step together. Try breaking down the core concepts first.`,
       ]);
     } finally {
-      if (session && typeof session.destroy === 'function') {
-        try {
-          session.destroy();
-        } catch {}
-      }
       setIsProcessing(false);
     }
   };
@@ -226,17 +260,17 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <button
           type="button"
-          onClick={() => handlePreset('Atomic Structure & Isotopes', 'science_atomic_structure')}
+          onClick={() => handlePreset('Atomic Structure & Isotopes', 'ks3:sci:atomic')}
           style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
         >
           ⚛️ Science: Atomic Structure
         </button>
         <button
           type="button"
-          onClick={() => handlePreset("Newton's Laws of Motion", 'physics_newtons_laws')}
+          onClick={() => handlePreset("Newton's Laws of Motion", 'ks2:sci:forces')}
           style={{ background: '#0ea5e9', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
         >
-          ⚡ Physics: Newton's Laws
+          ⚡ Physics: Forces & Motion
         </button>
       </div>
 

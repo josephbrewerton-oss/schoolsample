@@ -1,3 +1,4 @@
+// src/components/CurriculumSelector.tsx
 import React from 'react';
 import { DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
 
@@ -8,6 +9,8 @@ interface Props {
   status: string;
   isReady: boolean;
   sessionId: string;
+  buttonLabel?: string;
+  curriculumTree?: Record<string, Record<string, any>>;
   onKeyStageChange: (ks: string, firstSub: string, firstUnit: string) => void;
   onSubjectChange: (sub: string, firstUnit: string) => void;
   onUnitChange: (unit: string) => void;
@@ -23,6 +26,8 @@ export const CurriculumSelector: React.FC<Props> = ({
   status,
   isReady,
   sessionId,
+  buttonLabel = 'New Question',
+  curriculumTree = DEFAULT_OAK_CATALOGUE,
   onKeyStageChange,
   onSubjectChange,
   onUnitChange,
@@ -30,21 +35,35 @@ export const CurriculumSelector: React.FC<Props> = ({
   onNewQuestion,
   onDownloadReport,
 }) => {
-  const availableSubjects = Object.keys(DEFAULT_OAK_CATALOGUE[keyStage] || {});
+  const catalogue = curriculumTree && Object.keys(curriculumTree).length > 0 ? curriculumTree : DEFAULT_OAK_CATALOGUE;
+  const availableStages = Object.keys(catalogue);
+  const safeStage = availableStages.includes(keyStage) ? keyStage : (availableStages[0] || keyStage);
+
+  const availableSubjects = Object.keys(catalogue[safeStage] || {});
   const safeSubject = availableSubjects.includes(subject) ? subject : (availableSubjects[0] || '');
-  const availableUnits = DEFAULT_OAK_CATALOGUE[keyStage]?.[safeSubject] || [];
+  
+  // Defensive extraction: ensure raw units resolve to an Array
+  const rawUnits = catalogue[safeStage]?.[safeSubject];
+  const availableUnits: string[] = Array.isArray(rawUnits)
+    ? rawUnits
+    : rawUnits && typeof rawUnits === 'object'
+    ? Object.keys(rawUnits)
+    : [];
+
   const safeUnit = availableUnits.includes(unit) ? unit : (availableUnits[0] || '');
 
   const handleStageSelect = (newKs: string) => {
-    const subjects = Object.keys(DEFAULT_OAK_CATALOGUE[newKs] || {});
+    const subjects = Object.keys(catalogue[newKs] || {});
     const firstSub = subjects[0] || '';
-    const units = DEFAULT_OAK_CATALOGUE[newKs]?.[firstSub] || [];
+    const rawU = catalogue[newKs]?.[firstSub];
+    const units = Array.isArray(rawU) ? rawU : (rawU && typeof rawU === 'object' ? Object.keys(rawU) : []);
     const firstUnit = units[0] || '';
     onKeyStageChange(newKs, firstSub, firstUnit);
   };
 
   const handleSubjectSelect = (newSub: string) => {
-    const units = DEFAULT_OAK_CATALOGUE[keyStage]?.[newSub] || [];
+    const rawU = catalogue[safeStage]?.[newSub];
+    const units = Array.isArray(rawU) ? rawU : (rawU && typeof rawU === 'object' ? Object.keys(rawU) : []);
     const firstUnit = units[0] || '';
     onSubjectChange(newSub, firstUnit);
   };
@@ -69,7 +88,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         {/* Key Stage */}
         <select
           aria-label="Select Key Stage"
-          value={keyStage}
+          value={safeStage}
           onChange={(e) => handleStageSelect(e.target.value)}
           style={{
             padding: '0.45rem 0.75rem',
@@ -80,7 +99,7 @@ export const CurriculumSelector: React.FC<Props> = ({
             background: '#f8fafc',
           }}
         >
-          {Object.keys(DEFAULT_OAK_CATALOGUE).map((ks) => (
+          {availableStages.map((ks) => (
             <option key={ks} value={ks}>
               {ks}
             </option>
@@ -129,8 +148,10 @@ export const CurriculumSelector: React.FC<Props> = ({
           ))}
         </select>
 
+        {/* Action Button */}
         <button
-          aria-label="Generate New Question"
+          type="button"
+          aria-label={buttonLabel}
           onClick={onNewQuestion}
           disabled={!isReady}
           style={{
@@ -142,12 +163,13 @@ export const CurriculumSelector: React.FC<Props> = ({
             padding: '0.5rem 1.15rem',
             cursor: isReady ? 'pointer' : 'not-allowed',
             fontSize: '0.9rem',
+            opacity: isReady ? 1 : 0.7
           }}
         >
-          New Question
+          {buttonLabel}
         </button>
 
-        {/* Session Tag & Report Download */}
+        {/* Session & Report */}
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginLeft: '4px' }}>
           <input
             type="text"
@@ -167,6 +189,7 @@ export const CurriculumSelector: React.FC<Props> = ({
             }}
           />
           <button
+            type="button"
             aria-label="Download Local Diagnostic Summary Report"
             onClick={onDownloadReport}
             title="Download Local Diagnostic Summary"
@@ -204,3 +227,5 @@ export const CurriculumSelector: React.FC<Props> = ({
     </div>
   );
 };
+
+export default CurriculumSelector;

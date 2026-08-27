@@ -20,48 +20,6 @@ export function resolveKeyStageRule(keyStage) {
   return KEY_STAGE_CONSTRAINTS.KS3;
 }
 
-export const AST_TEMPLATES = {
-  mcq: {
-    prefix: '(:route "quiz:mcq" :scratchpad "',
-    promptStructure: `Complete the following S-expression. Fill in ONLY the values for :scratchpad, :prompt, :options, and :hint.
-
-Template to complete:
-(:route "quiz:mcq" :scratchpad "<STEP_BY_STEP_FACT>" :prompt "<QUESTION_STEM>" :options (list "<CORRECT_ANSWER>" "<DISTRACTOR_1>" "<DISTRACTOR_2>" "<DISTRACTOR_3>") :hint "<SOCRATIC_HINT>" :answer-key 0)
-
-Begin immediately with the scratchpad text:`
-  }
-};
-
-const QUESTION_FRAME_ROUTING = {
-  maths: [
-    { stem: 'Calculate / Evaluate', pattern: 'Direct computation' },
-    { stem: 'Geometric Deduction', pattern: 'Theorem application' },
-    { stem: 'Inverse Formulation', pattern: 'Working backwards' },
-    { stem: 'Identify Property', pattern: 'Direct rule check' }
-  ],
-  science: [
-    { stem: 'Causal Mechanism (Why/How)', pattern: 'Explain phenomenon' },
-    { stem: 'Predict the Outcome', pattern: 'Scenario intervention' },
-    { stem: 'Identify Component', pattern: 'Structure or law definition' },
-    { stem: 'Quantitative Relation', pattern: 'Formula application' }
-  ],
-  languages: [
-    { stem: 'Identify Device / Technique', pattern: 'Device recognition' },
-    { stem: 'Punctuation & Grammar Correction', pattern: 'Syntax rule check' },
-    { stem: 'Tone & Connotation', pattern: 'Semantic inference' }
-  ],
-  computing: [
-    { stem: 'Trace / State Value', pattern: 'Code tracing' },
-    { stem: 'Binary / Denary Conversion', pattern: 'Data representation evaluation' },
-    { stem: 'Identify Error / Protocol', pattern: 'Diagnostic evaluation' }
-  ],
-  humanities: [
-    { stem: 'Causal Significance', pattern: 'Cause and effect' },
-    { stem: 'Historical / Geographical Identification', pattern: 'Direct fact check' },
-    { stem: 'Source & Perspective Evaluation', pattern: 'Significance assessment' }
-  ]
-};
-
 export const SUBJECT_DEFINITIONS = {
   maths: {
     category: "Mathematics",
@@ -101,7 +59,7 @@ export const SUBJECT_DEFINITIONS = {
     aliases: [
       'english', 'english-language', 'english-literature', 'french', 'spanish', 
       'german', 'grammar', 'punctuation', 'spelling', 'metaphor', 'literature', 
-      'poem', 'comprehension'
+      'poem', 'comprehension', 'capital letters', 'full stops'
     ],
     archetypes: [
       "Contextual passage analysis / Device identification",
@@ -145,6 +103,10 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// ---------------------------------------------------------------------------
+// 1. PRACTICE LAB COMPILERS (Multiple-Choice Questions)
+// ---------------------------------------------------------------------------
+
 export function buildUniversalPrompt(params) {
   const {
     subject = 'Science',
@@ -171,7 +133,6 @@ export function buildUniversalPrompt(params) {
 
   const subConfig = SUBJECT_DEFINITIONS[matchedKey] || SUBJECT_DEFINITIONS.humanities;
   const focus = pickRandom(subConfig.archetypes || ['core_conceptual_understanding']);
-  const entropy = Math.floor(Math.random() * 100000);
 
   const ageRule = resolveKeyStageRule(keyStage);
   const regionalRule = REGIONAL_CONSTRAINTS[curriculum] || REGIONAL_CONSTRAINTS.uk_oak;
@@ -180,7 +141,7 @@ export function buildUniversalPrompt(params) {
 Output ONLY one valid Lisp S-expression adhering to the exact syntax format shown in the exemplar.
 
 EXEMPLAR:
-(:route "quiz:mcq" :scratchpad "Speech marks must enclose the words actually spoken, with punctuation placed before the closing quotation mark." :prompt "Which sentence correctly punctuates the direct speech?" :options (list "\\"I am going home,\\" said Tom." "\\"I am going home\\" said Tom." "\\"I am going home said Tom.\\"" "I am going home, said Tom.") :hint "Remember that spoken words must be enclosed inside quotation marks with a comma inside." :answer-key 0)
+(:route "quiz:mcq" :scratchpad "In winter, deciduous trees drop their leaves and the weather is typically coldest." :prompt "Which description best characterizes winter weather in the UK?" :options (list "Freezing temperatures and shorter daylight hours" "Warm sunny days with blossoming flowers" "Hot dry afternoons and long evenings" "Humid tropical rainstorms and high heat") :hint "Think about temperature and daylight changes during the coldest season." :answer-key 0)
 
 TASK:
 Generate a single multiple-choice question testing:
@@ -191,11 +152,12 @@ Generate a single multiple-choice question testing:
 - Standard: ${regionalRule}
 
 SYNTAX CONSTRAINTS:
-1. :prompt must contain ONLY the isolated question sentence. NEVER put option letters (like A, B, C, D) or choices inside :prompt.
+1. :prompt must contain ONLY the isolated question sentence. NEVER include options inside :prompt.
 2. :options must contain (list "Option0" "Option1" "Option2" "Option3").
-3. Slot 0 in (list ...) MUST be the correct ground-truth answer.
-4. :answer-key must always be 0.
-5. Do not include markdown codeblocks or conversational preamble.
+3. All 4 options MUST be distinct, full sentences or phrases, and must NOT repeat or contain syntax artifacts.
+4. Slot 0 in (list ...) MUST be the correct ground-truth answer.
+5. :answer-key must always be 0.
+6. Do not include markdown formatting, backtick codeblocks, or conversational chatter.
 
 Generate S-expression for ${subject} -> ${topic}:
 Output:`.trim();
@@ -225,4 +187,132 @@ export function buildPrompt(userPrompt, langName = 'English', curriculumOverride
     langName,
     curriculum: curriculumOverride || 'uk_oak'
   });
+}
+
+// ---------------------------------------------------------------------------
+// 2. LEARNING ZONE SEED REGISTRY & COMPILERS (Prof. Turing & Diagnostic AST)
+// ---------------------------------------------------------------------------
+
+export const OAK_SEED_REGISTRY = {
+  // === KEY STAGE 1 ===
+  'ks1:eng:punctuation': {
+    subject: 'English',
+    keyStage: 'KS1',
+    topic: 'Capital Letters & Full Stops',
+    axiom: 'Every sentence begins with a capital letter and ends with a terminal punctuation mark (full stop, question mark, or exclamation mark).',
+    trap: 'Forgetting capital letters for the personal pronoun "I" and proper nouns (names and places).',
+    pivot: 'How does a reader know where your first idea ends and the next one starts?'
+  },
+  'ks1:sci:plants': {
+    subject: 'Science',
+    keyStage: 'KS1',
+    topic: 'Plants & Seeds',
+    axiom: 'Seeds require moisture and warmth to sprout roots and shoots before they ever need sunlight.',
+    trap: 'Thinking buried seeds need direct sunlight underground to germinate.',
+    pivot: 'What condition does a buried seed actually experience in the dark soil?'
+  },
+  'ks1:mat:addition': {
+    subject: 'Maths',
+    keyStage: 'KS1',
+    topic: 'Addition within 20',
+    axiom: 'Addition is commutative; counting on from the larger number minimizes calculation steps.',
+    trap: 'Recounting the first group from one instead of starting from the known total.',
+    pivot: 'If you already have 8 blocks, why recount them from 1 when adding 3?'
+  },
+
+  // === KEY STAGE 2 ===
+  'ks2:sci:forces': {
+    subject: 'Science',
+    keyStage: 'KS2',
+    topic: 'Forces & Friction',
+    axiom: 'Friction is a contact force that acts in the opposite direction to relative movement.',
+    trap: 'Believing moving objects slow down because their internal "force" runs out.',
+    pivot: 'What surface touches the toy car to make it slow down?'
+  },
+  'ks2:mat:fractions': {
+    subject: 'Maths',
+    keyStage: 'KS2',
+    topic: 'Equivalent Fractions',
+    axiom: 'Multiplying or dividing both numerator and denominator by the same non-zero number preserves value.',
+    trap: 'Adding the same number to numerator and denominator thinking it keeps equivalence (e.g., 1/2 = 2/3).',
+    pivot: 'If you cut a pizza into twice as many slices, do you get more total pizza if you take twice as many?'
+  },
+
+  // === KEY STAGE 3 ===
+  'ks3:sci:atomic': {
+    subject: 'Science',
+    keyStage: 'KS3',
+    topic: 'Atomic Structure',
+    axiom: 'Protons and neutrons form the central dense nucleus; electrons orbit in discrete outer shells.',
+    trap: 'Thinking atomic mass is evenly distributed across the entire volume of the atom.',
+    pivot: 'Where is nearly all of an atom\'s mass concentrated?'
+  },
+  'ks3:com:algorithms': {
+    subject: 'Computing',
+    keyStage: 'KS3',
+    topic: 'Computational Thinking',
+    axiom: 'Decomposition breaks complex problems into smaller sub-problems; abstraction removes unnecessary details.',
+    trap: 'Attempting to write implementation code before determining the algorithmic steps.',
+    pivot: 'What details can we ignore right now to see the core pattern?'
+  },
+
+  // === KEY STAGE 4 (GCSE) ===
+  'ks4:sci:bonding': {
+    subject: 'Science',
+    keyStage: 'KS4',
+    topic: 'Ionic & Covalent Bonding',
+    axiom: 'Ionic bonding involves electrostatic attraction between oppositely charged ions; covalent bonding involves shared electron pairs.',
+    trap: 'Assuming covalent molecules conduct electricity because they have strong intramolecular bonds.',
+    pivot: 'Are there any free delocalised electrons or mobile ions available to carry charge?'
+  }
+};
+
+/**
+ * Resolves an active seed object by key or fuzzy match.
+ */
+export function resolveSeedCoordinate(seedKey) {
+  const normalizedKey = String(seedKey || '').toLowerCase().trim();
+  if (OAK_SEED_REGISTRY[normalizedKey]) {
+    return OAK_SEED_REGISTRY[normalizedKey];
+  }
+
+  // Fallback fuzzy search across keys
+  const matched = Object.keys(OAK_SEED_REGISTRY).find(k => 
+    normalizedKey.includes(k) || k.includes(normalizedKey)
+  );
+
+  return matched ? OAK_SEED_REGISTRY[matched] : OAK_SEED_REGISTRY['ks3:sci:atomic'];
+}
+
+/**
+ * Builds an ultra-dense, token-efficient prompt for Prof. Turing
+ * using exact Oak curriculum seed coordinates.
+ */
+export function buildSocraticSeedPrompt(seedKey, pupilMessage = '') {
+  const seed = resolveSeedCoordinate(seedKey);
+
+  return `[SEED: ${seedKey}]
+[SUBJECT: ${seed.subject} | ${seed.keyStage}]
+[CORE_AXIOM: ${seed.axiom}]
+[COGNITIVE_TRAP: ${seed.trap}]
+[PIVOT_QUESTION: ${seed.pivot}]
+Pupil: "${pupilMessage || 'I need help understanding this topic.'}"
+Prof. Turing (1 short Socratic question only):`.trim();
+}
+
+/**
+ * Builds an AST Lesson Node compiler prompt for the Learning Zone diagnostic cards.
+ */
+export function buildLessonNodePrompt(seedKey) {
+  const seed = resolveSeedCoordinate(seedKey);
+
+  return `You are an Oak Curriculum AST compiler.
+Complete the Lisp S-expression using these exact concepts:
+Axiom: ${seed.axiom}
+Trap: ${seed.trap}
+Pivot: ${seed.pivot}
+
+Output format:
+(:route "lesson:view" :axiom "${seed.axiom}" :trap "${seed.trap}" :pivot "${seed.pivot}")
+Output:`.trim();
 }

@@ -22,18 +22,41 @@ export default function Home() {
             Master the UK National Curriculum with offline, on-device AI. 
             Interactive S-expression practice, deterministic math validation, and real-time private tutoring.
           </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+
+          {/* Dual Action Hub CTAs */}
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link
+              to="/learning-zone"
+              className="button button--secondary button--lg"
+              style={{
+                padding: '0.8rem 2rem',
+                fontSize: '1.1rem',
+                borderRadius: '8px',
+                border: '2px solid #0284c7',
+                color: '#0284c7',
+                fontWeight: 600
+              }}
+            >
+              📖 Curriculum Learning Zone
+            </Link>
+
             <Link
               to="/practice-lab"
               className="button button--primary button--lg"
-              style={{ padding: '0.8rem 2rem', fontSize: '1.1rem', borderRadius: '8px' }}
+              style={{
+                padding: '0.8rem 2rem',
+                fontSize: '1.1rem',
+                borderRadius: '8px',
+                background: '#2563eb',
+                fontWeight: 600
+              }}
             >
-              Launch Interactive Lab 🚀
+              ⚡ Interactive Practice Lab 🚀
             </Link>
           </div>
         </section>
 
-        {/* Core Services & Capabilities Grid */}
+        {/* Core Capabilities Grid */}
         <section style={{ marginBottom: '4rem' }}>
           <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '2rem', color: '#1e293b' }}>
             What We Offer
@@ -41,10 +64,10 @@ export default function Home() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.5rem'
           }}>
-            {/* Service 1: Dynamic National Curriculum */}
+            {/* Service 1: Learning Zone */}
             <div style={{
               padding: '1.75rem',
               borderRadius: '12px',
@@ -52,16 +75,16 @@ export default function Home() {
               backgroundColor: 'var(--ifm-card-background-color, #ffffff)',
               boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📚</div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#059669' }}>
-                Full Oak National Curriculum
+              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📖</div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#0284c7' }}>
+                Curriculum Learning Zone
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                Complete coverage of Key Stages 1 through 4 across Maths, Sciences, and Humanities, structured into dynamic, step-by-step modular lessons.
+                Structured micro-lessons and misconception busting. Learn core principles step-by-step before testing your knowledge.
               </p>
             </div>
 
-            {/* Service 2: On-Device Neural Tutor */}
+            {/* Service 2: Practice Lab */}
             <div style={{
               padding: '1.75rem',
               borderRadius: '12px',
@@ -71,14 +94,31 @@ export default function Home() {
             }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚡</div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#2563eb' }}>
-                Prof. Turing (Edge AI Assistant)
+                Adaptive Practice Lab
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                Powered entirely client-side with Gemini Nano. Provides Socratic guidance and audio feedback with 100% data privacy and zero cloud tracking.
+                Dynamic S-expression assessment engine with instant grading, streak tracking, and automated session diagnostics.
               </p>
             </div>
 
-            {/* Service 3: Deterministic Hypervisor */}
+            {/* Service 3: Prof. Turing */}
+            <div style={{
+              padding: '1.75rem',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
+              backgroundColor: 'var(--ifm-card-background-color, #ffffff)',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🤖</div>
+              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#059669' }}>
+                Prof. Turing Socratic Tutor
+              </h3>
+              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
+                100% on-device AI assistant providing real-time voice guidance and conceptual hints without revealing direct answers.
+              </p>
+            </div>
+
+            {/* Service 4: Deterministic Guardrails */}
             <div style={{
               padding: '1.75rem',
               borderRadius: '12px',
@@ -88,10 +128,10 @@ export default function Home() {
             }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🎯</div>
               <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#7c3aed' }}>
-                Deterministic Math Guardrails
+                Deterministic Guardrails
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                Zero-hallucination verification engine. Every equation, fraction conversion, and AST node is mathematically verified before rendering to the canvas.
+                AST flow governors and arithmetic solvers verify every question, eliminating hallucinations before rendering.
               </p>
             </div>
           </div>
