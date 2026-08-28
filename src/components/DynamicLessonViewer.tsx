@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// src/components/DynamicLessonViewer.tsx
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MasterCatalog, CatalogItem, LearningStream } from '../types/learning-ast';
 import { getVfsView, saveVfsView, bootstrapVfsViews } from '../services/dbStore';
 import { parseSExpr } from '../utils/sexprParser';
@@ -7,28 +8,13 @@ import SExprViewRenderer from './SExprViewRenderer';
 import { Channels } from '../utils/channelBus';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { VFS_CURRICULUM_SEEDS } from '../manifests/vfsSeedModules';
+import { EngineFlow } from '../engine/engineflow';
 
 interface EngineProps {
   defaultPhase?: 'PRIMARY' | 'SECONDARY' | string;
   defaultSubject?: string;
   defaultStream?: LearningStream | string;
 }
-
-// Fallback seed view for testing/offline bootstrap
-const DEFAULT_FALLBACK_VIEW = `(view :className "card padding--md margin-vert--md"
-  (header :level 3 "Primary Mathematics: Basic Addition")
-  (callout :variant "info" "Addition is combining two or more quantities into a single total.")
-  (stepper
-    (step (text "Step 1: Look at the units column first."))
-    (step (text "Step 2: Add 4 + 3 to get 7."))
-    (step (text "Step 3: Combine with the tens column.")))
-  (quiz :id "math-add-101"
-    (question "What is 14 + 13?")
-    (option "26")
-    (option :correct true "27")
-    (option "28")
-    (explanation "14 + 13 = (10 + 10) + (4 + 3) = 20 + 7 = 27."))
-  (ai-tutor :persona "Prof. Turing" :engine "Gemini Nano" :greeting "I am here to guide your addition steps! Ask me if you get stuck."))`;
 
 const GENERATING_PLACEHOLDER_VIEW = `(view :className "card padding--md margin-vert--md"
   (header :level 3 "⚡ Synthesizing Practice Node...")
@@ -52,7 +38,7 @@ export default function DynamicLessonViewer({
   const [activeStream, setActiveStream] = useState<LearningStream>(defaultStream as LearningStream);
   const [selectedPhase, setSelectedPhase] = useState<string>(defaultPhase || 'ALL');
   const [selectedSubject, setSelectedSubject] = useState<string>(defaultSubject || 'ALL');
-  const [activeViewPath, setActiveViewPath] = useState<string>('/sys/views/math_addition.lisp');
+  const [activeViewPath, setActiveViewPath] = useState<string>('');
 
   // AST and Execution state
   const [currentAst, setCurrentAst] = useState<SExprAST | null>(null);
@@ -68,7 +54,6 @@ export default function DynamicLessonViewer({
   });
   const [showAstInspector, setShowAstInspector] = useState<boolean>(false);
 
-  // Sync teacher mode across local storage
   useEffect(() => {
     const syncTeacherMode = () => {
       if (typeof window !== 'undefined') {
@@ -79,66 +64,24 @@ export default function DynamicLessonViewer({
     return () => window.removeEventListener('storage', syncTeacherMode);
   }, []);
 
-useEffect(() => {
+  // 1. Initialize Master Catalog
+  useEffect(() => {
     async function initCatalog() {
       try {
         const catRes = await fetch(`${normalizedBase}/manifests/catalog.json`);
-        const catViews: Record<string, string> = {};
-
         if (catRes.ok) {
           const catData: MasterCatalog = await catRes.json();
           setCatalog(catData);
-
-// Dynamically synthesize structured S-Expression views for Oak lessons
-          catData.items.forEach((item) => {
-            const vfsPath = `/sys/views/${item.id}.lisp`;
-            catViews[vfsPath] = `(view :className "card padding--md margin-vert--md"
-  (header :level 3 "${item.title}")
-  (callout :variant "info" "${item.description || 'Work through the lesson walkthrough below.'}")
-  (stepper
-    (step (text "Step 1: Identify the main problem and review the key rules."))
-    (step (text "Step 2: Apply the method carefully step-by-step."))
-    (step (text "Step 3: Check your calculations and verify your answer.")))
-  (ai-tutor :persona "${item.subject || 'Oak'} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${item.title}! Work through the steps above, or ask me any question if you need guidance!"))`;
-          });
         }
-
-        // Write both default seeds and full dynamic catalog into IndexedDB VFS
         await bootstrapVfsViews({
-          '/sys/views/math_addition.lisp': DEFAULT_FALLBACK_VIEW,
           ...VFS_CURRICULUM_SEEDS,
-          ...catViews,
         });
       } catch (err) {
         console.warn('Catalog index could not be loaded; running standalone VFS:', err);
       }
     }
-
     initCatalog();
   }, [normalizedBase]);
-
-  // 2. Load View from IndexedDB VFS whenever path changes
-  useEffect(() => {
-    async function loadVfsModule() {
-      setIsLoading(true);
-      try {
-        let content = await getVfsView(activeViewPath);
-        if (!content) {
-          content = DEFAULT_FALLBACK_VIEW;
-          await saveVfsView(activeViewPath, content);
-        }
-        setRawSource(content);
-        const parsed = parseSExpr(content);
-        setCurrentAst(parsed);
-      } catch (err) {
-        console.error('Failed to load S-Expression view from VFS:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadVfsModule();
-  }, [activeViewPath]);
 
   // Filter Catalog items
   const streamItems = useMemo(() => {
@@ -185,22 +128,83 @@ useEffect(() => {
     }
   }, [filteredLessons, activeViewPath]);
 
-// --- Binary 1+1+1 Selection Flags ---
-  const flagPhase = selectedPhase !== 'ALL' ? 1 : 0;
-  const flagSubject = selectedSubject !== 'ALL' ? 1 : 0;
-  const flagTopic = activeViewPath.length > 0 ? 1 : 0;
-  const isFullyQualified = (flagPhase + flagSubject + flagTopic) === 3;
+  // 2. Synthesize or Load Domain-Accurate S-Expression View
+  const hydrateLessonAST = useCallback(async (pathKey: string) => {
+    if (!pathKey) return;
+    setIsLoading(true);
+
+    try {
+      // 1. Check local IndexedDB VFS first
+      let content = await getVfsView(pathKey);
+
+      if (!content) {
+        const itemId = pathKey.replace('/sys/views/', '').replace('.lisp', '');
+        const catalogItem = catalog?.items.find((i) => i.id === itemId);
+
+        if (catalogItem?.manifestPath) {
+          // 2. Load and splice real manifest challenges
+          const manifestRes = await fetch(`${normalizedBase}${catalogItem.manifestPath}`);
+          if (manifestRes.ok) {
+            const manifest = await manifestRes.json();
+            const ch = manifest.c?.[0] || {};
+            const axiom = ch.e || `Fundamental principles and rules governing ${catalogItem.unit || catalogItem.title}.`;
+            const trap = ch.r?.[0]?.[1] || `Common misconceptions regarding ${catalogItem.title}.`;
+            const prompt = ch.p || `Examine the core concepts of ${catalogItem.title}.`;
+
+            content = `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "${manifest.m.n}")
+  (callout :variant "info" "${axiom}")
+  (callout :variant "warning" "${trap}")
+  (stepper
+    (step (text "Step 1: Inquiry Hook — ${prompt}"))
+    (step (text "Step 2: Key Concept — ${ch.h || 'Analyze the rules and evidence.'}"))
+    (step (text "Step 3: Verification — Confirm understanding.")))
+  (ai-tutor :persona "${catalogItem.subject} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${catalogItem.title}! Ask me if you need help with this lesson."))`;
+          }
+        }
+
+        // 3. Fallback to segregated On-Device EngineFlow generation
+        if (!content && catalogItem) {
+          const generated = await EngineFlow.generateLessonCards({
+            keyStage: catalogItem.keyStage || selectedPhase,
+            subject: catalogItem.subject || selectedSubject,
+            topic: catalogItem.title,
+          });
+
+          content = `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "${generated.title}")
+  (callout :variant "info" "${generated.axiom}")
+  (callout :variant "warning" "${generated.trap}")
+  (stepper
+    (step (text "Step 1: Inquiry Hook — ${generated.hook}"))
+    (step (text "Step 2: Guided Practice — ${generated.guidedStep}"))
+    (step (text "Step 3: Socratic Check — ${generated.socraticCheck}")))
+  (ai-tutor :persona "${selectedSubject} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${generated.title}! How can I help you master this concept?"))`;
+        }
+
+        if (content) {
+          await saveVfsView(pathKey, content);
+        }
+      }
+
+      if (content) {
+        setRawSource(content);
+        const parsed = parseSExpr(content);
+        setCurrentAst(parsed);
+      }
+    } catch (err) {
+      console.error('Failed to hydrate S-Expression lesson:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [catalog, normalizedBase, selectedPhase, selectedSubject]);
+
+  useEffect(() => {
+    hydrateLessonAST(activeViewPath);
+  }, [activeViewPath, hydrateLessonAST]);
 
   const handleAction = (action: string, payload?: any) => {
     if (action === 'NEXT_QUESTION' || action === 'GENERATE') {
-      // 0 state: Selection incomplete -> show hardcoded placeholder
-      if (!isFullyQualified) {
-        setRawSource(GENERATING_PLACEHOLDER_VIEW);
-        setCurrentAst(parseSExpr(GENERATING_PLACEHOLDER_VIEW));
-        return;
-      }
-
-      // 1 state: Fully qualified -> show placeholder card immediately, then dispatch inference
       setRawSource(GENERATING_PLACEHOLDER_VIEW);
       setCurrentAst(parseSExpr(GENERATING_PLACEHOLDER_VIEW));
 
@@ -215,16 +219,14 @@ useEffect(() => {
       });
       return;
     }
-
-    // Pass through non-generation UI actions
     Channels.UI_ACTIONS.send({ action, payload });
   };
-return (
+
+  return (
     <div style={{ maxWidth: '840px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
       
-      {/* Dynamic Multi-Filter Navigation */}
+      {/* Navigation Selectors */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        {/* Phase Filter (Primary / Secondary) */}
         <select
           aria-label="Filter by Phase"
           value={selectedPhase}
@@ -239,7 +241,6 @@ return (
           <option value="SECONDARY">🔬 Secondary</option>
         </select>
 
-        {/* Subject Filter */}
         <select
           aria-label="Select Subject"
           value={selectedSubject}
@@ -252,7 +253,6 @@ return (
           ))}
         </select>
 
-        {/* Dynamic Lesson Dropdown populated from Oak Catalog + Seed Modules */}
         <select
           aria-label="Select Lesson Unit"
           value={activeViewPath}
@@ -266,13 +266,7 @@ return (
               </option>
             ))
           ) : (
-            <optgroup label="Seeded Modules">
-              <option value="/sys/views/math_addition.lisp">➕ Primary Math: Basic Addition</option>
-              <option value="/sys/views/math_fractions.lisp">🍰 Primary Math: Fractions & Decimals</option>
-              <option value="/sys/views/sci_plants.lisp">🌱 Primary Science: Plant Photosynthesis</option>
-              <option value="/sys/views/physics_forces.lisp">🚀 GCSE Physics: Newton's Laws</option>
-              <option value="/sys/views/chem_atoms.lisp">⚛️ GCSE Chemistry: Atomic Structure</option>
-            </optgroup>
+            <option value="">No units available</option>
           )}
         </select>
       </div>
@@ -280,7 +274,7 @@ return (
       {/* Main Declarative S-Expression Engine View */}
       {isLoading ? (
         <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
-          Loading module from IndexedDB VFS...
+          Hydrating topic-accurate curriculum AST...
         </div>
       ) : currentAst ? (
         <SExprViewRenderer ast={currentAst} onAction={handleAction} />

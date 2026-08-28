@@ -33,30 +33,44 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
     setSaveStatus('');
 
     try {
-      const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
-      if (aiObj) {
-        const session = await (aiObj.create
-          ? aiObj.create({
-              systemPrompt:
-                'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences.',
-            })
-          : (window as any).ai.languageModel.create({
-              systemPrompt:
-                'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences.',
-            }));
+// Inside src/components/InteractiveEdgeSandbox.tsx
+const handleAIGenerate = async () => {
+  if (!topicPrompt.trim() || isGenerating) return;
+  setIsGenerating(true);
+  setSaveStatus('');
 
-        const prompt = `Synthesize a primary school lesson on topic: "${topicPrompt}". Output only pure Lisp AST.`;
-        const result = await session.prompt(prompt);
-        if (result && result.includes('(lesson')) {
-          setLispCode(result.replace(/```lisp|```/g, '').trim());
-        }
+  let session: any = null;
+  try {
+    const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
+    if (aiObj) {
+      const config = {
+        systemPrompt:
+          'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences.',
+        expectedInputLanguages: ['en'],
+        expectedOutputLanguages: ['en'],
+      };
+
+      session = await (aiObj.create
+        ? aiObj.create(config)
+        : (window as any).ai.languageModel.create(config));
+
+      const prompt = `Synthesize a primary school lesson on topic: "${topicPrompt}". Output only pure Lisp AST.`;
+      const result = await session.prompt(prompt);
+      if (result && result.includes('(lesson')) {
+        setLispCode(result.replace(/```lisp|```/g, '').trim());
       }
-    } catch (err) {
-      console.warn('[Teacher Gen Error]', err);
-    } finally {
-      setIsGenerating(false);
     }
-  };
+  } catch (err) {
+    console.warn('[Teacher Gen Error]', err);
+  } finally {
+    if (session && typeof session.destroy === 'function') {
+      try {
+        session.destroy();
+      } catch {}
+    }
+    setIsGenerating(false);
+  }
+};
 
   // Commit lesson AST to VFS
   const handleSave = async () => {

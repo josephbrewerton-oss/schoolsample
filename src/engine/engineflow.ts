@@ -13,6 +13,15 @@ export interface GenerationRequest {
   isQuiz?: boolean;
 }
 
+export interface LessonViewContent {
+  title: string;
+  axiom: string;
+  trap: string;
+  hook: string;
+  guidedStep: string;
+  socraticCheck: string;
+}
+
 export interface EngineResult {
   raw: string;
   governed: GovernedQuestion | null;
@@ -22,14 +31,14 @@ export interface EngineResult {
 
 export class EngineFlow {
   /**
-   * 1. End-to-End Pipeline: Token Optimization -> Inference -> Governance
+   * 1. PRACTICE LAB ROUTE: Token Optimization -> Prompt API -> AST Governance
    */
   public static async synthesizeGovernedQuestion(
     req: GenerationRequest
   ): Promise<GovernedQuestion> {
     const topicKey = `${req.keyStage}_${req.subject}_${req.topic}`.toLowerCase();
 
-    // 1. Build token-dense prompt
+    // 1. Build token-dense prompt for multiple-choice quiz format
     const prompt = PromptASTPreParser.parseForInference({
       subject: req.subject,
       topic: req.topic,
@@ -56,8 +65,46 @@ export class EngineFlow {
     return ASTFlowGovernor.govern(normalized, req.subject, req.topic);
   }
 
+  // Alias for semantic clarity
+  public static generatePracticeQuestion = EngineFlow.synthesizeGovernedQuestion;
+
   /**
-   * 2. Resolves and caches full lesson modules from VFS or On-Device generation
+   * 2. LEARNING ZONE ROUTE: Pedagogical Lesson Card Generation
+   */
+  public static async generateLessonCards(req: {
+    keyStage: string;
+    subject: string;
+    topic: string;
+    curriculum?: string;
+  }): Promise<LessonViewContent> {
+    const topicKey = `${req.keyStage}_${req.subject}_${req.topic}`.toLowerCase();
+
+    const systemPrompt = `You are an expert UK Oak National Curriculum author. Generate a concise, age-appropriate lesson structure for ${req.keyStage} ${req.subject}: "${req.topic}".
+Format strictly as an S-expression:
+(:route "lesson:view"
+ :axiom "<Core foundational rule or concept definition under 25 words>"
+ :trap "<Common student misconception or pitfall to avoid under 25 words>"
+ :hook "<Engaging real-world or inquiry opening question>"
+ :guided "<Step-by-step worked example or activity guidance>"
+ :socratic "<Socratic check question to verify understanding>")`;
+
+    const prompt = `Synthesize structured lesson cards for ${req.keyStage} ${req.subject}: "${req.topic}". Output only a valid Lisp S-expression.`;
+
+    const raw = await runLocalInference(prompt, systemPrompt, topicKey);
+    const parsed = parseAST(raw);
+
+    return {
+      title: req.topic,
+      axiom: this.extractProp(parsed, 'axiom') || `Key foundational rule for ${req.topic} in ${req.subject}.`,
+      trap: this.extractProp(parsed, 'trap') || `Commonly confusing misconceptions in ${req.topic}.`,
+      hook: this.extractProp(parsed, 'hook') || `How does ${req.topic} apply in real-world contexts?`,
+      guidedStep: this.extractProp(parsed, 'guided') || `Analyze the structure and principles of ${req.topic} step-by-step.`,
+      socraticCheck: this.extractProp(parsed, 'socratic') || `What is the core rule behind ${req.topic}?`,
+    };
+  }
+
+  /**
+   * 3. Resolves and caches full lesson modules from VFS or On-Device generation
    */
   public static async resolveLessonView(
     stage: OakStage,
@@ -68,7 +115,7 @@ export class EngineFlow {
   }
 
   /**
-   * 3. Normalizes parsed AST node objects to standard question schema
+   * 4. Normalizes parsed AST node objects to standard question schema
    */
   public static normalizeASTToQuestion(parsed: any): RawASTQuestion & { hint?: string } | null {
     if (!parsed) return null;
@@ -109,9 +156,16 @@ export class EngineFlow {
   }
 
   /**
-   * 4. Helper for direct AST string parsing
+   * 5. Helper for direct AST string parsing
    */
   public static parse(source: string): ASTNode | null {
     return parseAST(source);
+  }
+
+  private static extractProp(parsed: any, key: string): string {
+    if (!parsed) return '';
+    const val = parsed[key];
+    if (typeof val === 'object') return val?.children?.[0] || '';
+    return typeof val === 'string' ? val.trim() : '';
   }
 }

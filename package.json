@@ -16,6 +16,7 @@
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
+    "process": "^0.11.10",
     "typescript": "~5.4.0"
   },
   "browserslist": {

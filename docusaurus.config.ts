@@ -1,6 +1,7 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import webpack from 'webpack';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -16,8 +17,6 @@ const config: Config = {
   projectName: 'schoolsample',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
-
-  
 
   scripts: [
     {
@@ -56,7 +55,26 @@ const config: Config = {
   ],
 
   plugins: [
-    // Only register PWA service worker in production builds to prevent localhost runtime errors
+    // 1. Webpack Polyfill Plugin to resolve 'process is not defined'
+    function webpackPolyfillPlugin() {
+      return {
+        name: 'custom-webpack-polyfill',
+        configureWebpack() {
+          return {
+            plugins: [
+              new webpack.ProvidePlugin({
+                process: 'process/browser',
+              }),
+              new webpack.DefinePlugin({
+                'process.env': JSON.stringify({}),
+              }),
+            ],
+          };
+        },
+      };
+    },
+
+    // 2. Production PWA Plugin
     ...(isProd
       ? [
           [
