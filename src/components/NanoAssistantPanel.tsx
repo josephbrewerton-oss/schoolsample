@@ -1,6 +1,6 @@
 // src/components/TuringTutor.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { buildSocraticSeedPrompt } from '@site/static/promptStrategies';
+import { ComponentsFlow } from './componentsflow';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -10,6 +10,13 @@ interface TuringTutorProps {
   keyStage?: string;
   subject?: string;
   unit?: string;
+  onLaunchLesson?: (manifest: any) => void;
+}
+
+interface RetrievedLesson {
+  id: string;
+  title: string;
+  manifestPath: string;
 }
 
 export function TuringTutor({
@@ -19,27 +26,20 @@ export function TuringTutor({
   seedKey = '',
   keyStage = 'KS3',
   subject = 'Science',
-  unit = 'Atomic Structure'
+  unit = 'Atomic Structure',
+  onLaunchLesson,
 }: TuringTutorProps) {
   const currentTopic = activeTopic || contextTopic || unit || 'General Studies';
-
-  // Automatically derive or fallback the seed coordinate key
-  const effectiveSeedKey = seedKey || (() => {
-    const ks = keyStage.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const sub = subject.toLowerCase().includes('math') ? 'mat' : 
-                subject.toLowerCase().includes('comp') ? 'com' : 'sci';
-    const topicSlug = currentTopic.toLowerCase().includes('plant') ? 'plants' :
-                     currentTopic.toLowerCase().includes('add') ? 'addition' :
-                     currentTopic.toLowerCase().includes('force') ? 'forces' : 'atomic';
-    return `${ks.includes('ks') ? ks : 'ks3'}:${sub}:${topicSlug}`;
-  })();
 
   const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
     { role: 'turing', text: 'I am here to guide your steps! Ask me if you get stuck.' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestedLesson, setSuggestedLesson] = useState<RetrievedLesson | null>(null);
+  const [launchingLesson, setLaunchingLesson] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+
   const voiceEnabledRef = useRef(voiceEnabled);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
@@ -48,12 +48,10 @@ export function TuringTutor({
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
 
-  // Auto-scroll terminal
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // UK English Voice synthesis
   useEffect(() => {
     const updateVoices = () => {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -96,22 +94,28 @@ export function TuringTutor({
       .trim();
   };
 
-  // Persistent BroadcastChannel listener for multi-component signals
-  useEffect(() => {
-    const channel = new BroadcastChannel('neural_hypervisor_bus');
-
-    channel.onmessage = (event) => {
-      if (event.data?.type === 'TURING_FEEDBACK' && event.data.message) {
-        const cleaned = cleanThoughtArtifacts(event.data.message);
-        setMessages((prev) => [...prev, { role: 'turing', text: cleaned }]);
-        speak(cleaned);
+  // STEP 4: Fetch full lesson AST on demand via ComponentsFlow
+  const handleLaunchSuggestedLesson = async () => {
+    if (!suggestedLesson) return;
+    setLaunchingLesson(true);
+    try {
+      const fullAST = await ComponentsFlow.loadLessonAST(
+        suggestedLesson.id,
+        suggestedLesson.manifestPath
+      );
+      if (onLaunchLesson) {
+        onLaunchLesson(fullAST);
+      } else {
+        const channel = new BroadcastChannel('neural_hypervisor_bus');
+        channel.postMessage({ type: 'LOAD_AST_MANIFEST', manifest: fullAST });
+        channel.close();
       }
-    };
-
-    return () => {
-      channel.close();
-    };
-  }, []);
+    } catch (err) {
+      console.error('[Launch AST Error]:', err);
+    } finally {
+      setLaunchingLesson(false);
+    }
+  };
 
   const handleAsk = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -121,71 +125,46 @@ export function TuringTutor({
     setMessages((prev) => [...prev, { role: 'pupil', text: query }]);
     setInput('');
     setLoading(true);
+    setSuggestedLesson(null);
 
-    let session: any = null;
     try {
-      const aiHost = (window as any).ai || (self as any).ai || (window.parent as any)?.ai;
-      const GlobalLM = (window as any).LanguageModel || (window.parent as any)?.LanguageModel;
-      const targetFactory = aiHost?.languageModel || GlobalLM;
-
-      if (!targetFactory) {
-        throw new Error('Prompt API not detected');
-      }
-
-      // Check availability with standard flat parameters
-      if (typeof targetFactory.availability === 'function') {
-        await targetFactory.availability({
-          expectedInputLanguages: ['en'],
-          expectedOutputLanguages: ['en']
+      // 1. In-browser RAG match via ComponentsFlow
+      const ragResult = await ComponentsFlow.getGroundedContext(currentTopic, query);
+      if (ragResult.match) {
+        setSuggestedLesson({
+          id: ragResult.match.id,
+          title: ragResult.match.title,
+          manifestPath: ragResult.match.manifestPath,
         });
       }
 
-      // Modern W3C session options (No legacy arrays or deprecated params)
-      session = await targetFactory.create({
-        systemPrompt: 'You are Prof. Turing, a concise UK Socratic tutor. Never deliver lectures, lesson plans, summaries, or lists. Reply in ONE single question under 20 words guiding the pupil.',
-        expectedInputLanguages: ['en'],
-        expectedOutputLanguages: ['en']
-      });
-
-      // Build ultra-dense steering prompt anchored to the Oak Seed coordinate
-      const promptContext = buildSocraticSeedPrompt(effectiveSeedKey, query);
+      const promptContext = `Topic: ${currentTopic} (${keyStage} ${subject})${ragResult.context}\n\nPupil Question: "${query}"\nRespond with one brief Socratic question:`;
 
       setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
       setLoading(false);
 
+      // 2. Stream generation via unified Prompt API generator
+      const stream = ComponentsFlow.streamPrompt(promptContext, {
+        systemPrompt:
+          'You are Prof. Turing, a concise UK Socratic tutor. Never deliver lectures, lesson plans, summaries, or lists. Reply in ONE single question under 20 words guiding the pupil.',
+      });
+
       let accumulated = '';
-
-      if (typeof session.promptStreaming === 'function') {
-        const stream = session.promptStreaming(promptContext);
-        for await (const chunk of stream) {
-          if (chunk.startsWith(accumulated)) {
-            accumulated = chunk;
-          } else {
-            accumulated += chunk;
-          }
-
-          const cleaned = cleanThoughtArtifacts(accumulated);
-          setMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = {
-              role: 'turing',
-              text: cleaned || 'Examining the concept...',
-            };
-            return updated;
-          });
-        }
-        const finalClean = cleanThoughtArtifacts(accumulated) || 'Think about the core rule for this topic!';
-        speak(finalClean);
-      } else {
-        const reply = await session.prompt(promptContext);
-        const finalClean = cleanThoughtArtifacts(reply) || 'Think about the core rule for this topic!';
+      for await (const chunk of stream) {
+        accumulated = chunk;
+        const cleaned = cleanThoughtArtifacts(accumulated);
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: 'turing', text: finalClean };
+          updated[updated.length - 1] = {
+            role: 'turing',
+            text: cleaned || 'Examining the concept...',
+          };
           return updated;
         });
-        speak(finalClean);
       }
+
+      const finalClean = cleanThoughtArtifacts(accumulated) || 'Think about the core rule for this topic!';
+      speak(finalClean);
     } catch (err) {
       console.error('[Turing Tutor Error]:', err);
       const fallbackText = 'Break the problem down into its core components and test each condition step-by-step.';
@@ -201,11 +180,6 @@ export function TuringTutor({
       });
       speak(fallbackText);
     } finally {
-      if (session && typeof session.destroy === 'function') {
-        try {
-          session.destroy();
-        } catch {}
-      }
       setLoading(false);
     }
   };
@@ -223,7 +197,7 @@ export function TuringTutor({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-        <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 Prof. Turing [Gemini Nano]</span>
+        <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 Prof. Turing [Gemini Nano + IndexedDB RAG]</span>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             type="button"
@@ -253,9 +227,44 @@ export function TuringTutor({
             {m.text}
           </div>
         ))}
-        {loading && <div style={{ color: '#94a3b8' }}>Prof. Turing is thinking...</div>}
+        {loading && <div style={{ color: '#94a3b8' }}>Prof. Turing is retrieving context & thinking...</div>}
         <div ref={terminalEndRef} />
       </div>
+
+      {suggestedLesson && (
+        <div
+          style={{
+            background: '#0f172a',
+            border: '1px dashed #38bdf8',
+            borderRadius: '6px',
+            padding: '6px 10px',
+            marginBottom: '0.75rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+            Matched Unit: <strong style={{ color: '#e2e8f0' }}>{suggestedLesson.title}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={handleLaunchSuggestedLesson}
+            disabled={launchingLesson}
+            style={{
+              background: '#0284c7',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '3px 8px',
+              fontSize: '0.75rem',
+              cursor: launchingLesson ? 'wait' : 'pointer',
+            }}
+          >
+            {launchingLesson ? 'Loading...' : 'Launch Interactive Practice ⚡'}
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
         <input

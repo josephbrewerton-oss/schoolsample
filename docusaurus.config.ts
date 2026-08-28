@@ -17,15 +17,7 @@ const config: Config = {
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
-  headTags: [
-    {
-      tagName: 'script',
-      attributes: {
-        type: 'text/javascript',
-      },
-      innerHTML: 'window.process = window.process || { env: { NODE_ENV: "production" } };',
-    },
-  ],
+  
 
   scripts: [
     {
@@ -63,28 +55,32 @@ const config: Config = {
     ],
   ],
 
-// docusaurus.config.js
-plugins: [
-  [
-    '@docusaurus/plugin-pwa',
-    {
-      debug: false,
-      offlineModeActivationStrategies: ['appInstalled', 'standalone', 'queryString'],
-      pwaHead: [
-        {
-          tagName: 'link',
-          rel: 'icon',
-          href: '/img/docusaurus.png',
-        },
-        {
-          tagName: 'link',
-          rel: 'manifest',
-          href: '/manifest.json',
-        },
-      ],
-    },
+  plugins: [
+    // Only register PWA service worker in production builds to prevent localhost runtime errors
+    ...(isProd
+      ? [
+          [
+            '@docusaurus/plugin-pwa',
+            {
+              debug: false,
+              offlineModeActivationStrategies: ['appInstalled', 'standalone', 'queryString'],
+              pwaHead: [
+                {
+                  tagName: 'link',
+                  rel: 'icon',
+                  href: '/img/docusaurus.png',
+                },
+                {
+                  tagName: 'link',
+                  rel: 'manifest',
+                  href: '/manifest.json',
+                },
+              ],
+            },
+          ],
+        ]
+      : []),
   ],
-],
 
   themeConfig: {
     image: 'img/docusaurus-social-card.jpg',

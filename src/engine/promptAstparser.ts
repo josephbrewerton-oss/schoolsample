@@ -1,16 +1,23 @@
-// static/promptAstParser.js
+// src/engine/promptAstparser.ts
 import { 
   KEY_STAGE_CONSTRAINTS, 
   REGIONAL_CONSTRAINTS, 
   SUBJECT_DEFINITIONS,
   resolveKeyStageRule 
-} from './promptStrategies.js';
+} from '@site/static/promptStrategies';
+
+export interface PromptInferenceParams {
+  subject?: string;
+  topic?: string;
+  keyStage?: string;
+  curriculum?: 'uk_oak' | 'international' | string;
+}
 
 export class PromptASTPreParser {
   /**
    * Compresses verbose human descriptions into compact, high-density constraint tokens.
    */
-  static compressText(text) {
+  static compressText(text?: string): string {
     if (!text) return '';
     return text
       .replace(/Ages \d+-\d+\s*(\([^)]+\))?\.?/gi, '')
@@ -23,9 +30,9 @@ export class PromptASTPreParser {
   }
 
   /**
-   * Transforms human-edited configuration objects into an optimized AST prompt payload.
+   * Transforms configuration objects into an optimized AST prompt payload.
    */
-  static parseForInference(params = {}) {
+  static parseForInference(params: PromptInferenceParams = {}): string {
     const {
       subject = 'Science',
       topic = 'General',
@@ -33,24 +40,24 @@ export class PromptASTPreParser {
       curriculum = 'uk_oak'
     } = params;
 
-    // 1. Resolve human configs directly from promptStrategies
-    const rawKs = KEY_STAGE_CONSTRAINTS[keyStage] || resolveKeyStageRule(keyStage);
-    const rawRegional = REGIONAL_CONSTRAINTS[curriculum] || REGIONAL_CONSTRAINTS.uk_oak;
+    // 1. Resolve configs from promptStrategies
+    const rawKs = (KEY_STAGE_CONSTRAINTS as Record<string, string>)[keyStage] || resolveKeyStageRule(keyStage);
+    const rawRegional = (REGIONAL_CONSTRAINTS as Record<string, string>)[curriculum] || (REGIONAL_CONSTRAINTS as Record<string, string>).uk_oak;
 
-    // 2. Pre-parse and strip human fluff
+    // 2. Pre-parse and strip fluff
     const cleanKs = this.compressText(rawKs);
     const cleanRegional = this.compressText(rawRegional);
 
     // 3. Resolve targeted subject focus
     const cleanSub = subject.toLowerCase().trim();
     const matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(
-      k => k === cleanSub || SUBJECT_DEFINITIONS[k].aliases.some(a => cleanSub.includes(a))
+      (k) => k === cleanSub || (SUBJECT_DEFINITIONS as any)[k]?.aliases?.some((a: string) => cleanSub.includes(a))
     ) || 'humanities';
     
-    const archetypes = SUBJECT_DEFINITIONS[matchedKey]?.archetypes || ['core conceptual mastery'];
+    const archetypes = (SUBJECT_DEFINITIONS as any)[matchedKey]?.archetypes || ['core conceptual mastery'];
     const targetFocus = archetypes[Math.floor(Math.random() * archetypes.length)];
 
-    // 4. Return pure AST schema contract with prefilled trigger prefix
+    // 4. Return AST schema contract with prefilled trigger prefix
     return `[AST_SCHEMA: LISP_S_EXPRESSION]
 (:route "quiz:mcq" :scratchpad "<STEP_REASONING>" :prompt "<STEM>" :options (list "<CORRECT>" "<DISTRACTOR_1>" "<DISTRACTOR_2>" "<DISTRACTOR_3>") :hint "<CLUE>" :answer-key 0)
 

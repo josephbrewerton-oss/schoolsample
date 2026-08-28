@@ -2,12 +2,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
+import { openDB, DBSchema } from 'idb';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 import { parseAST } from '../engine/ast-loader';
 import { runLocalInference } from '../engine/EdgeCognitiveEngine';
-import { resolveSeedCoordinate, buildLessonNodePrompt } from '@site/static/promptStrategies';
+import { resolveSeedCoordinate, buildLessonNodePrompt, OAK_SEED_REGISTRY } from '@site/static/promptStrategies';
 
 interface LessonPlanNode {
   axiom: string;
@@ -17,10 +18,40 @@ interface LessonPlanNode {
   probe: string;
 }
 
+interface KnowledgeStageDBSchema extends DBSchema {
+  active_stage_props: {
+    key: string;
+    value: {
+      stageKey: string;
+      timestamp: number;
+      nodes: Record<string, LessonPlanNode>;
+    };
+  };
+}
+
+const DB_NAME = 'oak_stage_knowledge_db';
+const STORE_NAME = 'active_stage_props';
+
+async function getKnowledgeDB() {
+  return openDB<KnowledgeStageDBSchema>(DB_NAME, 1, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'stageKey' });
+      }
+    },
+  });
+}
+
 function deriveSeedKey(keyStage: string, subject: string, unit: string): string {
-  const ks = keyStage.toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Normalize "Key Stage 1" or "ks1" -> "ks1"
+  let ks = 'ks3';
+  const ksNorm = keyStage.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (ksNorm.includes('1')) ks = 'ks1';
+  else if (ksNorm.includes('2')) ks = 'ks2';
+  else if (ksNorm.includes('4')) ks = 'ks4';
+  else if (ksNorm.includes('3')) ks = 'ks3';
+
   const subLower = subject.toLowerCase();
-  
   let sub = 'sci';
   if (subLower.includes('math')) sub = 'mat';
   else if (subLower.includes('eng') || subLower.includes('lang') || subLower.includes('lit')) sub = 'eng';
@@ -28,9 +59,13 @@ function deriveSeedKey(keyStage: string, subject: string, unit: string): string 
   else if (subLower.includes('hist') || subLower.includes('geog') || subLower.includes('hum')) sub = 'his';
 
   const unitNorm = unit.toLowerCase();
-  let topicSlug = 'atomic';
+  let topicSlug = 'general';
 
-  if (unitNorm.includes('norman') || unitNorm.includes('1066') || unitNorm.includes('conquest')) {
+  if (unitNorm.includes('living memory') || unitNorm.includes('memory') || unitNorm.includes('timeline') || unitNorm.includes('past')) {
+    topicSlug = 'living_memory';
+  } else if (unitNorm.includes('shape') || unitNorm.includes('2d') || unitNorm.includes('3d') || unitNorm.includes('geometry')) {
+    topicSlug = 'shapes';
+  } else if (unitNorm.includes('norman') || unitNorm.includes('1066') || unitNorm.includes('conquest')) {
     topicSlug = 'normans';
   } else if (unitNorm.includes('capital') || unitNorm.includes('punct') || unitNorm.includes('stop') || unitNorm.includes('letter')) {
     topicSlug = 'punctuation';
@@ -46,9 +81,11 @@ function deriveSeedKey(keyStage: string, subject: string, unit: string): string 
     topicSlug = 'algorithms';
   } else if (unitNorm.includes('bond')) {
     topicSlug = 'bonding';
+  } else if (unitNorm.includes('atom') || unitNorm.includes('periodic')) {
+    topicSlug = 'atomic';
   }
 
-  return `${ks.includes('ks') ? ks : 'ks3'}:${sub}:${topicSlug}`;
+  return `${ks}:${sub}:${topicSlug}`;
 }
 
 export default function LearningZonePage() {
@@ -61,6 +98,7 @@ export default function LearningZonePage() {
 
   const activeRequestIdRef = useRef(0);
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isDbHydrated, setIsDbHydrated] = useState(false);
 
   const curriculumTree = useMemo(() => {
     return getActiveCurriculumTree(curriculumSetting);
@@ -75,6 +113,17 @@ export default function LearningZonePage() {
     return deriveSeedKey(selectedKeyStage, selectedSubject, selectedUnit);
   }, [selectedKeyStage, selectedSubject, selectedUnit]);
 
+  const stageSubjectGroup = useMemo(() => {
+    const ks = selectedKeyStage.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const subLower = selectedSubject.toLowerCase();
+    let sub = 'sci';
+    if (subLower.includes('math')) sub = 'mat';
+    else if (subLower.includes('eng')) sub = 'eng';
+    else if (subLower.includes('comp')) sub = 'com';
+    else if (subLower.includes('hist')) sub = 'his';
+    return `${ks}:${sub}`;
+  }, [selectedKeyStage, selectedSubject]);
+
   const [lessonData, setLessonData] = useState<LessonPlanNode>(() => {
     const seed = resolveSeedCoordinate('ks3:sci:atomic');
     return {
@@ -86,51 +135,136 @@ export default function LearningZonePage() {
     };
   });
 
-  const handleCompileLesson = async () => {
-    const requestId = ++activeRequestIdRef.current;
-    setIsCompiling(true);
+  // Stage Expander: Syncs active KeyStage knowledge to IndexedDB
+  useEffect(() => {
+    let isCancelled = false;
 
-    const seed = resolveSeedCoordinate(activeSeedKey);
-    const baselineLesson: LessonPlanNode = {
-      axiom: seed.axiom,
-      trap: seed.trap,
-      hook: `What happens when you change the core conditions of ${selectedUnit}?`,
-      activity: `Step through the foundational rules of ${selectedUnit} and verify each step against the core axiom.`,
-      probe: seed.pivot
-    };
+    async function syncStageToIndexedDB() {
+      try {
+        const db = await getKnowledgeDB();
+        let cachedStage = await db.get(STORE_NAME, stageSubjectGroup);
 
-    setLessonData(baselineLesson);
+        if (!cachedStage) {
+          const stageNodes: Record<string, LessonPlanNode> = {};
+          
+          Object.keys(OAK_SEED_REGISTRY).forEach((key) => {
+            if (key.startsWith(stageSubjectGroup)) {
+              const seed = OAK_SEED_REGISTRY[key];
+              stageNodes[key] = {
+                axiom: seed.axiom,
+                trap: seed.trap,
+                hook: `What happens when you change the core conditions of ${seed.topic || 'this topic'}?`,
+                activity: `Step through the foundational rules of ${seed.topic || 'this topic'} and verify each step against the core axiom.`,
+                probe: seed.pivot
+              };
+            }
+          });
 
-    const astPrompt = buildLessonNodePrompt(activeSeedKey);
+          cachedStage = {
+            stageKey: stageSubjectGroup,
+            timestamp: Date.now(),
+            nodes: stageNodes
+          };
 
-    try {
-      const rawContent = await runLocalInference(
-        astPrompt,
-        "You are an expert Oak Curriculum compiler. Output ONLY a valid Lisp S-expression. Never output markdown backticks or conversational text.",
-        activeSeedKey
-      );
-      
-      if (requestId !== activeRequestIdRef.current) return;
+          await db.put(STORE_NAME, cachedStage);
+        }
 
-      const parsed = parseAST(rawContent);
-
-      if (parsed) {
-        setLessonData({
-          axiom: parsed.axiom?.children?.[0] || String(parsed.axiom || baselineLesson.axiom),
-          trap: parsed.trap?.children?.[0] || String(parsed.trap || baselineLesson.trap),
-          hook: parsed.hook?.children?.[0] || String(parsed.hook || baselineLesson.hook),
-          activity: parsed.activity?.children?.[0] || String(parsed.activity || baselineLesson.activity),
-          probe: parsed.pivot?.children?.[0] || String(parsed.pivot || baselineLesson.probe)
-        });
+        if (!isCancelled) {
+          setIsDbHydrated(true);
+        }
+      } catch (err) {
+        console.warn('[Knowledge DB]: Ephemeral expansion fallback to memory.', err);
+        if (!isCancelled) setIsDbHydrated(true);
       }
-    } catch (err) {
-      if (requestId !== activeRequestIdRef.current) return;
-      console.warn('[Learning Zone AST Notice]: Using verified seed lesson.', err);
-      setLessonData(baselineLesson);
-    } finally {
-      setIsCompiling(false);
     }
+
+    syncStageToIndexedDB();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [stageSubjectGroup]);
+
+  const handleCompileLesson = async () => {
+  const requestId = ++activeRequestIdRef.current;
+  setIsCompiling(true);
+
+  // 1. Resolve registered seed
+  const seed = resolveSeedCoordinate(activeSeedKey);
+  
+  // Flag whether this resolved to the atomic physics default fallback
+  const isDefaultPhysicsFallback = 
+    !activeSeedKey.includes('atomic') && 
+    seed.axiom.toLowerCase().includes('proton');
+
+  let baselineLesson: LessonPlanNode = {
+    axiom: isDefaultPhysicsFallback
+      ? `Understanding how things change over time and recognizing differences between the past and present in ${selectedUnit}.`
+      : seed.axiom,
+    trap: isDefaultPhysicsFallback
+      ? `Assuming conditions and technologies in the past were identical to how they are today.`
+      : seed.trap,
+    hook: `What was everyday life like during the period of ${selectedUnit}, and how do we know?`,
+    activity: `Compare artifacts, photographs, or accounts from ${selectedUnit} with modern day equivalents.`,
+    probe: isDefaultPhysicsFallback
+      ? `What is one major difference between life today and life in the period we are studying?`
+      : seed.pivot
   };
+
+  // 2. Check IndexedDB cache for pre-compiled AST
+  try {
+    const db = await getKnowledgeDB();
+    const stage = await db.get(STORE_NAME, stageSubjectGroup);
+    if (stage && stage.nodes[activeSeedKey]) {
+      baselineLesson = stage.nodes[activeSeedKey];
+    }
+  } catch {
+    // Clean fallback to baseline
+  }
+
+  // Immediately render the subject-accurate baseline
+  setLessonData(baselineLesson);
+
+  const astPrompt = buildLessonNodePrompt(activeSeedKey);
+
+  try {
+    const rawContent = await runLocalInference(
+      astPrompt,
+      "You are an expert Oak Curriculum compiler. Output ONLY a valid Lisp S-expression. Never output markdown backticks or conversational text.",
+      activeSeedKey
+    );
+    
+    if (requestId !== activeRequestIdRef.current) return;
+
+    const parsed = parseAST(rawContent);
+
+    if (parsed) {
+      const compiledLesson: LessonPlanNode = {
+        axiom: parsed.axiom?.children?.[0] || String(parsed.axiom || baselineLesson.axiom),
+        trap: parsed.trap?.children?.[0] || String(parsed.trap || baselineLesson.trap),
+        hook: parsed.hook?.children?.[0] || String(parsed.hook || baselineLesson.hook),
+        activity: parsed.activity?.children?.[0] || String(parsed.activity || baselineLesson.activity),
+        probe: parsed.pivot?.children?.[0] || String(parsed.pivot || baselineLesson.probe)
+      };
+
+      setLessonData(compiledLesson);
+
+      const db = await getKnowledgeDB();
+      let stage = await db.get(STORE_NAME, stageSubjectGroup);
+      if (!stage) {
+        stage = { stageKey: stageSubjectGroup, timestamp: Date.now(), nodes: {} };
+      }
+      stage.nodes[activeSeedKey] = compiledLesson;
+      await db.put(STORE_NAME, stage);
+    }
+  } catch (err) {
+    if (requestId !== activeRequestIdRef.current) return;
+    console.warn('[Learning Zone AST Notice]: Using verified seed lesson.', err);
+    setLessonData(baselineLesson);
+  } finally {
+    setIsCompiling(false);
+  }
+};
 
   useEffect(() => {
     handleCompileLesson();
@@ -145,14 +279,14 @@ export default function LearningZonePage() {
     >
       <main style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         
-        {/* Unified Top Control Bar */}
+        {/* Top Selector Control Bar */}
         <div style={{ marginBottom: '1.5rem' }}>
           <CurriculumSelector
             keyStage={selectedKeyStage}
             subject={selectedSubject}
             unit={selectedUnit}
             status="online"
-            isReady={!isCompiling}
+            isReady={!isCompiling && isDbHydrated}
             sessionId={sessionId}
             curriculumTree={curriculumTree}
             buttonLabel={isCompiling ? '⚡ Compiling...' : '📖 Generate Lesson'}
@@ -186,8 +320,8 @@ export default function LearningZonePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>
-                {selectedKeyStage} &bull; {selectedSubject} (Oak Curriculum Standard)
-              </span>
+            {selectedKeyStage.toUpperCase()} &bull; {selectedSubject.toUpperCase()} (Oak Curriculum Standard)
+            </span>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: '0.25rem 0' }}>
                 {selectedUnit}
               </h2>

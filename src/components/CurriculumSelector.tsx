@@ -10,7 +10,7 @@ interface Props {
   isReady: boolean;
   sessionId: string;
   buttonLabel?: string;
-  curriculumTree?: Record<string, Record<string, any>>;
+  curriculumTree?: Record<string, any>;
   onKeyStageChange: (ks: string, firstSub: string, firstUnit: string) => void;
   onSubjectChange: (sub: string, firstUnit: string) => void;
   onUnitChange: (unit: string) => void;
@@ -39,31 +39,74 @@ export const CurriculumSelector: React.FC<Props> = ({
   const availableStages = Object.keys(catalogue);
   const safeStage = availableStages.includes(keyStage) ? keyStage : (availableStages[0] || keyStage);
 
-  const availableSubjects = Object.keys(catalogue[safeStage] || {});
-  const safeSubject = availableSubjects.includes(subject) ? subject : (availableSubjects[0] || '');
-  
-  // Defensive extraction: ensure raw units resolve to an Array
-  const rawUnits = catalogue[safeStage]?.[safeSubject];
-  const availableUnits: string[] = Array.isArray(rawUnits)
-    ? rawUnits
-    : rawUnits && typeof rawUnits === 'object'
-    ? Object.keys(rawUnits)
-    : [];
+  // 1. Safely extract subject list as [{ id, title, raw }]
+  const getSubjectItems = (stageKey: string): { label: string; raw: any }[] => {
+    const rawStage = catalogue[stageKey];
+    if (!rawStage) return [];
 
+    const rawSubjects = rawStage.subjects || rawStage;
+
+    // If subjects is an Array: [{ title: 'Science', units: [...] }]
+    if (Array.isArray(rawSubjects)) {
+      return rawSubjects.map((s) => ({
+        label: typeof s === 'string' ? s : s.title || s.name || s.id || String(s),
+        raw: s,
+      }));
+    }
+
+    // If subjects is an Object dictionary: { "Science": [...] }
+    if (typeof rawSubjects === 'object') {
+      return Object.keys(rawSubjects)
+        .filter((k) => !['id', 'title', 'keyStage'].includes(k))
+        .map((k) => ({
+          label: k,
+          raw: rawSubjects[k],
+        }));
+    }
+
+    return [];
+  };
+
+  const subjectItems = getSubjectItems(safeStage);
+  const availableSubjectLabels = subjectItems.map((s) => s.label);
+  const safeSubject = availableSubjectLabels.includes(subject) ? subject : (availableSubjectLabels[0] || '');
+
+  // 2. Safely extract unit strings
+  const getUnitItems = (stageKey: string, targetSubLabel: string): string[] => {
+    const sItems = getSubjectItems(stageKey);
+    const matchedSubject = sItems.find((s) => s.label === targetSubLabel);
+    if (!matchedSubject) return [];
+
+    const subData = matchedSubject.raw;
+
+    if (Array.isArray(subData)) {
+      return subData.map((u) => (typeof u === 'string' ? u : u.title || u.name || u.id || String(u)));
+    }
+
+    if (subData && typeof subData === 'object') {
+      const unitsList = subData.units || subData.lessons || subData.topics;
+      if (Array.isArray(unitsList)) {
+        return unitsList.map((u) => (typeof u === 'string' ? u : u.title || u.name || u.id || String(u)));
+      }
+      return Object.keys(subData).filter((k) => !['id', 'title', 'icon', 'name'].includes(k));
+    }
+
+    return [];
+  };
+
+  const availableUnits = getUnitItems(safeStage, safeSubject);
   const safeUnit = availableUnits.includes(unit) ? unit : (availableUnits[0] || '');
 
   const handleStageSelect = (newKs: string) => {
-    const subjects = Object.keys(catalogue[newKs] || {});
-    const firstSub = subjects[0] || '';
-    const rawU = catalogue[newKs]?.[firstSub];
-    const units = Array.isArray(rawU) ? rawU : (rawU && typeof rawU === 'object' ? Object.keys(rawU) : []);
+    const newSubItems = getSubjectItems(newKs);
+    const firstSub = newSubItems[0]?.label || '';
+    const units = getUnitItems(newKs, firstSub);
     const firstUnit = units[0] || '';
     onKeyStageChange(newKs, firstSub, firstUnit);
   };
 
   const handleSubjectSelect = (newSub: string) => {
-    const rawU = catalogue[safeStage]?.[newSub];
-    const units = Array.isArray(rawU) ? rawU : (rawU && typeof rawU === 'object' ? Object.keys(rawU) : []);
+    const units = getUnitItems(safeStage, newSub);
     const firstUnit = units[0] || '';
     onSubjectChange(newSub, firstUnit);
   };
@@ -120,9 +163,9 @@ export const CurriculumSelector: React.FC<Props> = ({
             background: '#f8fafc',
           }}
         >
-          {availableSubjects.map((sub) => (
-            <option key={sub} value={sub}>
-              {sub}
+          {subjectItems.map((sub) => (
+            <option key={sub.label} value={sub.label}>
+              {sub.label}
             </option>
           ))}
         </select>
@@ -163,7 +206,7 @@ export const CurriculumSelector: React.FC<Props> = ({
             padding: '0.5rem 1.15rem',
             cursor: isReady ? 'pointer' : 'not-allowed',
             fontSize: '0.9rem',
-            opacity: isReady ? 1 : 0.7
+            opacity: isReady ? 1 : 0.7,
           }}
         >
           {buttonLabel}

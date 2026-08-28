@@ -6,42 +6,9 @@ import { QuestionCard } from './QuestionCard';
 import { useWebRTCNeuralBus, QuestionPayload } from '../hooks/useWebRTCNeuralBus';
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
-
-import { buildUniversalPrompt } from '@site/static/promptStrategies';
-import { parseAST } from '../engine/ast-loader';
-import { ASTFlowGovernor, RawASTQuestion } from '../engine/astGovernor';
-import { runLocalInference } from '../engine/EdgeCognitiveEngine';
-import { logProgress, getBufferedQuestion, saveVerifiedAST } from '../services/dbStore';
-import { PromptASTPreparser } from '../engine/promptAstparser';
-
-interface NormalizedQuestion extends RawASTQuestion {
-  hint?: string;
-}
-
-function normalizeASTToQuestion(parsed: any): NormalizedQuestion | null {
-  if (!parsed) return null;
-
-  let options: string[] = [];
-  if (Array.isArray(parsed.options)) {
-    options = parsed.options.map((o: any) => (typeof o === 'object' ? o.children?.[0] || '' : String(o)));
-  } else if (parsed.options?.children && Array.isArray(parsed.options.children)) {
-    options = parsed.options.children.map((c: any) => (typeof c === 'object' ? c.children?.[0] || '' : String(c)));
-  }
-
-  const prompt = typeof parsed.prompt === 'object' ? parsed.prompt?.children?.[0] || '' : String(parsed.prompt || '');
-  const scratchpad = typeof parsed.scratchpad === 'object' ? parsed.scratchpad?.children?.[0] || '' : String(parsed.scratchpad || '');
-  const hint = typeof parsed.hint === 'object' ? parsed.hint?.children?.[0] || '' : String(parsed.hint || '');
-  const answerKey = Number(parsed['answer-key'] ?? parsed.answerKey ?? 0);
-
-  return {
-    route: parsed.route || 'quiz:mcq',
-    prompt: prompt.trim(),
-    scratchpad: scratchpad.trim(),
-    hint: hint.trim(),
-    options: options.filter(Boolean),
-    answerKey: isNaN(answerKey) ? 0 : answerKey,
-  };
-}
+import { EngineFlow } from '../engine/engineflow';
+import { ComponentsFlow } from './componentsflow';
+import { getBufferedQuestion, saveVerifiedAST } from '../services/dbStore';
 
 export default function NeuralLabCanvas() {
   const [curriculumSetting, setCurriculumSetting] = useState<CurriculumProviderKey>(() => {
@@ -49,20 +16,6 @@ export default function NeuralLabCanvas() {
   });
 
   const workerUrl = useBaseUrl('/worker.html');
-
-  // Stable BroadcastChannel references to eliminate GC teardown race conditions
-  const hypervisorBusRef = useRef<BroadcastChannel | null>(null);
-  const voiceBusRef = useRef<BroadcastChannel | null>(null);
-
-  useEffect(() => {
-    hypervisorBusRef.current = new BroadcastChannel('neural_hypervisor_bus');
-    voiceBusRef.current = new BroadcastChannel('neural_voice_bus');
-
-    return () => {
-      hypervisorBusRef.current?.close();
-      voiceBusRef.current?.close();
-    };
-  }, []);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -161,8 +114,8 @@ export default function NeuralLabCanvas() {
       if (requestId !== activeRequestIdRef.current) return;
 
       if (cachedRawAST) {
-        const parsedCached = parseAST(cachedRawAST);
-        const normalizedCached = normalizeASTToQuestion(parsedCached);
+        const parsedCached = EngineFlow.parse(cachedRawAST);
+        const normalizedCached = EngineFlow.normalizeASTToQuestion(parsedCached);
         if (normalizedCached) {
           const hintText = normalizedCached.hint || (parsedCached as any)?.hint || '';
           handleNewQuestion({
@@ -185,43 +138,31 @@ export default function NeuralLabCanvas() {
         if (sent) return;
       }
 
-      // 3. IN-PAGE FALLBACK: Local Edge Engine execution
-// 3. IN-PAGE FALLBACK: Local Edge Engine execution with AST Pre-Parsing
-      const prompt = PromptASTPreParser.parseForInference({
+      // 3. ENGINEFLOW PIPELINE: Token optimization, local Nano execution & Governance
+      const governed = await EngineFlow.synthesizeGovernedQuestion({
         subject: sub,
         topic: u,
         keyStage: ks,
         curriculum: curriculumSetting,
+        isQuiz: true,
       });
 
-      console.log('[Token-Optimized AST Prompt]:', prompt);
-      const rawContent = await runLocalInference(prompt);
       if (requestId !== activeRequestIdRef.current) return;
 
-      console.log('[Raw AI Response]:', rawContent);
-      const parsedNode = parseAST(rawContent);
-      const normalized = normalizeASTToQuestion(parsedNode);
-
-      if (normalized) {
-        const governed = ASTFlowGovernor.govern(normalized, sub, u);
-        if (governed.isValid && governed.sanitizedQuestion) {
-          saveVerifiedAST(topicKey, rawContent).catch(console.error);
-          const hintText = normalized.hint || (parsedNode as any)?.hint || '';
-
-          handleNewQuestion({
-            question: { 
-              ...governed.sanitizedQuestion, 
-              hint: hintText 
-            },
-            keyStage: ks,
-            subject: sub,
-            unit: u,
-            hint: hintText
-          });
-          return;
-        } else {
-          console.warn('[AST Governor Rejection]:', governed.rejectionReason);
-        }
+      if (governed.isValid && governed.sanitizedQuestion) {
+        const hintText = (governed.sanitizedQuestion as any).hint || '';
+        handleNewQuestion({
+          question: {
+            ...governed.sanitizedQuestion,
+            hint: hintText,
+          },
+          keyStage: ks,
+          subject: sub,
+          unit: u,
+          hint: hintText,
+        });
+      } else {
+        console.warn('[AST EngineFlow Rejection]:', governed.rejectionReason);
       }
     } catch (err) {
       if (requestId === activeRequestIdRef.current) {
@@ -246,15 +187,8 @@ export default function NeuralLabCanvas() {
       ? 'Spot on! Correct conceptual deduction.'
       : sanitizeHint(activeQuestion.hint);
 
-    const feedbackPayload = {
-      type: 'TURING_FEEDBACK',
-      message: feedbackText,
-      isCorrect,
-    };
-
-    // Instant Socratic notification across both bus channels
-    hypervisorBusRef.current?.postMessage(feedbackPayload);
-    voiceBusRef.current?.postMessage(feedbackPayload);
+    // 1. Unified Bus Notification via ComponentsFlow
+    ComponentsFlow.emitFeedback(feedbackText, isCorrect);
 
     if (isCorrect) {
       setScore((s) => s + 1);
@@ -263,15 +197,14 @@ export default function NeuralLabCanvas() {
       setStreak(0);
     }
 
+    // 2. Unified Progress Logging via ComponentsFlow
     const topicId = `${slugify(activeQuestion.subject)}_${slugify(activeQuestion.unit)}`;
-    logProgress({
+    ComponentsFlow.recordProgress({
       cohortCode: sessionId || 'default_cohort',
       challengeId: activeQuestion.id || `ch_${Date.now()}`,
-      topicId: topicId,
-      answeredAt: Date.now(),
+      topicId,
       isCorrect,
       userAnswer: activeQuestion.displayOptions[idx],
-      errorTag: isCorrect ? undefined : 'concept_misconception'
     }).catch(console.error);
   };
 

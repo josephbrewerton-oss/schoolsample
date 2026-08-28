@@ -1,8 +1,7 @@
+// scripts/ingest-oak.ts
 import fs from 'fs';
 import path from 'path';
-import { MasterCatalog, CatalogItem } from '../src/types/learning-ast';
 
-// Custom streams preserved alongside Oak
 const CUSTOM_EXPANDED_CURRICULUM = [
   {
     slug: 'first-holy-communion',
@@ -84,63 +83,50 @@ function formatTitle(slug: string): string {
     .join(' ');
 }
 
+const STOP_WORDS = new Set([
+  'what', 'happens', 'during', 'after', 'before', 'this', 'that', 
+  'with', 'from', 'about', 'your', 'explain', 'which', 'where', 
+  'when', 'does', 'have', 'been', 'were', 'they', 'them', 'their',
+  'there', 'these', 'those', 'will', 'would', 'could', 'should',
+  'into', 'than', 'then', 'also', 'more', 'some', 'such', 'unit',
+  'lesson', 'part', 'step', 'core', 'main'
+]);
+
+function tokenize(text: string): string[] {
+  return Array.from(new Set(
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !STOP_WORDS.has(w))
+  ));
+}
+
 function buildChallengePrompt(unitTitle: string, subjectTitle: string = '', phaseTitle: string = ''): string {
   const s = subjectTitle.toLowerCase();
   const isPrimary = phaseTitle.toLowerCase().includes('primary') || phaseTitle.toLowerCase().includes('ks1') || phaseTitle.toLowerCase().includes('ks2');
 
-  // English / Literacy
   if (s.includes('eng') || s.includes('lang') || s.includes('lit') || s.includes('grammar')) {
-    if (isPrimary) {
-      return `Practice the key words and sentence rules for "${unitTitle}".`;
-    }
-    return `Examine the themes, language techniques, and structure in "${unitTitle}".`;
+    return isPrimary ? `Practice the key words and sentence rules for "${unitTitle}".` : `Examine the themes, language techniques, and structure in "${unitTitle}".`;
   }
-
-  // Computing / Digital
   if (s.includes('comp') || s.includes('tech') || s.includes('digital')) {
-    if (isPrimary) {
-      return `What are the main steps or safety tips to remember for "${unitTitle}"?`;
-    }
-    return `Identify key algorithms, systems, or digital principles in "${unitTitle}".`;
+    return isPrimary ? `What are the main steps or safety tips to remember for "${unitTitle}"?` : `Identify key algorithms, systems, or digital principles in "${unitTitle}".`;
   }
-
-  // Mathematics
   if (s.includes('math')) {
-    if (isPrimary) {
-      return `Work out the calculation or number pattern for "${unitTitle}".`;
-    }
-    return `Outline the step-by-step method and solve the problem for "${unitTitle}".`;
+    return isPrimary ? `Work out the calculation or number pattern for "${unitTitle}".` : `Outline the step-by-step method and solve the problem for "${unitTitle}".`;
   }
-
-  // Science
   if (s.includes('sci') || s.includes('bio') || s.includes('chem') || s.includes('phys')) {
-    if (isPrimary) {
-      return `Describe what happens and name the key parts in "${unitTitle}".`;
-    }
-    return `Explain the core scientific principles and mechanisms behind "${unitTitle}".`;
+    return isPrimary ? `Describe what happens and name the key parts in "${unitTitle}".` : `Explain the core scientific principles and mechanisms behind "${unitTitle}".`;
   }
-
-  // Humanities (History & Geography)
   if (s.includes('hist') || s.includes('geog')) {
-    if (isPrimary) {
-      return `Name the key facts, places, or people explored in "${unitTitle}".`;
-    }
-    return `Analyze the causes, evidence, and historical impacts of "${unitTitle}".`;
+    return isPrimary ? `Name the key facts, places, or people explored in "${unitTitle}".` : `Analyze the causes, evidence, and historical impacts of "${unitTitle}".`;
   }
-
-  // Art & Design
   if (s.includes('art') || s.includes('design')) {
-    if (isPrimary) {
-      return `What materials, shapes, or drawing techniques are used in "${unitTitle}"?`;
-    }
-    return `Examine the composition, style, and visual methods in "${unitTitle}".`;
+    return isPrimary ? `What materials, shapes, or drawing techniques are used in "${unitTitle}"?` : `Examine the composition, style, and visual methods in "${unitTitle}".`;
   }
-
-  // Default Fallback
-  return isPrimary 
-    ? `What are the most important things to remember about "${unitTitle}"?`
-    : `Explain the essential concepts and applications of "${unitTitle}".`;
+  return isPrimary ? `What are the most important things to remember about "${unitTitle}"?` : `Explain the essential concepts and applications of "${unitTitle}".`;
 }
+
 async function buildSystem() {
   const localOakDir = path.join(process.cwd(), 'scripts', 'data', 'oak');
   const manifestsDir = path.join(process.cwd(), 'static', 'manifests');
@@ -150,10 +136,13 @@ async function buildSystem() {
     fs.mkdirSync(lessonsDir, { recursive: true });
   }
 
-  const catalogItems: CatalogItem[] = [];
+  const catalogItems: any[] = [];
+  const ragIndex: any[] = [];
 
-  // 1. Ingest Custom Streams (Faith & CPD)
+  // 1. Ingest Custom Faith & Parish Streams
   for (const item of CUSTOM_EXPANDED_CURRICULUM) {
+    const fileName = `${item.slug}.json`;
+
     const challenges = (item.questions || []).map((q: any, index: number) => {
       const distractors = q.distractors || [];
       const semanticRules: [string, string][] = distractors.map((d: any) => [
@@ -200,12 +189,11 @@ async function buildSystem() {
       c: challenges
     };
 
-    const fileName = `${item.slug}.json`;
     fs.writeFileSync(path.join(lessonsDir, fileName), JSON.stringify(manifest), 'utf-8');
 
     catalogItems.push({
       id: item.slug,
-      stream: item.stream as any,
+      stream: item.stream,
       keyStage: item.keyStage,
       subject: item.subjectTitle,
       unit: item.unitTitle,
@@ -214,10 +202,25 @@ async function buildSystem() {
       manifestPath: `/manifests/lessons/${fileName}`,
     });
 
+    const combinedText = `${item.title} ${item.subjectTitle} ${item.keyStageTitle} ${
+      challenges.map(c => `${c.p} ${c.a} ${c.r.map((r: any) => r[0]).join(' ')}`).join(' ')
+    }`;
+
+    ragIndex.push({
+      id: item.slug,
+      stream: item.stream || 'faith',
+      phase: item.keyStageTitle,
+      subject: item.subjectTitle,
+      title: item.title,
+      tokens: tokenize(combinedText),
+      ragContext: `[${item.subjectTitle} - ${item.keyStageTitle}] ${item.title}\nCore Concepts: ${challenges.map(c => c.p).join(' | ')}\nAnswers: ${challenges.map(c => c.a).join(' | ')}`,
+      manifestPath: `/manifests/lessons/${fileName}`
+    });
+
     console.log(`📦 Compiled Custom AST: ${fileName}`);
   }
 
-  // 2. Ingest Offline Oak Bulk JSON Files from scripts/data/oak/
+  // 2. Ingest Offline Oak Bulk JSON Files
   if (fs.existsSync(localOakDir)) {
     const rawFiles = fs.readdirSync(localOakDir).filter(f => f.endsWith('.json'));
     console.log(`\n📂 Found ${rawFiles.length} local Oak bulk files. Compiling AST manifests...`);
@@ -232,25 +235,23 @@ async function buildSystem() {
       try {
         const rawContent = fs.readFileSync(filePath, 'utf-8');
         const data = JSON.parse(rawContent);
-
-        // Normalize units/lessons from Oak schema
         const lessons = Array.isArray(data) ? data : (data.lessons || data.units || data.data || []);
         if (!lessons.length) continue;
 
-        // Group into concise interactive modules
-        const maxModules = 12; // Index top units per subject to keep catalog balanced
+        const maxModules = 12;
         const selectedLessons = lessons.slice(0, maxModules);
 
         selectedLessons.forEach((lesson: any, lIdx: number) => {
           const lessonSlug = `oak-${fileSlug}-unit-${lIdx + 1}`;
           const lessonTitle = lesson.lessonTitle || lesson.unitTitle || lesson.title || `${subjectTitle} Unit ${lIdx + 1}`;
           const rawQuestions = lesson.questions || lesson.quiz || lesson.keyLearningPoints || [];
+          const outFileName = `${lessonSlug}.json`;
 
           const challenges = rawQuestions.slice(0, 8).map((q: any, qIdx: number) => {
-          const defaultPrompt = buildChallengePrompt(lessonTitle, subjectTitle, phaseTitle);
-          const prompt = typeof q === 'string'
-            ? (q.trim() ? q : defaultPrompt)
-            : (q.question || q.prompt || q.title || defaultPrompt);
+            const defaultPrompt = buildChallengePrompt(lessonTitle, subjectTitle, phaseTitle);
+            const prompt = typeof q === 'string'
+              ? (q.trim() ? q : defaultPrompt)
+              : (q.question || q.prompt || q.title || defaultPrompt);
             const answers = q.answers || q.correctAnswers || [q.answer || 'Standard Definition'];
             const distractors = q.distractors || q.misconceptions || [];
 
@@ -308,7 +309,6 @@ async function buildSystem() {
             c: challenges
           };
 
-          const outFileName = `${lessonSlug}.json`;
           fs.writeFileSync(path.join(lessonsDir, outFileName), JSON.stringify(manifest), 'utf-8');
 
           catalogItems.push({
@@ -321,6 +321,21 @@ async function buildSystem() {
             badgeIcon: getSubjectEmoji(subjectTitle),
             manifestPath: `/manifests/lessons/${outFileName}`,
           });
+
+          const combinedText = `${lessonTitle} ${subjectTitle} ${phaseTitle} ${
+            challenges.map(c => `${c.p} ${c.a} ${c.r.map((r: any) => r[0]).join(' ')}`).join(' ')
+          }`;
+
+          ragIndex.push({
+            id: lessonSlug,
+            stream: 'academic',
+            phase: phaseTitle,
+            subject: subjectTitle,
+            title: lessonTitle,
+            tokens: tokenize(combinedText),
+            ragContext: `[${subjectTitle} - ${phaseTitle}] ${lessonTitle}\nCore Concepts: ${challenges.map(c => c.p).join(' | ')}\nKey Rules: ${challenges.map(c => c.a).join(' | ')}`,
+            manifestPath: `/manifests/lessons/${outFileName}`
+          });
         });
 
         console.log(`✅ Processed ${file} (${selectedLessons.length} modular manifests generated)`);
@@ -328,12 +343,10 @@ async function buildSystem() {
         console.warn(`⚠️ Error compiling ${file}: ${err.message}`);
       }
     }
-  } else {
-    console.warn(`⚠️ Oak folder not found at ${localOakDir}`);
   }
 
-  // 3. Write Master Catalog
-  const masterCatalog: MasterCatalog = {
+  // 3. Write Master Catalog & RAG Index
+  const masterCatalog = {
     version: '1.2.0-compact',
     generatedAt: Date.now(),
     streams: [
@@ -345,7 +358,11 @@ async function buildSystem() {
   };
 
   fs.writeFileSync(path.join(manifestsDir, 'catalog.json'), JSON.stringify(masterCatalog, null, 2), 'utf-8');
-  console.log(`\n🚀 Ingestion Complete! Generated ${catalogItems.length} interactive manifests in static/manifests/`);
+  fs.writeFileSync(path.join(manifestsDir, 'rag-index.json'), JSON.stringify(ragIndex), 'utf-8');
+
+  console.log(`\n🚀 Ingestion Complete!`);
+  console.log(`✨ Generated ${catalogItems.length} interactive manifests in static/manifests/lessons/`);
+  console.log(`⚡ Generated static/manifests/rag-index.json (${ragIndex.length} indexed nodes)`);
 }
 
 buildSystem();
