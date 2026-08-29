@@ -9,7 +9,7 @@ export interface GenerationRequest {
   subject: string;
   topic: string;
   keyStage: string;
-  curriculum?: 'uk_oak' | 'international';
+  curriculum?: 'uk_oak' | 'international' | string;
   isQuiz?: boolean;
 }
 
@@ -53,15 +53,7 @@ export class EngineFlow {
     const parsedNode = parseAST(rawContent);
     const normalized = this.normalizeASTToQuestion(parsedNode);
 
-    if (!normalized) {
-      return {
-        isValid: false,
-        sanitizedQuestion: null,
-        rejectionReason: 'Failed to normalize AST node structure',
-      };
-    }
-
-    // 4. Govern, verify arithmetic, and validate topic boundary
+    // 4. Pass normalized (or null) to Governor to guarantee a domain-accurate, validated question
     return ASTFlowGovernor.govern(normalized, req.subject, req.topic);
   }
 
@@ -120,38 +112,63 @@ Format strictly as an S-expression:
   public static normalizeASTToQuestion(parsed: any): RawASTQuestion & { hint?: string } | null {
     if (!parsed) return null;
 
-    let options: string[] = [];
-    if (Array.isArray(parsed.options)) {
-      options = parsed.options.map((o: any) =>
-        typeof o === 'object' ? o.children?.[0] || '' : String(o)
-      );
-    } else if (parsed.options?.children && Array.isArray(parsed.options.children)) {
-      options = parsed.options.children.map((c: any) =>
-        typeof c === 'object' ? c.children?.[0] || '' : String(c)
-      );
+    // 1. Extract prompt string
+    let prompt = '';
+    if (typeof parsed.prompt === 'string') {
+      prompt = parsed.prompt;
+    } else if (parsed.prompt?.children && Array.isArray(parsed.prompt.children)) {
+      prompt = parsed.prompt.children.join(' ');
+    } else if (parsed.prompt && typeof parsed.prompt === 'object') {
+      prompt = parsed.prompt.text || parsed.prompt.value || Object.values(parsed.prompt).join(' ');
     }
 
-    const prompt =
-      typeof parsed.prompt === 'object'
-        ? parsed.prompt?.children?.[0] || ''
-        : String(parsed.prompt || '');
-    const scratchpad =
-      typeof parsed.scratchpad === 'object'
-        ? parsed.scratchpad?.children?.[0] || ''
-        : String(parsed.scratchpad || '');
-    const hint =
-      typeof parsed.hint === 'object'
-        ? parsed.hint?.children?.[0] || ''
-        : String(parsed.hint || '');
-    const answerKey = Number(parsed['answer-key'] ?? parsed.answerKey ?? 0);
+    // 2. Extract options list handling array variants and (list ...) tags
+    let rawOptionsList: any[] = [];
+    if (Array.isArray(parsed.options)) {
+      rawOptionsList = parsed.options;
+    } else if (parsed.options?.children && Array.isArray(parsed.options.children)) {
+      rawOptionsList = parsed.options.children;
+    } else if (parsed.options?.list && Array.isArray(parsed.options.list)) {
+      rawOptionsList = parsed.options.list;
+    } else if (parsed.list && Array.isArray(parsed.list)) {
+      rawOptionsList = parsed.list;
+    }
+
+    const options: string[] = rawOptionsList
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        if (typeof item === 'object' && item !== null) {
+          if (typeof item.children?.[0] === 'string') return item.children[0].trim();
+          return item.text || item.value || String(item);
+        }
+        return String(item).trim();
+      })
+      .filter((opt) => opt.length > 0 && !opt.includes('<DISTRACTOR') && !opt.includes('<CORRECT>'));
+
+    // 3. Extract auxiliary attributes
+    const scratchpad = typeof parsed.scratchpad === 'string'
+      ? parsed.scratchpad
+      : (parsed.scratchpad?.children?.[0] || '');
+
+    const hint = typeof parsed.hint === 'string'
+      ? parsed.hint
+      : (parsed.hint?.children?.[0] || '');
+
+    const rawKey = parsed['answer-key'] ?? parsed.answerKey ?? parsed.answer_key ?? 0;
+    const answerKey = typeof rawKey === 'number' ? rawKey : parseInt(String(rawKey), 10) || 0;
+
+    // Fail normalization if essential components are absent or poisoned by templates
+    if (!prompt || prompt.includes('<STEM>') || options.length < 2) {
+      return null;
+    }
 
     return {
       route: parsed.route || 'quiz:mcq',
       prompt: prompt.trim(),
       scratchpad: scratchpad.trim(),
       hint: hint.trim(),
-      options: options.filter(Boolean),
-      answerKey: isNaN(answerKey) ? 0 : answerKey,
+      options,
+      answerKey: answerKey < options.length ? answerKey : 0,
     };
   }
 

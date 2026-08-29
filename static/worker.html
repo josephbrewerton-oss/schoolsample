@@ -92,7 +92,8 @@
 
       const options = {
         systemPrompt: systemInstruction,
-        expectedOutputs: [{ type: 'text', languages: ['en'] }]
+        expectedInputLanguages: ['en'],
+        expectedOutputLanguages: ['en']
       };
 
       if (aiHost?.languageModel) {
@@ -108,61 +109,71 @@
       return null;
     }
 
-    async function processIntent(rawIntent, dc) {
-      isBusy = true;
-      let session = null;
-      try {
-        let parsed = rawIntent;
-        if (typeof rawIntent === 'string') {
-          try { parsed = JSON.parse(rawIntent); } catch {}
-        }
-
-        const prompt = buildUniversalPrompt({
-          subject: parsed.subject || parsed.sub || 'Science',
-          topic: parsed.unit || parsed.topic || 'General',
-          keyStage: parsed.keyStage || parsed.ks || 'KS3',
-          curriculum: parsed.curriculum || 'uk_oak'
-        });
-
-        const systemInstruction = "You are an educational assessment test generator. Generate valid Lisp S-expressions strictly matching the requested topic.";
-        session = await createFreshSession(systemInstruction);
-
-        if (!session) {
-          if (dc.readyState === 'open') {
-            dc.send('(:route "quiz:mcq" :prompt "Gemini Nano API not detected in this browser." :options (list "Retry" "Help") :answer-key 0)');
-            dc.send('__EOF__');
-          }
-          return;
-        }
-
-        const response = await session.prompt(prompt);
-        let sanitized = response
-          .replace(/```(?:lisp|scheme)?/gi, '')
-          .replace(/```/g, '')
-          .trim();
-
-        const firstParen = sanitized.indexOf('(');
-        const lastParen = sanitized.lastIndexOf(')');
-
-        if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
-          sanitized = sanitized.substring(firstParen, lastParen + 1);
-        }
-
-        if (dc.readyState === 'open') {
-          dc.send(sanitized);
-          dc.send('__EOF__');
-        }
-      } catch (err) {
-        console.error('[Worker Daemon] Generation Error:', err);
-        if (dc.readyState === 'open') dc.send('__EOF__');
-      } finally {
-        isBusy = false;
-        if (session && typeof session.destroy === 'function') {
-          try { session.destroy(); } catch {}
-        }
-      }
+    // Inside static/worker.html -> processIntent()
+// Inside static/worker.html -> processIntent()
+async function processIntent(rawIntent, dc) {
+  isBusy = true;
+  let session = null;
+  try {
+    let parsed = rawIntent;
+    if (typeof rawIntent === 'string') {
+      try { parsed = JSON.parse(rawIntent); } catch {}
     }
 
+    const subject = parsed?.subject || parsed?.sub || 'English';
+    const topic = parsed?.unit || parsed?.topic || parsed?.u || 'Shakespeare: Key Themes';
+    const keyStage = parsed?.keyStage || parsed?.ks || 'Key Stage 3';
+    const curriculum = parsed?.curriculum || 'uk_oak';
+
+    const systemInstruction = `You are an expert UK curriculum teacher. Create multiple-choice questions matching the given subject, topic, and Key Stage level. Output strictly as a valid Lisp S-expression.`;
+
+    session = await createFreshSession(systemInstruction);
+
+    // Clean direct instruction without repetitive template keys
+    const prompt = `Topic: "${topic}" (${keyStage} ${subject}).
+Generate 1 multiple choice question testing understanding of "${topic}".
+
+Format:
+(:route "quiz:mcq"
+ :scratchpad "Explanation of correct concept"
+ :prompt "Write a specific question directly testing knowledge of ${topic} here"
+ :options ("Correct answer" "Plausible wrong answer 1" "Plausible wrong answer 2" "Plausible wrong answer 3")
+ :answer-key 0
+ :hint "Short clue under 15 words")`;
+
+    const response = await session.prompt(prompt);
+
+    let sanitized = response
+      .replace(/```(?:lisp|scheme)?/gi, '')
+      .replace(/```/g, '')
+      .trim();
+
+    const firstParen = sanitized.indexOf('(');
+    const lastParen = sanitized.lastIndexOf(')');
+    if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+      sanitized = sanitized.substring(firstParen, lastParen + 1);
+    }
+
+    if (dc.readyState === 'open') {
+      dc.send(JSON.stringify({
+        type: 'AST_RESPONSE',
+        raw: sanitized,
+        keyStage,
+        subject,
+        unit: topic
+      }));
+      dc.send('__EOF__');
+    }
+  } catch (err) {
+    console.error('[Worker Daemon Error]:', err);
+    if (dc.readyState === 'open') dc.send('__EOF__');
+  } finally {
+    isBusy = false;
+    if (session?.destroy) {
+      try { session.destroy(); } catch {}
+    }
+  }
+}
     // Announce ready immediately
     bus.postMessage({ type: 'daemon_ready' });
   </script>

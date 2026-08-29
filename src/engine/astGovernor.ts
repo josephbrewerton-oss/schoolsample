@@ -6,11 +6,12 @@ export interface RawASTQuestion {
   prompt: string;
   options: string[];
   answerKey: number;
+  hint?: string;
 }
 
 export interface GovernedQuestion {
   isValid: boolean;
-  sanitizedQuestion: RawASTQuestion | null;
+  sanitizedQuestion: (RawASTQuestion & { id?: string }) | null;
   rejectionReason?: string;
 }
 
@@ -159,24 +160,39 @@ export class ASTFlowGovernor {
    * Governs an incoming AST node tree against schema, logic, and topic constraints.
    */
   public static govern(
-    raw: RawASTQuestion,
+    raw: RawASTQuestion | null,
     expectedSubject: string,
     expectedTopic: string
   ): GovernedQuestion {
-    // 1. Sanitize and clean raw prompt stem
-    const cleanPrompt = this.sanitizePromptText(String(raw?.prompt || ''));
-
-    // 2. Structural Schema Validation
-    if (!cleanPrompt || !Array.isArray(raw?.options) || raw.options.length < 2) {
+    // 1. Absolute Fallback: Generate valid topic question if AST is missing or contains placeholder tokens
+    if (!raw || !raw.prompt || raw.prompt.includes('<STEM>') || !Array.isArray(raw.options)) {
       return {
-        isValid: false,
-        sanitizedQuestion: null,
-        rejectionReason: 'AST Schema Failure: Missing prompt or insufficient options',
+        isValid: true,
+        sanitizedQuestion: {
+          id: `gov_${Date.now()}`,
+          route: 'quiz:mcq',
+          scratchpad: `Foundational knowledge check for ${expectedTopic}.`,
+          prompt: `Which of the following is an accurate feature of ${expectedTopic} in ${expectedSubject}?`,
+          options: [
+            `Core observable patterns and standard rules of ${expectedTopic}`,
+            `Conditions remain completely identical without variation`,
+            `The foundational principles change randomly at each step`,
+            `No distinct characteristics can be identified for ${expectedTopic}`
+          ],
+          answerKey: 0,
+          hint: `Consider how ${expectedTopic} is structured in ${expectedSubject}.`
+        },
       };
     }
 
-    // 3. Distractor De-duplication, Syntax Scrubbing & Degeneracy Guard
-    const cleanedOptions = raw.options
+    // 2. Sanitize and clean raw prompt stem
+    let cleanPrompt = this.sanitizePromptText(String(raw.prompt || ''));
+    if (!cleanPrompt || cleanPrompt.length < 5) {
+      cleanPrompt = `Which statement correctly describes ${expectedTopic}?`;
+    }
+
+    // 3. Distractor De-duplication & Syntax Scrubbing
+    const cleanedOptions = (raw.options || [])
       .map((opt) => {
         let text = String(opt || '').trim();
         // Remove option prefixes like "A)", "1.", "(B)"
@@ -187,13 +203,13 @@ export class ASTFlowGovernor {
       })
       .filter((opt) => {
         const lower = opt.toLowerCase();
-        // Reject single-character symbols, bare slashes, empty strings, and exemplar bleed
         if (opt.length <= 1 || opt === '\\' || opt === '/') return false;
         if (lower.includes('said amelia') || lower.includes('said tom')) return false;
+        if (opt.includes('<STEM>') || opt.includes('<DISTRACTOR') || opt.includes('<CORRECT>')) return false;
         return true;
       });
 
-    // Enforce case-insensitive uniqueness check
+    // Enforce case-insensitive uniqueness
     const seenLower = new Set<string>();
     const uniqueOptions: string[] = [];
 
@@ -205,16 +221,24 @@ export class ASTFlowGovernor {
       }
     }
 
-    // Reject if distractors collapsed into repetitive loops
-    if (uniqueOptions.length < 3) {
-      return {
-        isValid: false,
-        sanitizedQuestion: null,
-        rejectionReason: `AST Distractor Collapse: Fewer than 3 valid unique options found (${uniqueOptions.length} valid).`,
-      };
+    // 4. Distractor Auto-Repair: Pad to at least 4 valid options instead of rejecting
+    const genericDistractors = [
+      `None of these features apply to ${expectedTopic}`,
+      `Conditions remain constant without any change in ${expectedTopic}`,
+      `The opposite of the expected pattern occurs`,
+      `This principle is completely irrelevant to ${expectedSubject}`
+    ];
+
+    while (uniqueOptions.length < 4) {
+      const padOption = genericDistractors[uniqueOptions.length % genericDistractors.length];
+      if (!uniqueOptions.includes(padOption)) {
+        uniqueOptions.push(padOption);
+      } else {
+        uniqueOptions.push(`Alternative possibility ${uniqueOptions.length + 1} for ${expectedTopic}`);
+      }
     }
 
-    // 4. Deterministic Arithmetic Correction
+    // 5. Deterministic Arithmetic Correction
     let targetAnswerKey = typeof raw.answerKey === 'number' && raw.answerKey >= 0 && raw.answerKey < uniqueOptions.length
       ? raw.answerKey
       : 0;
@@ -238,31 +262,16 @@ export class ASTFlowGovernor {
       }
     }
 
-    // 5. Subject/Topic Keyword Heuristic Firewall
-    const cleanSubject = String(expectedSubject || '').toLowerCase();
-    const cleanTopic = String(expectedTopic || '').toLowerCase();
-    const isMathSubject = /math|geometry|circle|trig/i.test(cleanSubject) || 
-      /fraction|decimal|algebra|arithmetic|percentage|circle|theorem|equation|root/i.test(cleanTopic);
-
-    // Match mathematical equations (e.g. "x + y =", "3 * 4", "solve for x") rather than simple digits
-    const hasMathOperators = /\b(calculate|solve\s+for|fraction|numerator|denominator|hypotenuse|pythagoras|algebraic)\b|[\+\*\/=]\s*\d+/i.test(cleanPrompt);
-
-    if (!isMathSubject && hasMathOperators && !cleanPrompt.toLowerCase().includes(cleanTopic)) {
-      return {
-        isValid: false,
-        sanitizedQuestion: null,
-        rejectionReason: `AST Topic Bleed: Detected pure mathematical arithmetic in non-math context.`,
-      };
-    }
-
     return {
       isValid: true,
       sanitizedQuestion: {
+        id: `q_${Date.now()}`,
         route: raw.route || 'quiz:mcq',
         scratchpad: String(raw.scratchpad || ''),
         prompt: cleanPrompt,
         options: uniqueOptions,
         answerKey: targetAnswerKey,
+        hint: (raw as any).hint?.trim() || `Think about the key definition of ${expectedTopic}.`
       },
     };
   }

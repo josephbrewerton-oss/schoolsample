@@ -24,7 +24,7 @@ export function TuringTutor({
   activeTopic = '',
   contextTopic = '',
   seedKey = '',
-  keyStage = 'KS3',
+  keyStage = 'Key Stage 3',
   subject = 'Science',
   unit = 'Atomic Structure',
   onLaunchLesson,
@@ -32,7 +32,10 @@ export function TuringTutor({
   const currentTopic = activeTopic || contextTopic || unit || 'General Studies';
 
   const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
-    { role: 'turing', text: 'I am here to guide your steps! Ask me if you get stuck.' },
+    {
+      role: 'turing',
+      text: `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
+    },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,13 +76,23 @@ export function TuringTutor({
     }
   }, []);
 
+  const buildSystemPrompt = () => `You are "Super Teacher Nano" — an elite UK National Curriculum Socratic educator.
+Subject Context: ${subject} | Stage: ${keyStage} | Topic: ${currentTopic}
+
+PEDAGOGICAL RULES:
+1. NEVER reveal the direct final answer.
+2. If the student is stuck: Break the question down into ONE simpler micro-step (Scaffolding).
+3. If the student makes an error: Identify the root misconception and ask a gentle counter-factual question to help them self-correct.
+4. Keep all spoken responses under 25 words to optimize audio synthesis.
+5. Conclude every turn with an engaging, bite-sized question.`;
+
   const speak = (text: string) => {
     if (!voiceEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     if (voiceRef.current) utterance.voice = voiceRef.current;
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 0.98;
+    utterance.pitch = 1.05;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -90,11 +103,10 @@ export function TuringTutor({
       .replace(/\((?:Since|Based on|If they|Note).*?\)/gi, '')
       .replace(/\*\*.*?\*\*/g, '')
       .replace(/^"(.*)"$/, '$1')
-      .replace(/^(?:Hint|Tutor Hint|Prof\. Turing):\s*/i, '')
+      .replace(/^(?:Hint|Tutor Hint|Super Teacher Nano|Prof\. Turing):\s*/i, '')
       .trim();
   };
 
-  // STEP 4: Fetch full lesson AST on demand via ComponentsFlow
   const handleLaunchSuggestedLesson = async () => {
     if (!suggestedLesson) return;
     setLaunchingLesson(true);
@@ -117,19 +129,14 @@ export function TuringTutor({
     }
   };
 
-  const handleAsk = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const query = input.trim();
-    if (!query || loading) return;
-
-    setMessages((prev) => [...prev, { role: 'pupil', text: query }]);
-    setInput('');
+  const dispatchNanoInference = async (userText: string, customInstruction?: string) => {
+    if (loading) return;
+    setMessages((prev) => [...prev, { role: 'pupil', text: userText }]);
     setLoading(true);
     setSuggestedLesson(null);
 
     try {
-      // 1. In-browser RAG match via ComponentsFlow
-      const ragResult = await ComponentsFlow.getGroundedContext(currentTopic, query);
+      const ragResult = await ComponentsFlow.getGroundedContext(currentTopic, userText);
       if (ragResult.match) {
         setSuggestedLesson({
           id: ragResult.match.id,
@@ -138,15 +145,15 @@ export function TuringTutor({
         });
       }
 
-      const promptContext = `Topic: ${currentTopic} (${keyStage} ${subject})${ragResult.context}\n\nPupil Question: "${query}"\nRespond with one brief Socratic question:`;
+      const promptContext = `Topic: ${currentTopic} (${keyStage} ${subject})${ragResult.context}\n${
+        activePrompt ? `Active Check: "${activePrompt}"\n` : ''
+      }${customInstruction ? `Instruction: ${customInstruction}\n` : ''}Pupil Query: "${userText}"\nRespond as Super Teacher Nano:`;
 
       setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
       setLoading(false);
 
-      // 2. Stream generation via unified Prompt API generator
       const stream = ComponentsFlow.streamPrompt(promptContext, {
-        systemPrompt:
-          'You are Prof. Turing, a concise UK Socratic tutor. Never deliver lectures, lesson plans, summaries, or lists. Reply in ONE single question under 20 words guiding the pupil.',
+        systemPrompt: buildSystemPrompt(),
       });
 
       let accumulated = '';
@@ -157,17 +164,17 @@ export function TuringTutor({
           const updated = [...prev];
           updated[updated.length - 1] = {
             role: 'turing',
-            text: cleaned || 'Examining the concept...',
+            text: cleaned || 'Formulating Socratic guidance...',
           };
           return updated;
         });
       }
 
-      const finalClean = cleanThoughtArtifacts(accumulated) || 'Think about the core rule for this topic!';
+      const finalClean = cleanThoughtArtifacts(accumulated) || 'What is the first rule we apply here?';
       speak(finalClean);
     } catch (err) {
-      console.error('[Turing Tutor Error]:', err);
-      const fallbackText = 'Break the problem down into its core components and test each condition step-by-step.';
+      console.error('[Super Teacher Error]:', err);
+      const fallbackText = 'Let us break this problem down into its first simple step. What do we know so far?';
       setMessages((prev) => {
         const updated = [...prev];
         const last = updated[updated.length - 1];
@@ -184,53 +191,158 @@ export function TuringTutor({
     }
   };
 
+  const handleAsk = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const query = input.trim();
+    if (!query) return;
+    setInput('');
+    dispatchNanoInference(query);
+  };
+
+  // 3-Tier Scaffolding Handlers
+  const handleScaffoldHint = (level: 1 | 2 | 3) => {
+    if (level === 1) {
+      dispatchNanoInference(
+        'Can I have a small nudge?',
+        'Give a gentle real-world analogy to orient the student without using formula jargon.'
+      );
+    } else if (level === 2) {
+      dispatchNanoInference(
+        'Can I have a clue on the rule?',
+        'Point out the specific curriculum rule or property needed here, but leave the execution to the student.'
+      );
+    } else {
+      dispatchNanoInference(
+        'Can we break this down step-by-step?',
+        'Provide a worked parallel mini-example demonstrating the first step only.'
+      );
+    }
+  };
+
   return (
     <div
       style={{
-        background: '#0a0e17',
+        background: '#090d16',
         border: '1px solid #1e293b',
-        borderRadius: '12px',
-        padding: '1rem',
+        borderRadius: '14px',
+        padding: '1.25rem',
         marginTop: '1.5rem',
         color: '#f8fafc',
-        fontFamily: 'monospace',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
+      {/* Panel Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-        <span style={{ fontWeight: 'bold', color: '#38bdf8' }}>🤖 Prof. Turing [Gemini Nano + IndexedDB RAG]</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '1.1rem' }}>⚡</span>
+          <span style={{ fontWeight: 700, color: '#38bdf8', letterSpacing: '0.02em' }}>
+            Super Teacher Nano <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>[{keyStage} • {subject}]</span>
+          </span>
+        </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
             type="button"
             onClick={() => setVoiceEnabled(!voiceEnabled)}
             style={{
               fontSize: '0.75rem',
-              background: voiceEnabled ? '#047857' : '#334155',
+              background: voiceEnabled ? '#059669' : '#334155',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',
-              padding: '2px 8px',
+              padding: '4px 10px',
               cursor: 'pointer',
+              fontWeight: 600,
             }}
           >
             {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
           </button>
-          <span style={{ fontSize: '0.75rem', background: '#065f46', color: '#34d399', padding: '2px 8px', borderRadius: '6px' }}>
-            100% Client-Side
+          <span style={{ fontSize: '0.75rem', background: '#064e3b', color: '#34d399', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>
+            100% On-Device
           </span>
         </div>
       </div>
 
-      <div style={{ minHeight: '60px', maxHeight: '140px', overflowY: 'auto', marginBottom: '0.75rem' }}>
+      {/* Terminal Chat Body */}
+      <div
+        style={{
+          minHeight: '80px',
+          maxHeight: '160px',
+          overflowY: 'auto',
+          marginBottom: '0.75rem',
+          padding: '0.5rem',
+          background: '#030712',
+          borderRadius: '8px',
+          border: '1px solid #1f2937',
+          fontFamily: 'monospace',
+          fontSize: '0.9rem',
+        }}
+      >
         {messages.map((m, i) => (
-          <div key={i} style={{ margin: '4px 0', color: m.role === 'turing' ? '#4ade80' : '#38bdf8' }}>
-            <strong>{m.role === 'turing' ? 'Prof. Turing: ' : 'pupil: '}</strong>
+          <div key={i} style={{ margin: '6px 0', color: m.role === 'turing' ? '#4ade80' : '#38bdf8', lineHeight: 1.4 }}>
+            <strong>{m.role === 'turing' ? 'Super Teacher Nano: ' : 'pupil: '}</strong>
             {m.text}
           </div>
         ))}
-        {loading && <div style={{ color: '#94a3b8' }}>Prof. Turing is retrieving context & thinking...</div>}
+        {loading && <div style={{ color: '#94a3b8' }}>Super Teacher Nano is diagnosing and thinking...</div>}
         <div ref={terminalEndRef} />
       </div>
 
+      {/* 3-Tier Scaffolding Hint Ladder */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => handleScaffoldHint(1)}
+          style={{
+            background: '#1e293b',
+            color: '#f8fafc',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          💡 Level 1: Nudge
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => handleScaffoldHint(2)}
+          style={{
+            background: '#1e293b',
+            color: '#f8fafc',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          🔍 Level 2: Clue
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => handleScaffoldHint(3)}
+          style={{
+            background: '#1e293b',
+            color: '#f8fafc',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            padding: '4px 10px',
+            fontSize: '0.75rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          🧩 Level 3: Step Breakdown
+        </button>
+      </div>
+
+      {/* Grounded Manifest Match */}
       {suggestedLesson && (
         <div
           style={{
@@ -259,6 +371,7 @@ export function TuringTutor({
               padding: '3px 8px',
               fontSize: '0.75rem',
               cursor: launchingLesson ? 'wait' : 'pointer',
+              fontWeight: 600,
             }}
           >
             {launchingLesson ? 'Loading...' : 'Launch Interactive Practice ⚡'}
@@ -266,32 +379,36 @@ export function TuringTutor({
         </div>
       )}
 
+      {/* Chat Input */}
       <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question or explain your reasoning..."
+          placeholder="Ask a question, describe your steps, or request advice..."
           style={{
             flex: 1,
             background: '#020617',
             border: '1px solid #334155',
             color: '#ffffff',
             borderRadius: '6px',
-            padding: '6px 12px',
+            padding: '8px 12px',
+            fontSize: '0.85rem',
           }}
         />
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !input.trim()}
           style={{
             background: '#2563eb',
             color: '#ffffff',
             border: 'none',
             borderRadius: '6px',
-            padding: '6px 16px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.6 : 1,
+            padding: '8px 18px',
+            cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+            opacity: loading || !input.trim() ? 0.6 : 1,
+            fontWeight: 600,
+            fontSize: '0.85rem',
           }}
         >
           Ask

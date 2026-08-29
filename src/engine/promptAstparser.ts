@@ -30,7 +30,7 @@ export class PromptASTPreParser {
   }
 
   /**
-   * Transforms configuration objects into an optimized AST prompt payload.
+   * Transforms configuration objects into an optimized AST prompt payload without literal schema placeholder tokens.
    */
   static parseForInference(params: PromptInferenceParams = {}): string {
     const {
@@ -57,14 +57,16 @@ export class PromptASTPreParser {
     const archetypes = (SUBJECT_DEFINITIONS as any)[matchedKey]?.archetypes || ['core conceptual mastery'];
     const targetFocus = archetypes[Math.floor(Math.random() * archetypes.length)];
 
-    // 4. Return AST schema contract with prefilled trigger prefix
-    return `[AST_SCHEMA: LISP_S_EXPRESSION]
-(:route "quiz:mcq" :scratchpad "<STEP_REASONING>" :prompt "<STEM>" :options (list "<CORRECT>" "<DISTRACTOR_1>" "<DISTRACTOR_2>" "<DISTRACTOR_3>") :hint "<CLUE>" :answer-key 0)
+    // 4. Return clean, direct AST generation prompt
+    return `Generate 1 Oak Curriculum multiple-choice quiz question for ${keyStage} ${subject}: "${topic}".
+Focus: ${targetFocus} | Constraints: ${cleanKs}, ${cleanRegional}.
 
-[EXEMPLAR]
-(:route "quiz:mcq" :scratchpad "Deciduous trees lose leaves in winter to conserve energy." :prompt "Which feature characterizes winter weather in the UK?" :options (list "Freezing temperatures and shorter days" "Warm sunny days with blossom" "Hot dry afternoons" "Humid tropical monsoons") :hint "Consider daylight hours and temperature during the coldest season." :answer-key 0)
-
-[TARGET: ${subject} | ${topic} | ${keyStage} | ${cleanKs} | ${targetFocus} | ${cleanRegional}]
-(:route "quiz:mcq" :scratchpad "`.trim();
+Output ONLY a valid Lisp S-expression in this exact format:
+(:route "quiz:mcq"
+ :scratchpad "Short explanation of the concept"
+ :prompt "Clear question about ${topic}?"
+ :options ("Correct answer" "Plausible wrong answer 1" "Plausible wrong answer 2" "Plausible wrong answer 3")
+ :answer-key 0
+ :hint "Concise Socratic clue under 15 words.")`.trim();
   }
 }

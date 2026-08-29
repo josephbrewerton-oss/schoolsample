@@ -1,6 +1,7 @@
 // src/hooks/useWebRTCNeuralBus.ts
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { extractQuestionFromAst, ExtractedQuestion } from '../utils/astQuestionExtractor';
+import { EngineFlow } from '../engine/engineflow';
 
 export interface QuestionPayload {
   question: ExtractedQuestion;
@@ -8,6 +9,7 @@ export interface QuestionPayload {
   subject: string;
   unit: string;
   curriculum?: string;
+  hint?: string;
 }
 
 export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) => void) {
@@ -26,9 +28,9 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
     unit: string;
     curriculum: string;
   }>({
-    keyStage: 'Key Stage 3',
+    keyStage: 'Key Stage 1',
     subject: 'Science',
-    unit: 'Atomic Structure & Periodic Table',
+    unit: 'Seasonal Changes',
     curriculum: 'uk_oak',
   });
 
@@ -65,24 +67,55 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       };
 
       dc.onmessage = (msgEvent) => {
-        const chunk = msgEvent.data;
-        if (chunk === '__EOF__') {
+        const raw = msgEvent.data;
+        if (!raw) return;
+
+        if (raw === '__EOF__') {
           const fullText = rawStreamRef.current;
           rawStreamRef.current = '';
 
-          const extracted = extractQuestionFromAst(fullText);
-          if (extracted) {
+          // 1. Try JSON Envelope decode
+          if (fullText.startsWith('{') && fullText.endsWith('}')) {
+            try {
+              const envelope = JSON.parse(fullText);
+              if (envelope.type === 'AST_RESPONSE' || envelope.raw) {
+                const parsedNode = EngineFlow.parse(envelope.raw);
+                const normalized = EngineFlow.normalizeASTToQuestion(parsedNode);
+                if (normalized) {
+                  onQuestionReadyRef.current({
+                    question: normalized,
+                    keyStage: envelope.keyStage || inFlightContextRef.current.keyStage,
+                    subject: envelope.subject || inFlightContextRef.current.subject,
+                    unit: envelope.unit || inFlightContextRef.current.unit,
+                    curriculum: envelope.curriculum || inFlightContextRef.current.curriculum,
+                    hint: normalized.hint,
+                  });
+                  return;
+                }
+              }
+            } catch (err) {
+              console.warn('[NeuralBus Envelope Parse Error]:', err);
+            }
+          }
+
+          // 2. Direct S-expression extraction
+          const parsedNode = EngineFlow.parse(fullText);
+          const normalized = EngineFlow.normalizeASTToQuestion(parsedNode) || extractQuestionFromAst(fullText);
+
+          if (normalized) {
             onQuestionReadyRef.current({
-              question: extracted,
+              question: normalized,
               keyStage: inFlightContextRef.current.keyStage,
               subject: inFlightContextRef.current.subject,
               unit: inFlightContextRef.current.unit,
               curriculum: inFlightContextRef.current.curriculum,
+              hint: normalized.hint,
             });
           }
           return;
         }
-        rawStreamRef.current += chunk;
+
+        rawStreamRef.current += raw;
       };
     };
 
@@ -90,7 +123,7 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       if (e.candidate && isCurrentMount) {
         bus.postMessage({ 
           type: 'candidate', 
-          candidate: e.candidate.toJSON(),
+          candidate: e.candidate.toJSON(), 
           sessionId: sessionIdRef.current 
         });
       }
@@ -101,7 +134,6 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       const data = e.data;
       if (!data) return;
 
-      // When daemon announces it booted, reply with peer_ready
       if (data.type === 'daemon_ready') {
         console.log('[NeuralBus Client] Detected daemon_ready, sending peer_ready...');
         bus.postMessage({ type: 'peer_ready', sessionId: sessionIdRef.current });
@@ -117,7 +149,7 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
           await pc.setLocalDescription(answer);
           bus.postMessage({ 
             type: 'answer', 
-            sdp: pc.localDescription?.toJSON(),
+            sdp: pc.localDescription?.toJSON(), 
             sessionId: sessionIdRef.current 
           });
         } catch (err) {
@@ -155,28 +187,37 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       keyStage: string,
       subject: string,
       unit: string,
-      keyStageId: string,
-      subjectId: string,
-      unitId: string,
+      ksId?: string,
+      subId?: string,
+      unitId?: string,
       curriculum: string = 'uk_oak'
     ) => {
-      inFlightContextRef.current = { keyStage, subject, unit, curriculum };
-
-      if (channelRef.current?.readyState === 'open') {
-        const intentPayload = {
-          type: 'GENERATE_INTENT',
-          keyStage,
-          subject,
-          unit,
-          keyStageId,
-          subjectId,
-          unitId,
-          curriculum,
-        };
-        channelRef.current.send(JSON.stringify(intentPayload));
-        return true;
+      if (!channelRef.current || channelRef.current.readyState !== 'open') {
+        return false;
       }
-      return false;
+
+      inFlightContextRef.current = {
+        keyStage,
+        subject,
+        unit,
+        curriculum,
+      };
+
+      rawStreamRef.current = '';
+
+      const payload = JSON.stringify({
+        type: 'REQUEST_QUESTION',
+        keyStage,
+        subject,
+        unit,
+        ks: keyStage,
+        sub: subject,
+        topic: unit,
+        curriculum,
+      });
+
+      channelRef.current.send(payload);
+      return true;
     },
     []
   );
