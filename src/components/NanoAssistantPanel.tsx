@@ -1,6 +1,7 @@
 // src/components/TuringTutor.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { ComponentsFlow } from './componentsflow';
+import { dispatchAstIntent, CurriculumPackage } from '../curriculum';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -136,6 +137,22 @@ PEDAGOGICAL RULES:
     setSuggestedLesson(null);
 
     try {
+      // 1. Resolve live curriculum grounding via AST Substrate Intent
+      let stageManifestContext = '';
+      try {
+        const normalizedStage = keyStage.toLowerCase().replace(/\s+/g, '');
+        const pkg = dispatchAstIntent<CurriculumPackage>('getActiveCurriculum', normalizedStage);
+        if (pkg?.catalogueStage) {
+          const adapted = dispatchAstIntent('adaptOakStage', pkg.catalogueStage);
+          if (adapted) {
+            stageManifestContext = `\n[Mined Framework: ${pkg.framework}]`;
+          }
+        }
+      } catch (e) {
+        console.warn('[AST Tutor Context Grounding Skip]:', e);
+      }
+
+      // 2. Query contextual embeddings
       const ragResult = await ComponentsFlow.getGroundedContext(currentTopic, userText);
       if (ragResult.match) {
         setSuggestedLesson({
@@ -145,7 +162,7 @@ PEDAGOGICAL RULES:
         });
       }
 
-      const promptContext = `Topic: ${currentTopic} (${keyStage} ${subject})${ragResult.context}\n${
+      const promptContext = `Topic: ${currentTopic} (${keyStage} ${subject})${stageManifestContext}${ragResult.context}\n${
         activePrompt ? `Active Check: "${activePrompt}"\n` : ''
       }${customInstruction ? `Instruction: ${customInstruction}\n` : ''}Pupil Query: "${userText}"\nRespond as Super Teacher Nano:`;
 

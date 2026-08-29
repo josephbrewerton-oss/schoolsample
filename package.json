@@ -10,12 +10,15 @@
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
     "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
     "build": "npm run ingest:oak && docusaurus build",
+    "mine:watch": "ts-node --esm scripts/watchSubstrates.ts",
+    "dev": "concurrently \"npm run mine:watch\" \"docusaurus start\"",
     "deploy": "docusaurus deploy"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
+    "chokidar": "^5.0.0",
     "process": "^0.11.10",
     "typescript": "~5.4.0"
   },

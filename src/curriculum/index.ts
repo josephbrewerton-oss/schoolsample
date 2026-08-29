@@ -1,6 +1,13 @@
-import defaultUkCurriculum from './curriculum.ast';
+// src/curriculum/index.ts
+import defaultUkCurriculum from './curriculum.ast.ts';
+import minedSubstrateAst from './curriculumoutput.ast.ts';
 import { parseAST, ASTNode } from '../engine/ast-loader';
-import { OAK_CURRICULUM_CATALOGUE, OakStage } from './oakCatalogue';
+import { 
+  OAK_CURRICULUM_CATALOGUE, 
+  DEFAULT_OAK_CATALOGUE,
+  OakStage 
+} from './oakCatalogue';
+import { adaptOakStage } from './curriculumAdapter';
 
 export interface CurriculumPackage {
   id: string;
@@ -11,26 +18,55 @@ export interface CurriculumPackage {
   catalogueStage?: OakStage;
 }
 
-// Automatically scaffold the entire registry from OAK_CURRICULUM_CATALOGUE
+// 1. Module Registry built directly from mined substrate exports
+const SUBSTRATE_REGISTRY: Record<string, any> = {
+  adaptOakStage,
+  getActiveCurriculum,
+  OAK_CURRICULUM_CATALOGUE,
+  DEFAULT_OAK_CATALOGUE,
+  CurriculumRegistry: null as any,
+};
+
+// 2. Hydrate all stages using the mined substrate AST
 export const CurriculumRegistry: Record<string, CurriculumPackage> = Object.values(
   OAK_CURRICULUM_CATALOGUE
 ).reduce((acc, stage) => {
   const stageKey = `uk-${stage.id}`;
-  const isDefaultKs2 = stage.id === 'ks2';
+  const rawAst = stage.id === 'ks2' ? defaultUkCurriculum : minedSubstrateAst;
 
   acc[stageKey] = {
     id: stageKey,
     country: 'UK',
     framework: stage.title,
-    // Hydrate KS2 with the default static AST, leave others as null for JIT compilation
-    ast: isDefaultKs2 ? parseAST(defaultUkCurriculum) : null,
-    raw: isDefaultKs2 ? defaultUkCurriculum : '',
+    ast: parseAST(rawAst),
+    raw: rawAst,
     catalogueStage: stage,
   };
 
   return acc;
 }, {} as Record<string, CurriculumPackage>);
 
+SUBSTRATE_REGISTRY.CurriculumRegistry = CurriculumRegistry;
+
 export function getActiveCurriculum(id = 'uk-ks2'): CurriculumPackage {
-  return CurriculumRegistry[id] ?? CurriculumRegistry['uk-ks2'];
+  const normalizedId = id.startsWith('uk-') ? id : `uk-${id.toLowerCase()}`;
+  return CurriculumRegistry[normalizedId] ?? CurriculumRegistry['uk-ks2'];
+}
+
+/**
+ * Dynamic Intent Dispatcher
+ * Invokes mined AST exports dynamically without static wiring
+ */
+export function dispatchAstIntent<T = any>(symbolName: string, ...args: any[]): T {
+  const target = SUBSTRATE_REGISTRY[symbolName];
+  
+  if (typeof target === 'function') {
+    return target(...args);
+  }
+  
+  if (target !== undefined) {
+    return target;
+  }
+  
+  throw new Error(`[AST Substrate] Symbol "${symbolName}" not found in curriculum graph.`);
 }

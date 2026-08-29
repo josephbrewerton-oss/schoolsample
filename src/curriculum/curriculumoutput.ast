@@ -1,0 +1,47 @@
+;; Curriculum AST Export Manifest
+;; Auto-generated from curriculum
+
+(:curriculum-substrate
+  (:module "curriculumAdapter.ts"
+    :exports (
+      (:symbol "adaptOakStage" :kind :function :return-type "StandardStage" :params ((:param "stage" :type "any")))
+      (:symbol "StandardTopic" :kind :const :return-type "any" :params ())
+      (:symbol "StandardSubject" :kind :const :return-type "any" :params ())
+      (:symbol "StandardStage" :kind :const :return-type "any" :params ())
+    )
+  )
+  (:module "engine.ts"
+    :exports (
+      (:symbol "FOLDER_MANIFEST" :kind :const :return-type "{ readonly folder: "src/curriculum"; readonly timestamp: 1787937755228; readonly totalModules: 2; readonly exports: readonly [{ readonly name: "StandardTopic"; readonly isType: true; readonly sourceFile: "curriculumAdapter"; }, ... 8 more ..., { ...; }]; }" :params ())
+      (:symbol "FolderExportNames" :kind :const :return-type "any" :params ())
+      (:symbol "adaptOakStage" :kind :function :return-type "StandardStage" :params ((:param "stage" :type "any")))
+      (:symbol "StandardTopic" :kind :const :return-type "any" :params ())
+      (:symbol "StandardSubject" :kind :const :return-type "any" :params ())
+      (:symbol "StandardStage" :kind :const :return-type "any" :params ())
+      (:symbol "OakTopic" :kind :const :return-type "any" :params ())
+      (:symbol "OakSubject" :kind :const :return-type "any" :params ())
+      (:symbol "OakStage" :kind :const :return-type "any" :params ())
+      (:symbol "OAK_CURRICULUM_CATALOGUE" :kind :const :return-type "Record<string, OakStage>" :params ())
+      (:symbol "OakCatalogue" :kind :const :return-type "any" :params ())
+      (:symbol "DEFAULT_OAK_CATALOGUE" :kind :const :return-type "OakCatalogue" :params ())
+    )
+  )
+  (:module "index.ts"
+    :exports (
+      (:symbol "getActiveCurriculum" :kind :function :return-type "CurriculumPackage" :params ((:param "id" :type "string")))
+      (:symbol "dispatchAstIntent" :kind :function :return-type "T" :params ((:param "symbolName" :type "string") (:param "args" :type "any[]")))
+      (:symbol "CurriculumPackage" :kind :const :return-type "any" :params ())
+      (:symbol "CurriculumRegistry" :kind :const :return-type "Record<string, CurriculumPackage>" :params ())
+    )
+  )
+  (:module "oakCatalogue.ts"
+    :exports (
+      (:symbol "OakTopic" :kind :const :return-type "any" :params ())
+      (:symbol "OakSubject" :kind :const :return-type "any" :params ())
+      (:symbol "OakStage" :kind :const :return-type "any" :params ())
+      (:symbol "OAK_CURRICULUM_CATALOGUE" :kind :const :return-type "Record<string, OakStage>" :params ())
+      (:symbol "OakCatalogue" :kind :const :return-type "any" :params ())
+      (:symbol "DEFAULT_OAK_CATALOGUE" :kind :const :return-type "OakCatalogue" :params ())
+    )
+  )
+)
