@@ -2,13 +2,14 @@
 import { DomainManifest } from '../types/learning-ast';
 
 const DB_NAME = 'EdgeLearningEngineDB';
-const DB_VERSION = 3; // Version 3: Dynamic In-Context Adapters & Synthetic AST Bank
+const DB_VERSION = 4; // Version 4: In-Context Lesson Schemas & Logic Inflation
 
 const STORE_MANIFESTS = 'manifests';
 const STORE_PROGRESS = 'student_progress';
 export const STORE_VIEWS = 'vfs_views';
 const STORE_ADAPTERS = 'dynamic_adapters';
 const STORE_AST_BANK = 'ast_bank';
+const STORE_LESSONS = 'lessons';
 
 export interface StudentRecord {
   cohortCode: string;
@@ -39,6 +40,20 @@ export interface CachedASTRecord {
   topicKey: string;
   rawAST: string;
   createdAt: number;
+}
+
+export interface CachedLessonRecord {
+  key: string; // `${stage}_${subject}_${topic}`
+  title: string;
+  stage: string;
+  subject: string;
+  axiom: string;
+  trap: string;
+  hook: string;
+  guidedStep: string;
+  socraticCheck: string;
+  fullText?: string;
+  updatedAt: number;
 }
 
 export function openLocalDB(): Promise<IDBDatabase> {
@@ -81,6 +96,11 @@ export function openLocalDB(): Promise<IDBDatabase> {
         const astStore = db.createObjectStore(STORE_AST_BANK, { autoIncrement: true, keyPath: 'id' });
         astStore.createIndex('topicKey', 'topicKey', { unique: false });
       }
+
+      // 6. Cached Pedagogical Lessons & Logic Point Inflations
+      if (!db.objectStoreNames.contains(STORE_LESSONS)) {
+        db.createObjectStore(STORE_LESSONS, { keyPath: 'key' });
+      }
     };
 
     request.onsuccess = () => resolve(request.result);
@@ -90,6 +110,39 @@ export function openLocalDB(): Promise<IDBDatabase> {
 
 // Alias for backwards compatibility
 export const getDB = openLocalDB;
+
+// --- Lesson Logic Inflation Operations ---
+
+export async function getBufferedLesson(key: string): Promise<CachedLessonRecord | null> {
+  try {
+    const db = await openLocalDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_LESSONS, 'readonly');
+      const store = tx.objectStore(STORE_LESSONS);
+      const req = store.get(key);
+      req.onsuccess = () => resolve((req.result as CachedLessonRecord) || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    console.warn('[dbStore] Lesson cache lookup error:', err);
+    return null;
+  }
+}
+
+export async function putBufferedLesson(lesson: CachedLessonRecord): Promise<void> {
+  try {
+    const db = await openLocalDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_LESSONS, 'readwrite');
+      const store = tx.objectStore(STORE_LESSONS);
+      const req = store.put(lesson);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    console.warn('[dbStore] Lesson cache write error:', err);
+  }
+}
 
 // --- Manifest Operations ---
 
@@ -142,14 +195,14 @@ export async function getTuringDiagnosticSummary(topicId: string): Promise<{ acc
         return resolve({ accuracy: 1.0, commonErrors: [] });
       }
 
-      const correctCount = records.filter(r => r.isCorrect).length;
+      const correctCount = records.filter((r) => r.isCorrect).length;
       const errors = records
-        .filter(r => !r.isCorrect && r.errorTag)
-        .map(r => r.errorTag as string);
+        .filter((r) => !r.isCorrect && r.errorTag)
+        .map((r) => r.errorTag as string);
 
       resolve({
         accuracy: correctCount / records.length,
-        commonErrors: Array.from(new Set(errors))
+        commonErrors: Array.from(new Set(errors)),
       });
     };
     req.onerror = () => reject(req.error);
@@ -183,27 +236,29 @@ export async function getTopicAdapter(topicKey: string): Promise<TopicAdapterRec
 export const DEFAULT_TOPIC_ADAPTERS: TopicAdapterRecord[] = [
   {
     topicKey: 'science_atomic_structure',
-    exemplarAST: '(:route "quiz:mcq" :scratchpad "Isotopes are atoms of the same element with different numbers of neutrons, giving them different mass numbers." :prompt "Why do different isotopes of the same element have different mass numbers?" :options (list "They have different numbers of neutrons" "They have different numbers of protons" "They have different numbers of electrons" "Their electrons have different masses") :hint "Consider which subatomic particle in the nucleus varies without altering atomic number." :answer-key 0)',
+    exemplarAST:
+      '(:route "quiz:mcq" :scratchpad "Isotopes are atoms of the same element with different numbers of neutrons, giving them different mass numbers." :prompt "Why do different isotopes of the same element have different mass numbers?" :options (list "They have different numbers of neutrons" "They have different numbers of protons" "They have different numbers of electrons" "Their electrons have different masses") :hint "Consider which subatomic particle in the nucleus varies without altering atomic number." :answer-key 0)',
     curriculumGuardrails: [
       'Protons = positive (relative mass 1)',
       'Neutrons = neutral (relative mass 1)',
       'Electrons = negative (negligible mass / 1/1840)',
-      'Isotopes differ ONLY in neutron count'
+      'Isotopes differ ONLY in neutron count',
     ],
     commonMisconceptions: ['Thinking neutrons are massless', 'Confusing atomic number with mass number'],
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   },
   {
     topicKey: 'physics_newtons_laws',
-    exemplarAST: '(:route "quiz:mcq" :scratchpad "Newton\'s First Law states an object remains at constant velocity unless acted upon by a resultant force." :prompt "What happens to a moving spacecraft when all engine thrust stops in deep space?" :options (list "It continues moving at a constant velocity" "It gradually slows down to a stop" "It instantly halts" "It changes direction") :hint "Remember that no friction or resultant force opposes motion in deep space." :answer-key 0)',
+    exemplarAST:
+      '(:route "quiz:mcq" :scratchpad "Newton\'s First Law states an object remains at constant velocity unless acted upon by a resultant force." :prompt "What happens to a moving spacecraft when all engine thrust stops in deep space?" :options (list "It continues moving at a constant velocity" "It gradually slows down to a stop" "It instantly halts" "It changes direction") :hint "Remember that no friction or resultant force opposes motion in deep space." :answer-key 0)',
     curriculumGuardrails: [
       'F = ma',
       'Objects keep moving at constant velocity unless resultant force acts',
-      'Friction is absent in a vacuum'
+      'Friction is absent in a vacuum',
     ],
     commonMisconceptions: ['Assuming force is required to maintain motion'],
-    updatedAt: Date.now()
-  }
+    updatedAt: Date.now(),
+  },
 ];
 
 export async function bootstrapTopicAdapters(): Promise<void> {
@@ -226,14 +281,12 @@ export async function saveVerifiedAST(topicKey: string, rawAST: string): Promise
     const req = store.add({
       topicKey,
       rawAST,
-      createdAt: Date.now()
+      createdAt: Date.now(),
     });
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
 }
-
-// src/services/dbStore.ts
 
 export async function getBufferedQuestion(topicKey: string): Promise<string | null> {
   try {
@@ -259,7 +312,7 @@ export async function getBufferedQuestion(topicKey: string): Promise<string | nu
 
         resolve(chosen.rawAST);
       };
-      
+
       req.onerror = () => resolve(null);
     });
   } catch (err) {
@@ -269,7 +322,7 @@ export async function getBufferedQuestion(topicKey: string): Promise<string | nu
 }
 
 export async function checkAndReplenishBuffer(
-  topicKey: string, 
+  topicKey: string,
   minThreshold: number = 3,
   triggerWorker: (key: string) => Promise<void>
 ): Promise<void> {
@@ -351,7 +404,7 @@ export async function bootstrapVfsViews(defaultViews: Record<string, string>): P
 // --- Storage Management ---
 
 export async function purgeInactiveManifests(
-  activeDomainId: string, 
+  activeDomainId: string,
   preservedDomains: string[] = ['school', 'communion']
 ): Promise<void> {
   const db = await openLocalDB();

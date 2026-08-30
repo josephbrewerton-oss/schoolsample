@@ -1,6 +1,8 @@
+// src/components/InteractiveEdgeSandbox.tsx
 import React, { useState } from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import SExprViewRenderer from './SExprViewRenderer';
+import { aiCaller } from '../engine/aicaller';
 
 interface SandboxProps {
   onSaveToVfs?: (path: string, content: string) => Promise<void> | void;
@@ -26,51 +28,44 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
 
-  // Synthesize Oak lesson via Gemini Nano
+  // Synthesize Oak lesson via unified aiCaller substrate
   const handleAIGenerate = async () => {
     if (!topicPrompt.trim() || isGenerating) return;
     setIsGenerating(true);
     setSaveStatus('');
 
     try {
-// Inside src/components/InteractiveEdgeSandbox.tsx
-const handleAIGenerate = async () => {
-  if (!topicPrompt.trim() || isGenerating) return;
-  setIsGenerating(true);
-  setSaveStatus('');
-
-  let session: any = null;
-  try {
-    const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
-    if (aiObj) {
-      const config = {
-        systemPrompt:
-          'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences.',
-        expectedInputLanguages: ['en'],
-        expectedOutputLanguages: ['en'],
-      };
-
-      session = await (aiObj.create
-        ? aiObj.create(config)
-        : (window as any).ai.languageModel.create(config));
+      const systemPrompt =
+        'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences or explanation.';
 
       const prompt = `Synthesize a primary school lesson on topic: "${topicPrompt}". Output only pure Lisp AST.`;
-      const result = await session.prompt(prompt);
+
+      const result = await aiCaller.promptText({
+        prompt,
+        systemPrompt,
+        temperature: 0.1,
+      });
+
       if (result && result.includes('(lesson')) {
-        setLispCode(result.replace(/```lisp|```/g, '').trim());
+        let sanitized = result
+          .replace(/```(?:lisp|scheme)?/gi, '')
+          .replace(/```/g, '')
+          .trim();
+
+        const firstParen = sanitized.indexOf('(');
+        const lastParen = sanitized.lastIndexOf(')');
+        if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+          sanitized = sanitized.substring(firstParen, lastParen + 1);
+        }
+
+        setLispCode(sanitized);
       }
+    } catch (err) {
+      console.warn('[Teacher Gen Error]:', err);
+    } finally {
+      setIsGenerating(false);
     }
-  } catch (err) {
-    console.warn('[Teacher Gen Error]', err);
-  } finally {
-    if (session && typeof session.destroy === 'function') {
-      try {
-        session.destroy();
-      } catch {}
-    }
-    setIsGenerating(false);
-  }
-};
+  };
 
   // Commit lesson AST to VFS
   const handleSave = async () => {
@@ -97,13 +92,15 @@ const handleAIGenerate = async () => {
             style={{ flex: 1, padding: '10px 14px', borderRadius: '6px', border: '1px solid #2d3748', background: '#1a202c', color: '#fff' }}
           />
           <button
+            type="button"
             onClick={handleAIGenerate}
             disabled={isGenerating}
-            style={{ padding: '10px 16px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+            style={{ padding: '10px 16px', background: '#3182ce', color: '#fff', border: 'none', borderRadius: '6px', cursor: isGenerating ? 'wait' : 'pointer', fontWeight: 600 }}
           >
             {isGenerating ? 'Synthesizing...' : 'AI Generate'}
           </button>
           <button
+            type="button"
             onClick={handleSave}
             style={{ padding: '10px 16px', background: '#38a169', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
           >

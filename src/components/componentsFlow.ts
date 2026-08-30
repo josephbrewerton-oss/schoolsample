@@ -9,6 +9,7 @@ import {
   getLessonManifest,
   RAGMatch 
 } from '../lib/browser-rag';
+import { aiCaller } from '../engine/aicaller';
 
 export interface FlowCurriculumState {
   keyStage: string;
@@ -44,41 +45,21 @@ export class ComponentsFlow {
     return { raw: content, ast };
   }
 
-  // 2. Unified On-Device Gemini Nano Inference Pipeline
+  // 2. Unified On-Device Gemini Nano Inference Pipeline via AiCaller
   static async *streamPrompt(
     prompt: string,
     config: NanoSessionConfig
   ): AsyncGenerator<string, void, unknown> {
-    const aiHost = (window as any).ai || (self as any).ai || (window.parent as any)?.ai;
-    const GlobalLM = (window as any).LanguageModel || (window.parent as any)?.LanguageModel;
-    const targetFactory = aiHost?.languageModel || GlobalLM;
-
-    if (!targetFactory) {
-      throw new Error('Prompt API not detected in browser');
-    }
-
-    const session = await targetFactory.create({
+    const stream = aiCaller.promptStream({
+      prompt,
       systemPrompt: config.systemPrompt,
-      expectedInputLanguages: config.expectedInputLanguages || ['en'],
-      expectedOutputLanguages: config.expectedOutputLanguages || ['en'],
     });
 
-    try {
-      if (typeof session.promptStreaming === 'function') {
-        const stream = session.promptStreaming(prompt);
-        let accumulated = '';
-        for await (const chunk of stream) {
-          accumulated = chunk.startsWith(accumulated) ? chunk : accumulated + chunk;
-          yield accumulated;
-        }
-      } else {
-        const reply = await session.prompt(prompt);
-        yield reply;
-      }
-    } finally {
-      if (session && typeof session.destroy === 'function') {
-        session.destroy();
-      }
+    let accumulated = '';
+    for await (const chunk of stream) {
+      // Direct accumulation handles both raw token streams cleanly
+      accumulated += chunk;
+      yield accumulated;
     }
   }
 

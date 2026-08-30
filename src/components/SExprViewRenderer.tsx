@@ -1,6 +1,7 @@
 // src/components/SExprViewRenderer.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SExprAST, SExprNode } from '../types/sexpr';
+import { aiCaller } from '../engine/aicaller';
 
 interface Props {
   ast: SExprAST;
@@ -20,7 +21,7 @@ export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.E
     return <span>{String(ast)}</span>;
   }
 
-  const { tag, props, children } = ast as SExprNode;
+  const { tag, props = {}, children = [] } = ast as SExprNode;
 
   const isTeacherMode =
     typeof window !== 'undefined' &&
@@ -201,46 +202,29 @@ function AiTutorNode({
     const systemPrompt = `You are a concise, Socratic tutor. ${regionalSystemRule} Guide the student with 1 short question or rule under 15 words. Never give the direct answer.`;
 
     try {
-      const aiObj = (window as any).ai?.languageModel || (window as any).LanguageModel;
+      const stream = aiCaller.promptStream({
+        prompt: userText,
+        systemPrompt,
+      });
 
-      if (aiObj) {
-        const session = await (aiObj.create
-          ? aiObj.create({ systemPrompt })
-          : (window as any).ai.languageModel.create({ systemPrompt }));
+      let accumulated = '';
+      for await (const chunk of stream) {
+        accumulated += chunk;
 
-        let accumulated = '';
-        const stream = session.promptStreaming(userText);
-
-        for await (const chunk of stream) {
-          if (chunk.startsWith(accumulated)) {
-            accumulated = chunk;
-          } else {
-            accumulated += chunk;
-          }
-
-          setLogs((prev) => {
-            if (prev.length === 0) return prev;
-            const next = [...prev];
-            next[next.length - 1] = { role: 'tutor', text: accumulated };
-            return next;
-          });
-        }
-
-        speak(accumulated);
-      } else {
-        await new Promise((res) => setTimeout(res, 350));
-        const fallback = `Break down the problem step-by-step. What do the units add up to first?`;
         setLogs((prev) => {
+          if (prev.length === 0) return prev;
           const next = [...prev];
-          next[next.length - 1] = { role: 'tutor', text: fallback };
+          next[next.length - 1] = { role: 'tutor', text: accumulated };
           return next;
         });
-        speak(fallback);
       }
+
+      speak(accumulated);
     } catch (err) {
       console.warn('[Nano Inference Error]', err);
       const fallback = `Let's focus on the first step of this problem.`;
       setLogs((prev) => {
+        if (prev.length === 0) return prev;
         const next = [...prev];
         next[next.length - 1] = { role: 'tutor', text: fallback };
         return next;
@@ -403,18 +387,11 @@ function QuizNode({
     (c) => typeof c === 'object' && c !== null && c.tag === 'question'
   ) as SExprNode | undefined;
 
-  const rawOptionNodes = children.filter(
-    (c) => typeof c === 'object' && c !== null && c.tag === 'option'
-  ) as SExprNode[];
-
-  const optionNodes = React.useMemo(() => {
-    const items = [...rawOptionNodes];
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
-    }
-    return items;
-  }, [props.id, children]);
+  const optionNodes = useMemo(() => {
+    return children.filter(
+      (c) => typeof c === 'object' && c !== null && c.tag === 'option'
+    ) as SExprNode[];
+  }, [children]);
 
   const explanationNode = children.find(
     (c) => typeof c === 'object' && c !== null && c.tag === 'explanation'
@@ -572,7 +549,6 @@ function StepperNode({
     if (!isFinalStep) {
       setCurrentStep((s) => s + 1);
     } else {
-      // Dispatches visual focus pulse to the quiz card
       window.dispatchEvent(new CustomEvent('focus-quiz-node'));
     }
   };

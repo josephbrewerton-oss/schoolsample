@@ -1,7 +1,6 @@
-// src/components/TuringTutor.tsx
+// src/components/NanoAssistantPanel.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { ComponentsFlow } from './componentsflow';
-import { dispatchAstIntent, CurriculumPackage } from '../curriculum';
+import { aiCaller } from '../engine/aicaller';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -48,6 +47,16 @@ export function TuringTutor({
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Reset conversation session when the topic changes
+  useEffect(() => {
+    setMessages([
+      {
+        role: 'turing',
+        text: `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
+      },
+    ]);
+  }, [seedKey, currentTopic]);
+
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
@@ -77,34 +86,33 @@ export function TuringTutor({
     }
   }, []);
 
-  const buildSystemPrompt = () => `You are "Super Teacher Nano" — an elite UK National Curriculum Socratic educator.
-Subject Context: ${subject} | Stage: ${keyStage} | Topic: ${currentTopic}
+  const buildSystemPrompt = () => `You are "Super Teacher Nano" — an expert UK National Curriculum Socratic educator for ${keyStage} ${subject}.
+Target Topic: ${currentTopic}
 
 PEDAGOGICAL RULES:
-1. NEVER reveal the direct final answer.
-2. If the student is stuck: Break the question down into ONE simpler micro-step (Scaffolding).
-3. If the student makes an error: Identify the root misconception and ask a gentle counter-factual question to help them self-correct.
-4. Keep all spoken responses under 25 words to optimize audio synthesis.
-5. Conclude every turn with an engaging, bite-sized question.`;
+1. NEVER give the direct answer.
+2. Provide ONE concise hint or thought-provoking clue (under 30 words).
+3. Always finish with an engaging question to help the student think through the answer.`;
 
   const speak = (text: string) => {
     if (!voiceEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    if (voiceRef.current) utterance.voice = voiceRef.current;
-    utterance.rate = 0.98;
-    utterance.pitch = 1.05;
-    window.speechSynthesis.speak(utterance);
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (voiceRef.current) utterance.voice = voiceRef.current;
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('[TTS Error]:', e);
+    }
   };
 
-  const cleanThoughtArtifacts = (raw: string): string => {
+  const cleanResponse = (raw: string): string => {
+    if (!raw) return '';
     return raw
-      .replace(/^[\s\S]*?\*\*Response:\*\*/i, '')
-      .replace(/^[\s\S]*?(?:Okay,?\s+here['’]?s\s+(?:a\s+)?socratic\s+hint[^:]*:\s*|Here(?:'s|\s+is)\s+a\s+hint:?)/i, '')
-      .replace(/\((?:Since|Based on|If they|Note).*?\)/gi, '')
-      .replace(/\*\*.*?\*\*/g, '')
+      .replace(/^(?:Hint|Tutor Hint|Super Teacher Nano|Teacher|Prof\. Turing):\s*/i, '')
+      .replace(/\*\*(?:Response|Thought|Explanation|Answer):\*\*/gi, '')
       .replace(/^"(.*)"$/, '$1')
-      .replace(/^(?:Hint|Tutor Hint|Super Teacher Nano|Prof\. Turing):\s*/i, '')
       .trim();
   };
 
@@ -112,15 +120,11 @@ PEDAGOGICAL RULES:
     if (!suggestedLesson) return;
     setLaunchingLesson(true);
     try {
-      const fullAST = await ComponentsFlow.loadLessonAST(
-        suggestedLesson.id,
-        suggestedLesson.manifestPath
-      );
       if (onLaunchLesson) {
-        onLaunchLesson(fullAST);
+        onLaunchLesson(suggestedLesson);
       } else {
         const channel = new BroadcastChannel('neural_hypervisor_bus');
-        channel.postMessage({ type: 'LOAD_AST_MANIFEST', manifest: fullAST });
+        channel.postMessage({ type: 'LOAD_AST_MANIFEST', manifest: suggestedLesson });
         channel.close();
       }
     } catch (err) {
@@ -132,77 +136,49 @@ PEDAGOGICAL RULES:
 
   const dispatchNanoInference = async (userText: string, customInstruction?: string) => {
     if (loading) return;
-    setMessages((prev) => [...prev, { role: 'pupil', text: userText }]);
     setLoading(true);
     setSuggestedLesson(null);
 
+    const updatedMessages = [...messages, { role: 'pupil' as const, text: userText }];
+    setMessages([...updatedMessages, { role: 'turing' as const, text: '' }]);
+
     try {
-      // 1. Resolve live curriculum grounding via AST Substrate Intent
-      let stageManifestContext = '';
-      try {
-        const normalizedStage = keyStage.toLowerCase().replace(/\s+/g, '');
-        const pkg = dispatchAstIntent<CurriculumPackage>('getActiveCurriculum', normalizedStage);
-        if (pkg?.catalogueStage) {
-          const adapted = dispatchAstIntent('adaptOakStage', pkg.catalogueStage);
-          if (adapted) {
-            stageManifestContext = `\n[Mined Framework: ${pkg.framework}]`;
-          }
-        }
-      } catch (e) {
-        console.warn('[AST Tutor Context Grounding Skip]:', e);
-      }
+      // Package recent conversation context into the prompt
+      const conversationHistory = updatedMessages
+        .slice(-4)
+        .map((m) => `${m.role === 'pupil' ? 'Pupil' : 'Teacher'}: ${m.text}`)
+        .join('\n');
 
-      // 2. Query contextual embeddings
-      const ragResult = await ComponentsFlow.getGroundedContext(currentTopic, userText);
-      if (ragResult.match) {
-        setSuggestedLesson({
-          id: ragResult.match.id,
-          title: ragResult.match.title,
-          manifestPath: ragResult.match.manifestPath,
-        });
-      }
+      const fullPrompt = `Topic Context: ${currentTopic} (${keyStage} ${subject})\n${
+        activePrompt ? `Focus Question: "${activePrompt}"\n` : ''
+      }${conversationHistory}\n${customInstruction ? `Instruction: ${customInstruction}\n` : ''}Teacher Socratic Response:`;
 
-      const promptContext = `Topic: ${currentTopic} (${keyStage} ${subject})${stageManifestContext}${ragResult.context}\n${
-        activePrompt ? `Active Check: "${activePrompt}"\n` : ''
-      }${customInstruction ? `Instruction: ${customInstruction}\n` : ''}Pupil Query: "${userText}"\nRespond as Super Teacher Nano:`;
-
-      setMessages((prev) => [...prev, { role: 'turing', text: '' }]);
-      setLoading(false);
-
-      const stream = ComponentsFlow.streamPrompt(promptContext, {
+      const rawResponse = await aiCaller.promptText({
+        prompt: fullPrompt,
         systemPrompt: buildSystemPrompt(),
+        preserveContext: false, // Prevents Chrome session port collisions
       });
 
-      let accumulated = '';
-      for await (const chunk of stream) {
-        accumulated = chunk;
-        const cleaned = cleanThoughtArtifacts(accumulated);
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            role: 'turing',
-            text: cleaned || 'Formulating Socratic guidance...',
-          };
-          return updated;
-        });
-      }
+      const cleaned =
+        cleanResponse(rawResponse) ||
+        `What do you think is the first key factor we need to consider in ${currentTopic}?`;
 
-      const finalClean = cleanThoughtArtifacts(accumulated) || 'What is the first rule we apply here?';
-      speak(finalClean);
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = { role: 'turing', text: cleaned };
+        return copy;
+      });
+
+      speak(cleaned);
     } catch (err) {
       console.error('[Super Teacher Error]:', err);
-      const fallbackText = 'Let us break this problem down into its first simple step. What do we know so far?';
+      const fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
       setMessages((prev) => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last && last.role === 'turing' && !last.text) {
-          updated[updated.length - 1] = { role: 'turing', text: fallbackText };
-        } else {
-          updated.push({ role: 'turing', text: fallbackText });
-        }
-        return updated;
+        const copy = [...prev];
+        copy[copy.length - 1] = { role: 'turing', text: fallback };
+        return copy;
       });
-      speak(fallbackText);
+      speak(fallback);
     } finally {
       setLoading(false);
     }
@@ -216,7 +192,6 @@ PEDAGOGICAL RULES:
     dispatchNanoInference(query);
   };
 
-  // 3-Tier Scaffolding Handlers
   const handleScaffoldHint = (level: 1 | 2 | 3) => {
     if (level === 1) {
       dispatchNanoInference(
@@ -248,7 +223,7 @@ PEDAGOGICAL RULES:
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
-      {/* Panel Header */}
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '1.1rem' }}>⚡</span>
@@ -279,18 +254,18 @@ PEDAGOGICAL RULES:
         </div>
       </div>
 
-      {/* Terminal Chat Body */}
+      {/* Terminal Chat Box */}
       <div
         style={{
           minHeight: '80px',
           maxHeight: '160px',
           overflowY: 'auto',
           marginBottom: '0.75rem',
-          padding: '0.5rem',
+          padding: '0.65rem',
           background: '#030712',
           borderRadius: '8px',
           border: '1px solid #1f2937',
-          fontFamily: 'monospace',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
           fontSize: '0.9rem',
         }}
       >
@@ -300,11 +275,11 @@ PEDAGOGICAL RULES:
             {m.text}
           </div>
         ))}
-        {loading && <div style={{ color: '#94a3b8' }}>Super Teacher Nano is diagnosing and thinking...</div>}
+        {loading && <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>Super Teacher Nano is thinking...</div>}
         <div ref={terminalEndRef} />
       </div>
 
-      {/* 3-Tier Scaffolding Hint Ladder */}
+      {/* 3-Tier Scaffolding Buttons */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
         <button
           type="button"
@@ -359,7 +334,7 @@ PEDAGOGICAL RULES:
         </button>
       </div>
 
-      {/* Grounded Manifest Match */}
+      {/* Lesson Launcher Banner */}
       {suggestedLesson && (
         <div
           style={{
@@ -396,7 +371,7 @@ PEDAGOGICAL RULES:
         </div>
       )}
 
-      {/* Chat Input */}
+      {/* Input */}
       <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
         <input
           type="text"

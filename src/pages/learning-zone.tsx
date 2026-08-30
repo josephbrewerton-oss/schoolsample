@@ -1,68 +1,229 @@
 // src/pages/learning-zone.tsx
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
-import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
-import { EngineFlow, LessonViewContent } from '../engine/engineflow';
+import { dispatch } from '../engine/hypercall';
+
+export interface LessonViewContent {
+  title: string;
+  axiom: string;
+  trap: string;
+  hook: string;
+  guidedStep: string;
+  socraticCheck: string;
+}
+
+const buildDefaultNarrative = (topic: string, data: Partial<LessonViewContent>): string => {
+  return `### ${topic}\n\n**1. Conceptual Narrative:**\n${data.axiom || `Core curriculum standard established for ${topic}.`}\n\n**2. Guided Practice & Key Mechanics:**\n${data.guidedStep || `Explore and observe the key principles of ${topic}.`}\n\n**3. Cognitive Trap & Misconception:**\nCommon misunderstanding: "${data.trap || `Intuitive misconception regarding ${topic}`}". In practice, we evaluate the scientific standard.\n\n**4. Check for Understanding:**\n${data.socraticCheck || `What fundamental property defines ${topic}?`}`;
+};
 
 export default function LearningZonePage() {
-  const [curriculumSetting, setCurriculumSetting] = useState<CurriculumProviderKey>(() => {
+  const [curriculumSetting, setCurriculumSetting] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('curriculum_standard') as CurriculumProviderKey) || 'uk_oak';
+      return localStorage.getItem('curriculum_standard') || 'uk_oak';
     }
     return 'uk_oak';
   });
 
   const activeRequestIdRef = useRef(0);
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isSynthesizingFull, setIsSynthesizingFull] = useState(false);
 
-  const curriculumTree = useMemo(() => {
-    return getActiveCurriculumTree(curriculumSetting);
-  }, [curriculumSetting]);
-
-  const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 1');
+  const [selectedKeyStage, setSelectedKeyStage] = useState('ks1');
   const [selectedSubject, setSelectedSubject] = useState('Science');
-  const [selectedUnit, setSelectedUnit] = useState('Seasonal Changes');
+  const [selectedUnit, setSelectedUnit] = useState('Animals and Humans');
   const [sessionId, setSessionId] = useState('Lesson 1');
 
+  // 1. Resolve Curriculum Catalogue Tree via Substrate Dispatch
+  const [curriculumTree, setCurriculumTree] = useState<any>(null);
+  useEffect(() => {
+    dispatch('CurriculumNode', {
+      intent: 'resolve:tree',
+      payload: { stage: selectedKeyStage, curriculum: curriculumSetting },
+    }).then((res) => {
+      if (res.ok) setCurriculumTree(res.data);
+    });
+  }, [selectedKeyStage, curriculumSetting]);
+
   const [lessonData, setLessonData] = useState<LessonViewContent>({
-    title: 'Seasonal Changes',
-    axiom: 'Earth experiences four distinct seasons due to changes in weather, temperature, and daylight hours throughout the year.',
-    trap: 'Believing seasons change because the Earth moves significantly closer or further from the Sun.',
-    hook: 'Why do trees lose their leaves in autumn, and why does it get dark so early in winter?',
-    guidedStep: 'Observe and compare temperature shifts, daylight patterns, and plant lifecycle changes across all 4 seasons.',
-    socraticCheck: 'How do daylight hours differ between mid-summer and mid-winter in the UK?',
+    title: 'Animals and Humans',
+    axiom: 'Animals, including humans, have basic needs for survival and distinct body structures.',
+    trap: 'Believing that humans are not animals or that all animals have the same dietary needs.',
+    hook: 'How do different animals survive in varying environments compared to humans?',
+    guidedStep: 'Identify, compare, and classify common animals by their physical structures and diets.',
+    socraticCheck: 'What essential things do all animals need to stay alive?',
   });
 
-  const handleCompileLesson = async () => {
-    const requestId = ++activeRequestIdRef.current;
-    setIsCompiling(true);
+  const [fullLessonText, setFullLessonText] = useState<string>(() =>
+    buildDefaultNarrative('Animals and Humans', {
+      axiom: 'Animals, including humans, have basic needs for survival and distinct body structures.',
+      guidedStep: 'Identify, compare, and classify common animals by their physical structures and diets.',
+      trap: 'Believing that humans are not animals or that all animals have the same dietary needs.',
+      socraticCheck: 'What essential things do all animals need to stay alive?',
+    })
+  );
 
+  // 2. Governed Compilation with Atomic Target Parameters
+  const compileLessonForTopic = useCallback(
+    async (targetStage: string, targetSubject: string, targetTopic: string) => {
+      if (!targetTopic) return;
+
+      const requestId = ++activeRequestIdRef.current;
+      setIsCompiling(true);
+
+      // Instant optimistic placeholder update so the UI reacts immediately
+      setLessonData((prev) => ({
+        ...prev,
+        title: targetTopic,
+        axiom: `Synthesizing core curriculum principles for ${targetTopic}...`,
+        trap: `Analyzing common student misconceptions for ${targetTopic}...`,
+        hook: `How does ${targetTopic} apply to observable physical reality?`,
+        guidedStep: `Analyzing key mechanics and properties of ${targetTopic}...`,
+        socraticCheck: `What is the core principle governing ${targetTopic}?`,
+      }));
+
+      const timeoutTimer = setTimeout(() => {
+        if (requestId === activeRequestIdRef.current) {
+          setIsCompiling(false);
+        }
+      }, 4500);
+
+      try {
+        // Step A: Fast IndexedDB Cache Lookup
+        const cacheRes = await dispatch('LessonSynthesizer', {
+          intent: 'inflate:baseline',
+          payload: {
+            stage: targetStage,
+            subject: targetSubject,
+            topic: targetTopic,
+          },
+        });
+
+        if (requestId !== activeRequestIdRef.current) {
+          clearTimeout(timeoutTimer);
+          return;
+        }
+
+        const isRealData =
+          cacheRes?.ok &&
+          cacheRes.data &&
+          cacheRes.data.axiom &&
+          !cacheRes.data.axiom.startsWith('Synthesizing') &&
+          !cacheRes.data.axiom.startsWith('Core curriculum rule established');
+
+        if (isRealData) {
+          const loadedLesson: LessonViewContent = {
+            title: cacheRes.data.title || targetTopic,
+            axiom: cacheRes.data.axiom,
+            trap: cacheRes.data.trap || '',
+            hook: cacheRes.data.hook || '',
+            guidedStep: cacheRes.data.guidedStep || '',
+            socraticCheck: cacheRes.data.socraticCheck || '',
+          };
+
+          setLessonData(loadedLesson);
+          if (cacheRes.data.fullText && cacheRes.data.fullText.trim().length > 20) {
+            setFullLessonText(cacheRes.data.fullText);
+          } else {
+            setFullLessonText(buildDefaultNarrative(loadedLesson.title, loadedLesson));
+          }
+
+          setIsCompiling(false);
+          clearTimeout(timeoutTimer);
+          return;
+        }
+
+        // Step B: Governed AI Question Engine Synthesis
+        const res = await dispatch('QuestionEngine', {
+          intent: 'synthesize:governed',
+          payload: {
+            keyStage: targetStage,
+            subject: targetSubject,
+            topic: targetTopic,
+            curriculum: curriculumSetting,
+          },
+        });
+
+        if (requestId !== activeRequestIdRef.current) {
+          clearTimeout(timeoutTimer);
+          return;
+        }
+
+        if (res?.ok && res.data) {
+          const freshLesson: LessonViewContent = {
+            title: targetTopic,
+            axiom: res.data.axiom || `Fundamental principles governing ${targetTopic}.`,
+            trap: res.data.trap || `Common misunderstanding regarding ${targetTopic}.`,
+            hook: res.data.hook || `How does ${targetTopic} operate in everyday reality?`,
+            guidedStep: res.data.guidedStep || `Analyze the core properties and behaviors of ${targetTopic}.`,
+            socraticCheck: res.data.prompt || `What fundamental property defines ${targetTopic}?`,
+          };
+
+          // Update active view state with real synthesized data
+          setLessonData(freshLesson);
+
+          const defaultNarrative = buildDefaultNarrative(targetTopic, freshLesson);
+          setFullLessonText(defaultNarrative);
+
+          // Buffer back to IndexedDB with real content
+          dispatch('LessonSynthesizer', {
+            intent: 'inflate:baseline',
+            payload: {
+              stage: targetStage,
+              subject: targetSubject,
+              topic: targetTopic,
+              fullText: defaultNarrative,
+              ...freshLesson,
+            },
+          });
+        }
+      } catch (err) {
+        console.warn('[Learning Zone AST Notice]:', err);
+      } finally {
+        clearTimeout(timeoutTimer);
+        if (requestId === activeRequestIdRef.current) {
+          setIsCompiling(false);
+        }
+      }
+    },
+    [curriculumSetting]
+  );
+
+  // 3. Trigger compilation when selection changes
+  useEffect(() => {
+    compileLessonForTopic(selectedKeyStage, selectedSubject, selectedUnit);
+  }, [selectedKeyStage, selectedSubject, selectedUnit, compileLessonForTopic]);
+
+  // 4. Synthesize Full Dynamic Lesson (Axiom Expansion)
+  const handleSynthesizeFullLesson = async () => {
+    setIsSynthesizingFull(true);
     try {
-      const generated = await EngineFlow.generateLessonCards({
-        keyStage: selectedKeyStage,
-        subject: selectedSubject,
-        topic: selectedUnit,
-        curriculum: curriculumSetting,
+      const res = await dispatch('LessonSynthesizer', {
+        intent: 'synthesize:full-lesson',
+        payload: {
+          stage: selectedKeyStage,
+          subject: selectedSubject,
+          topic: selectedUnit,
+          axiom: lessonData.axiom,
+          trap: lessonData.trap,
+          steps: [lessonData.hook, lessonData.guidedStep, lessonData.socraticCheck],
+        },
       });
 
-      if (requestId !== activeRequestIdRef.current) return;
-
-      setLessonData(generated);
-    } catch (err) {
-      console.warn('[Learning Zone AST Notice]:', err);
-    } finally {
-      if (requestId === activeRequestIdRef.current) {
-        setIsCompiling(false);
+      const output = res?.data?.content || res?.data?.fullText;
+      if (res?.ok && output && output.trim().length > 10) {
+        setFullLessonText(output);
+      } else {
+        setFullLessonText(buildDefaultNarrative(selectedUnit, lessonData));
       }
+    } catch (err) {
+      console.error('[Full Lesson Synthesis Error]:', err);
+    } finally {
+      setIsSynthesizingFull(false);
     }
   };
-
-  useEffect(() => {
-    handleCompileLesson();
-  }, [selectedKeyStage, selectedSubject, selectedUnit, curriculumSetting]);
 
   const practiceLabUrl = `/practice-lab?ks=${encodeURIComponent(selectedKeyStage)}&sub=${encodeURIComponent(selectedSubject)}&unit=${encodeURIComponent(selectedUnit)}`;
 
@@ -73,6 +234,13 @@ export default function LearningZonePage() {
     >
       <main style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         
+        {/* Hidden WebRTC Neural Worker Daemon Frame */}
+        <iframe
+          src="/schoolsample/worker.html"
+          style={{ display: 'none' }}
+          title="neural-worker-daemon"
+        />
+
         {/* Top Selector Control Bar */}
         <div style={{ marginBottom: '1.5rem' }}>
           <CurriculumSelector
@@ -95,7 +263,7 @@ export default function LearningZonePage() {
             }}
             onUnitChange={(newUnit) => setSelectedUnit(newUnit)}
             onSessionIdChange={setSessionId}
-            onNewQuestion={handleCompileLesson}
+            onNewQuestion={() => compileLessonForTopic(selectedKeyStage, selectedSubject, selectedUnit)}
             onDownloadReport={() => {}}
           />
         </div>
@@ -123,18 +291,34 @@ export default function LearningZonePage() {
               </h2>
             </div>
             
-            <Link
-              to={practiceLabUrl}
-              className="button button--primary"
-              style={{
-                borderRadius: '8px',
-                padding: '0.6rem 1.25rem',
-                fontWeight: 600,
-                background: '#2563eb'
-              }}
-            >
-              ⚡ Test in Practice Lab
-            </Link>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={handleSynthesizeFullLesson}
+                disabled={isSynthesizingFull || isCompiling}
+                className="button button--secondary"
+                style={{
+                  borderRadius: '8px',
+                  padding: '0.6rem 1.25rem',
+                  fontWeight: 600,
+                  cursor: isSynthesizingFull ? 'wait' : 'pointer',
+                }}
+              >
+                {isSynthesizingFull ? '✨ Synthesizing Lesson...' : '✨ Expand Full Lesson (AI)'}
+              </button>
+              <Link
+                to={practiceLabUrl}
+                className="button button--primary"
+                style={{
+                  borderRadius: '8px',
+                  padding: '0.6rem 1.25rem',
+                  fontWeight: 600,
+                  background: '#2563eb',
+                }}
+              >
+                ⚡ Test in Practice Lab
+              </Link>
+            </div>
           </div>
 
           <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '1.5rem 0' }} />
@@ -186,9 +370,31 @@ export default function LearningZonePage() {
             </div>
           </div>
 
+          {/* Expanded AI Lesson Narrative Block */}
+          {fullLessonText && (
+            <div
+              style={{
+                marginBottom: '2rem',
+                padding: '1.75rem',
+                borderRadius: '12px',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>✨</span> Synthesized Comprehensive Lesson
+              </h3>
+              <div style={{ color: '#334155', fontSize: '1rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                {fullLessonText}
+              </div>
+            </div>
+          )}
+
           {/* Socratic Assistant Panel */}
           <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1.5rem' }}>
             <TuringTutor
+              key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}`}
               seedKey={`${selectedKeyStage}:${selectedSubject}:${selectedUnit}`}
               keyStage={selectedKeyStage}
               subject={selectedSubject}

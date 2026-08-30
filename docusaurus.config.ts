@@ -20,7 +20,7 @@ const config: Config = {
 
   scripts: [
     {
-      src: 'js/webrtc-agent.js',
+      src: '/schoolsample/js/webrtc-agent.js',
       async: true,
     },
   ],
@@ -54,7 +54,7 @@ const config: Config = {
     ],
   ],
 
-  plugins: [
+plugins: [
     // 1. Webpack Polyfill Plugin to resolve 'process is not defined'
     function webpackPolyfillPlugin() {
       return {
@@ -74,7 +74,7 @@ const config: Config = {
       };
     },
 
-    // 2. Production PWA Plugin
+    // 2. Production PWA Plugin with explicit baseUrl scoping
     ...(isProd
       ? [
           [
@@ -86,12 +86,12 @@ const config: Config = {
                 {
                   tagName: 'link',
                   rel: 'icon',
-                  href: '/img/docusaurus.png',
+                  href: '/schoolsample/img/docusaurus.png',
                 },
                 {
                   tagName: 'link',
                   rel: 'manifest',
-                  href: '/manifest.json',
+                  href: '/schoolsample/manifest.json',
                 },
               ],
             },

@@ -6,8 +6,6 @@
 </head>
 <body>
   <script type="module">
-    import { buildUniversalPrompt } from './promptStrategies.js';
-
     console.log('[Worker Daemon] Booting WebRTC Daemon at:', window.location.href);
 
     const bus = new BroadcastChannel('webrtc-neural-signaling');
@@ -15,6 +13,14 @@
     let activeChannel = null;
     let isConnecting = false;
     let isBusy = false;
+
+    // Helper to send framed messages across WebRTC DataChannel
+    function sendFramed(dc, messageObj) {
+      if (!dc || dc.readyState !== 'open') return;
+      const str = JSON.stringify(messageObj);
+      dc.send(str);
+      dc.send('__EOF__');
+    }
 
     async function initAndOffer() {
       if (activeChannel && activeChannel.readyState === 'open') return;
@@ -28,7 +34,17 @@
       console.log('[Worker Daemon] Initializing PeerConnection & DataChannel...');
       pc = new RTCPeerConnection({ iceServers: [] });
 
-      const dc = pc.createDataChannel('neural-bus');
+      pc.oniceconnectionstatechange = () => {
+        console.log('[Worker Daemon] ICE Connection State:', pc.iceConnectionState);
+        if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+          isConnecting = false;
+          activeChannel = null;
+        }
+      };
+
+      const dc = pc.createDataChannel('neural-bus', {
+        ordered: true,
+      });
       activeChannel = dc;
 
       dc.onopen = () => {
@@ -38,11 +54,12 @@
 
       dc.onclose = () => {
         isConnecting = false;
+        activeChannel = null;
         console.log('[Worker Daemon] DataChannel CLOSED.');
       };
 
       dc.onmessage = async (event) => {
-        if (isBusy) return;
+        if (event.data === '__EOF__' || isBusy) return;
         processIntent(event.data, dc);
       };
 
@@ -87,50 +104,55 @@
     };
 
     async function createFreshSession(systemInstruction) {
-      const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
-      const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
+  const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
+  const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
 
-      const options = {
-        systemPrompt: systemInstruction,
+  const target = aiHost?.languageModel || GlobalLM;
+  if (!target?.create) return null;
+
+  const baseConfig = {
+    systemPrompt: systemInstruction,
+    expectedInputLanguages: ['en'],
+    expectedOutputLanguages: ['en'],
+  };
+
+  try {
+    return await target.create(baseConfig);
+  } catch {
+    try {
+      return await target.create({
         expectedInputLanguages: ['en'],
-        expectedOutputLanguages: ['en']
-      };
-
-      if (aiHost?.languageModel) {
-        try { return await aiHost.languageModel.create(options); } catch {
-          try { return await aiHost.languageModel.create(); } catch {}
-        }
-      }
-      if (GlobalLM?.create) {
-        try { return await GlobalLM.create(options); } catch {
-          try { return await GlobalLM.create(); } catch {}
-        }
-      }
+        expectedOutputLanguages: ['en'],
+      });
+    } catch {
       return null;
     }
+  }
+}
 
-    // Inside static/worker.html -> processIntent()
-// Inside static/worker.html -> processIntent()
-async function processIntent(rawIntent, dc) {
-  isBusy = true;
-  let session = null;
-  try {
-    let parsed = rawIntent;
-    if (typeof rawIntent === 'string') {
-      try { parsed = JSON.parse(rawIntent); } catch {}
-    }
+    async function processIntent(rawIntent, dc) {
+      isBusy = true;
+      let session = null;
 
-    const subject = parsed?.subject || parsed?.sub || 'English';
-    const topic = parsed?.unit || parsed?.topic || parsed?.u || 'Shakespeare: Key Themes';
-    const keyStage = parsed?.keyStage || parsed?.ks || 'Key Stage 3';
-    const curriculum = parsed?.curriculum || 'uk_oak';
+      try {
+        let parsed = rawIntent;
+        if (typeof rawIntent === 'string') {
+          try { parsed = JSON.parse(rawIntent); } catch {}
+        }
 
-    const systemInstruction = `You are an expert UK curriculum teacher. Create multiple-choice questions matching the given subject, topic, and Key Stage level. Output strictly as a valid Lisp S-expression.`;
+        const subject = parsed?.subject || parsed?.sub || 'English';
+        const topic = parsed?.unit || parsed?.topic || parsed?.u || 'Shakespeare: Key Themes';
+        const keyStage = parsed?.keyStage || parsed?.ks || 'Key Stage 3';
 
-    session = await createFreshSession(systemInstruction);
+        const systemInstruction = `You are an expert UK curriculum teacher. Create multiple-choice questions strictly matching the given subject, topic, and Key Stage level. Output strictly as a valid Lisp S-expression without Markdown backticks or conversational text.`;
 
-    // Clean direct instruction without repetitive template keys
-    const prompt = `Topic: "${topic}" (${keyStage} ${subject}).
+        session = await createFreshSession(systemInstruction);
+
+        if (!session) {
+          throw new Error('On-device LanguageModel session unavailable on this device.');
+        }
+
+        const prompt = `Topic: "${topic}" (${keyStage} ${subject}).
 Generate 1 multiple choice question testing understanding of "${topic}".
 
 Format:
@@ -141,40 +163,41 @@ Format:
  :answer-key 0
  :hint "Short clue under 15 words")`;
 
-    const response = await session.prompt(prompt);
+        const response = await session.prompt(prompt);
 
-    let sanitized = response
-      .replace(/```(?:lisp|scheme)?/gi, '')
-      .replace(/```/g, '')
-      .trim();
+        let sanitized = response
+          .replace(/```(?:lisp|scheme)?/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-    const firstParen = sanitized.indexOf('(');
-    const lastParen = sanitized.lastIndexOf(')');
-    if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
-      sanitized = sanitized.substring(firstParen, lastParen + 1);
+        const firstParen = sanitized.indexOf('(');
+        const lastParen = sanitized.lastIndexOf(')');
+        if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+          sanitized = sanitized.substring(firstParen, lastParen + 1);
+        }
+
+        sendFramed(dc, {
+          type: 'AST_RESPONSE',
+          raw: sanitized,
+          keyStage,
+          subject,
+          unit: topic,
+        });
+      } catch (err) {
+        console.error('[Worker Daemon Error]:', err);
+        sendFramed(dc, {
+          type: 'AST_ERROR',
+          error: err?.message || 'Inference execution failed in worker daemon.',
+        });
+      } finally {
+        isBusy = false;
+        if (session?.destroy) {
+          try { session.destroy(); } catch {}
+        }
+      }
     }
 
-    if (dc.readyState === 'open') {
-      dc.send(JSON.stringify({
-        type: 'AST_RESPONSE',
-        raw: sanitized,
-        keyStage,
-        subject,
-        unit: topic
-      }));
-      dc.send('__EOF__');
-    }
-  } catch (err) {
-    console.error('[Worker Daemon Error]:', err);
-    if (dc.readyState === 'open') dc.send('__EOF__');
-  } finally {
-    isBusy = false;
-    if (session?.destroy) {
-      try { session.destroy(); } catch {}
-    }
-  }
-}
-    // Announce ready immediately
+    // Announce ready immediately to signaling bus
     bus.postMessage({ type: 'daemon_ready' });
   </script>
 </body>

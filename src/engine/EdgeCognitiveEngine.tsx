@@ -8,20 +8,7 @@ import {
   getTuringDiagnosticSummary 
 } from '../services/dbStore';
 import { resolveSeedCoordinate } from '@site/static/promptStrategies';
-
-/**
- * Resolves the active Prompt API factory across specification variants.
- */
-function getLanguageModelFactory(): any {
-  if (typeof (window as any).LanguageModel !== 'undefined') {
-    return (window as any).LanguageModel;
-  }
-  if (typeof (self as any).LanguageModel !== 'undefined') {
-    return (self as any).LanguageModel;
-  }
-  const aiHost = (window as any).ai || (self as any).ai;
-  return aiHost?.languageModel || null;
-}
+import { aiCaller } from './aicaller';
 
 /**
  * Generates an instant, route-appropriate fallback AST based on topicKey.
@@ -37,8 +24,7 @@ function generateContextualFallback(topicKey: string, isQuiz: boolean): string {
 }
 
 /**
- * Executes on-device LLM inference using Chrome's Prompt API (Gemini Nano)
- * across both Practice Lab (Quizzes) and Learning Zone (Lesson Nodes).
+ * Executes on-device LLM inference using the unified aiCaller singleton.
  */
 export async function runLocalInference(
   prompt: string, 
@@ -55,38 +41,14 @@ export async function runLocalInference(
     console.warn('[DB Bank Warning] Failed fetching cached AST fallback:', err);
   }
 
-  const targetFactory = getLanguageModelFactory();
-
-  if (!targetFactory) {
-    return fallbackAST;
-  }
-
   const inferencePromise = (async () => {
-    let session: any = null;
     try {
-      // 1. Availability check (flat parameters)
-      if (typeof targetFactory.availability === 'function') {
-        const status = await targetFactory.availability({
-          expectedInputLanguages: ['en'],
-          expectedOutputLanguages: ['en']
-        });
-        if (status === 'no' || status === 'unavailable') return fallbackAST;
-      } else if (typeof targetFactory.capabilities === 'function') {
-        const caps = await targetFactory.capabilities();
-        if (caps?.available === 'no') return fallbackAST;
-      }
-
-      // 2. Session creation (flat parameters)
-      session = await targetFactory.create({
+      const rawResponse = await aiCaller.promptText({
+        prompt,
         systemPrompt: systemPrompt || 
           "You are an expert Oak Curriculum compiler. Output ONLY a valid Lisp S-expression. Never output markdown backticks or conversational text.",
-        expectedInputLanguages: ['en'],
-        expectedOutputLanguages: ['en']
       });
 
-      // 3. Execution
-      const rawResponse = await session.prompt(prompt);
-      
       let sanitized = (rawResponse || '')
         .replace(/```(?:lisp|scheme)?/gi, '')
         .replace(/```/g, '')
@@ -99,7 +61,7 @@ export async function runLocalInference(
         sanitized = sanitized.substring(firstParen, lastParen + 1);
       }
 
-      // 4. Multi-route AST Validation
+      // Multi-route AST Validation
       const isQuizValid = sanitized.includes(':prompt') && sanitized.includes(':options');
       const isLessonValid = sanitized.includes(':axiom') && sanitized.includes(':trap');
 
@@ -112,12 +74,6 @@ export async function runLocalInference(
     } catch (err) {
       console.warn('[AI Engine Error]', err);
       return fallbackAST;
-    } finally {
-      if (session && typeof session.destroy === 'function') {
-        try {
-          session.destroy();
-        } catch {}
-      }
     }
   })();
 
@@ -132,14 +88,13 @@ export async function runLocalInference(
 
 export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfig?: any }) {
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    '⚡ Initializing IndexedDB v3 and on-device WebGPU runtime...',
+    '⚡ Initializing IndexedDB v4 and on-device WebGPU runtime...',
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const activeSessionRef = useRef<any>(null);
 
   useEffect(() => {
     openLocalDB()
@@ -147,7 +102,7 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
       .then(() => {
         setTerminalLogs((prev) => [
           ...prev,
-          '📦 EdgeLearningEngineDB v3 connected (dynamic_adapters seeded, ast_bank ready).',
+          '📦 EdgeLearningEngineDB v4 connected (dynamic_adapters seeded, ast_bank ready).',
           '⚡ On-device Gemini Nano ready. Select a lesson topic or enter a query below.'
         ]);
       })
@@ -158,14 +113,6 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
           '⚠️ IndexedDB initialization failed. Running in memory-only mode.'
         ]);
       });
-
-    return () => {
-      if (activeSessionRef.current && typeof activeSessionRef.current.destroy === 'function') {
-        try {
-          activeSessionRef.current.destroy();
-        } catch {}
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -188,53 +135,26 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
         ? ` Note student previously struggled with: ${diagnostics.commonErrors.join(', ')}.`
         : '';
 
-      const targetFactory = getLanguageModelFactory();
+      const stream = aiCaller.promptStream({
+        prompt: promptText,
+        systemPrompt: `You are Prof. Turing, a concise Socratic tutor. Guide the student conceptually without giving away the direct answer.${errorContext} Keep responses under 25 words.`,
+      });
 
-      if (targetFactory) {
-        if (typeof targetFactory.availability === 'function') {
-          await targetFactory.availability({
-            expectedInputLanguages: ['en'],
-            expectedOutputLanguages: ['en'],
-          });
-        }
+      let fullResponse = '';
 
-        if (activeSessionRef.current && typeof activeSessionRef.current.destroy === 'function') {
-          try {
-            activeSessionRef.current.destroy();
-          } catch {}
-        }
-
-        const session = await targetFactory.create({
-          systemPrompt: `You are Prof. Turing, a concise Socratic tutor. Guide the student conceptually without giving away the direct answer.${errorContext} Keep responses under 25 words.`,
-          expectedInputLanguages: ['en'],
-          expectedOutputLanguages: ['en'],
+      for await (const chunk of stream) {
+        fullResponse = chunk;
+        setTerminalLogs((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = `🤖 [Prof. Turing]: ${fullResponse}`;
+          return next;
         });
-
-        activeSessionRef.current = session;
-
-        const stream = session.promptStreaming(promptText);
-        let fullResponse = '';
-
-        for await (const chunk of stream) {
-          fullResponse = chunk;
-          setTerminalLogs((prev) => {
-            const next = [...prev];
-            next[next.length - 1] = `🤖 [Prof. Turing]: ${fullResponse}`;
-            return next;
-          });
-        }
-      } else {
-        await new Promise((res) => setTimeout(res, 400));
-        setTerminalLogs((prev) => [
-          ...prev,
-          `💡 [Offline Socratic Rule]: Break the problem down into fundamental units. What does the core definition state?`,
-        ]);
       }
     } catch (err: any) {
       console.warn('[Nano Inference Error]', err);
       setTerminalLogs((prev) => [
         ...prev,
-        `⚠️ [Fallback Tutor]: Let's look at the first step together. Try breaking down the core concepts first.`,
+        `💡 [Offline Socratic Rule]: Break the problem down into fundamental units. What does the core definition state?`,
       ]);
     } finally {
       setIsProcessing(false);

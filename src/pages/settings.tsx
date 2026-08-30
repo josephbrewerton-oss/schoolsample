@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import { CurriculumProviderKey } from '../data/curriculumRegistry';
+import { aiCaller } from '../engine/aicaller';
 
 export default function SettingsPage() {
   const [curriculumStandard, setCurriculumStandard] = useState<CurriculumProviderKey>('uk_oak');
-  const [nanoStatus, setNanoStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking');
+  const [nanoStatus, setNanoStatus] = useState<'checking' | 'ready' | 'after-download' | 'unavailable'>('checking');
   const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
@@ -15,26 +16,16 @@ export default function SettingsPage() {
       setCurriculumStandard(saved);
     }
 
-    // 2. Check local Gemini Nano availability via standard W3C factory
+    // 2. Check local Gemini Nano availability via unified aiCaller
     async function checkNano() {
       try {
-        const aiHost = (window as any).ai || (self as any).ai;
-        const GlobalLM = (window as any).LanguageModel;
-        const targetFactory = aiHost?.languageModel || GlobalLM;
-
-        if (!targetFactory) {
-          setNanoStatus('unavailable');
-          return;
-        }
-
-        if (typeof targetFactory.availability === 'function') {
-          const status = await targetFactory.availability({
-            expectedInputLanguages: ['en'],
-            expectedOutputLanguages: ['en'],
-          });
-          setNanoStatus(status === 'no' || status === 'unavailable' ? 'unavailable' : 'ready');
-        } else {
+        const availability = await aiCaller.checkAvailability();
+        if (availability.status === 'readily') {
           setNanoStatus('ready');
+        } else if (availability.status === 'after-download') {
+          setNanoStatus('after-download');
+        } else {
+          setNanoStatus('unavailable');
         }
       } catch {
         setNanoStatus('unavailable');
@@ -47,10 +38,11 @@ export default function SettingsPage() {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem('curriculum_standard', curriculumStandard);
-    
-    // Dispatch storage event so open pages update reactively
+
+    // Dispatch custom and storage event so open tabs/components update reactively
     window.dispatchEvent(new Event('storage'));
-    
+    window.dispatchEvent(new CustomEvent('curriculum_standard_changed', { detail: curriculumStandard }));
+
     setSaveMessage('✅ Settings saved successfully!');
     setTimeout(() => setSaveMessage(''), 3000);
   };
@@ -85,6 +77,11 @@ export default function SettingsPage() {
                     Active (Hardware Accelerated)
                   </span>
                 )}
+                {nanoStatus === 'after-download' && (
+                  <span style={{ background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
+                    Download Required (Will auto-fetch on first run)
+                  </span>
+                )}
                 {nanoStatus === 'unavailable' && (
                   <span style={{ background: '#fee2e2', color: '#b91c1c', padding: '2px 8px', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem' }}>
                     Offline / Prompt API Disabled
@@ -92,7 +89,7 @@ export default function SettingsPage() {
                 )}
               </div>
               <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem', marginBottom: 0 }}>
-                Uses Chrome's Built-in Prompt API with zero download overhead.
+                Uses Chrome's Built-in Prompt API with local model execution.
               </p>
             </div>
 
