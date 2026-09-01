@@ -1,15 +1,15 @@
 // static/promptStrategies.js
 
 export const KEY_STAGE_CONSTRAINTS = {
-  KS1: "Ages 5-7. Simple vocabulary, clear concrete scenarios.",
-  KS2: "Ages 7-11. Elementary concepts, structured definitions.",
+  KS1: "Ages 5-7. Simple vocabulary, clear concrete scenarios, short sentences.",
+  KS2: "Ages 7-11. Elementary concepts, structured definitions, one-step reasoning.",
   KS3: "Ages 11-14. Foundational secondary concepts, cause-and-effect reasoning.",
-  KS4: "Ages 14-16. GCSE standard, precise scientific mechanisms and terminology."
+  KS4: "Ages 14-16. GCSE standard, precise scientific terminology and quantitative deduction."
 };
 
 export const REGIONAL_CONSTRAINTS = {
-  uk_oak: "Follow UK National Curriculum Key Stage standard terminology (e.g., maths, practical investigation, periodic table groups 1 to 0).",
-  universal: "Follow international curriculum standard scientific terminology."
+  uk_oak: "Follow UK National Curriculum Key Stage standard terminology (e.g., maths, practical investigation, SI metric units, £/p).",
+  international: "Follow international curriculum standard terminology (globally neutral English, SI metric units ONLY, no regional currencies)."
 };
 
 export function resolveKeyStageRule(keyStage) {
@@ -31,10 +31,9 @@ export const SUBJECT_DEFINITIONS = {
     ],
     archetypes: [
       "Multi-step problem solving",
-      "Geometric property deduction / Theorem application",
+      "Geometric property deduction",
       "Real-world word problem application",
-      "Inverse problem (working backwards from a result)",
-      "Spot the arithmetic / conceptual error"
+      "Spot the arithmetic or conceptual error"
     ]
   },
 
@@ -44,13 +43,13 @@ export const SUBJECT_DEFINITIONS = {
       'science', 'physics', 'chemistry', 'biology', 'forces', 'magnet', 'electric', 
       'electrolysis', 'photosynthesis', 'plant', 'cell', 'atom', 'chemical', 'energy', 
       'wave', 'ecology', 'acid', 'reaction', 'atomic structure', 'periodic table', 
-      'isotope', 'subatomic'
+      'isotope', 'subatomic', 'seasonal changes', 'seasons', 'weather'
     ],
     archetypes: [
-      "Calculation / Formula application (e.g. solve for unknown with units)",
-      "Practical scenario / Diagnostic error (troubleshoot a lab setup)",
+      "Core physical or biological property identification",
       "Common misconception trap",
-      "Structure and function / Subatomic component identification"
+      "Structure and function relationship",
+      "Observable environmental pattern deduction"
     ]
   },
 
@@ -62,10 +61,10 @@ export const SUBJECT_DEFINITIONS = {
       'poem', 'comprehension', 'capital letters', 'full stops'
     ],
     archetypes: [
-      "Contextual passage analysis / Device identification",
+      "Passage device identification",
       "Subtle grammatical error correction",
       "Tone and connotation discrimination",
-      "Structural syntax application"
+      "Sentence punctuation application"
     ]
   },
 
@@ -76,10 +75,10 @@ export const SUBJECT_DEFINITIONS = {
       'binary', 'logic', 'python', 'scratch'
     ],
     archetypes: [
-      "Trace code / predict variable state at line N",
-      "Identify logical vs syntax errors in pseudocode",
-      "Binary / Hex / Logic gate evaluation",
-      "Network protocol & cybersecurity diagnostic"
+      "Trace code and variable state",
+      "Identify logical errors in pseudocode",
+      "Binary, hex, and logic gate evaluation",
+      "Core computational concept definition"
     ]
   },
 
@@ -91,10 +90,10 @@ export const SUBJECT_DEFINITIONS = {
       'ancient', 'living-memory', 'changes within living memory'
     ],
     archetypes: [
-      "Cause and consequence / Impact assessment",
-      "Source analysis / Perspective comparison",
-      "Chronological turning point / Significance",
-      "Key definition applied to a specific historical/geographical case"
+      "Cause and consequence deduction",
+      "Source evidence analysis",
+      "Chronological milestone identification",
+      "Core definition applied to a specific historical case"
     ]
   }
 };
@@ -128,38 +127,38 @@ export function buildUniversalPrompt(params) {
   if (!matchedKey) {
     matchedKey = Object.keys(SUBJECT_DEFINITIONS).find(key =>
       SUBJECT_DEFINITIONS[key].aliases.some(alias => alias === cleanTopic)
-    ) || 'humanities';
+    ) || 'science';
   }
 
-  const subConfig = SUBJECT_DEFINITIONS[matchedKey] || SUBJECT_DEFINITIONS.humanities;
-  const focus = pickRandom(subConfig.archetypes || ['core_conceptual_understanding']);
+  const subConfig = SUBJECT_DEFINITIONS[matchedKey] || SUBJECT_DEFINITIONS.science;
+  const focus = pickRandom(subConfig.archetypes || ['Core concept mastery']);
 
   const ageRule = resolveKeyStageRule(keyStage);
   const regionalRule = REGIONAL_CONSTRAINTS[curriculum] || REGIONAL_CONSTRAINTS.uk_oak;
 
-  return `You are an expert curriculum test compiler.
-Output ONLY one valid Lisp S-expression adhering to the exact syntax format shown in the exemplar.
+  // Resolve ground truth seed coordinates to supply real curriculum facts
+  const seed = resolveSeedCoordinate(`${keyStage}:${cleanSubject}:${cleanTopic}`);
+
+  return `You are an elite school teacher creating an interactive multiple-choice question.
+Write an authentic, direct question testing student knowledge of "${topic}".
+
+TOPIC CONTEXT:
+- Level: ${keyStage} (${ageRule})
+- Core Rule: "${seed.axiom}"
+- Common Misconception: "${seed.trap}"
+- Regional Style: ${regionalRule}
+- Pedagogical Focus: ${focus}
+
+RULES:
+1. The :prompt MUST be a real, complete question sentence (e.g. "What happens to most trees in autumn?"). NEVER output phrases like "Clear question stem" or template instructions.
+2. Slot 0 in :options MUST be the exact, factually correct answer.
+3. Slots 1, 2, and 3 MUST be realistic, plausible wrong answers.
+4. Output ONLY the raw Lisp S-expression without Markdown code blocks or preamble.
 
 EXEMPLAR:
-(:route "quiz:mcq" :scratchpad "In winter, deciduous trees drop their leaves and the weather is typically coldest." :prompt "Which description best characterizes winter weather in the UK?" :options (list "Freezing temperatures and shorter daylight hours" "Warm sunny days with blossoming flowers" "Hot dry afternoons and long evenings" "Humid tropical rainstorms and high heat") :hint "Think about temperature and daylight changes during the coldest season." :answer-key 0)
+(:route "quiz:mcq" :scratchpad "In autumn, daylight hours decrease and deciduous trees shed their leaves." :prompt "Which change is most commonly observed in nature during autumn?" :options (list "Leaves change colour and fall from deciduous trees" "Trees grow new blossoms and fresh green shoots" "Days become significantly longer and temperatures peak" "Animals emerge from winter hibernation to build nests") :hint "Think about what happens to deciduous trees as daylight decreases." :answer-key 0)
 
-TASK:
-Generate a single multiple-choice question testing:
-- Subject: ${subject}
-- Topic: ${topic}
-- Level: ${keyStage} (${ageRule})
-- Focus: ${focus}
-- Standard: ${regionalRule}
-
-SYNTAX CONSTRAINTS:
-1. :prompt must contain ONLY the isolated question sentence. NEVER include options inside :prompt.
-2. :options must contain (list "Option0" "Option1" "Option2" "Option3").
-3. All 4 options MUST be distinct, full sentences or phrases, and must NOT repeat or contain syntax artifacts.
-4. Slot 0 in (list ...) MUST be the correct ground-truth answer.
-5. :answer-key must always be 0.
-6. Do not include markdown formatting, backtick codeblocks, or conversational chatter.
-
-Generate S-expression for ${subject} -> ${topic}:
+Generate S-expression for ${keyStage} ${subject} (${topic}):
 Output:`.trim();
 }
 
@@ -190,7 +189,7 @@ export function buildPrompt(userPrompt, langName = 'English', curriculumOverride
 }
 
 // ---------------------------------------------------------------------------
-// 2. LEARNING ZONE SEED REGISTRY & COMPILERS (Prof. Turing & Diagnostic AST)
+// 2. LEARNING ZONE SEED REGISTRY & COMPILERS
 // ---------------------------------------------------------------------------
 
 export const OAK_SEED_REGISTRY = {
@@ -199,15 +198,31 @@ export const OAK_SEED_REGISTRY = {
     subject: 'English',
     keyStage: 'KS1',
     topic: 'Capital Letters & Full Stops',
-    axiom: 'Every sentence begins with a capital letter and ends with a terminal punctuation mark (full stop, question mark, or exclamation mark).',
-    trap: 'Forgetting capital letters for the personal pronoun "I" and proper nouns (names and places).',
+    axiom: 'Every sentence begins with a capital letter and ends with a terminal punctuation mark.',
+    trap: 'Forgetting capital letters for the personal pronoun "I" and proper nouns.',
     pivot: 'How does a reader know where your first idea ends and the next one starts?'
+  },
+  'ks1:sci:seasons': {
+    subject: 'Science',
+    keyStage: 'KS1',
+    topic: 'Seasonal Changes',
+    axiom: 'Earth experiences four distinct seasons each year (spring, summer, autumn, winter) with changing weather and daylight hours.',
+    trap: 'Thinking summer is warmer because the Earth moves closer to the Sun rather than due to daylight hours and sunlight angle.',
+    pivot: 'What happens to the temperature and daylight as we move from summer into winter?'
+  },
+  'ks1:sci:seasonal changes': {
+    subject: 'Science',
+    keyStage: 'KS1',
+    topic: 'Seasonal Changes',
+    axiom: 'Earth experiences four distinct seasons each year (spring, summer, autumn, winter) with changing weather and daylight hours.',
+    trap: 'Thinking summer is warmer because the Earth moves closer to the Sun rather than due to daylight hours and sunlight angle.',
+    pivot: 'What happens to the temperature and daylight as we move from summer into winter?'
   },
   'ks1:sci:plants': {
     subject: 'Science',
     keyStage: 'KS1',
     topic: 'Plants & Seeds',
-    axiom: 'Seeds require moisture and warmth to sprout roots and shoots before they ever need sunlight.',
+    axiom: 'Seeds require moisture and warmth to germinate and grow roots before they need sunlight.',
     trap: 'Thinking buried seeds need direct sunlight underground to germinate.',
     pivot: 'What condition does a buried seed actually experience in the dark soil?'
   },
@@ -226,7 +241,7 @@ export const OAK_SEED_REGISTRY = {
     keyStage: 'KS2',
     topic: 'Forces & Friction',
     axiom: 'Friction is a contact force that acts in the opposite direction to relative movement.',
-    trap: 'Believing moving objects slow down because their internal "force" runs out.',
+    trap: 'Believing moving objects slow down because their internal force runs out.',
     pivot: 'What surface touches the toy car to make it slow down?'
   },
   'ks2:mat:fractions': {
@@ -234,8 +249,8 @@ export const OAK_SEED_REGISTRY = {
     keyStage: 'KS2',
     topic: 'Equivalent Fractions',
     axiom: 'Multiplying or dividing both numerator and denominator by the same non-zero number preserves value.',
-    trap: 'Adding the same number to numerator and denominator thinking it keeps equivalence (e.g., 1/2 = 2/3).',
-    pivot: 'If you cut a pizza into twice as many slices, do you get more total pizza if you take twice as many?'
+    trap: 'Adding the same number to numerator and denominator thinking it keeps equivalence.',
+    pivot: 'If you cut a pizza into twice as many slices, do you get more pizza if you take twice as many?'
   },
 
   // === KEY STAGE 3 ===
@@ -276,17 +291,38 @@ export function resolveSeedCoordinate(seedKey) {
     return OAK_SEED_REGISTRY[normalizedKey];
   }
 
-  // Fallback fuzzy search across keys
   const matched = Object.keys(OAK_SEED_REGISTRY).find(k => 
     normalizedKey.includes(k) || k.includes(normalizedKey)
   );
 
-  return matched ? OAK_SEED_REGISTRY[matched] : OAK_SEED_REGISTRY['ks3:sci:atomic'];
+  if (matched) return OAK_SEED_REGISTRY[matched];
+
+  // Topic keyword fallback
+  if (normalizedKey.includes('season') || normalizedKey.includes('weather')) {
+    return OAK_SEED_REGISTRY['ks1:sci:seasons'];
+  }
+  if (normalizedKey.includes('plant') || normalizedKey.includes('seed')) {
+    return OAK_SEED_REGISTRY['ks1:sci:plants'];
+  }
+  if (normalizedKey.includes('force') || normalizedKey.includes('friction')) {
+    return OAK_SEED_REGISTRY['ks2:sci:forces'];
+  }
+  if (normalizedKey.includes('fraction')) {
+    return OAK_SEED_REGISTRY['ks2:mat:fractions'];
+  }
+
+  return {
+    subject: 'Science',
+    keyStage: 'KS3',
+    topic: 'Core Concept',
+    axiom: 'Foundational scientific principles govern observable patterns and interactions.',
+    trap: 'Assuming everyday intuition always matches rigorous scientific mechanisms.',
+    pivot: 'What key rule defines how this process operates?'
+  };
 }
 
 /**
  * Builds an ultra-dense, token-efficient prompt for Prof. Turing
- * using exact Oak curriculum seed coordinates.
  */
 export function buildSocraticSeedPrompt(seedKey, pupilMessage = '') {
   const seed = resolveSeedCoordinate(seedKey);

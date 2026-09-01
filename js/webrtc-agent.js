@@ -183,33 +183,56 @@
     let fullText = "";
     const wrappedPrompt = await buildContextualPrompt(payload.topic, rawPrompt, payload.isCustomInput);
 
-    if (window.ai && window.ai.languageModel) {
+const lmRoot = window.LanguageModel || window.ai?.languageModel;
+    if (lmRoot) {
       try {
-        const capabilities = await window.ai.languageModel.capabilities();
-        if (capabilities.available === "readily") {
-          const session = await window.ai.languageModel.create({
-            systemPrompt: PEDAGOGICAL_SYSTEM_PROMPT
+        let isAvailable = false;
+        if (typeof lmRoot.availability === 'function') {
+          const status = await lmRoot.availability({
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            expectedOutputs: [{ type: 'text', languages: ['en'] }]
           });
-          const stream = session.promptStreaming(rawPrompt);
-          let prevLen = 0;
+          isAvailable = (status === 'readily' || status === 'available');
+        } else if (typeof lmRoot.capabilities === 'function') {
+          const caps = await lmRoot.capabilities();
+          isAvailable = (caps?.available === 'readily');
+        }
 
-          for await (const chunk of stream) {
-            if (streamId !== currentStreamId) return;
-            const newChunk = chunk.slice(prevLen);
-            prevLen = chunk.length;
-            fullText += newChunk;
-            packetCounter++;
-            updateElem("webrtc-packets", packetCounter);
-            receiveChannel.send(JSON.stringify({ streamId, chunk: newChunk, done: false }));
+        if (isAvailable) {
+          const session = await lmRoot.create({
+            systemPrompt: PEDAGOGICAL_SYSTEM_PROMPT,
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            expectedOutputs: [{ type: 'text', languages: ['en'] }]
+          });
+
+          const stream = session.promptStreaming 
+            ? session.promptStreaming(wrappedPrompt) 
+            : null;
+
+          if (stream) {
+            let prevLen = 0;
+            for await (const chunk of stream) {
+              if (streamId !== currentStreamId) return;
+              const delta = chunk.startsWith(fullText) ? chunk.slice(fullText.length) : chunk.slice(prevLen);
+              prevLen = chunk.length;
+              fullText += delta;
+              packetCounter++;
+              updateElem("webrtc-packets", packetCounter);
+              receiveChannel.send(JSON.stringify({ streamId, chunk: delta, done: false }));
+            }
+          } else {
+            fullText = await session.prompt(wrappedPrompt);
+            receiveChannel.send(JSON.stringify({ streamId, chunk: fullText, done: false }));
           }
 
           receiveChannel.send(JSON.stringify({ streamId, chunk: "", done: true }));
           setLastTutorQuestion(payload.topic, fullText);
           handleVoice(payload, fullText, streamId);
+          session.destroy?.();
           return;
         }
       } catch (nanoErr) {
-        console.warn("[WebRTC-Agent] Nano fallback:", nanoErr);
+        console.warn("[WebRTC-Agent] Nano execution warning:", nanoErr);
       }
     }
 
