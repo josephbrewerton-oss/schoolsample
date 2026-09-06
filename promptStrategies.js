@@ -111,6 +111,7 @@ export function buildUniversalPrompt(params) {
     subject = 'Science',
     topic = 'General',
     langName = 'English',
+    languageCondition = 'Formulate all text in clear English.', // Inject from SUPPORTED_LANGUAGES
     keyStage = 'KS3',
     subjectId = '',
     topicId = '',
@@ -139,8 +140,11 @@ export function buildUniversalPrompt(params) {
   // Resolve ground truth seed coordinates to supply real curriculum facts
   const seed = resolveSeedCoordinate(`${keyStage}:${cleanSubject}:${cleanTopic}`);
 
-  return `You are an elite school teacher creating an interactive multiple-choice question.
+return `You are an elite school teacher creating an interactive multiple-choice question.
 Write an authentic, direct question testing student knowledge of "${topic}".
+
+LANGUAGE REQUIREMENT:
+${languageCondition}
 
 TOPIC CONTEXT:
 - Level: ${keyStage} (${ageRule})
@@ -150,13 +154,10 @@ TOPIC CONTEXT:
 - Pedagogical Focus: ${focus}
 
 RULES:
-1. The :prompt MUST be a real, complete question sentence (e.g. "What happens to most trees in autumn?"). NEVER output phrases like "Clear question stem" or template instructions.
+1. The :prompt MUST be a real, complete question sentence.
 2. Slot 0 in :options MUST be the exact, factually correct answer.
 3. Slots 1, 2, and 3 MUST be realistic, plausible wrong answers.
 4. Output ONLY the raw Lisp S-expression without Markdown code blocks or preamble.
-
-EXEMPLAR:
-(:route "quiz:mcq" :scratchpad "In autumn, daylight hours decrease and deciduous trees shed their leaves." :prompt "Which change is most commonly observed in nature during autumn?" :options (list "Leaves change colour and fall from deciduous trees" "Trees grow new blossoms and fresh green shoots" "Days become significantly longer and temperatures peak" "Animals emerge from winter hibernation to build nests") :hint "Think about what happens to deciduous trees as daylight decreases." :answer-key 0)
 
 Generate S-expression for ${keyStage} ${subject} (${topic}):
 Output:`.trim();
@@ -270,7 +271,14 @@ export const OAK_SEED_REGISTRY = {
     trap: 'Attempting to write implementation code before determining the algorithmic steps.',
     pivot: 'What details can we ignore right now to see the core pattern?'
   },
-
+  'ks4:sci:waves': {
+  subject: 'Science',
+  keyStage: 'KS4',
+  topic: 'Waves and Electromagnetic Spectrum',
+  axiom: 'All electromagnetic waves travel at the speed of light in a vacuum and transfer energy as transverse waves without transferring matter.',
+  trap: 'Believing higher frequency EM waves travel faster than lower frequency waves in empty space.',
+  pivot: 'Do radio waves and gamma rays travel at different speeds through open space?'
+},
   // === KEY STAGE 4 (GCSE) ===
   'ks4:sci:bonding': {
     subject: 'Science',
