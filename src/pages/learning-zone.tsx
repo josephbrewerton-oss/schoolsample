@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
 import { dispatch } from '../engine/hypercall';
@@ -236,7 +237,7 @@ export default function LearningZonePage() {
         
         {/* Hidden WebRTC Neural Worker Daemon Frame */}
         <iframe
-          src="/schoolsample/worker.html"
+          src={useBaseUrl('/worker.html')}
           style={{ display: 'none' }}
           title="neural-worker-daemon"
         />

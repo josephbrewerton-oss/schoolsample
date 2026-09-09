@@ -4,6 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 import webpack from 'webpack';
 
 const isProd = process.env.NODE_ENV === 'production';
+const baseUrl = process.env.BASE_URL || '/';
 
 const config: Config = {
   title: 'St Joseph',
@@ -11,7 +12,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   url: 'https://josephbrewerton-oss.github.io',
-  baseUrl: '/schoolsample/',
+  baseUrl,
 
   organizationName: 'josephbrewerton-oss',
   projectName: 'schoolsample',
@@ -20,7 +21,7 @@ const config: Config = {
 
   scripts: [
     {
-      src: '/schoolsample/js/webrtc-agent.js',
+      src: `${baseUrl}js/webrtc-agent.js`,
       async: true,
     },
   ],
@@ -86,12 +87,12 @@ plugins: [
                 {
                   tagName: 'link',
                   rel: 'icon',
-                  href: '/schoolsample/img/docusaurus.png',
+                  href: `${baseUrl}img/docusaurus.png`,
                 },
                 {
                   tagName: 'link',
                   rel: 'manifest',
-                  href: '/schoolsample/manifest.json',
+                  href: `${baseUrl}manifest.json`,
                 },
               ],
             },

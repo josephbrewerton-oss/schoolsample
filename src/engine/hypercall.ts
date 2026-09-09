@@ -1,7 +1,7 @@
 // src/engine/hypercall.ts
 import { dispatchAstIntent, CurriculumPackage } from '../curriculum';
 import { EngineFlow } from './engineflow';
-import { ComponentsFlow } from '../components/componentsflow';
+import { ComponentsFlow } from '../components/componentsFlow';
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
 import { getBufferedLesson, putBufferedLesson, CachedLessonRecord } from '../services/dbStore';
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';

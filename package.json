@@ -5,13 +5,13 @@
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "docusaurus": "docusaurus",
-    "start": "docusaurus start",
+    "start": "docusaurus start --host 0.0.0.0 --port 3000",
     "obfuscate": "javascript-obfuscator static/js/webrtc-agent.js --output static/js/webrtc-agent.js --compact true --control-flow-flattening true --dead-code-injection true",
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
     "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
-    "build": "npm run ingest:oak && docusaurus build",
-    "mine:watch": "ts-node --esm scripts/watchSubstrates.ts",
-    "dev": "concurrently \"npm run mine:watch\" \"docusaurus start\"",
+    "build": "npm run ingest:oak && node scripts/build.mjs",
+    "mine:watch": "npx tsx scripts/watchSubstrates.ts",
+    "dev": "docusaurus start --host 0.0.0.0 --port 3000",
     "deploy": "docusaurus deploy"
   },
   "devDependencies": {
