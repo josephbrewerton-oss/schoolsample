@@ -37,6 +37,19 @@ const DEFAULT_ADJECTIVES = ['Curious', 'Bright', 'Quick', 'Eager', 'Stargazing',
 const DEFAULT_ANIMALS = ['Owl', 'Falcon', 'Dolphin', 'Otter', 'Fox', 'Robin', 'Cheetah', 'Wolf', 'Explorer'];
 const DEFAULT_AVATARS = ['🦉', '🦅', '🐬', '🦦', '🦊', '🐦', '🐆', '🐺', '🔬', '🚀', '🌟', '📚'];
 
+function escapeHtml(str: string): string {
+  return str.replace(/[&<>'"]/g, (tag) => {
+    const chars: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;',
+    };
+    return chars[tag] || tag;
+  });
+}
+
 export function generateRandomAlias(): { alias: string; avatar: string } {
   const adj = DEFAULT_ADJECTIVES[Math.floor(Math.random() * DEFAULT_ADJECTIVES.length)];
   const animal = DEFAULT_ANIMALS[Math.floor(Math.random() * DEFAULT_ANIMALS.length)];
@@ -62,19 +75,20 @@ export function getLearnerProfile(): LearnerProfile {
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        alias: parsed.alias || 'Curious Explorer',
-        avatarEmoji: parsed.avatarEmoji || '🦉',
-        keyStage: parsed.keyStage || 'Key Stage 2',
-        cohortCode: parsed.cohortCode || 'Primary Group',
-        createdAt: parsed.createdAt || Date.now(),
-        starsEarned: parsed.starsEarned || 0,
-        streakPeak: parsed.streakPeak || 0,
+        alias: parsed.alias ?? 'Curious Explorer',
+        avatarEmoji: parsed.avatarEmoji ?? '🦉',
+        keyStage: parsed.keyStage ?? 'Key Stage 2',
+        cohortCode: parsed.cohortCode ?? 'Primary Group',
+        createdAt: parsed.createdAt ?? Date.now(),
+        starsEarned: parsed.starsEarned ?? 0,
+        streakPeak: parsed.streakPeak ?? 0,
       };
     }
   } catch (err) {
     console.warn('[ProfileStore] Error parsing stored profile:', err);
   }
 
+  // Generate initial fallback profile
   const generated = generateRandomAlias();
   const initial: LearnerProfile = {
     alias: generated.alias,
@@ -86,7 +100,13 @@ export function getLearnerProfile(): LearnerProfile {
     streakPeak: 0,
   };
 
-  saveLearnerProfile(initial);
+  // Directly set storage to avoid the recursive loop
+  try {
+    localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(initial));
+  } catch (err) {
+    console.warn('[ProfileStore] Error setting initial profile:', err);
+  }
+
   return initial;
 }
 
@@ -113,8 +133,15 @@ export function saveLearnerProfile(updates: Partial<LearnerProfile>): LearnerPro
 
 export function formatTopicTitle(rawTopicId: string): string {
   if (!rawTopicId) return 'General Study';
-  return rawTopicId
-    .split('_')
+
+  // Grab the specific topic suffix if using namespaces like ks1:sci:1:plants
+  const baseName = rawTopicId.includes(':') 
+    ? rawTopicId.split(':').pop() || rawTopicId 
+    : rawTopicId;
+
+  return baseName
+    .split(/[_-]/)
+    .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
@@ -161,11 +188,12 @@ export async function getLearnerAnalytics(): Promise<LearnerAnalytics> {
     });
   });
 
-  // Sort by attempts descending
   topicBreakdown.sort((a, b) => b.attempts - a.attempts);
 
-  // Recent 15 records, newest first
-  const recentHistory = [...records].reverse().slice(0, 15);
+  // Explicit sort to guarantee newest-first history
+  const recentHistory = [...records]
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 15);
 
   return {
     profile,
@@ -189,8 +217,12 @@ export async function purgeAllLearnerData(): Promise<void> {
     localStorage.removeItem('curriculum_standard');
     localStorage.removeItem('oak_curriculum_standard');
   }
+
   await clearAllStudentProgress();
-  window.dispatchEvent(new CustomEvent('learner_profile_purged'));
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('learner_profile_purged'));
+  }
 }
 
 /**
@@ -198,6 +230,8 @@ export async function purgeAllLearnerData(): Promise<void> {
  * Export complete learning passport as a human- and machine-readable JSON file.
  */
 export async function exportLearnerPassportJson(): Promise<void> {
+  if (typeof window === 'undefined') return;
+
   const analytics = await getLearnerAnalytics();
   const exportPayload = {
     standard: 'St Joseph UK Curriculum Offline Learning Passport',
@@ -231,14 +265,21 @@ export async function exportLearnerPassportJson(): Promise<void> {
  * Generates an offline HTML card for students, teachers, or parents.
  */
 export async function downloadLearnerCertificateHtml(): Promise<void> {
+  if (typeof window === 'undefined') return;
+
   const analytics = await getLearnerAnalytics();
   const p = analytics.profile;
+
+  const safeAlias = escapeHtml(p.alias);
+  const safeAvatar = escapeHtml(p.avatarEmoji);
+  const safeKeyStage = escapeHtml(p.keyStage);
+  const safeCohort = escapeHtml(p.cohortCode);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Learning Passport: ${p.alias}</title>
+  <title>Learning Passport: ${safeAlias}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 2rem; }
     .passport-card { max-width: 720px; margin: 0 auto; background: #ffffff; border: 2px solid #e2e8f0; border-radius: 16px; padding: 2.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
@@ -259,10 +300,10 @@ export async function downloadLearnerCertificateHtml(): Promise<void> {
   <div class="passport-card">
     <div class="badge-bar">
       <div style="display: flex; align-items: center; gap: 1.25rem;">
-        <div class="avatar">${p.avatarEmoji}</div>
+        <div class="avatar">${safeAvatar}</div>
         <div>
-          <h1 style="margin: 0; font-size: 1.75rem; color: #0f172a;">${p.alias}</h1>
-          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.95rem;">${p.keyStage} • Cohort: ${p.cohortCode}</p>
+          <h1 style="margin: 0; font-size: 1.75rem; color: #0f172a;">${safeAlias}</h1>
+          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.95rem;">${safeKeyStage} • Cohort: ${safeCohort}</p>
         </div>
       </div>
       <div style="text-align: right;">
@@ -297,7 +338,7 @@ export async function downloadLearnerCertificateHtml(): Promise<void> {
                 (t) => `
         <div class="topic-row">
           <div>
-            <strong>${t.displayName}</strong>
+            <strong>${escapeHtml(t.displayName)}</strong>
             <div style="font-size: 0.8rem; color: #64748b;">${t.correctCount}/${t.attempts} correct (${t.accuracyPercent}%)</div>
           </div>
           <span class="${t.status === 'Mastered' ? 'mastered-badge' : 'practicing-badge'}">${t.status}</span>
@@ -319,7 +360,7 @@ export async function downloadLearnerCertificateHtml(): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `learning_certificate_${p.alias.replace(/\s+/g, '_')}.html`;
+  a.download = `learning_certificate_${safeAlias.replace(/\s+/g, '_')}.html`;
   a.click();
   URL.revokeObjectURL(url);
 }
