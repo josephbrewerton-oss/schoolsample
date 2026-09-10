@@ -1,6 +1,7 @@
 // src/components/NanoAssistantPanel.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { aiCaller } from '../engine/aicaller';
+import { aiCaller, hasUserGrantedAiConsent } from '../engine/aicaller';
+import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -30,11 +31,14 @@ export function TuringTutor({
   onLaunchLesson,
 }: TuringTutorProps) {
   const currentTopic = activeTopic || contextTopic || unit || 'General Studies';
+  const topicKnowledge = findCurriculumKnowledge(keyStage, subject, currentTopic);
 
   const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
     {
       role: 'turing',
-      text: `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
+      text: topicKnowledge
+        ? `Hello! I'm Super Teacher Nano. In ${topicKnowledge.title}: ${topicKnowledge.socraticPivot}`
+        : `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -42,6 +46,19 @@ export function TuringTutor({
   const [suggestedLesson, setSuggestedLesson] = useState<RetrievedLesson | null>(null);
   const [launchingLesson, setLaunchingLesson] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [hasConsent, setHasConsent] = useState(false);
+
+  useEffect(() => {
+    setHasConsent(hasUserGrantedAiConsent());
+    const handleConsentChanged = (e: any) => {
+      setHasConsent(Boolean(e.detail));
+    };
+    window.addEventListener('ai_consent_changed', handleConsentChanged);
+    window.addEventListener('storage', () => setHasConsent(hasUserGrantedAiConsent()));
+    return () => {
+      window.removeEventListener('ai_consent_changed', handleConsentChanged);
+    };
+  }, []);
 
   const voiceEnabledRef = useRef(voiceEnabled);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
@@ -49,13 +66,16 @@ export function TuringTutor({
 
   // Reset conversation session when the topic changes
   useEffect(() => {
+    const knowledge = findCurriculumKnowledge(keyStage, subject, currentTopic);
     setMessages([
       {
         role: 'turing',
-        text: `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
+        text: knowledge
+          ? `Hello! I'm Super Teacher Nano. In ${knowledge.title}: ${knowledge.socraticPivot}`
+          : `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
       },
     ]);
-  }, [seedKey, currentTopic]);
+  }, [seedKey, currentTopic, keyStage, subject]);
 
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
@@ -88,11 +108,16 @@ export function TuringTutor({
 
   const buildSystemPrompt = () => `You are "Super Teacher Nano" — an expert UK National Curriculum Socratic educator for ${keyStage} ${subject}.
 Target Topic: ${currentTopic}
+${topicKnowledge ? `\nCURRICULUM GROUND TRUTH:
+- Core Axiom/Rule: "${topicKnowledge.coreAxiom}"
+- Target Pupil Misconception: "${topicKnowledge.cognitiveTrap}"
+- Socratic Inquiry Angle: "${topicKnowledge.socraticPivot}"` : ''}
 
 PEDAGOGICAL RULES:
 1. NEVER give the direct answer.
-2. Provide ONE concise hint or thought-provoking clue (under 30 words).
-3. Always finish with an engaging question to help the student think through the answer.`;
+2. Provide ONE concise hint or thought-provoking clue (under 35 words).
+3. Directly counter the known pupil misconception without giving the solution away.
+4. Always finish with an engaging question to help the student think through the answer.`;
 
   const speak = (text: string) => {
     if (!voiceEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -172,7 +197,17 @@ PEDAGOGICAL RULES:
       speak(cleaned);
     } catch (err) {
       console.error('[Super Teacher Error]:', err);
-      const fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
+      let fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
+      if (customInstruction?.includes('analogy') && topicKnowledge?.scaffoldHints.level1) {
+        fallback = topicKnowledge.scaffoldHints.level1;
+      } else if (customInstruction?.includes('rule') && topicKnowledge?.scaffoldHints.level2) {
+        fallback = topicKnowledge.scaffoldHints.level2;
+      } else if (customInstruction?.includes('step') && topicKnowledge?.scaffoldHints.level3) {
+        fallback = topicKnowledge.scaffoldHints.level3;
+      } else if (topicKnowledge) {
+        fallback = `Remember the key rule: ${topicKnowledge.coreAxiom}. How can we apply that here?`;
+      }
+
       setMessages((prev) => {
         const copy = [...prev];
         copy[copy.length - 1] = { role: 'turing', text: fallback };
@@ -248,8 +283,18 @@ PEDAGOGICAL RULES:
           >
             {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
           </button>
-          <span style={{ fontSize: '0.75rem', background: '#064e3b', color: '#34d399', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>
-            100% On-Device
+          <span
+            style={{
+              fontSize: '0.75rem',
+              background: hasConsent ? '#064e3b' : '#1e293b',
+              color: hasConsent ? '#34d399' : '#94a3b8',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontWeight: 600,
+              border: `1px solid ${hasConsent ? '#059669' : '#334155'}`,
+            }}
+          >
+            {hasConsent ? '🧠 100% On-Device AI' : '🌱 Eco Mode (Zero Data)'}
           </span>
         </div>
       </div>

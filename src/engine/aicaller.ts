@@ -16,6 +16,24 @@ export interface ModelAvailability {
   temperature?: number;
 }
 
+export const CONSENT_STORAGE_KEY = 'ai_model_download_consent';
+
+export function hasUserGrantedAiConsent(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(CONSENT_STORAGE_KEY) === 'granted';
+}
+
+export function setUserAiConsent(granted: boolean): void {
+  if (typeof window === 'undefined') return;
+  if (granted) {
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'granted');
+  } else {
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'denied');
+  }
+  window.dispatchEvent(new Event('storage'));
+  window.dispatchEvent(new CustomEvent('ai_consent_changed', { detail: granted }));
+}
+
 class AiRuntimeCaller {
   private chatSession: any = null;
   private activeSystemPrompt: string = '';
@@ -38,7 +56,7 @@ class AiRuntimeCaller {
   }
 
   /**
-   * Diagnostic check across Desktop & Mobile runtimes
+   * Diagnostic check across Desktop & Mobile runtimes (hardware capability check only)
    */
   async checkAvailability(): Promise<ModelAvailability> {
     const lm = this.getAiRoot();
@@ -75,9 +93,15 @@ class AiRuntimeCaller {
   }
 
   /**
-   * Creates a configured session instance
+   * Creates a configured session instance respecting user consent
    */
   private async createSessionInstance(opts?: Partial<AiInferenceOptions>): Promise<any> {
+    // UK GDPR & Children's Code Consent Gate:
+    // If the user hasn't explicitly granted permission, do NOT spin up or download local neural weights
+    if (!hasUserGrantedAiConsent()) {
+      throw new Error('User has not consented to in-browser AI model execution/download.');
+    }
+
     const lm = this.getAiRoot();
     if (!lm) {
       throw new Error('W3C LanguageModel API not supported in this environment.');

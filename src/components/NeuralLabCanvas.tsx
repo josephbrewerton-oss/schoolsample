@@ -3,6 +3,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { dispatch } from '../engine/hypercall';
+import { hasUserGrantedAiConsent } from '../engine/aicaller';
 
 interface NeuralLabCanvasProps {
   onTopicChange?: (keyStage: string, subject: string, unit: string) => void;
@@ -20,6 +21,21 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
 
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [difficulty, setDifficulty] = useState<'warmup' | 'challenger' | 'brainbuster'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('preferred_difficulty') as any) || 'challenger';
+    }
+    return 'challenger';
+  });
+  const [hasConsent, setHasConsent] = useState(false);
+
+  useEffect(() => {
+    setHasConsent(hasUserGrantedAiConsent());
+    const onConsentChanged = (e: any) => setHasConsent(Boolean(e.detail));
+    window.addEventListener('ai_consent_changed', onConsentChanged);
+    window.addEventListener('storage', () => setHasConsent(hasUserGrantedAiConsent()));
+    return () => window.removeEventListener('ai_consent_changed', onConsentChanged);
+  }, []);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -104,7 +120,8 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
   const requestQuestion = useCallback(async (
     ks = activeSelectionRef.current.keyStage,
     sub = activeSelectionRef.current.subject,
-    u = activeSelectionRef.current.unit
+    u = activeSelectionRef.current.unit,
+    diff = difficulty
   ) => {
     const requestId = ++activeRequestIdRef.current;
     setIsGenerating(true);
@@ -119,6 +136,7 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
           subject: sub,
           topic: u,
           curriculum: curriculumSetting,
+          difficulty: diff,
         },
       });
 
@@ -142,10 +160,18 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
         setIsGenerating(false);
       }
     }
-  }, [curriculumSetting, handleNewQuestion]);
+  }, [curriculumSetting, difficulty, handleNewQuestion]);
+
+  const handleDifficultyChange = (newDiff: 'warmup' | 'challenger' | 'brainbuster') => {
+    setDifficulty(newDiff);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('preferred_difficulty', newDiff);
+    }
+    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, newDiff);
+  };
 
   useEffect(() => {
-    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit);
+    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty);
   }, [selectedKeyStage, selectedSubject, selectedUnit, curriculumSetting, requestQuestion]);
 
   // 3. User Selection & Progress Tracking via Unified Dispatch
@@ -228,6 +254,105 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
           boxSizing: 'border-box',
         }}
       >
+        {/* Child-Friendly Difficulty / Challenge Level Selector */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            marginBottom: '1.5rem',
+            paddingBottom: '1rem',
+            borderBottom: '1px solid #f1f5f9',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>
+              🎯 Challenge Level:
+            </span>
+            <button
+              type="button"
+              onClick={() => handleDifficultyChange('warmup')}
+              style={{
+                padding: '5px 12px',
+                borderRadius: '9999px',
+                border: difficulty === 'warmup' ? '2px solid #10b981' : '1px solid #cbd5e1',
+                background: difficulty === 'warmup' ? '#ecfdf5' : '#ffffff',
+                color: difficulty === 'warmup' ? '#065f46' : '#64748b',
+                fontWeight: difficulty === 'warmup' ? 800 : 600,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              🌱 Warm-Up
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDifficultyChange('challenger')}
+              style={{
+                padding: '5px 12px',
+                borderRadius: '9999px',
+                border: difficulty === 'challenger' ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                background: difficulty === 'challenger' ? '#eff6ff' : '#ffffff',
+                color: difficulty === 'challenger' ? '#1e40af' : '#64748b',
+                fontWeight: difficulty === 'challenger' ? 800 : 600,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              ⚡ Challenger
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDifficultyChange('brainbuster')}
+              style={{
+                padding: '5px 12px',
+                borderRadius: '9999px',
+                border: difficulty === 'brainbuster' ? '2px solid #7c3aed' : '1px solid #cbd5e1',
+                background: difficulty === 'brainbuster' ? '#f5f3ff' : '#ffffff',
+                color: difficulty === 'brainbuster' ? '#5b21b6' : '#64748b',
+                fontWeight: difficulty === 'brainbuster' ? 800 : 600,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              🏆 Brain Buster
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+              {difficulty === 'warmup' && '🌱 Gentle questions to build core confidence'}
+              {difficulty === 'challenger' && '⚡ Real-world problems and clever distractors'}
+              {difficulty === 'brainbuster' && '🏆 Big brain puzzles that power up device AI!'}
+            </span>
+
+            {/* Transparent Resource/Consent Badge */}
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: '4px',
+                background: hasConsent ? '#f0fdf4' : '#f8fafc',
+                color: hasConsent ? '#15803d' : '#475569',
+                border: `1px solid ${hasConsent ? '#bbf7d0' : '#e2e8f0'}`,
+              }}
+              title={
+                hasConsent
+                  ? 'On-Device AI Active (Permitted by user). Zero cloud telemetry.'
+                  : 'Eco Mode (Default). Zero data downloads. Verified offline curriculum.'
+              }
+            >
+              {hasConsent ? '🧠 Device AI Permitted' : '🌱 Eco Mode (Zero Download)'}
+            </span>
+          </div>
+        </div>
+
         {isGenerating ? (
           <div
             style={{

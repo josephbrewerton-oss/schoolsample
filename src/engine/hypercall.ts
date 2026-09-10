@@ -6,6 +6,7 @@ import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionRep
 import { getBufferedLesson, putBufferedLesson, CachedLessonRecord } from '../services/dbStore';
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 import { aiCaller } from './aicaller';
+import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -62,42 +63,85 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const subject = payload?.subject || 'Science';
           const topic = payload?.topic || 'General Science';
           const curriculum = payload?.curriculum || 'uk_oak';
+          const difficulty = (payload?.difficulty || 'challenger') as 'warmup' | 'challenger' | 'brainbuster';
           const stageGuidelines = getStageGuidelines(stage);
 
-          const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
-Age/Stage Guidelines: ${stageGuidelines}
+          let difficultyInstruction = 'Difficulty: Standard challenger level with a realistic scenario and a clever distractor.';
+          if (difficulty === 'warmup') {
+            difficultyInstruction = 'Difficulty: Warm-Up (Level 1). Keep vocabulary clear and encouraging for young learners. Single-step reasoning, straightforward options.';
+          } else if (difficulty === 'brainbuster') {
+            difficultyInstruction = 'Difficulty: Brain Buster (Level 3 - Deep Thinking). Multi-step reasoning problem or scenario that stretches thinking and tests tricky edge cases.';
+          }
 
-Generate the curriculum logic scaffolding. Return strictly a single JSON object with no Markdown:
+          // 1. Query verified offline curriculum knowledge base
+          const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
+          let offlineQuestion = null;
+          if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
+            const qIdx = Math.floor(Math.random() * offlineKnowledge.questions.length);
+            offlineQuestion = offlineKnowledge.questions[qIdx];
+          }
+
+          const basePrompt = offlineQuestion?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
+          const displayPrompt = difficulty === 'brainbuster' 
+            ? `🧠 [Brain Buster] ${basePrompt}` 
+            : difficulty === 'warmup' 
+            ? `🌱 [Warm-Up] ${basePrompt}` 
+            : basePrompt;
+
+          const defaultResult = {
+            axiom: offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
+            trap: offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
+            hook: offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
+            guidedStep: offlineKnowledge?.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
+            prompt: displayPrompt,
+            options: offlineQuestion ? [...offlineQuestion.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property'],
+            answerKey: offlineQuestion !== null ? offlineQuestion.answerKey : 0,
+            hint: offlineQuestion?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
+            explanation: offlineQuestion?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
+            scaffoldHints: offlineKnowledge?.scaffoldHints,
+            difficulty,
+          };
+
+          // 2. If AI runtime is available, attempt dynamic synthesis grounded in verified axioms
+          try {
+            const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
+Age/Stage Guidelines: ${stageGuidelines}
+Challenge Level: ${difficultyInstruction}
+${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}
+
+Generate an interactive multiple-choice question and lesson scaffolding. Return strictly a single JSON object with no Markdown:
 {
-  "axiom": "Stage-appropriate core rule (plain English for KS1/KS2, rigorous GCSE standard for KS4)",
-  "trap": "Accurate, realistic pupil misconception for this exact age group",
-  "hook": "Relatable real-world inquiry scenario matching the target stage depth",
-  "guidedStep": "Practical or analytical activity appropriate for this stage",
-  "prompt": "Direct Socratic question using age-appropriate phrasing (under 20 words)"
+  "axiom": "Stage-appropriate core rule",
+  "trap": "Accurate pupil misconception",
+  "hook": "Relatable real-world inquiry scenario",
+  "guidedStep": "Practical or analytical activity",
+  "prompt": "Direct multiple-choice question stem",
+  "options": ["Correct answer", "Misconception distractor", "Plausible alternative", "Boundary distractor"],
+  "answerKey": 0,
+  "hint": "Gentle Socratic clue guiding away from the misconception without giving answer"
 }`;
 
-          try {
             const rawResponse = await aiCaller.promptText({
               prompt,
-              systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. Output strictly valid JSON with no markdown formatting or commentary.`,
+              systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
               preserveContext: false,
             });
 
             const match = rawResponse.match(/\{[\s\S]*?\}/);
             if (match) {
-              return JSON.parse(match[0]);
+              const parsed = JSON.parse(match[0]);
+              if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
+                return {
+                  ...defaultResult,
+                  ...parsed,
+                };
+              }
             }
           } catch (err) {
-            console.warn('[QuestionEngine Parsing Fallback]:', err);
+            // Offline / on-device LLM unready: reliably return verified curriculum knowledge
           }
 
-          return {
-            axiom: `Fundamental principles governing ${topic}.`,
-            trap: `Common misconception regarding ${topic}.`,
-            hook: `How does ${topic} operate in everyday physical reality?`,
-            guidedStep: `Analyze the core properties and behaviors of ${topic}.`,
-            prompt: `What fundamental property defines ${topic}?`,
-          };
+          return defaultResult;
         }
         throw new Error(`Unknown QuestionEngine intent: "${intent}"`);
       },

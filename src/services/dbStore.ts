@@ -181,6 +181,37 @@ export async function logProgress(record: StudentRecord): Promise<void> {
   });
 }
 
+export async function getAllProgressRecords(): Promise<StudentRecord[]> {
+  try {
+    const db = await openLocalDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_PROGRESS, 'readonly');
+      const store = tx.objectStore(STORE_PROGRESS);
+      const req = store.getAll();
+      req.onsuccess = () => resolve((req.result as StudentRecord[]) || []);
+      req.onerror = () => resolve([]);
+    });
+  } catch (err) {
+    console.warn('[dbStore] Failed to fetch progress records:', err);
+    return [];
+  }
+}
+
+export async function clearAllStudentProgress(): Promise<void> {
+  try {
+    const db = await openLocalDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_PROGRESS, 'readwrite');
+      const store = tx.objectStore(STORE_PROGRESS);
+      const req = store.clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    console.warn('[dbStore] Failed to clear progress store:', err);
+  }
+}
+
 export async function getTuringDiagnosticSummary(topicId: string): Promise<{ accuracy: number; commonErrors: string[] }> {
   const db = await openLocalDB();
   return new Promise((resolve, reject) => {

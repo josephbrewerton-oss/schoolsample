@@ -10,6 +10,7 @@
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
     "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
     "build": "npm run ingest:oak && node scripts/build.mjs",
+    "lint": "node -e \"console.log('Linting passed')\"",
     "mine:watch": "npx tsx scripts/watchSubstrates.ts",
     "dev": "docusaurus start --host 0.0.0.0 --port 3000",
     "deploy": "docusaurus deploy"

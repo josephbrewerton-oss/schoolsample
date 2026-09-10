@@ -119,18 +119,23 @@ plugins: [
           position: 'left',
         },
         {
-          to: '/blog',
-          label: 'News',
-          position: 'left',
-        },
-        {
           to: '/learning-zone',
           label: 'Learning Zone',
           position: 'left',
         },
         {
+          to: '/profile',
+          label: '👤 Learner Profile',
+          position: 'left',
+        },
+        {
+          to: '/blog',
+          label: 'News',
+          position: 'left',
+        },
+        {
           to: '/settings',
-          label: '⚙️ Settings & Access',
+          label: '⚙️ Settings',
           position: 'right',
         },
         {
