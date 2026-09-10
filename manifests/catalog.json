@@ -1,6 +1,6 @@
 {
   "version": "1.2.0-compact",
-  "generatedAt": 1789039191878,
+  "generatedAt": 1789042669469,
   "streams": [
     {
       "id": "academic",
@@ -23,14 +23,84 @@
   ],
   "items": [
     {
+      "id": "first-reconciliation",
+      "stream": "faith",
+      "keyStage": "KS2",
+      "subject": "Religious Formation",
+      "unit": "Sacraments of Healing",
+      "title": "The Sacrament of Reconciliation (First Confession)",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/first-reconciliation.json"
+    },
+    {
       "id": "first-holy-communion",
       "stream": "faith",
-      "keyStage": "Parish",
+      "keyStage": "KS2",
       "subject": "Religious Formation",
       "unit": "Sacramental Life",
-      "title": "The Sacraments of Initiation: The Eucharist",
+      "title": "The Sacrament of the Eucharist (First Holy Communion)",
       "badgeIcon": "⛪",
       "manifestPath": "/manifests/lessons/first-holy-communion.json"
+    },
+    {
+      "id": "order-of-the-mass",
+      "stream": "faith",
+      "keyStage": "KS2",
+      "subject": "Religious Formation",
+      "unit": "Liturgy & Worship",
+      "title": "The Order and Structure of the Mass",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/order-of-the-mass.json"
+    },
+    {
+      "id": "sacrament-of-baptism",
+      "stream": "faith",
+      "keyStage": "KS2",
+      "subject": "Religious Formation",
+      "unit": "Sacraments of Initiation",
+      "title": "Baptism: The Gateway Sacrament",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/sacrament-of-baptism.json"
+    },
+    {
+      "id": "sacrament-of-confirmation",
+      "stream": "faith",
+      "keyStage": "KS3",
+      "subject": "Religious Education (Catholic)",
+      "unit": "Sacraments of Initiation",
+      "title": "The Sacrament of Confirmation & Gifts of the Holy Spirit",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/sacrament-of-confirmation.json"
+    },
+    {
+      "id": "holy-trinity-creed",
+      "stream": "faith",
+      "keyStage": "KS3",
+      "subject": "Religious Education (Catholic)",
+      "unit": "Catholic Beliefs & Teachings",
+      "title": "The Holy Trinity & The Nicene Creed",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/holy-trinity-creed.json"
+    },
+    {
+      "id": "paschal-mystery",
+      "stream": "faith",
+      "keyStage": "KS3",
+      "subject": "Religious Education (Catholic)",
+      "unit": "Christology & Salvation",
+      "title": "The Paschal Mystery: Passion, Death & Resurrection",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/paschal-mystery.json"
+    },
+    {
+      "id": "mary-and-rosary",
+      "stream": "faith",
+      "keyStage": "KS3",
+      "subject": "Religious Education (Catholic)",
+      "unit": "Mariology & Devotion",
+      "title": "Mary, Mother of God & The Rosary",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/mary-and-rosary.json"
     },
     {
       "id": "gcse-re-trinity",
@@ -41,6 +111,36 @@
       "title": "The Nature of God: The Holy Trinity",
       "badgeIcon": "⛪",
       "manifestPath": "/manifests/lessons/gcse-re-trinity.json"
+    },
+    {
+      "id": "catholic-social-teaching",
+      "stream": "faith",
+      "keyStage": "GCSE",
+      "subject": "Catholic Christianity",
+      "unit": "Moral Theology & Social Justice",
+      "title": "Catholic Social Teaching & Human Dignity",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/catholic-social-teaching.json"
+    },
+    {
+      "id": "catholic-sources-of-authority",
+      "stream": "faith",
+      "keyStage": "GCSE",
+      "subject": "Catholic Christianity",
+      "unit": "Authority & Doctrine",
+      "title": "Sources of Authority: Scripture, Tradition & Magisterium",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/catholic-sources-of-authority.json"
+    },
+    {
+      "id": "catholic-eschatology",
+      "stream": "faith",
+      "keyStage": "GCSE",
+      "subject": "Catholic Christianity",
+      "unit": "Eschatology & Four Last Things",
+      "title": "Eschatology: Death, Judgment, Purgatory, Heaven & Hell",
+      "badgeIcon": "⛪",
+      "manifestPath": "/manifests/lessons/catholic-eschatology.json"
     }
   ]
 }
