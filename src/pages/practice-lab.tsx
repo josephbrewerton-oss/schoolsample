@@ -5,15 +5,29 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useLocation } from '@docusaurus/router';
 import NeuralLabCanvas from '../components/NeuralLabCanvas';
 import NanoAssistantPanel from '../components/NanoAssistantPanel';
-import { LanguageSelector } from '@site/src/engine/operational-language';
+import {
+  LanguageSelector,
+  getSavedLanguage,
+  listenToLanguageChange,
+  setSavedLanguage,
+} from '@site/src/engine/operational-language';
 import { dispatch } from '../engine/hypercall';
 
 export default function PracticeLabPage() {
   const [mounted, setMounted] = useState(false);
   const [bootIframe, setBootIframe] = useState(false);
-  const [currentLang, setCurrentLang] = useState('en');
+  const [currentLang, setCurrentLang] = useState(() => {
+    return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
+  });
 
   const location = useLocation();
+
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setCurrentLang(newLang);
+    });
+    return unsub;
+  }, []);
 
   // Dynamic topic tracking for Super Teacher Nano
   const [activeStage, setActiveStage] = useState('Key Stage 2');
@@ -66,6 +80,7 @@ export default function PracticeLabPage() {
 
   const handleLanguageChange = (newLang: string) => {
     setCurrentLang(newLang);
+    setSavedLanguage(newLang);
     const channel = new BroadcastChannel('neural_hypervisor_bus');
     channel.postMessage({
       type: 'SET_LANGUAGE',

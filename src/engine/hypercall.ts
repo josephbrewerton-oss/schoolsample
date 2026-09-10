@@ -7,6 +7,8 @@ import { getBufferedLesson, putBufferedLesson, CachedLessonRecord } from '../ser
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 import { aiCaller } from './aicaller';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
+import { translateQuestionData, translateLessonData } from './translationService';
+import { SUPPORTED_LANGUAGES } from './operational-language';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -64,7 +66,12 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const topic = payload?.topic || 'General Science';
           const curriculum = payload?.curriculum || 'uk_oak';
           const difficulty = (payload?.difficulty || 'challenger') as 'warmup' | 'challenger' | 'brainbuster';
+          const lang = payload?.lang || 'en';
           const stageGuidelines = getStageGuidelines(stage);
+          const langMeta = SUPPORTED_LANGUAGES[lang];
+          const langInstruction = lang !== 'en' && langMeta
+            ? `Language Requirement: ${langMeta.promptCondition}`
+            : '';
 
           let difficultyInstruction = 'Difficulty: Standard challenger level with a realistic scenario and a clever distractor.';
           if (difficulty === 'warmup') {
@@ -88,7 +95,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             ? `🌱 [Warm-Up] ${basePrompt}` 
             : basePrompt;
 
-          const defaultResult = {
+          let resultCandidate = {
             axiom: offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
             trap: offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
             hook: offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
@@ -107,6 +114,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
 Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
+${langInstruction}
 ${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}
 
 Generate an interactive multiple-choice question and lesson scaffolding. Return strictly a single JSON object with no Markdown:
@@ -123,7 +131,7 @@ Generate an interactive multiple-choice question and lesson scaffolding. Return 
 
             const rawResponse = await aiCaller.promptText({
               prompt,
-              systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
+              systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
               preserveContext: false,
             });
 
@@ -131,17 +139,42 @@ Generate an interactive multiple-choice question and lesson scaffolding. Return 
             if (match) {
               const parsed = JSON.parse(match[0]);
               if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
-                return {
-                  ...defaultResult,
+                resultCandidate = {
+                  ...resultCandidate,
                   ...parsed,
                 };
               }
             }
           } catch (err) {
-            // Offline / on-device LLM unready: reliably return verified curriculum knowledge
+            // Offline / on-device LLM unready: use verified offline curriculum knowledge
           }
 
-          return defaultResult;
+          // 3. If target language is non-English, ensure question content is translated
+          if (lang && lang !== 'en') {
+            try {
+              const translated = await translateQuestionData(
+                {
+                  prompt: resultCandidate.prompt,
+                  displayOptions: resultCandidate.options,
+                  hint: resultCandidate.hint,
+                  explanation: resultCandidate.explanation,
+                },
+                lang
+              );
+
+              return {
+                ...resultCandidate,
+                prompt: translated.prompt,
+                options: translated.displayOptions,
+                hint: translated.hint,
+                explanation: translated.explanation,
+              };
+            } catch (err) {
+              console.warn('[QuestionEngine Translation Fallback]:', err);
+            }
+          }
+
+          return resultCandidate;
         }
         throw new Error(`Unknown QuestionEngine intent: "${intent}"`);
       },
@@ -156,50 +189,96 @@ Generate an interactive multiple-choice question and lesson scaffolding. Return 
         const stage = payload?.stage || payload?.keyStage || 'Key Stage 1';
         const subject = payload?.subject || 'Science';
         const topic = payload?.topic || payload?.title || payload?.unit || 'General Topic';
+        const lang = payload?.lang || 'en';
         const lessonKey = `${stage}:${subject}:${topic}`.toLowerCase().replace(/\s+/g, '-');
         const stageGuidelines = getStageGuidelines(stage);
 
         if (intent === 'inflate:baseline') {
           const cached = await getBufferedLesson(lessonKey);
+          let recordToReturn: CachedLessonRecord;
           if (cached) {
-            return cached;
+            recordToReturn = cached;
+          } else {
+            const baselineRecord: CachedLessonRecord = {
+              key: lessonKey,
+              title: topic,
+              stage,
+              subject,
+              axiom: payload?.axiom || '',
+              trap: payload?.trap || '',
+              hook: payload?.hook || '',
+              guidedStep: payload?.guidedStep || '',
+              socraticCheck: payload?.socraticCheck || '',
+              fullText: payload?.fullText || '',
+              updatedAt: Date.now(),
+            };
+
+            if (payload?.axiom && !payload.axiom.startsWith('Core curriculum rule')) {
+              await putBufferedLesson(baselineRecord);
+            }
+            recordToReturn = baselineRecord;
           }
 
-          const baselineRecord: CachedLessonRecord = {
-            key: lessonKey,
-            title: topic,
-            stage,
-            subject,
-            axiom: payload?.axiom || '',
-            trap: payload?.trap || '',
-            hook: payload?.hook || '',
-            guidedStep: payload?.guidedStep || '',
-            socraticCheck: payload?.socraticCheck || '',
-            fullText: payload?.fullText || '',
-            updatedAt: Date.now(),
-          };
-
-          if (payload?.axiom && !payload.axiom.startsWith('Core curriculum rule')) {
-            await putBufferedLesson(baselineRecord);
+          if (lang && lang !== 'en') {
+            try {
+              const translated = await translateLessonData(
+                {
+                  title: recordToReturn.title,
+                  axiom: recordToReturn.axiom,
+                  trap: recordToReturn.trap,
+                  hook: recordToReturn.hook,
+                  guidedStep: recordToReturn.guidedStep,
+                  socraticCheck: recordToReturn.socraticCheck,
+                  fullText: recordToReturn.fullText,
+                },
+                lang
+              );
+              return {
+                ...recordToReturn,
+                ...translated,
+              };
+            } catch (err) {
+              console.warn('[Lesson Baseline Translation Fallback]:', err);
+            }
           }
-          return baselineRecord;
+
+          return recordToReturn;
         }
 
         if (intent === 'synthesize:full-lesson') {
           const cached = await getBufferedLesson(lessonKey);
           if (cached?.fullText && cached.fullText.trim().length > 20) {
-            return {
+            let resObj = {
               ...cached,
               content: cached.fullText,
               fullText: cached.fullText,
             };
+            if (lang && lang !== 'en') {
+              const trans = await translateLessonData(
+                {
+                  title: resObj.title,
+                  axiom: resObj.axiom,
+                  trap: resObj.trap,
+                  hook: resObj.hook,
+                  guidedStep: resObj.guidedStep,
+                  socraticCheck: resObj.socraticCheck,
+                  fullText: resObj.fullText,
+                },
+                lang
+              );
+              resObj = { ...resObj, ...trans, content: trans.fullText || resObj.content };
+            }
+            return resObj;
           }
 
+          const langMeta = SUPPORTED_LANGUAGES[lang];
+          const langInstruction = lang !== 'en' && langMeta ? `\nLanguage Requirement: ${langMeta.promptCondition}` : '';
           const prompt = `You are Super Teacher Nano, an expert UK Curriculum Educator.
 Target Level: ${stage.toUpperCase()} • Subject: ${subject} • Topic: ${topic}
 Age/Stage Guidelines: ${stageGuidelines}
 Core Ground Truth: "${payload?.axiom || 'Fundamental curriculum standard'}"
 Specific Misconception: "${payload?.trap || 'Common intuitive error'}"
+${langInstruction}
 
 Generate a comprehensive 4-part lesson plan in clear Markdown:
 ### 1. Conceptual Narrative

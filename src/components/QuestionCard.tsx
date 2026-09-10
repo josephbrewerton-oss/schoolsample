@@ -1,4 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  SUPPORTED_LANGUAGES,
+  getSavedLanguage,
+  listenToLanguageChange,
+  setSavedLanguage,
+} from '../engine/operational-language';
+import {
+  translateQuestionData,
+  translateText,
+  speakInLanguage,
+} from '../engine/translationService';
 
 interface Props {
   subject: string;
@@ -9,8 +20,12 @@ interface Props {
   correctIndex: number | null;
   score: number;
   streak: number;
+  hint?: string;
+  explanation?: string;
   onSelectOption: (idx: number) => void;
   onNextQuestion: () => void;
+  currentLang?: string;
+  onLanguageChange?: (lang: string) => void;
 }
 
 export const QuestionCard: React.FC<Props> = ({
@@ -22,31 +37,282 @@ export const QuestionCard: React.FC<Props> = ({
   correctIndex,
   score,
   streak,
+  hint,
+  explanation,
   onSelectOption,
   onNextQuestion,
+  currentLang,
+  onLanguageChange,
 }) => {
+  const [activeLang, setActiveLang] = useState<string>(() => currentLang || getSavedLanguage());
+  const [showOriginal, setShowOriginal] = useState<boolean>(false);
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+
+  const [translatedData, setTranslatedData] = useState<{
+    prompt: string;
+    displayOptions: string[];
+    hint?: string;
+    explanation?: string;
+  }>({
+    prompt,
+    displayOptions,
+    hint,
+    explanation,
+  });
+
+  const [translatedFeedback, setTranslatedFeedback] = useState<{
+    correct: string;
+    tryAgain: string;
+    nextQuestion: string;
+    stars: string;
+    streak: string;
+  }>({
+    correct: '🎉 Correct! Well done.',
+    tryAgain: '💡 Try again or pick another option!',
+    nextQuestion: 'Next Question ➔',
+    stars: 'Stars',
+    streak: 'Streak',
+  });
+
+  // Sync external language prop or storage broadcast
+  useEffect(() => {
+    if (currentLang && currentLang !== activeLang) {
+      setActiveLang(currentLang);
+    }
+  }, [currentLang]);
+
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setActiveLang(newLang);
+    });
+    return unsub;
+  }, []);
+
+  // Perform translation whenever question or active language changes
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!activeLang || activeLang === 'en') {
+      setTranslatedData({ prompt, displayOptions, hint, explanation });
+      setTranslatedFeedback({
+        correct: '🎉 Correct! Well done.',
+        tryAgain: '💡 Try again or pick another option!',
+        nextQuestion: 'Next Question ➔',
+        stars: 'Stars',
+        streak: 'Streak',
+      });
+      setIsTranslating(false);
+      return;
+    }
+
+    setIsTranslating(true);
+
+    Promise.all([
+      translateQuestionData(
+        { prompt, displayOptions, hint, explanation },
+        activeLang
+      ),
+      translateText('Correct! Well done.', activeLang),
+      translateText('Try again or pick another option!', activeLang),
+      translateText('Next Question', activeLang),
+      translateText('Stars', activeLang),
+      translateText('Streak', activeLang),
+    ])
+      .then(([transQ, transCorrect, transTryAgain, transNext, transStars, transStreak]) => {
+        if (!cancelled) {
+          setTranslatedData(transQ);
+          setTranslatedFeedback({
+            correct: `🎉 ${transCorrect}`,
+            tryAgain: `💡 ${transTryAgain}`,
+            nextQuestion: `${transNext} ➔`,
+            stars: transStars,
+            streak: transStreak,
+          });
+          setIsTranslating(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('[QuestionCard Translation Error]:', err);
+        if (!cancelled) {
+          setTranslatedData({ prompt, displayOptions, hint, explanation });
+          setIsTranslating(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [prompt, displayOptions, hint, explanation, activeLang]);
+
+  const isNonEnglish = activeLang && activeLang !== 'en';
+  const effectivePrompt = isNonEnglish && !showOriginal ? translatedData.prompt : prompt;
+  const effectiveOptions =
+    isNonEnglish && !showOriginal && translatedData.displayOptions.length === displayOptions.length
+      ? translatedData.displayOptions
+      : displayOptions;
+
+  const currentLangMeta = SUPPORTED_LANGUAGES[activeLang] || SUPPORTED_LANGUAGES.en;
   const isResolvedCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
+
+  const handleLangSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    setActiveLang(newLang);
+    setSavedLanguage(newLang);
+    setShowOriginal(false);
+    onLanguageChange?.(newLang);
+  };
+
+  const handleSpeak = () => {
+    const text = effectivePrompt;
+    const langToSpeak = isNonEnglish && !showOriginal ? activeLang : 'en';
+    speakInLanguage(text, langToSpeak);
+  };
 
   return (
     <div>
-      {/* Subject & Score Banner */}
+      {/* Subject, Translation Bar & Score Banner */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
           borderBottom: '1px solid #f1f5f9',
           paddingBottom: '1rem',
-          marginBottom: '1.5rem',
+          marginBottom: '1.25rem',
         }}
       >
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1e3a8a', margin: 0 }}>
-          {subject}: {unit}
-        </h2>
-        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#d97706' }}>
-          ⭐ Stars: {score} &nbsp;&nbsp; 🔥 Streak: {streak}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1e3a8a', margin: 0 }}>
+            {subject}: {unit}
+          </h2>
+        </div>
+
+        {/* Translation Controls Toolbar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#f1f5f9',
+              padding: '3px 8px',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+            }}
+          >
+            <label
+              htmlFor="card-lang-select"
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: '#334155',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              <span>🌐</span> Translate:
+            </label>
+            <select
+              id="card-lang-select"
+              value={activeLang}
+              onChange={handleLangSelect}
+              style={{
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid #94a3b8',
+                background: '#ffffff',
+                color: '#0f172a',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {Object.values(SUPPORTED_LANGUAGES).map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label} ({l.nativeLabel})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {isNonEnglish && (
+            <button
+              type="button"
+              onClick={() => setShowOriginal(!showOriginal)}
+              style={{
+                background: showOriginal ? '#e0f2fe' : '#ffffff',
+                color: showOriginal ? '#0284c7' : '#475569',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title={showOriginal ? 'Switch to translated version' : 'Switch to original English'}
+            >
+              {showOriginal ? `🌐 Show ${currentLangMeta.label}` : '🇬🇧 Show Original'}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSpeak}
+            style={{
+              background: '#ffffff',
+              color: '#334155',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Listen to question"
+          >
+            🔊 Listen
+          </button>
+
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d97706', marginLeft: '8px' }}>
+            ⭐ {translatedFeedback.stars}: {score} &nbsp;&nbsp; 🔥 {translatedFeedback.streak}: {streak}
+          </div>
         </div>
       </div>
+
+      {/* Translation active pill */}
+      {isNonEnglish && (
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginBottom: '1rem',
+            padding: '3px 10px',
+            background: showOriginal ? '#fef3c7' : '#eff6ff',
+            color: showOriginal ? '#92400e' : '#1d4ed8',
+            borderRadius: '9999px',
+            fontSize: '0.78rem',
+            fontWeight: 600,
+            border: `1px solid ${showOriginal ? '#fde68a' : '#bfdbfe'}`,
+          }}
+        >
+          {isTranslating ? (
+            <span>⚡ Translating into {currentLangMeta.label} ({currentLangMeta.nativeLabel})...</span>
+          ) : showOriginal ? (
+            <span>🇬🇧 Viewing English Original (Translation to {currentLangMeta.label} available)</span>
+          ) : (
+            <span>🌐 Translated to {currentLangMeta.label} ({currentLangMeta.nativeLabel})</span>
+          )}
+        </div>
+      )}
 
       {/* Question Prompt Stem */}
       <div
@@ -58,12 +324,12 @@ export const QuestionCard: React.FC<Props> = ({
           lineHeight: 1.5,
         }}
       >
-        {prompt}
+        {effectivePrompt}
       </div>
 
       {/* Option Stack */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {displayOptions.map((opt, idx) => {
+        {effectiveOptions.map((opt, idx) => {
           const isSelected = selectedAnswer === idx;
           const isCorrect = idx === correctIndex;
 
@@ -150,7 +416,7 @@ export const QuestionCard: React.FC<Props> = ({
               color: isResolvedCorrect ? '#059669' : '#ea580c',
             }}
           >
-            {isResolvedCorrect ? '🎉 Correct! Well done.' : '💡 Try again or pick another option!'}
+            {isResolvedCorrect ? translatedFeedback.correct : translatedFeedback.tryAgain}
           </div>
 
           <button
@@ -167,7 +433,7 @@ export const QuestionCard: React.FC<Props> = ({
               fontSize: '1rem',
             }}
           >
-            Next Question ➔
+            {translatedFeedback.nextQuestion}
           </button>
         </div>
       )}

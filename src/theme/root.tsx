@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import UniversalTranslatorBar from '../components/UniversalTranslatorBar';
 
 export default function Root({ children }: { children: React.ReactNode }): React.JSX.Element {
   useEffect(() => {
@@ -9,5 +10,10 @@ export default function Root({ children }: { children: React.ReactNode }): React
     document.documentElement.classList.toggle("high-contrast-mode", storedContrast);
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      <UniversalTranslatorBar />
+      {children}
+    </>
+  );
 }

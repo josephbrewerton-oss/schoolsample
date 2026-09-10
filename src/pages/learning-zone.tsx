@@ -6,6 +6,14 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
 import { dispatch } from '../engine/hypercall';
+import {
+  LanguageSelector,
+  SUPPORTED_LANGUAGES,
+  getSavedLanguage,
+  listenToLanguageChange,
+  setSavedLanguage,
+} from '../engine/operational-language';
+import { translateLessonData, speakInLanguage } from '../engine/translationService';
 
 export interface LessonViewContent {
   title: string;
@@ -27,6 +35,21 @@ export default function LearningZonePage() {
     }
     return 'uk_oak';
   });
+
+  const [currentLang, setCurrentLang] = useState<string>(() => {
+    return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
+  });
+  const [showOriginal, setShowOriginal] = useState<boolean>(false);
+  const [isTranslatingLesson, setIsTranslatingLesson] = useState<boolean>(false);
+  const [translatedLessonData, setTranslatedLessonData] = useState<LessonViewContent | null>(null);
+  const [translatedFullText, setTranslatedFullText] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setCurrentLang(newLang);
+    });
+    return unsub;
+  }, []);
 
   const activeRequestIdRef = useRef(0);
   const [isCompiling, setIsCompiling] = useState(false);
@@ -66,6 +89,56 @@ export default function LearningZonePage() {
     })
   );
 
+  // Dynamic lesson re-translation when currentLang or lessonData changes
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!currentLang || currentLang === 'en') {
+      setTranslatedLessonData(null);
+      setTranslatedFullText(null);
+      setIsTranslatingLesson(false);
+      return;
+    }
+
+    setIsTranslatingLesson(true);
+    translateLessonData(
+      {
+        title: lessonData.title,
+        axiom: lessonData.axiom,
+        trap: lessonData.trap,
+        hook: lessonData.hook,
+        guidedStep: lessonData.guidedStep,
+        socraticCheck: lessonData.socraticCheck,
+        fullText: fullLessonText,
+      },
+      currentLang
+    )
+      .then((res) => {
+        if (!cancelled) {
+          setTranslatedLessonData({
+            title: res.title,
+            axiom: res.axiom,
+            trap: res.trap,
+            hook: res.hook,
+            guidedStep: res.guidedStep,
+            socraticCheck: res.socraticCheck,
+          });
+          if (res.fullText) {
+            setTranslatedFullText(res.fullText);
+          }
+          setIsTranslatingLesson(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('[Lesson Translation Error]:', err);
+        if (!cancelled) setIsTranslatingLesson(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonData, fullLessonText, currentLang]);
+
   // 2. Governed Compilation with Atomic Target Parameters
   const compileLessonForTopic = useCallback(
     async (targetStage: string, targetSubject: string, targetTopic: string) => {
@@ -99,6 +172,7 @@ export default function LearningZonePage() {
             stage: targetStage,
             subject: targetSubject,
             topic: targetTopic,
+            lang: currentLang,
           },
         });
 
@@ -144,6 +218,7 @@ export default function LearningZonePage() {
             subject: targetSubject,
             topic: targetTopic,
             curriculum: curriculumSetting,
+            lang: currentLang,
           },
         });
 
@@ -176,26 +251,27 @@ export default function LearningZonePage() {
               subject: targetSubject,
               topic: targetTopic,
               fullText: defaultNarrative,
+              lang: currentLang,
               ...freshLesson,
             },
           });
         }
       } catch (err) {
-        console.warn('[Learning Zone AST Notice]:', err);
+        console.error('[Governed Compilation Error]:', err);
       } finally {
-        clearTimeout(timeoutTimer);
         if (requestId === activeRequestIdRef.current) {
           setIsCompiling(false);
+          clearTimeout(timeoutTimer);
         }
       }
     },
-    [curriculumSetting]
+    [curriculumSetting, currentLang]
   );
 
-  // 3. Trigger compilation when selection changes
+  // 3. Keep Active Lesson Synced when Unit selection changes
   useEffect(() => {
     compileLessonForTopic(selectedKeyStage, selectedSubject, selectedUnit);
-  }, [selectedKeyStage, selectedSubject, selectedUnit, compileLessonForTopic]);
+  }, [selectedKeyStage, selectedSubject, selectedUnit, curriculumSetting, compileLessonForTopic]);
 
   // 4. Synthesize Full Dynamic Lesson (Axiom Expansion)
   const handleSynthesizeFullLesson = async () => {
@@ -210,6 +286,7 @@ export default function LearningZonePage() {
           axiom: lessonData.axiom,
           trap: lessonData.trap,
           steps: [lessonData.hook, lessonData.guidedStep, lessonData.socraticCheck],
+          lang: currentLang,
         },
       });
 
@@ -224,6 +301,23 @@ export default function LearningZonePage() {
     } finally {
       setIsSynthesizingFull(false);
     }
+  };
+
+  const handleLanguageChange = (newLang: string) => {
+    setCurrentLang(newLang);
+    setSavedLanguage(newLang);
+    setShowOriginal(false);
+  };
+
+  const isNonEnglish = currentLang && currentLang !== 'en';
+  const effectiveLesson = isNonEnglish && !showOriginal && translatedLessonData ? translatedLessonData : lessonData;
+  const effectiveFullText = isNonEnglish && !showOriginal && translatedFullText ? translatedFullText : fullLessonText;
+  const currentLangMeta = SUPPORTED_LANGUAGES[currentLang] || SUPPORTED_LANGUAGES.en;
+
+  const handleSpeakLesson = () => {
+    const textToSpeak = `${effectiveLesson.title}. Core Axiom: ${effectiveLesson.axiom}. Common Misconception: ${effectiveLesson.trap}. Inquiry: ${effectiveLesson.hook}. Check: ${effectiveLesson.socraticCheck}`;
+    const langToSpeak = isNonEnglish && !showOriginal ? currentLang : 'en';
+    speakInLanguage(textToSpeak, langToSpeak);
   };
 
   const practiceLabUrl = `/practice-lab?ks=${encodeURIComponent(selectedKeyStage)}&sub=${encodeURIComponent(selectedSubject)}&unit=${encodeURIComponent(selectedUnit)}`;
@@ -241,6 +335,11 @@ export default function LearningZonePage() {
           style={{ display: 'none' }}
           title="neural-worker-daemon"
         />
+
+        {/* Language Selection Header */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1rem' }}>
+          <LanguageSelector currentLang={currentLang} onSelect={handleLanguageChange} />
+        </div>
 
         {/* Top Selector Control Bar */}
         <div style={{ marginBottom: '1.5rem' }}>
@@ -282,17 +381,46 @@ export default function LearningZonePage() {
             transition: 'opacity 0.2s ease',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>
                 {selectedKeyStage.toUpperCase()} &bull; {selectedSubject.toUpperCase()} ({curriculumSetting.toUpperCase()} Standard)
               </span>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: '0.25rem 0' }}>
-                {lessonData.title || selectedUnit}
+                {effectiveLesson.title || selectedUnit}
               </h2>
             </div>
             
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {isNonEnglish && (
+                <button
+                  type="button"
+                  onClick={() => setShowOriginal(!showOriginal)}
+                  className="button button--outline button--primary"
+                  style={{
+                    borderRadius: '8px',
+                    padding: '0.5rem 1rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {showOriginal ? `🌐 Show ${currentLangMeta.label}` : '🇬🇧 Show Original'}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSpeakLesson}
+                className="button button--secondary"
+                style={{
+                  borderRadius: '8px',
+                  padding: '0.5rem 1rem',
+                  fontWeight: 600,
+                }}
+                title="Listen to lesson overview"
+              >
+                🔊 Read Aloud
+              </button>
+
               <button
                 type="button"
                 onClick={handleSynthesizeFullLesson}
@@ -322,7 +450,34 @@ export default function LearningZonePage() {
             </div>
           </div>
 
-          <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '1.5rem 0' }} />
+          {/* Translation Status Badge */}
+          {isNonEnglish && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '1rem',
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                background: showOriginal ? '#fef3c7' : '#eff6ff',
+                color: showOriginal ? '#92400e' : '#1e40af',
+                border: `1px solid ${showOriginal ? '#fde68a' : '#bfdbfe'}`,
+              }}
+            >
+              {isTranslatingLesson ? (
+                <span>⚡ Translating lesson into {currentLangMeta.label} ({currentLangMeta.nativeLabel})...</span>
+              ) : showOriginal ? (
+                <span>🇬🇧 Viewing English Original (Translation into {currentLangMeta.label} ready)</span>
+              ) : (
+                <span>🌐 Translated into {currentLangMeta.label} ({currentLangMeta.nativeLabel})</span>
+              )}
+            </div>
+          )}
+
+          <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '1rem 0 1.5rem 0' }} />
 
           {/* Diagnostic Pillars */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -332,7 +487,7 @@ export default function LearningZonePage() {
                 <span>📐</span> Core Axiom
               </div>
               <p style={{ color: '#334155', fontSize: '1rem', lineHeight: 1.6, fontWeight: 500, margin: 0 }}>
-                {lessonData.axiom}
+                {effectiveLesson.axiom}
               </p>
             </div>
 
@@ -341,7 +496,7 @@ export default function LearningZonePage() {
                 <span>⚠️</span> Cognitive Trap (Common Error)
               </div>
               <p style={{ color: '#92400e', fontSize: '1rem', lineHeight: 1.6, fontWeight: 500, margin: 0 }}>
-                {lessonData.trap}
+                {effectiveLesson.trap}
               </p>
             </div>
 
@@ -356,23 +511,23 @@ export default function LearningZonePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                 <strong style={{ color: '#15803d' }}>Step 1: Inquiry Hook</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}>{lessonData.hook}</p>
+                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}>{effectiveLesson.hook}</p>
               </div>
 
               <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                 <strong style={{ color: '#15803d' }}>Step 2: Guided Practice & Activity</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}>{lessonData.guidedStep}</p>
+                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}>{effectiveLesson.guidedStep}</p>
               </div>
 
               <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                 <strong style={{ color: '#15803d' }}>Step 3: Socratic Check for Understanding</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}><em>"{lessonData.socraticCheck}"</em></p>
+                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}><em>"{effectiveLesson.socraticCheck}"</em></p>
               </div>
             </div>
           </div>
 
           {/* Expanded AI Lesson Narrative Block */}
-          {fullLessonText && (
+          {effectiveFullText && (
             <div
               style={{
                 marginBottom: '2rem',
@@ -387,7 +542,7 @@ export default function LearningZonePage() {
                 <span>✨</span> Synthesized Comprehensive Lesson
               </h3>
               <div style={{ color: '#334155', fontSize: '1rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-                {fullLessonText}
+                {effectiveFullText}
               </div>
             </div>
           )}
@@ -395,13 +550,13 @@ export default function LearningZonePage() {
           {/* Socratic Assistant Panel */}
           <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1.5rem' }}>
             <TuringTutor
-              key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}`}
-              seedKey={`${selectedKeyStage}:${selectedSubject}:${selectedUnit}`}
+              key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}-${currentLang}`}
+              seedKey={`${selectedKeyStage}:${selectedSubject}:${selectedUnit}:${currentLang}`}
               keyStage={selectedKeyStage}
               subject={selectedSubject}
               unit={selectedUnit}
               contextTopic={selectedUnit}
-              activePrompt={lessonData.socraticCheck}
+              activePrompt={effectiveLesson.socraticCheck}
             />
           </div>
 

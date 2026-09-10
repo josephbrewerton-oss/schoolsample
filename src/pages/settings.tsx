@@ -3,6 +3,12 @@ import React, { useState, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import { CurriculumProviderKey } from '../data/curriculumRegistry';
 import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
+import {
+  SUPPORTED_LANGUAGES,
+  getSavedLanguage,
+  setSavedLanguage,
+} from '../engine/operational-language';
+import { translatePageDOM, restorePageDOM } from '../engine/universalDomTranslator';
 
 export default function SettingsPage() {
   const [curriculumStandard, setCurriculumStandard] = useState<CurriculumProviderKey>('uk_oak');
@@ -11,9 +17,11 @@ export default function SettingsPage() {
   const [nanoStatus, setNanoStatus] = useState<'checking' | 'ready' | 'after-download' | 'unavailable'>('checking');
   const [saveMessage, setSaveMessage] = useState('');
   const [testResult, setTestResult] = useState('');
+  const [portalLanguage, setPortalLanguage] = useState<string>('en');
+  const [cacheClearNotice, setCacheClearNotice] = useState('');
 
   useEffect(() => {
-    // 1. Load saved curriculum standard & difficulty & consent
+    // 1. Load saved curriculum standard & difficulty & consent & language
     const savedStandard = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
     if (savedStandard) {
       setCurriculumStandard(savedStandard);
@@ -24,6 +32,7 @@ export default function SettingsPage() {
       setPreferredDifficulty(savedDifficulty);
     }
 
+    setPortalLanguage(getSavedLanguage());
     setHasAiConsent(hasUserGrantedAiConsent());
 
     // 2. Check local Gemini Nano availability via unified aiCaller
@@ -79,6 +88,13 @@ export default function SettingsPage() {
     localStorage.setItem('curriculum_standard', curriculumStandard);
     localStorage.setItem('preferred_difficulty', preferredDifficulty);
     setUserAiConsent(hasAiConsent);
+    setSavedLanguage(portalLanguage);
+
+    if (portalLanguage && portalLanguage !== 'en') {
+      translatePageDOM(portalLanguage);
+    } else {
+      restorePageDOM();
+    }
 
     // Dispatch custom and storage event so open tabs/components update reactively
     window.dispatchEvent(new Event('storage'));
@@ -86,6 +102,21 @@ export default function SettingsPage() {
 
     setSaveMessage('✅ Settings saved successfully!');
     setTimeout(() => setSaveMessage(''), 3000);
+  };
+
+  const handleClearTranslationCache = () => {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('cache_trans_') || key.startsWith('trans_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      setCacheClearNotice(`Cleared ${keysToRemove.length} cached translations.`);
+      setTimeout(() => setCacheClearNotice(''), 3000);
+    } catch {}
   };
 
   return (
@@ -265,6 +296,64 @@ export default function SettingsPage() {
               <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.4rem', marginBottom: 0 }}>
                 You can also change your challenge level any time right on the Practice Lab screen!
               </p>
+            </div>
+
+            {/* Universal Language & Translation Settings */}
+            <div style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '0.75rem' }}>
+                <label htmlFor="portal-language-select" style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🌐</span> Universal Portal Language & Translation
+                </label>
+                <button
+                  type="button"
+                  onClick={handleClearTranslationCache}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#64748b',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Clear locally stored translations"
+                >
+                  🧹 Clear Translation Cache
+                </button>
+              </div>
+
+              <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, margin: '0 0 1rem 0' }}>
+                Select your default language. The Universal Translation Engine automatically translates all pages, navigation items, lesson plans, and interactive questions across the entire portal.
+              </p>
+
+              <select
+                id="portal-language-select"
+                value={portalLanguage}
+                onChange={(e) => setPortalLanguage(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  fontSize: '0.95rem',
+                  color: '#0f172a',
+                  fontWeight: 600,
+                }}
+              >
+                {Object.values(SUPPORTED_LANGUAGES).map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.label} ({lang.nativeLabel}) — {lang.code.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+
+              {cacheClearNotice && (
+                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#16a34a', fontWeight: 600 }}>
+                  {cacheClearNotice}
+                </div>
+              )}
             </div>
 
             {/* Curriculum Standard Selection */}

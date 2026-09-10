@@ -4,20 +4,40 @@ import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { dispatch } from '../engine/hypercall';
 import { hasUserGrantedAiConsent } from '../engine/aicaller';
+import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 
 interface NeuralLabCanvasProps {
+  initialKeyStage?: string;
+  initialSubject?: string;
+  initialUnit?: string;
   onTopicChange?: (keyStage: string, subject: string, unit: string) => void;
 }
 
-export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps) {
+export default function NeuralLabCanvas({
+  initialKeyStage,
+  initialSubject,
+  initialUnit,
+  onTopicChange,
+}: NeuralLabCanvasProps) {
   const [curriculumSetting, setCurriculumSetting] = useState<string>(() => {
-    return localStorage.getItem('curriculum_standard') || 'uk_oak';
+    return (typeof window !== 'undefined' && localStorage.getItem('curriculum_standard')) || 'uk_oak';
   });
 
-  const [selectedKeyStage, setSelectedKeyStage] = useState('Key Stage 1');
-  const [selectedSubject, setSelectedSubject] = useState('Science');
-  const [selectedUnit, setSelectedUnit] = useState('Seasonal Changes');
+  const [selectedKeyStage, setSelectedKeyStage] = useState(initialKeyStage || 'Key Stage 1');
+  const [selectedSubject, setSelectedSubject] = useState(initialSubject || 'Science');
+  const [selectedUnit, setSelectedUnit] = useState(initialUnit || 'Seasonal Changes');
   const [sessionId, setSessionId] = useState('Lesson 1');
+
+  const [activeLang, setActiveLang] = useState<string>(() => {
+    return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
+  });
+
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setActiveLang(newLang);
+    });
+    return unsub;
+  }, []);
 
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -121,7 +141,8 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
     ks = activeSelectionRef.current.keyStage,
     sub = activeSelectionRef.current.subject,
     u = activeSelectionRef.current.unit,
-    diff = difficulty
+    diff = difficulty,
+    targetLang = activeLang
   ) => {
     const requestId = ++activeRequestIdRef.current;
     setIsGenerating(true);
@@ -137,6 +158,7 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
           topic: u,
           curriculum: curriculumSetting,
           difficulty: diff,
+          lang: targetLang,
         },
       });
 
@@ -160,7 +182,7 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
         setIsGenerating(false);
       }
     }
-  }, [curriculumSetting, difficulty, handleNewQuestion]);
+  }, [curriculumSetting, difficulty, activeLang, handleNewQuestion]);
 
   const handleDifficultyChange = (newDiff: 'warmup' | 'challenger' | 'brainbuster') => {
     setDifficulty(newDiff);
@@ -382,6 +404,12 @@ export default function NeuralLabCanvas({ onTopicChange }: NeuralLabCanvasProps)
             correctIndex={correctIndex}
             score={score}
             streak={streak}
+            hint={activeQuestion.hint}
+            currentLang={activeLang}
+            onLanguageChange={(newLang) => {
+              setActiveLang(newLang);
+              requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
+            }}
             onSelectOption={handleSelectOption}
             onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
           />

@@ -2,6 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { aiCaller, hasUserGrantedAiConsent } from '../engine/aicaller';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
+import {
+  getSavedLanguage,
+  listenToLanguageChange,
+  SUPPORTED_LANGUAGES,
+} from '../engine/operational-language';
+import { translateText, speakInLanguage } from '../engine/translationService';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -33,6 +39,10 @@ export function TuringTutor({
   const currentTopic = activeTopic || contextTopic || unit || 'General Studies';
   const topicKnowledge = findCurriculumKnowledge(keyStage, subject, currentTopic);
 
+  const [currentLang, setCurrentLang] = useState<string>(() => {
+    return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
+  });
+
   const [messages, setMessages] = useState<Array<{ role: 'turing' | 'pupil'; text: string }>>([
     {
       role: 'turing',
@@ -49,6 +59,13 @@ export function TuringTutor({
   const [hasConsent, setHasConsent] = useState(false);
 
   useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setCurrentLang(newLang);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
     setHasConsent(hasUserGrantedAiConsent());
     const handleConsentChanged = (e: any) => {
       setHasConsent(Boolean(e.detail));
@@ -61,21 +78,30 @@ export function TuringTutor({
   }, []);
 
   const voiceEnabledRef = useRef(voiceEnabled);
-  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Reset conversation session when the topic changes
+  // Reset conversation session when the topic or language changes
   useEffect(() => {
+    let cancelled = false;
     const knowledge = findCurriculumKnowledge(keyStage, subject, currentTopic);
-    setMessages([
-      {
-        role: 'turing',
-        text: knowledge
-          ? `Hello! I'm Super Teacher Nano. In ${knowledge.title}: ${knowledge.socraticPivot}`
-          : `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
-      },
-    ]);
-  }, [seedKey, currentTopic, keyStage, subject]);
+    const baseGreeting = knowledge
+      ? `Hello! I'm Super Teacher Nano. In ${knowledge.title}: ${knowledge.socraticPivot}`
+      : `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`;
+
+    if (currentLang && currentLang !== 'en') {
+      translateText(baseGreeting, currentLang).then((translated) => {
+        if (!cancelled) {
+          setMessages([{ role: 'turing', text: translated }]);
+        }
+      });
+    } else {
+      setMessages([{ role: 'turing', text: baseGreeting }]);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [seedKey, currentTopic, keyStage, subject, currentLang]);
 
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
@@ -85,51 +111,31 @@ export function TuringTutor({
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  useEffect(() => {
-    const updateVoices = () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        const voices = window.speechSynthesis.getVoices();
-        const ukVoice =
-          voices.find(
-            (v) =>
-              v.lang === 'en-GB' ||
-              v.name.toLowerCase().includes('united kingdom') ||
-              v.name.toLowerCase().includes('british')
-          ) || voices[0];
-        voiceRef.current = ukVoice || null;
-      }
-    };
+  const buildSystemPrompt = () => {
+    const langMeta = SUPPORTED_LANGUAGES[currentLang];
+    const langInstruction =
+      currentLang !== 'en' && langMeta
+        ? `\nCRITICAL LANGUAGE REQUIREMENT: You MUST formulate your entire response in ${langMeta.label} (${langMeta.nativeLabel}). ${langMeta.promptCondition}.`
+        : '';
 
-    updateVoices();
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = updateVoices;
-    }
-  }, []);
-
-  const buildSystemPrompt = () => `You are "Super Teacher Nano" — an expert UK National Curriculum Socratic educator for ${keyStage} ${subject}.
+    return `You are "Super Teacher Nano" — an expert UK National Curriculum Socratic educator for ${keyStage} ${subject}.
 Target Topic: ${currentTopic}
 ${topicKnowledge ? `\nCURRICULUM GROUND TRUTH:
 - Core Axiom/Rule: "${topicKnowledge.coreAxiom}"
 - Target Pupil Misconception: "${topicKnowledge.cognitiveTrap}"
 - Socratic Inquiry Angle: "${topicKnowledge.socraticPivot}"` : ''}
+${langInstruction}
 
 PEDAGOGICAL RULES:
 1. NEVER give the direct answer.
 2. Provide ONE concise hint or thought-provoking clue (under 35 words).
 3. Directly counter the known pupil misconception without giving the solution away.
 4. Always finish with an engaging question to help the student think through the answer.`;
+  };
 
   const speak = (text: string) => {
-    if (!voiceEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (voiceRef.current) utterance.voice = voiceRef.current;
-      utterance.rate = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.warn('[TTS Error]:', e);
-    }
+    if (!voiceEnabledRef.current || typeof window === 'undefined') return;
+    speakInLanguage(text, currentLang);
   };
 
   const cleanResponse = (raw: string): string => {
@@ -184,9 +190,18 @@ PEDAGOGICAL RULES:
         preserveContext: false, // Prevents Chrome session port collisions
       });
 
-      const cleaned =
+      let cleaned =
         cleanResponse(rawResponse) ||
         `What do you think is the first key factor we need to consider in ${currentTopic}?`;
+
+      // If needed, verify language translation
+      if (currentLang && currentLang !== 'en') {
+        try {
+          cleaned = await translateText(cleaned, currentLang);
+        } catch (e) {
+          // Keep response
+        }
+      }
 
       setMessages((prev) => {
         const copy = [...prev];
@@ -206,6 +221,14 @@ PEDAGOGICAL RULES:
         fallback = topicKnowledge.scaffoldHints.level3;
       } else if (topicKnowledge) {
         fallback = `Remember the key rule: ${topicKnowledge.coreAxiom}. How can we apply that here?`;
+      }
+
+      if (currentLang && currentLang !== 'en') {
+        try {
+          fallback = await translateText(fallback, currentLang);
+        } catch (e) {
+          // Keep english fallback
+        }
       }
 
       setMessages((prev) => {
@@ -246,6 +269,8 @@ PEDAGOGICAL RULES:
     }
   };
 
+  const currentLangMeta = SUPPORTED_LANGUAGES[currentLang] || SUPPORTED_LANGUAGES.en;
+
   return (
     <div
       style={{
@@ -259,12 +284,26 @@ PEDAGOGICAL RULES:
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '1.1rem' }}>⚡</span>
           <span style={{ fontWeight: 700, color: '#38bdf8', letterSpacing: '0.02em' }}>
             Super Teacher Nano <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>[{keyStage} • {subject}]</span>
           </span>
+          {currentLang !== 'en' && (
+            <span
+              style={{
+                fontSize: '0.72rem',
+                background: '#1e3a8a',
+                color: '#bfdbfe',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontWeight: 600,
+              }}
+            >
+              🌐 {currentLangMeta.label}
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button
@@ -303,7 +342,7 @@ PEDAGOGICAL RULES:
       <div
         style={{
           minHeight: '80px',
-          maxHeight: '160px',
+          maxHeight: '180px',
           overflowY: 'auto',
           marginBottom: '0.75rem',
           padding: '0.65rem',
@@ -315,9 +354,39 @@ PEDAGOGICAL RULES:
         }}
       >
         {messages.map((m, i) => (
-          <div key={i} style={{ margin: '6px 0', color: m.role === 'turing' ? '#4ade80' : '#38bdf8', lineHeight: 1.4 }}>
-            <strong>{m.role === 'turing' ? 'Super Teacher Nano: ' : 'pupil: '}</strong>
-            {m.text}
+          <div
+            key={i}
+            style={{
+              margin: '6px 0',
+              color: m.role === 'turing' ? '#4ade80' : '#38bdf8',
+              lineHeight: 1.4,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '8px',
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <strong>{m.role === 'turing' ? 'Super Teacher Nano: ' : 'pupil: '}</strong>
+              {m.text}
+            </div>
+            {m.role === 'turing' && m.text && (
+              <button
+                type="button"
+                onClick={() => speakInLanguage(m.text, currentLang)}
+                title="Listen to message"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  padding: '2px 4px',
+                }}
+              >
+                🔊
+              </button>
+            )}
           </div>
         ))}
         {loading && <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>Super Teacher Nano is thinking...</div>}
