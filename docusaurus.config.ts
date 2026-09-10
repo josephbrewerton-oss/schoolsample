@@ -142,6 +142,11 @@ plugins: [
           position: 'left',
         },
         {
+          to: '/curriculum-studio',
+          label: '🌍 Curriculum Studio',
+          position: 'left',
+        },
+        {
           to: '/settings',
           label: '⚙️ Settings',
           position: 'right',
@@ -157,6 +162,10 @@ plugins: [
             {
               label: 'Interactive Practice Lab',
               to: '/practice-lab',
+            },
+            {
+              label: '🌍 International Curriculum Studio',
+              to: '/curriculum-studio',
             },
           ],
         },

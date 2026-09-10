@@ -127,6 +127,16 @@ export const OAK_CURRICULUM_CATALOGUE: Record<string, OakStage> = {
           { id: 'algorithms-sequencing', title: 'Algorithms & Sequencing' },
         ],
       },
+      {
+        id: 'religious-education-catholic',
+        title: 'Religious Education (Catholic)',
+        topics: [
+          { id: 'first-reconciliation', title: 'The Sacrament of Reconciliation (First Confession)' },
+          { id: 'first-holy-communion', title: 'The Sacrament of the Eucharist (First Holy Communion)' },
+          { id: 'order-of-the-mass', title: 'The Order and Structure of the Mass' },
+          { id: 'sacrament-of-baptism', title: 'Baptism: The Gateway Sacrament' },
+        ],
+      },
     ],
   },
   'ks3': {
@@ -187,6 +197,16 @@ export const OAK_CURRICULUM_CATALOGUE: Record<string, OakStage> = {
           { id: 'spanish-free-time', title: 'Spanish: Free Time & Hobbies' },
         ],
       },
+      {
+        id: 'religious-education-catholic',
+        title: 'Religious Education (Catholic)',
+        topics: [
+          { id: 'sacrament-of-confirmation', title: 'The Sacrament of Confirmation & Gifts of the Holy Spirit' },
+          { id: 'holy-trinity-creed', title: 'The Holy Trinity & The Nicene Creed' },
+          { id: 'paschal-mystery', title: 'The Paschal Mystery: Passion, Death & Resurrection' },
+          { id: 'mary-and-rosary', title: 'Mary, Mother of God & The Rosary' },
+        ],
+      },
     ],
   },
   'ks4': {
@@ -232,10 +252,20 @@ export const OAK_CURRICULUM_CATALOGUE: Record<string, OakStage> = {
       },
       {
         id: 'religious-studies',
-        title: 'Religious Studies',
+        title: 'Religious Studies (General & GCSE)',
         topics: [
           { id: 'christian-practices', title: 'Christian Practices & Sacraments' },
           { id: 'ethics-peace-conflict', title: 'Ethics: Peace, Conflict and Justice' },
+        ],
+      },
+      {
+        id: 'catholic-christianity',
+        title: 'Catholic Christianity (GCSE)',
+        topics: [
+          { id: 'gcse-re-trinity', title: 'The Nature of God: The Holy Trinity' },
+          { id: 'catholic-social-teaching', title: 'Catholic Social Teaching & Human Dignity' },
+          { id: 'catholic-sources-of-authority', title: 'Sources of Authority: Scripture, Tradition & Magisterium' },
+          { id: 'catholic-eschatology', title: 'Eschatology: Death, Judgment, Purgatory, Heaven & Hell' },
         ],
       },
     ],

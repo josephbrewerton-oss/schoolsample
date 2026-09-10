@@ -11,7 +11,10 @@ export interface CurriculumQuestion {
   explanation: string;
 }
 
+import { findCustomTopicKnowledge } from '../services/curriculumPackStore';
+
 export interface CurriculumTopicKnowledge {
+
   topicId: string;
   title: string;
   keyStage: string;
@@ -759,6 +762,12 @@ export function findCurriculumKnowledge(
   subject: string,
   topic: string
 ): CurriculumTopicKnowledge | null {
+  // 0. Check locally installed custom curriculum packs (overseas/school syllabi)
+  const customKnowledge = findCustomTopicKnowledge(stage, subject, topic);
+  if (customKnowledge) {
+    return customKnowledge;
+  }
+
   const norm = (s: string) =>
     (s || '')
       .toLowerCase()

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '@theme/Layout';
 import { CurriculumProviderKey } from '../data/curriculumRegistry';
+import { getInstalledCurriculumPacks, CustomCurriculumPack } from '../services/curriculumPackStore';
+import Link from '@docusaurus/Link';
 import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import {
   SUPPORTED_LANGUAGES,
@@ -19,8 +21,10 @@ export default function SettingsPage() {
   const [testResult, setTestResult] = useState('');
   const [portalLanguage, setPortalLanguage] = useState<string>('en');
   const [cacheClearNotice, setCacheClearNotice] = useState('');
+  const [customPacks, setCustomPacks] = useState<CustomCurriculumPack[]>([]);
 
   useEffect(() => {
+    setCustomPacks(getInstalledCurriculumPacks());
     // 1. Load saved curriculum standard & difficulty & consent & language
     const savedStandard = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
     if (savedStandard) {
@@ -376,8 +380,52 @@ export default function SettingsPage() {
                 }}
               >
                 <option value="uk_oak">UK National Curriculum (Oak National Academy)</option>
-                <option value="international">International / Cambridge Standard</option>
+                <option value="international">International / Cambridge Standard (Universal Scope)</option>
+                <option value="custom_imported">Custom / Overseas Imported Syllabi Only</option>
               </select>
+            </div>
+
+            {/* Overseas & Custom Curriculum Studio Card */}
+            <div style={{
+              marginBottom: '2rem',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              background: '#f0fdf4',
+              border: '1px solid #86efac',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#166534', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🌍</span> Overseas & Custom Curriculum Importer
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: '#14532d', margin: 0, lineHeight: 1.45 }}>
+                    Overseas schools, dioceses, and education ministries can import custom spreadsheets (CSV) or install ready-to-run national packs (e.g. Kenya, India, Ghana, Philippines) into the offline engine.
+                  </p>
+                  <div style={{ fontSize: '0.82rem', color: '#15803d', fontWeight: 700, marginTop: '8px' }}>
+                    📦 Active custom packs on this device: <strong>{customPacks.length}</strong>
+                    {customPacks.length > 0 && ` (${customPacks.map((p) => p.countryOrRegion).join(', ')})`}
+                  </div>
+                </div>
+
+                <Link
+                  to="/curriculum-studio"
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 4px rgba(22,163,74,0.2)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  🚀 Open Curriculum Studio ➔
+                </Link>
+              </div>
             </div>
 
             {/* Actions */}
