@@ -3,11 +3,6 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import webpack from 'webpack';
 
-import { themes as prismThemes } from 'prism-react-renderer';
-import type { Config } from '@docusaurus/types';
-import type * as Preset from '@docusaurus/preset-classic';
-import webpack from 'webpack';
-
 const isProd = process.env.NODE_ENV === 'production';
 const baseUrl = process.env.BASE_URL || '/';
 
