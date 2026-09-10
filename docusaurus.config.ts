@@ -90,6 +90,7 @@ plugins: [
             {
               debug: false,
               offlineModeActivationStrategies: ['appInstalled', 'standalone', 'queryString'],
+              swRegister: false,
               pwaHead: [
                 {
                   tagName: 'link',
