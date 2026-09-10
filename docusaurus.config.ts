@@ -56,7 +56,7 @@ const config: Config = {
   ],
 
 plugins: [
-    // 1. Webpack Polyfill Plugin to resolve 'process is not defined'
+    // 1. Webpack Polyfill Plugin to resolve 'process is not defined' without clobbering plugin env variables
     function webpackPolyfillPlugin() {
       return {
         name: 'custom-webpack-polyfill',
@@ -67,7 +67,14 @@ plugins: [
                 process: 'process/browser',
               }),
               new webpack.DefinePlugin({
-                'process.env': JSON.stringify({}),
+                'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+                'process.env.PWA_OFFLINE_MODE_ACTIVATION_STRATEGIES': JSON.stringify([
+                  'appInstalled',
+                  'standalone',
+                  'queryString',
+                ]),
+                'process.env.PWA_SERVICE_WORKER_URL': JSON.stringify(`${baseUrl}sw.js`),
+                'process.env.PWA_DEBUG': JSON.stringify(false),
               }),
             ],
           };

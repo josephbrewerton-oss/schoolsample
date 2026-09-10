@@ -1,0 +1,114 @@
+{
+  "m": {
+    "d": "seasonal-changes",
+    "n": "Seasonal Changes",
+    "i": "🍂",
+    "c": "#059669",
+    "t": "Key Stage 1 • Science",
+    "l": "en-US"
+  },
+  "tp": {
+    "n": "Science Tutor",
+    "e": "Socratic",
+    "p": 1,
+    "r": 1
+  },
+  "co": [
+    {
+      "c": "OAK-SCI1-SEASONAL",
+      "n": "Seasonal Changes Cohort",
+      "s": "Key Stage 1 Science",
+      "d": "seasonal-changes-q1"
+    }
+  ],
+  "c": [
+    {
+      "i": "seasonal-changes-q1",
+      "p": "Which of these is the main reason why day length and weather change throughout the year?",
+      "a": "The Earth orbits the Sun on a tilted axis",
+      "h": "Think about how our planet moves around the Sun and its tilt.",
+      "e": "Earth experiences four distinct seasons (Spring, Summer, Autumn, Winter) because of its orbit and tilt, causing changes in weather and day length.",
+      "r": [
+        ["distance", "Common misconception: Many believe Earth is closer to the Sun in summer, but seasons are caused by the Earth's tilted axis as it orbits."],
+        ["clouds", "Weather changes between seasons, but clouds are not the cause of astronomical seasons."]
+      ]
+    },
+    {
+      "i": "seasonal-changes-q2",
+      "p": "In the UK, during which season do we experience the shortest daylight hours and coldest temperatures?",
+      "a": "Winter",
+      "h": "Think about snow, short days, and cold weather.",
+      "e": "In Winter, the Northern Hemisphere is tilted away from the Sun, resulting in shorter daylight hours and lower temperatures.",
+      "r": [
+        ["Autumn", "Autumn precedes winter as days get shorter, but the shortest days occur in winter."],
+        ["Spring", "Spring brings longer days and warming temperatures after winter."]
+      ]
+    },
+    {
+      "i": "seasonal-changes-q3",
+      "p": "What noticeable change happens to deciduous trees during Autumn in the UK?",
+      "a": "Their leaves change colour and fall off",
+      "h": "Think about walking through leaves in the park in October.",
+      "e": "Deciduous trees lose their leaves in autumn to conserve water and survive the cold winter months.",
+      "r": [
+        ["They grow new green shoots", "New shoots and buds typically appear in Spring."],
+        ["They produce summer fruit", "Summer fruits develop in warm summer months."]
+      ]
+    },
+    {
+      "i": "seasonal-changes-q4",
+      "p": "What seasonal pattern begins when flowers start blooming, baby animals are born, and days get longer?",
+      "a": "Spring",
+      "h": "Think of daffodils and baby lambs.",
+      "e": "Spring marks the transition from winter to summer with new plant growth and animal breeding as daylight increases.",
+      "r": [
+        ["Winter", "Winter has the coldest temperatures and dormant plant life."],
+        ["Summer", "Summer follows spring with the longest and warmest days."]
+      ]
+    }
+  ],
+  "meta": {
+    "domainId": "seasonal-changes",
+    "portalName": "Seasonal Changes",
+    "badgeIcon": "🍂",
+    "themeColor": "#059669",
+    "tagline": "Key Stage 1 • Science"
+  },
+  "tutorPersona": {
+    "name": "Science Tutor",
+    "engineType": "Socratic",
+    "voicePitch": 1,
+    "voiceRate": 1
+  },
+  "cohorts": [
+    {
+      "code": "OAK-SCI1-SEASONAL",
+      "name": "Seasonal Changes Cohort",
+      "subtext": "Key Stage 1 Science",
+      "defaultTopicId": "seasonal-changes-q1"
+    }
+  ],
+  "challenges": [
+    {
+      "id": "seasonal-changes-q1",
+      "cohortCode": "OAK-SCI1-SEASONAL",
+      "topic": "Seasonal Changes",
+      "level": 1,
+      "prompt": "Which of these is the main reason why day length and weather change throughout the year?",
+      "expectedAnswer": "The Earth orbits the Sun on a tilted axis",
+      "hint": "Think about how our planet moves around the Sun and its tilt.",
+      "explanation": "Earth experiences four distinct seasons (Spring, Summer, Autumn, Winter) because of its orbit and tilt, causing changes in weather and day length.",
+      "starterTutorPrompt": "Let's explore seasonal changes: Which of these is the main reason why day length and weather change throughout the year?",
+      "semanticRules": [
+        {
+          "keywords": ["distance", "closer"],
+          "response": "Common misconception: Many believe Earth is closer to the Sun in summer, but seasons are caused by the Earth's tilted axis as it orbits."
+        },
+        {
+          "keywords": ["clouds"],
+          "response": "Weather changes between seasons, but clouds are not the cause of astronomical seasons."
+        }
+      ]
+    }
+  ]
+}

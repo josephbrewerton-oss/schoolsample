@@ -3,6 +3,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { dispatch } from '../engine/hypercall';
+import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
 import { hasUserGrantedAiConsent } from '../engine/aicaller';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 
@@ -48,6 +49,17 @@ export default function NeuralLabCanvas({
     return 'challenger';
   });
   const [hasConsent, setHasConsent] = useState(false);
+
+  // Hypervisor Host Supervisor State & Metrics
+  const [vmState, setVmState] = useState<GuestVMState>(() => hypervisor.getState());
+  const [vmMetrics, setVmMetrics] = useState<HypervisorMetrics>(() => hypervisor.getMetrics());
+
+  useEffect(() => {
+    return hypervisor.subscribe((state, metrics) => {
+      setVmState(state);
+      setVmMetrics(metrics);
+    });
+  }, []);
 
   useEffect(() => {
     setHasConsent(hasUserGrantedAiConsent());
@@ -373,6 +385,47 @@ export default function NeuralLabCanvas({
               {difficulty === 'warmup' && '🌱 Gentle questions to build core confidence'}
               {difficulty === 'challenger' && '⚡ Real-world problems and clever distractors'}
               {difficulty === 'brainbuster' && '🏆 Big brain puzzles that power up device AI!'}
+            </span>
+
+            {/* Live Hypervisor Supervisor Status */}
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: vmState === 'ready' || vmState === 'executing' ? '#f0fdfa' : '#f8fafc',
+                color: vmState === 'ready' || vmState === 'executing' ? '#0d9488' : '#64748b',
+                border: `1px solid ${vmState === 'ready' || vmState === 'executing' ? '#99f6e4' : '#cbd5e1'}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title={`Hypervisor Status: ${vmState}. Watchdog: 9s timeout. Rules: quiz.rules.ast`}
+            >
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background:
+                    vmState === 'ready'
+                      ? '#10b981'
+                      : vmState === 'executing'
+                      ? '#f59e0b'
+                      : vmState === 'watchdog_timeout'
+                      ? '#ef4444'
+                      : '#94a3b8',
+                  display: 'inline-block',
+                }}
+              />
+              {vmState === 'executing'
+                ? 'Hypervisor: Watchdog Armed'
+                : vmState === 'ready'
+                ? 'Hypervisor: Supervising'
+                : vmState === 'watchdog_timeout'
+                ? 'Hypervisor: Recycled'
+                : 'Hypervisor: Active'}
             </span>
 
             {/* Transparent Resource/Consent Badge */}

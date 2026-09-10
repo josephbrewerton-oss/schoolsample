@@ -12,6 +12,7 @@ import {
   setSavedLanguage,
 } from '@site/src/engine/operational-language';
 import { dispatch } from '../engine/hypercall';
+import { hypervisor } from '../engine/hypervisor';
 
 export default function PracticeLabPage() {
   const [mounted, setMounted] = useState(false);
@@ -95,6 +96,7 @@ export default function PracticeLabPage() {
       {/* Dynamic Base URL Worker Daemon */}
       {bootIframe && (
         <iframe
+          ref={(el) => hypervisor.registerWorkerIframe(el)}
           src={workerUrl}
           style={{ display: 'none', width: 0, height: 0, border: 'none' }}
           title="neural-engine-daemon"

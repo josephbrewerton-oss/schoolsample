@@ -2,18 +2,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { extractQuestionFromAst, ExtractedQuestion } from '../utils/astQuestionExtractor';
 import { EngineFlow } from '../engine/engineflow';
+import { hypervisor, HypervisorHost, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
+import { RawASTQuestion } from '../engine/astGovernor';
 
 export interface QuestionPayload {
-  question: ExtractedQuestion;
+  question: RawASTQuestion | ExtractedQuestion;
   keyStage: string;
   subject: string;
   unit: string;
   curriculum?: string;
   hint?: string;
+  governed?: boolean;
 }
 
-export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) => void) {
-  const [status, setStatus] = useState<string>('Connecting to Daemon...');
+export function useWebRTCNeuralBus(onQuestionReady?: (payload: QuestionPayload) => void) {
+  const [instanceState, setInstanceState] = useState<GuestVMState>(() => hypervisor.getState());
+  const [metrics, setMetrics] = useState<HypervisorMetrics>(() => hypervisor.getMetrics());
+  const [status, setStatus] = useState<string>('Supervising Guest VM...');
   const [isReady, setIsReady] = useState<boolean>(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -39,6 +44,33 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
     onQuestionReadyRef.current = onQuestionReady;
   }, [onQuestionReady]);
 
+  // 1. Subscribe to Hypervisor Host State & Telemetry
+  useEffect(() => {
+    const unsub = hypervisor.subscribe((state, currentMetrics) => {
+      setInstanceState(state);
+      setMetrics(currentMetrics);
+
+      if (state === 'ready') {
+        setIsReady(true);
+        setStatus('Guest VM Ready • Hypervised');
+      } else if (state === 'executing') {
+        setStatus('Inference Active (Watchdog Armed)');
+      } else if (state === 'booting') {
+        setIsReady(false);
+        setStatus('Guest VM Booting...');
+      } else if (state === 'watchdog_timeout') {
+        setIsReady(false);
+        setStatus('Watchdog Timeout • Recycled VM');
+      } else {
+        setIsReady(false);
+        setStatus('Connecting to Guest Daemon...');
+      }
+    });
+
+    return unsub;
+  }, []);
+
+  // 2. WebRTC Peer Connection for low-latency peer data plane
   useEffect(() => {
     let isCurrentMount = true;
     const bus = new BroadcastChannel('webrtc-neural-signaling');
@@ -55,15 +87,15 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       dc.onopen = () => {
         if (!isCurrentMount) return;
         setIsReady(true);
-        setStatus('Engine Ready');
-        console.log('[NeuralBus Client] DataChannel OPEN.');
+        setStatus('Guest VM Online (WebRTC DataChannel)');
       };
 
       dc.onclose = () => {
         if (!isCurrentMount) return;
-        setIsReady(false);
-        setStatus('Daemon Disconnected');
-        console.log('[NeuralBus Client] DataChannel CLOSED.');
+        if (hypervisor.getState() !== 'ready') {
+          setIsReady(false);
+          setStatus('Daemon Disconnected');
+        }
       };
 
       dc.onmessage = (msgEvent) => {
@@ -74,42 +106,33 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
           const fullText = rawStreamRef.current;
           rawStreamRef.current = '';
 
-          // 1. Try JSON Envelope decode
+          let rawASTString = fullText;
           if (fullText.startsWith('{') && fullText.endsWith('}')) {
             try {
               const envelope = JSON.parse(fullText);
-              if (envelope.type === 'AST_RESPONSE' || envelope.raw) {
-                const parsedNode = EngineFlow.parse(envelope.raw);
-                const normalized = EngineFlow.normalizeASTToQuestion(parsedNode);
-                if (normalized) {
-                  onQuestionReadyRef.current({
-                    question: normalized,
-                    keyStage: envelope.keyStage || inFlightContextRef.current.keyStage,
-                    subject: envelope.subject || inFlightContextRef.current.subject,
-                    unit: envelope.unit || inFlightContextRef.current.unit,
-                    curriculum: envelope.curriculum || inFlightContextRef.current.curriculum,
-                    hint: normalized.hint,
-                  });
-                  return;
-                }
+              if (envelope.type === 'AST_RESPONSE' && envelope.raw) {
+                rawASTString = envelope.raw;
               }
-            } catch (err) {
-              console.warn('[NeuralBus Envelope Parse Error]:', err);
-            }
+            } catch {}
           }
 
-          // 2. Direct S-expression extraction
-          const parsedNode = EngineFlow.parse(fullText);
-          const normalized = EngineFlow.normalizeASTToQuestion(parsedNode) || extractQuestionFromAst(fullText);
+          // Pass raw AST through Hypervisor Rulebook Audit & ASTFlowGovernor
+          const audit = hypervisor.auditAndGovernAST(rawASTString, {
+            keyStage: inFlightContextRef.current.keyStage,
+            subject: inFlightContextRef.current.subject,
+            unit: inFlightContextRef.current.unit,
+            curriculum: inFlightContextRef.current.curriculum,
+          });
 
-          if (normalized) {
+          if (audit.passed && audit.governedQuestion && onQuestionReadyRef.current) {
             onQuestionReadyRef.current({
-              question: normalized,
+              question: audit.governedQuestion,
               keyStage: inFlightContextRef.current.keyStage,
               subject: inFlightContextRef.current.subject,
               unit: inFlightContextRef.current.unit,
               curriculum: inFlightContextRef.current.curriculum,
-              hint: normalized.hint,
+              hint: audit.governedQuestion.hint,
+              governed: true,
             });
           }
           return;
@@ -121,10 +144,10 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
 
     pc.onicecandidate = (e) => {
       if (e.candidate && isCurrentMount) {
-        bus.postMessage({ 
-          type: 'candidate', 
-          candidate: e.candidate.toJSON(), 
-          sessionId: sessionIdRef.current 
+        bus.postMessage({
+          type: 'candidate',
+          candidate: e.candidate.toJSON(),
+          sessionId: sessionIdRef.current,
         });
       }
     };
@@ -135,7 +158,6 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       if (!data) return;
 
       if (data.type === 'daemon_ready') {
-        console.log('[NeuralBus Client] Detected daemon_ready, sending peer_ready...');
         bus.postMessage({ type: 'peer_ready', sessionId: sessionIdRef.current });
       } else if (data.type === 'offer') {
         if (pc.signalingState !== 'stable' || channelRef.current?.readyState === 'open') {
@@ -143,18 +165,15 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
         }
 
         try {
-          console.log('[NeuralBus Client] Received offer from Daemon. Creating answer...');
           await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          bus.postMessage({ 
-            type: 'answer', 
-            sdp: pc.localDescription?.toJSON(), 
-            sessionId: sessionIdRef.current 
+          bus.postMessage({
+            type: 'answer',
+            sdp: pc.localDescription?.toJSON(),
+            sessionId: sessionIdRef.current,
           });
-        } catch (err) {
-          console.warn('[NeuralBus Client] Offer resolution warning:', err);
-        }
+        } catch {}
       } else if (data.type === 'candidate' && data.candidate) {
         try {
           if (pc.remoteDescription && pc.signalingState !== 'closed') {
@@ -164,14 +183,13 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       }
     };
 
-    // Heartbeat: announce presence until connected
     const heartbeat = setInterval(() => {
       if (channelRef.current?.readyState === 'open') {
         clearInterval(heartbeat);
       } else {
         bus.postMessage({ type: 'peer_ready', sessionId: sessionIdRef.current });
       }
-    }, 500);
+    }, 600);
 
     return () => {
       isCurrentMount = false;
@@ -182,8 +200,11 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
     };
   }, []);
 
+  /**
+   * Dispatches an intent to the hypervised guest VM
+   */
   const sendIntent = useCallback(
-    (
+    async (
       keyStage: string,
       subject: string,
       unit: string,
@@ -192,10 +213,6 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
       unitId?: string,
       curriculum: string = 'uk_oak'
     ) => {
-      if (!channelRef.current || channelRef.current.readyState !== 'open') {
-        return false;
-      }
-
       inFlightContextRef.current = {
         keyStage,
         subject,
@@ -203,24 +220,61 @@ export function useWebRTCNeuralBus(onQuestionReady: (payload: QuestionPayload) =
         curriculum,
       };
 
-      rawStreamRef.current = '';
+      try {
+        const result = await hypervisor.executeInference({
+          keyStage,
+          subject,
+          unit,
+          curriculum,
+          timeoutMs: 9000,
+        });
 
-      const payload = JSON.stringify({
-        type: 'REQUEST_QUESTION',
-        keyStage,
-        subject,
-        unit,
-        ks: keyStage,
-        sub: subject,
-        topic: unit,
-        curriculum,
-      });
+        if (result.ok && result.question && onQuestionReadyRef.current) {
+          onQuestionReadyRef.current({
+            question: result.question,
+            keyStage,
+            subject,
+            unit,
+            curriculum,
+            hint: result.question.hint,
+            governed: true,
+          });
+          return true;
+        }
+      } catch (err) {
+        console.warn('[NeuralBus Hook] Hypervisor inference execution note:', err);
+      }
 
-      channelRef.current.send(payload);
-      return true;
+      // Fallback to DataChannel if open
+      if (channelRef.current && channelRef.current.readyState === 'open') {
+        rawStreamRef.current = '';
+        channelRef.current.send(
+          JSON.stringify({
+            type: 'REQUEST_QUESTION',
+            keyStage,
+            subject,
+            unit,
+            curriculum,
+          })
+        );
+        return true;
+      }
+
+      return false;
     },
     []
   );
 
-  return { isReady, status, sendIntent };
+  const resetInstance = useCallback(() => {
+    hypervisor.resetGuestInstance();
+  }, []);
+
+  return {
+    isReady,
+    status,
+    instanceState,
+    metrics,
+    sendIntent,
+    resetInstance,
+  };
 }

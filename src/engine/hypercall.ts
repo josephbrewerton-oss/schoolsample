@@ -11,6 +11,7 @@ import { translateQuestionData, translateLessonData } from './translationService
 import { SUPPORTED_LANGUAGES } from './operational-language';
 import { MathQuestionGenerator } from './mathQuestionGenerator';
 import { ASTFlowGovernor } from './astGovernor';
+import { hypervisor, setHypercallDispatcher } from './hypervisor';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -164,9 +165,37 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             difficulty,
           };
 
-          // 3. If AI runtime is available, attempt dynamic diagnostic synthesis grounded in verified axioms
+          // 3. Primary Execution: Supervised Guest VM Inference with Armed Watchdog
+          let synthesized = false;
           try {
-            const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
+            const vmResult = await hypervisor.executeInference({
+              keyStage: stage,
+              subject,
+              unit: topic,
+              curriculum,
+              difficulty,
+              lang,
+              timeoutMs: 8500,
+            });
+
+            if (vmResult.ok && vmResult.question) {
+              resultCandidate = {
+                ...resultCandidate,
+                ...vmResult.question,
+                options: vmResult.question.options,
+                answerKey: vmResult.question.answerKey,
+                prompt: vmResult.question.prompt,
+              };
+              synthesized = true;
+            }
+          } catch (vmErr) {
+            // Guest VM offline or timed out: try local prompt or fallback smoothly
+          }
+
+          // If Guest VM was offline, attempt local browser prompt or fallback to verified offline curriculum
+          if (!synthesized) {
+            try {
+              const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
 Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
@@ -193,24 +222,25 @@ Return strictly a single JSON object with no Markdown:
   "socraticFollowUp": "Simpler scaffolding sub-question if the pupil gets stuck"
 }`;
 
-            const rawResponse = await aiCaller.promptText({
-              prompt,
-              systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
-              preserveContext: false,
-            });
+              const rawResponse = await aiCaller.promptText({
+                prompt,
+                systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
+                preserveContext: false,
+              });
 
-            const match = rawResponse.match(/\{[\s\S]*?\}/);
-            if (match) {
-              const parsed = JSON.parse(match[0]);
-              if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
-                resultCandidate = {
-                  ...resultCandidate,
-                  ...parsed,
-                };
+              const match = rawResponse.match(/\{[\s\S]*?\}/);
+              if (match) {
+                const parsed = JSON.parse(match[0]);
+                if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
+                  resultCandidate = {
+                    ...resultCandidate,
+                    ...parsed,
+                  };
+                }
               }
+            } catch (err) {
+              // Offline / on-device LLM unready: use verified offline curriculum knowledge
             }
-          } catch (err) {
-            // Offline / on-device LLM unready: use verified offline curriculum knowledge
           }
 
           // 4. Pass candidate through AST Flow Governor to guarantee syntax, deduping, and arithmetic verification
@@ -482,6 +512,29 @@ One reflective question to verify understanding.`;
       },
     },
   ],
+
+  // Hypervisor Supervisory Control Node
+  [
+    'hypervisornode',
+    {
+      execute: async (intent: string, payload: any) => {
+        if (intent === 'get:status') {
+          return {
+            state: hypervisor.getState(),
+            metrics: hypervisor.getMetrics(),
+          };
+        }
+        if (intent === 'reset:guest') {
+          hypervisor.resetGuestInstance();
+          return { ok: true };
+        }
+        if (intent === 'execute:inference') {
+          return await hypervisor.executeInference(payload);
+        }
+        throw new Error(`Unknown HypervisorNode intent: "${intent}"`);
+      },
+    },
+  ],
 ]);
 
 /**
@@ -507,3 +560,6 @@ export async function dispatch(
     return { ok: false, error: err?.message || 'Unknown substrate execution error' };
   }
 }
+
+// Wire the Universal Dispatcher to the Hypervisor Host for guest VM hypercalls (VM-exits)
+setHypercallDispatcher(dispatch);

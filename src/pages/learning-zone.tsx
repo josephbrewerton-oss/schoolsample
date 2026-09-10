@@ -6,6 +6,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
 import { dispatch } from '../engine/hypercall';
+import { hypervisor } from '../engine/hypervisor';
 import {
   LanguageSelector,
   SUPPORTED_LANGUAGES,
@@ -331,6 +332,7 @@ export default function LearningZonePage() {
         
         {/* Hidden WebRTC Neural Worker Daemon Frame */}
         <iframe
+          ref={(el) => hypervisor.registerWorkerIframe(el)}
           src={useBaseUrl('/worker.html')}
           style={{ display: 'none' }}
           title="neural-worker-daemon"

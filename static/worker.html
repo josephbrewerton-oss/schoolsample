@@ -2,26 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Neural WebRTC Daemon</title>
+  <title>Neural WebRTC Guest VM Daemon</title>
 </head>
 <body>
   <script type="module">
-    console.log('[Worker Daemon] Booting WebRTC Daemon at:', window.location.href);
+    console.log('[Guest VM Daemon] Booting Supervised Guest VM at:', window.location.href);
 
-    const bus = new BroadcastChannel('webrtc-neural-signaling');
+    const signalingBus = new BroadcastChannel('webrtc-neural-signaling');
+    const hypervisorBus = new BroadcastChannel('neural_hypervisor_bus');
+
     let pc = null;
     let activeChannel = null;
     let isConnecting = false;
     let isBusy = false;
 
-    // Helper to send framed messages across WebRTC DataChannel
-    function sendFramed(dc, messageObj) {
-      if (!dc || dc.readyState !== 'open') return;
-      const str = JSON.stringify(messageObj);
-      dc.send(str);
-      dc.send('__EOF__');
+    // Warm Session Cache for low-latency inference (< 250ms per token vs 800ms+ cold start)
+    let cachedSession = null;
+    let currentSystemInstruction = '';
+    const pendingHypercalls = new Map();
+
+    function sendToHypervisor(payload) {
+      const msg = { ...payload, __neural_guest__: true };
+      
+      // 1. Direct parent postMessage (< 0.1ms fast-path)
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(msg, '*');
+        } catch {}
+      }
+
+      // 2. WebRTC DataChannel (if open)
+      if (activeChannel && activeChannel.readyState === 'open') {
+        try {
+          activeChannel.send(JSON.stringify(msg));
+          activeChannel.send('__EOF__');
+        } catch {}
+      }
+
+      // 3. Signaling Bus fallback
+      try {
+        signalingBus.postMessage(msg);
+      } catch {}
     }
 
+    // Hypercall primitive: allows guest VM to invoke host capabilities (Curriculum, RAG, etc.)
+    function makeHypercall(target, message, timeoutMs = 2000) {
+      const id = `hc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      return new Promise((resolve) => {
+        const timer = setTimeout(() => {
+          pendingHypercalls.delete(id);
+          resolve({ ok: false, error: 'Hypercall timeout' });
+        }, timeoutMs);
+
+        pendingHypercalls.set(id, { resolve, timer });
+
+        sendToHypervisor({
+          type: 'HYPERCALL',
+          id,
+          target,
+          message,
+        });
+      });
+    }
+
+    function handleHypercallResponse(data) {
+      const pending = pendingHypercalls.get(data.id);
+      if (pending) {
+        clearTimeout(pending.timer);
+        pendingHypercalls.delete(data.id);
+        pending.resolve(data);
+      }
+    }
+
+    // WebRTC PeerConnection initialization
     async function initAndOffer() {
       if (activeChannel && activeChannel.readyState === 'open') return;
       if (isConnecting) return;
@@ -31,139 +84,158 @@
         try { pc.close(); } catch {}
       }
 
-      console.log('[Worker Daemon] Initializing PeerConnection & DataChannel...');
+      console.log('[Guest VM Daemon] Initializing PeerConnection & DataChannel...');
       pc = new RTCPeerConnection({ iceServers: [] });
 
       pc.oniceconnectionstatechange = () => {
-        console.log('[Worker Daemon] ICE Connection State:', pc.iceConnectionState);
         if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
           isConnecting = false;
           activeChannel = null;
         }
       };
 
-      const dc = pc.createDataChannel('neural-bus', {
-        ordered: true,
-      });
+      const dc = pc.createDataChannel('neural-bus', { ordered: true });
       activeChannel = dc;
 
       dc.onopen = () => {
         isConnecting = false;
-        console.log('[Worker Daemon] DataChannel OPEN. Connected to Hypervisor.');
+        console.log('[Guest VM Daemon] DataChannel OPEN. Connected to Hypervisor.');
       };
 
       dc.onclose = () => {
         isConnecting = false;
         activeChannel = null;
-        console.log('[Worker Daemon] DataChannel CLOSED.');
       };
 
       dc.onmessage = async (event) => {
         if (event.data === '__EOF__' || isBusy) return;
-        processIntent(event.data, dc);
+        try {
+          const parsed = JSON.parse(event.data);
+          processHypervisorCommand(parsed);
+        } catch {}
       };
 
       pc.onicecandidate = (e) => {
         if (e.candidate) {
-          bus.postMessage({ type: 'candidate', candidate: e.candidate.toJSON() });
+          signalingBus.postMessage({ type: 'candidate', candidate: e.candidate.toJSON() });
         }
       };
 
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        console.log('[Worker Daemon] Broadcasting Offer to Hypervisor...');
-        bus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
+        signalingBus.postMessage({ type: 'offer', sdp: pc.localDescription.toJSON() });
       } catch (err) {
         isConnecting = false;
-        console.error('[Worker Daemon] Offer creation failed:', err);
       }
     }
 
-    bus.onmessage = async (e) => {
-      const data = e.data;
-      if (!data) return;
+    // Session Management with Warm Session Pool
+    async function getOrCreateWarmSession(systemInstruction) {
+      const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
+      const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
+      const target = aiHost?.languageModel || GlobalLM;
 
-      if (data.type === 'peer_ready') {
-        initAndOffer();
-      } else if (data.type === 'answer' && pc) {
-        if (pc.signalingState === 'have-local-offer') {
-          try {
-            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          } catch (err) {
-            console.warn('[Worker Daemon] Answer error:', err);
-          }
-        }
-      } else if (data.type === 'candidate' && pc && data.candidate) {
-        try {
-          if (pc.remoteDescription && pc.signalingState !== 'closed') {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          }
-        } catch {}
+      if (!target?.create) return null;
+
+      if (cachedSession && currentSystemInstruction === systemInstruction) {
+        return cachedSession;
       }
-    };
 
-    async function createFreshSession(systemInstruction) {
-  const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
-  const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
+      if (cachedSession?.destroy) {
+        try { cachedSession.destroy(); } catch {}
+        cachedSession = null;
+      }
 
-  const target = aiHost?.languageModel || GlobalLM;
-  if (!target?.create) return null;
-
-  const baseConfig = {
-    systemPrompt: systemInstruction,
-    expectedInputLanguages: ['en'],
-    expectedOutputLanguages: ['en'],
-  };
-
-  try {
-    return await target.create(baseConfig);
-  } catch {
-    try {
-      return await target.create({
+      const baseConfig = {
+        systemPrompt: systemInstruction,
         expectedInputLanguages: ['en'],
         expectedOutputLanguages: ['en'],
-      });
-    } catch {
-      return null;
-    }
-  }
-}
-
-    async function processIntent(rawIntent, dc) {
-      isBusy = true;
-      let session = null;
+      };
 
       try {
-        let parsed = rawIntent;
-        if (typeof rawIntent === 'string') {
-          try { parsed = JSON.parse(rawIntent); } catch {}
+        cachedSession = await target.create(baseConfig);
+        currentSystemInstruction = systemInstruction;
+        return cachedSession;
+      } catch {
+        try {
+          cachedSession = await target.create({
+            expectedInputLanguages: ['en'],
+            expectedOutputLanguages: ['en'],
+          });
+          currentSystemInstruction = systemInstruction;
+          return cachedSession;
+        } catch {
+          return null;
         }
+      }
+    }
 
-        const subject = parsed?.subject || parsed?.sub || 'English';
-        const topic = parsed?.unit || parsed?.topic || parsed?.u || 'Shakespeare: Key Themes';
-        const keyStage = parsed?.keyStage || parsed?.ks || 'Key Stage 3';
+    function resetWarmSession() {
+      if (cachedSession?.destroy) {
+        try { cachedSession.destroy(); } catch {}
+      }
+      cachedSession = null;
+      currentSystemInstruction = '';
+    }
 
-        const systemInstruction = `You are an expert UK curriculum teacher. Create multiple-choice questions strictly matching the given subject, topic, and Key Stage level. Output strictly as a valid Lisp S-expression without Markdown backticks or conversational text.`;
+    // Process Inference Intent with S-Expression adherence to quiz.rules.ast
+    async function processInferenceRequest(payload) {
+      const requestId = payload.requestId || `req_${Date.now()}`;
+      isBusy = true;
 
-        session = await createFreshSession(systemInstruction);
+      try {
+        const subject = payload.subject || payload.sub || 'English';
+        const topic = payload.unit || payload.topic || payload.u || 'General Topic';
+        const keyStage = payload.keyStage || payload.ks || 'Key Stage 2';
+        const difficulty = payload.difficulty || 'challenger';
 
+        // 1. Hypercall to Host for Ground Truth Curriculum Axioms & Misconceptions
+        let curriculumAxiom = '';
+        let cognitiveTrap = '';
+        try {
+          const hcRes = await makeHypercall('curriculumnode', {
+            intent: 'get:package',
+            payload: { stage: keyStage, subject, topic },
+          }, 1200);
+
+          if (hcRes.ok && hcRes.data) {
+            curriculumAxiom = hcRes.data.coreAxiom || hcRes.data.axiom || '';
+            cognitiveTrap = hcRes.data.cognitiveTrap || hcRes.data.trap || '';
+          }
+        } catch {}
+
+        const systemInstruction = `You are an expert UK curriculum teacher. Create multiple-choice questions strictly matching the subject, topic, and Key Stage level. Output strictly as a valid Lisp S-expression without Markdown backticks or commentary. Format strictly adhering to quiz.rules.ast.`;
+
+        const session = await getOrCreateWarmSession(systemInstruction);
         if (!session) {
           throw new Error('On-device LanguageModel session unavailable on this device.');
         }
 
         const prompt = `Topic: "${topic}" (${keyStage} ${subject}).
-Generate 1 multiple choice question testing understanding of "${topic}".
+${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"` : ''}
+${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"` : ''}
+Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
+Constraint: Exactly 4 distinct options. Answer key must be 0-indexed integer (0, 1, 2, or 3). Hint must be concise and under 15 words. No 'A)' or 'Option 1' prefixes.
 
-Format:
+Format strictly as:
 (:route "quiz:mcq"
- :scratchpad "Explanation of correct concept"
- :prompt "Write a specific question directly testing knowledge of ${topic} here"
- :options ("Correct answer" "Plausible wrong answer 1" "Plausible wrong answer 2" "Plausible wrong answer 3")
+ :scratchpad "Core pedagogical rule explaining why the correct option is true"
+ :prompt "Question prompt directly testing ${topic}?"
+ :options ("Option 1" "Option 2" "Option 3" "Option 4")
  :answer-key 0
  :hint "Short clue under 15 words")`;
 
-        const response = await session.prompt(prompt);
+        // Execution with 7.5s internal abort protection
+        let response = '';
+        const abortCtrl = new AbortController();
+        const timeout = setTimeout(() => abortCtrl.abort(), 7500);
+
+        try {
+          response = await session.prompt(prompt, { signal: abortCtrl.signal });
+        } finally {
+          clearTimeout(timeout);
+        }
 
         let sanitized = response
           .replace(/```(?:lisp|scheme)?/gi, '')
@@ -176,29 +248,102 @@ Format:
           sanitized = sanitized.substring(firstParen, lastParen + 1);
         }
 
-        sendFramed(dc, {
+        sendToHypervisor({
           type: 'AST_RESPONSE',
+          requestId,
           raw: sanitized,
           keyStage,
           subject,
           unit: topic,
         });
       } catch (err) {
-        console.error('[Worker Daemon Error]:', err);
-        sendFramed(dc, {
+        console.error('[Guest VM Inference Error]:', err);
+        // On fatal session failure, discard warm session
+        resetWarmSession();
+
+        sendToHypervisor({
           type: 'AST_ERROR',
-          error: err?.message || 'Inference execution failed in worker daemon.',
+          requestId,
+          error: err?.message || 'Inference execution failed in guest VM daemon.',
         });
       } finally {
         isBusy = false;
-        if (session?.destroy) {
-          try { session.destroy(); } catch {}
-        }
       }
     }
 
-    // Announce ready immediately to signaling bus
-    bus.postMessage({ type: 'daemon_ready' });
+    function processHypervisorCommand(data) {
+      if (!data) return;
+
+      switch (data.type) {
+        case 'SUPERVISOR_PING':
+          sendToHypervisor({
+            type: 'SUPERVISOR_PONG',
+            pingTimestamp: data.timestamp,
+            sessionWarm: Boolean(cachedSession),
+            isBusy,
+          });
+          break;
+
+        case 'RESET_INSTANCE':
+          console.log('[Guest VM Daemon] Received RESET_INSTANCE command from Hypervisor.');
+          resetWarmSession();
+          isBusy = false;
+          sendToHypervisor({ type: 'GUEST_READY', sessionWarm: false, capabilities: ['prompt-api', 'hypercalls', 'warm-session'] });
+          break;
+
+        case 'HYPERCALL_RESPONSE':
+          handleHypercallResponse(data);
+          break;
+
+        case 'REQUEST_QUESTION':
+        case 'EXEC_PROMPT':
+          processInferenceRequest(data);
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    // Hypervisor Communication Listeners
+    window.addEventListener('message', (event) => {
+      if (event.data && typeof event.data === 'object' && event.data.__neural_hypervisor__) {
+        processHypervisorCommand(event.data);
+      }
+    });
+
+    signalingBus.onmessage = async (e) => {
+      const data = e.data;
+      if (!data) return;
+
+      if (data.__neural_hypervisor__) {
+        processHypervisorCommand(data);
+        return;
+      }
+
+      if (data.type === 'peer_ready') {
+        initAndOffer();
+      } else if (data.type === 'answer' && pc) {
+        if (pc.signalingState === 'have-local-offer') {
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          } catch {}
+        }
+      } else if (data.type === 'candidate' && pc && data.candidate) {
+        try {
+          if (pc.remoteDescription && pc.signalingState !== 'closed') {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          }
+        } catch {}
+      }
+    };
+
+    // Announce availability to Hypervisor Host
+    sendToHypervisor({
+      type: 'GUEST_READY',
+      sessionWarm: Boolean(cachedSession),
+      capabilities: ['prompt-api', 'hypercalls', 'warm-session', 'watchdog-managed'],
+    });
   </script>
 </body>
 </html>
