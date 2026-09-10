@@ -7,6 +7,9 @@ export interface RawASTQuestion {
   options: string[];
   answerKey: number;
   hint?: string;
+  explanation?: string;
+  misconceptions?: string[];
+  socraticFollowUp?: string;
 }
 
 export interface GovernedQuestion {
@@ -262,6 +265,27 @@ export class ASTFlowGovernor {
       }
     }
 
+    // 6. Misconception Alignment & Diagnostic Synthesis
+    let misconceptions: string[] = [];
+    if (Array.isArray(raw.misconceptions) && raw.misconceptions.length > 0) {
+      misconceptions = uniqueOptions.map((opt, i) => {
+        if (i === targetAnswerKey) {
+          return raw.misconceptions?.[i] || `Correct! Accurately demonstrates understanding of ${expectedTopic}.`;
+        }
+        return (
+          raw.misconceptions?.[i] ||
+          `Common misconception: This choice confuses the foundational rules or properties of ${expectedTopic}.`
+        );
+      });
+    } else {
+      misconceptions = uniqueOptions.map((opt, i) => {
+        if (i === targetAnswerKey) {
+          return `Correct! Spot on with the core principles of ${expectedTopic}.`;
+        }
+        return `Common trap: Confuses standard conditions or rules in ${expectedTopic}. Remember to test against the core definition.`;
+      });
+    }
+
     return {
       isValid: true,
       sanitizedQuestion: {
@@ -271,7 +295,10 @@ export class ASTFlowGovernor {
         prompt: cleanPrompt,
         options: uniqueOptions,
         answerKey: targetAnswerKey,
-        hint: (raw as any).hint?.trim() || `Think about the key definition of ${expectedTopic}.`
+        hint: (raw as any).hint?.trim() || `Think about the key definition of ${expectedTopic}.`,
+        explanation: raw.explanation || `The correct answer aligns directly with curriculum principles for ${expectedTopic}.`,
+        misconceptions,
+        socraticFollowUp: raw.socraticFollowUp || `Can you identify which rule or definition applies to ${expectedTopic}?`,
       },
     };
   }

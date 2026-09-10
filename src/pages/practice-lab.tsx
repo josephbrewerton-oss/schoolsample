@@ -90,7 +90,7 @@ export default function PracticeLabPage() {
   };
 
   return (
-    <Layout title="Practice Lab" description="On-Device Neural Hypervisor">
+    <Layout title="Practice Arena" description="St Joseph's Interactive Curriculum Practice Arena">
       {/* Dynamic Base URL Worker Daemon */}
       {bootIframe && (
         <iframe
@@ -130,7 +130,7 @@ export default function PracticeLabPage() {
         </main>
       ) : (
         <div style={{ maxWidth: '1100px', margin: '3rem auto', textAlign: 'center', color: '#64748b' }}>
-          <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading St Joseph&apos;s Practice Lab...</p>
+          <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading St Joseph&apos;s Practice Arena...</p>
         </div>
       )}
     </Layout>

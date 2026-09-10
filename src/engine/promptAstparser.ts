@@ -5,6 +5,7 @@ import {
   SUBJECT_DEFINITIONS,
   resolveKeyStageRule 
 } from '@site/static/promptStrategies';
+import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 
 export interface PromptInferenceParams {
   subject?: string;
@@ -30,7 +31,7 @@ export class PromptASTPreParser {
   }
 
   /**
-   * Transforms configuration objects into an optimized AST prompt payload without literal schema placeholder tokens.
+   * Transforms configuration objects into an optimized AST prompt payload with 1-shot exemplar grounding.
    */
   static parseForInference(params: PromptInferenceParams = {}): string {
     const {
@@ -57,15 +58,23 @@ export class PromptASTPreParser {
     const archetypes = (SUBJECT_DEFINITIONS as any)[matchedKey]?.archetypes || ['core conceptual mastery'];
     const targetFocus = archetypes[Math.floor(Math.random() * archetypes.length)];
 
-    // 4. Return clean, direct AST generation prompt
-    return `Generate 1 Oak Curriculum multiple-choice quiz question for ${keyStage} ${subject}: "${topic}".
-Focus: ${targetFocus} | Constraints: ${cleanKs}, ${cleanRegional}.
+    // 4. Ground with 1-shot exemplar knowledge if available
+    const knowledge = findCurriculumKnowledge(keyStage, subject, topic);
+    const exemplarSnippet = knowledge
+      ? `\nExemplar Baseline: Rule: "${knowledge.coreAxiom}" | Trap: "${knowledge.cognitiveTrap}"`
+      : '';
+
+    // 5. Return clean, high-diagnostic prompt
+    return `Generate 1 Oak Curriculum diagnostic multiple-choice question for ${keyStage} ${subject}: "${topic}".
+Focus: ${targetFocus} | Constraints: ${cleanKs}, ${cleanRegional}.${exemplarSnippet}
+Rule: Every distractor must embody an authentic student misconception.
 
 Output ONLY a valid Lisp S-expression in this exact format:
 (:route "quiz:mcq"
  :scratchpad "Short explanation of the concept"
  :prompt "Clear question about ${topic}?"
  :options ("Correct answer" "Plausible wrong answer 1" "Plausible wrong answer 2" "Plausible wrong answer 3")
+ :misconceptions ("Correct deduction" "Trap: Explanation of error 1" "Trap: Explanation of error 2" "Trap: Explanation of error 3")
  :answer-key 0
  :hint "Concise Socratic clue under 15 words.")`.trim();
   }

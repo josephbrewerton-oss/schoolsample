@@ -157,6 +157,32 @@ Format strictly as an S-expression:
     const rawKey = parsed['answer-key'] ?? parsed.answerKey ?? parsed.answer_key ?? 0;
     const answerKey = typeof rawKey === 'number' ? rawKey : parseInt(String(rawKey), 10) || 0;
 
+    let misconceptions: string[] | undefined = undefined;
+    if (Array.isArray(parsed.misconceptions)) {
+      misconceptions = parsed.misconceptions.map((m: any) =>
+        typeof m === 'string' ? m.trim() : typeof m?.children?.[0] === 'string' ? m.children[0].trim() : String(m)
+      );
+    } else if (parsed.trap) {
+      const trapText = typeof parsed.trap === 'string' ? parsed.trap : parsed.trap?.children?.[0];
+      if (trapText) {
+        misconceptions = options.map((_, i) =>
+          i === answerKey ? 'Correct conceptual deduction.' : `Common trap: ${trapText}`
+        );
+      }
+    }
+
+    const explanation = typeof parsed.explanation === 'string'
+      ? parsed.explanation.trim()
+      : typeof parsed.axiom === 'string'
+      ? parsed.axiom.trim()
+      : undefined;
+
+    const socraticFollowUp = typeof parsed.socratic === 'string'
+      ? parsed.socratic.trim()
+      : typeof parsed.socraticFollowUp === 'string'
+      ? parsed.socraticFollowUp.trim()
+      : undefined;
+
     // Fail normalization if essential components are absent or poisoned by templates
     if (!prompt || prompt.includes('<STEM>') || options.length < 2) {
       return null;
@@ -167,6 +193,9 @@ Format strictly as an S-expression:
       prompt: prompt.trim(),
       scratchpad: scratchpad.trim(),
       hint: hint.trim(),
+      explanation,
+      misconceptions,
+      socraticFollowUp,
       options,
       answerKey: answerKey < options.length ? answerKey : 0,
     };

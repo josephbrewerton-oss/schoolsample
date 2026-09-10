@@ -22,6 +22,8 @@ interface Props {
   streak: number;
   hint?: string;
   explanation?: string;
+  misconceptions?: string[];
+  socraticFollowUp?: string;
   onSelectOption: (idx: number) => void;
   onNextQuestion: () => void;
   currentLang?: string;
@@ -39,6 +41,8 @@ export const QuestionCard: React.FC<Props> = ({
   streak,
   hint,
   explanation,
+  misconceptions,
+  socraticFollowUp,
   onSelectOption,
   onNextQuestion,
   currentLang,
@@ -53,11 +57,15 @@ export const QuestionCard: React.FC<Props> = ({
     displayOptions: string[];
     hint?: string;
     explanation?: string;
+    misconceptions?: string[];
+    socraticFollowUp?: string;
   }>({
     prompt,
     displayOptions,
     hint,
     explanation,
+    misconceptions,
+    socraticFollowUp,
   });
 
   const [translatedFeedback, setTranslatedFeedback] = useState<{
@@ -68,7 +76,7 @@ export const QuestionCard: React.FC<Props> = ({
     streak: string;
   }>({
     correct: '🎉 Correct! Well done.',
-    tryAgain: '💡 Try again or pick another option!',
+    tryAgain: '💡 Not quite — check the clue below and try another choice!',
     nextQuestion: 'Next Question ➔',
     stars: 'Stars',
     streak: 'Streak',
@@ -93,10 +101,10 @@ export const QuestionCard: React.FC<Props> = ({
     let cancelled = false;
 
     if (!activeLang || activeLang === 'en') {
-      setTranslatedData({ prompt, displayOptions, hint, explanation });
+      setTranslatedData({ prompt, displayOptions, hint, explanation, misconceptions, socraticFollowUp });
       setTranslatedFeedback({
         correct: '🎉 Correct! Well done.',
-        tryAgain: '💡 Try again or pick another option!',
+        tryAgain: '💡 Not quite — check the clue below and try another choice!',
         nextQuestion: 'Next Question ➔',
         stars: 'Stars',
         streak: 'Streak',
@@ -109,11 +117,11 @@ export const QuestionCard: React.FC<Props> = ({
 
     Promise.all([
       translateQuestionData(
-        { prompt, displayOptions, hint, explanation },
+        { prompt, displayOptions, hint, explanation, misconceptions, socraticFollowUp },
         activeLang
       ),
       translateText('Correct! Well done.', activeLang),
-      translateText('Try again or pick another option!', activeLang),
+      translateText('Not quite — check the clue below and try another choice!', activeLang),
       translateText('Next Question', activeLang),
       translateText('Stars', activeLang),
       translateText('Streak', activeLang),
@@ -134,7 +142,7 @@ export const QuestionCard: React.FC<Props> = ({
       .catch((err) => {
         console.warn('[QuestionCard Translation Error]:', err);
         if (!cancelled) {
-          setTranslatedData({ prompt, displayOptions, hint, explanation });
+          setTranslatedData({ prompt, displayOptions, hint, explanation, misconceptions, socraticFollowUp });
           setIsTranslating(false);
         }
       });
@@ -142,7 +150,7 @@ export const QuestionCard: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [prompt, displayOptions, hint, explanation, activeLang]);
+  }, [prompt, displayOptions, hint, explanation, misconceptions, socraticFollowUp, activeLang]);
 
   const isNonEnglish = activeLang && activeLang !== 'en';
   const effectivePrompt = isNonEnglish && !showOriginal ? translatedData.prompt : prompt;
@@ -150,6 +158,21 @@ export const QuestionCard: React.FC<Props> = ({
     isNonEnglish && !showOriginal && translatedData.displayOptions.length === displayOptions.length
       ? translatedData.displayOptions
       : displayOptions;
+
+  const effectiveMisconceptions =
+    isNonEnglish && !showOriginal && translatedData.misconceptions && translatedData.misconceptions.length === displayOptions.length
+      ? translatedData.misconceptions
+      : (misconceptions || []);
+
+  const effectiveExplanation =
+    isNonEnglish && !showOriginal && translatedData.explanation
+      ? translatedData.explanation
+      : explanation;
+
+  const effectiveSocratic =
+    isNonEnglish && !showOriginal && translatedData.socraticFollowUp
+      ? translatedData.socraticFollowUp
+      : (socraticFollowUp || hint);
 
   const currentLangMeta = SUPPORTED_LANGUAGES[activeLang] || SUPPORTED_LANGUAGES.en;
   const isResolvedCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
@@ -359,15 +382,17 @@ export const QuestionCard: React.FC<Props> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '16px',
-                padding: '1rem 1.25rem',
+                minHeight: '54px',
+                padding: '0.9rem 1.25rem',
                 background: bg,
                 border: `2px solid ${border}`,
-                borderRadius: '10px',
+                borderRadius: '12px',
                 cursor: isResolvedCorrect ? 'default' : 'pointer',
                 textAlign: 'left',
                 fontSize: '1.05rem',
-                fontWeight: 500,
+                fontWeight: 600,
                 color: textColor,
+                boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : '0 1px 2px rgba(0,0,0,0.03)',
                 transition: 'all 0.15s ease',
                 opacity: isResolvedCorrect && !isSelected ? 0.6 : 1,
               }}
@@ -378,63 +403,121 @@ export const QuestionCard: React.FC<Props> = ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '6px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
                   background: isSelected ? border : '#e2e8f0',
                   color: isSelected ? '#ffffff' : '#475569',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
+                  fontWeight: 800,
+                  fontSize: '0.95rem',
+                  flexShrink: 0,
                 }}
               >
                 {String.fromCharCode(65 + idx)}
               </span>
 
               {/* Option Text */}
-              <span style={{ flex: 1 }}>{opt}</span>
+              <span style={{ flex: 1, lineHeight: 1.4 }}>{opt}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Bottom Feedback Action Strip */}
+      {/* Bottom Feedback Action Strip & Diagnostic Misconception Panel */}
       {selectedAnswer !== null && (
         <div
           style={{
             marginTop: '1.75rem',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
+            flexDirection: 'column',
             gap: '1rem',
           }}
         >
+          {isResolvedCorrect ? (
+            <div
+              style={{
+                padding: '1rem 1.25rem',
+                background: '#ecfdf5',
+                border: '1px solid #10b981',
+                borderRadius: '8px',
+                color: '#065f46',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}
+            >
+              <div style={{ fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {translatedFeedback.correct}
+              </div>
+              {effectiveExplanation && (
+                <div style={{ fontSize: '0.95rem', color: '#047857', lineHeight: 1.5 }}>
+                  {effectiveExplanation}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: '1rem 1.25rem',
+                background: '#fff7ed',
+                border: '1px solid #f97316',
+                borderRadius: '8px',
+                color: '#9a3412',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {translatedFeedback.tryAgain}
+              </div>
+              {effectiveMisconceptions[selectedAnswer] && (
+                <div style={{ fontSize: '0.95rem', color: '#7c2d12', lineHeight: 1.5 }}>
+                  <strong>💡 Understanding the error:</strong> {effectiveMisconceptions[selectedAnswer]}
+                </div>
+              )}
+              {effectiveSocratic && (
+                <div
+                  style={{
+                    fontSize: '0.92rem',
+                    color: '#c2410c',
+                    borderTop: '1px dashed #fdba74',
+                    paddingTop: '6px',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <strong>🌱 Helpful Clue:</strong> {effectiveSocratic}
+                </div>
+              )}
+            </div>
+          )}
+
           <div
             style={{
-              fontSize: '1.15rem',
-              fontWeight: 700,
-              color: isResolvedCorrect ? '#059669' : '#ea580c',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              flexWrap: 'wrap',
+              gap: '1rem',
             }}
           >
-            {isResolvedCorrect ? translatedFeedback.correct : translatedFeedback.tryAgain}
+            <button
+              type="button"
+              onClick={onNextQuestion}
+              style={{
+                background: '#2563eb',
+                color: '#ffffff',
+                fontWeight: 700,
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.75rem 1.5rem',
+                cursor: 'pointer',
+                fontSize: '1rem',
+              }}
+            >
+              {translatedFeedback.nextQuestion}
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={onNextQuestion}
-            style={{
-              background: '#2563eb',
-              color: '#ffffff',
-              fontWeight: 700,
-              border: 'none',
-              borderRadius: '8px',
-              padding: '0.75rem 1.5rem',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            {translatedFeedback.nextQuestion}
-          </button>
         </div>
       )}
     </div>

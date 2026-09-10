@@ -290,6 +290,8 @@ export async function translateQuestionData(
     displayOptions: string[];
     hint?: string;
     explanation?: string;
+    misconceptions?: string[];
+    socraticFollowUp?: string;
   },
   targetLang: string
 ): Promise<{
@@ -297,6 +299,8 @@ export async function translateQuestionData(
   displayOptions: string[];
   hint?: string;
   explanation?: string;
+  misconceptions?: string[];
+  socraticFollowUp?: string;
 }> {
   if (targetLang === 'en' || !targetLang) {
     return question;
@@ -318,11 +322,25 @@ export async function translateQuestionData(
       translatedExplanation = await translateText(question.explanation, targetLang);
     }
 
+    let translatedMisconceptions = question.misconceptions;
+    if (question.misconceptions && Array.isArray(question.misconceptions)) {
+      translatedMisconceptions = await Promise.all(
+        question.misconceptions.map((m) => translateText(m, targetLang))
+      );
+    }
+
+    let translatedSocratic = question.socraticFollowUp;
+    if (question.socraticFollowUp) {
+      translatedSocratic = await translateText(question.socraticFollowUp, targetLang);
+    }
+
     return {
       prompt: translatedPrompt || question.prompt,
       displayOptions: translatedOptions.length === question.displayOptions.length ? translatedOptions : question.displayOptions,
       hint: translatedHint,
       explanation: translatedExplanation,
+      misconceptions: translatedMisconceptions,
+      socraticFollowUp: translatedSocratic,
     };
   } catch (err) {
     console.warn('[Question Translation Error]:', err);

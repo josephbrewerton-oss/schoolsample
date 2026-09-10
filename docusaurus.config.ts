@@ -107,40 +107,35 @@ plugins: [
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "St Joseph's",
+      title: "St Joseph's Learning Portal",
       logo: {
-        alt: 'School AI Logo',
+        alt: 'School Logo',
         src: 'img/logo.svg',
       },
       items: [
         {
           to: '/practice-lab',
-          label: 'Practice Lab',
+          label: '⚡ Practice Arena',
           position: 'left',
         },
         {
           to: '/learning-zone',
-          label: 'Learning Zone',
+          label: '📖 Curriculum Lessons',
           position: 'left',
         },
         {
           to: '/profile',
-          label: '👤 Learner Profile',
+          label: '⭐ My Progress',
           position: 'left',
         },
         {
           to: '/blog',
-          label: 'News',
+          label: 'School News',
           position: 'left',
         },
         {
           to: '/settings',
           label: '⚙️ Settings',
-          position: 'right',
-        },
-        {
-          href: 'https://github.com/josephbrewerton-oss/schoolsample',
-          label: 'GitHub',
           position: 'right',
         },
       ],

@@ -65,6 +65,9 @@ export default function NeuralLabCanvas({
     displayOptions: string[];
     rawOptions: string[];
     hint?: string;
+    explanation?: string;
+    misconceptions?: string[];
+    socraticFollowUp?: string;
     keyStage: string;
     subject: string;
     unit: string;
@@ -117,19 +120,30 @@ export default function NeuralLabCanvas({
     if (!question?.options || question.options.length < 2) return;
 
     const rawKey = typeof question.answerKey === 'number' ? question.answerKey : 0;
-    const targetValue = question.options[rawKey] ?? question.options[0];
+    const rawOptions = question.options;
+    const rawMisconceptions = Array.isArray(question.misconceptions) ? question.misconceptions : [];
 
-    const shuffled = [...question.options].sort(() => Math.random() - 0.5);
-    const computedCorrectIndex = shuffled.indexOf(targetValue);
+    // Pair options with their misconceptions before shuffling
+    const items = rawOptions.map((opt: string, idx: number) => ({
+      text: opt,
+      misconception: rawMisconceptions[idx] || (idx === rawKey ? 'Correct!' : 'Common conceptual trap.'),
+      isCorrect: idx === rawKey,
+    }));
+
+    const shuffled = [...items].sort(() => Math.random() - 0.5);
+    const computedCorrectIndex = shuffled.findIndex((item) => item.isCorrect);
     setCorrectIndex(computedCorrectIndex !== -1 ? computedCorrectIndex : 0);
     setSelectedAnswer(null);
 
     setActiveQuestion({
       id: question.id || `q_${Date.now()}`,
       prompt: question.prompt,
-      displayOptions: shuffled,
+      displayOptions: shuffled.map((s) => s.text),
+      misconceptions: shuffled.map((s) => s.misconception),
       rawOptions: question.options,
       hint: question.hint || payload.hint || '',
+      explanation: question.explanation || payload.explanation || '',
+      socraticFollowUp: question.socraticFollowUp || payload.socraticFollowUp || '',
       keyStage: keyStage || activeSelectionRef.current.keyStage,
       subject: subject || activeSelectionRef.current.subject,
       unit: unit || activeSelectionRef.current.unit,
@@ -356,21 +370,21 @@ export default function NeuralLabCanvas({
             {/* Transparent Resource/Consent Badge */}
             <span
               style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                padding: '2px 8px',
-                borderRadius: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '4px 10px',
+                borderRadius: '6px',
                 background: hasConsent ? '#f0fdf4' : '#f8fafc',
                 color: hasConsent ? '#15803d' : '#475569',
-                border: `1px solid ${hasConsent ? '#bbf7d0' : '#e2e8f0'}`,
+                border: `1px solid ${hasConsent ? '#bbf7d0' : '#cbd5e1'}`,
               }}
               title={
                 hasConsent
-                  ? 'On-Device AI Active (Permitted by user). Zero cloud telemetry.'
-                  : 'Eco Mode (Default). Zero data downloads. Verified offline curriculum.'
+                  ? 'Smart AI Assistance Enabled. 100% private.'
+                  : 'Fast Offline Curriculum Mode. Zero data downloads.'
               }
             >
-              {hasConsent ? '🧠 Device AI Permitted' : '🌱 Eco Mode (Zero Download)'}
+              {hasConsent ? '🧠 Smart AI Enabled' : '🌱 Fast Offline Mode'}
             </span>
           </div>
         </div>
@@ -386,8 +400,8 @@ export default function NeuralLabCanvas({
               gap: '16px',
             }}
           >
-            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: '#64748b' }}>
-              ⚡ Synthesizing & governing question for {selectedSubject}: {selectedUnit}...
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#475569' }}>
+              🎯 Preparing your question for {selectedSubject}: {selectedUnit}...
             </div>
             <div style={{ width: '70%', height: '18px', background: '#f1f5f9', borderRadius: '6px' }} />
             <div style={{ width: '100%', height: '48px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
@@ -405,6 +419,9 @@ export default function NeuralLabCanvas({
             score={score}
             streak={streak}
             hint={activeQuestion.hint}
+            explanation={activeQuestion.explanation}
+            misconceptions={activeQuestion.misconceptions}
+            socraticFollowUp={activeQuestion.socraticFollowUp}
             currentLang={activeLang}
             onLanguageChange={(newLang) => {
               setActiveLang(newLang);

@@ -9,129 +9,155 @@ export default function Home() {
   return (
     <Layout
       title="Home"
-      description="St Joseph's Interactive National Curriculum Edge AI Portal"
+      description="St Joseph's Primary & Secondary Interactive Learning Portal"
     >
-      <main style={{ padding: '4rem 1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
+      <main style={{ padding: '3.5rem 1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
         
         {/* Welcome Hero */}
-        <section style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <h1 style={{ fontSize: '2.75rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem' }}>
-            St Joseph's Interactive Learning Portal
+        <section style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 16px',
+            borderRadius: '9999px',
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            color: '#1d4ed8',
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            marginBottom: '1.25rem'
+          }}>
+            <span>✨ UK National Curriculum Aligned</span>
+            <span>&bull;</span>
+            <span>Works Offline</span>
+          </div>
+
+          <h1 style={{ fontSize: '2.85rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', letterSpacing: '-0.025em' }}>
+            Learn with Confidence at St Joseph's
           </h1>
-          <p style={{ fontSize: '1.25rem', color: '#475569', maxWidth: '750px', margin: '0 auto 2rem auto', lineHeight: 1.6 }}>
-            Master the UK National Curriculum with offline, on-device AI. 
-            Interactive S-expression practice, deterministic math validation, and real-time private tutoring.
+          <p style={{ fontSize: '1.2rem', color: '#475569', maxWidth: '720px', margin: '0 auto 2.25rem auto', lineHeight: 1.6 }}>
+            Interactive practice with instant feedback, step-by-step clues, and diagnostic mistake checks. 
+            Tailored for Key Stages 1 to 4 in Mathematics, Science, English, Computing, and more.
           </p>
 
           {/* Dual Action Hub CTAs */}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link
-              to="/learning-zone"
-              className="button button--secondary button--lg"
-              style={{
-                padding: '0.8rem 2rem',
-                fontSize: '1.1rem',
-                borderRadius: '8px',
-                border: '2px solid #0284c7',
-                color: '#0284c7',
-                fontWeight: 600
-              }}
-            >
-              📖 Curriculum Learning Zone
-            </Link>
-
-            <Link
               to="/practice-lab"
               className="button button--primary button--lg"
               style={{
-                padding: '0.8rem 2rem',
+                padding: '0.9rem 2.25rem',
                 fontSize: '1.1rem',
-                borderRadius: '8px',
+                borderRadius: '10px',
                 background: '#2563eb',
-                fontWeight: 600
+                fontWeight: 700,
+                boxShadow: '0 4px 14px 0 rgba(37, 99, 235, 0.35)',
+                transition: 'all 0.2s ease',
               }}
             >
-              ⚡ Interactive Practice Lab 🚀
+              ⚡ Start Practicing Questions
+            </Link>
+
+            <Link
+              to="/learning-zone"
+              className="button button--secondary button--lg"
+              style={{
+                padding: '0.9rem 2.25rem',
+                fontSize: '1.1rem',
+                borderRadius: '10px',
+                border: '2px solid #0284c7',
+                color: '#0284c7',
+                background: '#ffffff',
+                fontWeight: 700,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              📖 Explore Lesson Walkthroughs
             </Link>
           </div>
         </section>
 
         {/* Core Capabilities Grid */}
         <section style={{ marginBottom: '4rem' }}>
-          <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '2rem', color: '#1e293b' }}>
-            What We Offer
+          <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '2.5rem', color: '#1e293b', fontWeight: 800 }}>
+            Designed for Pupil Success
           </h2>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             gap: '1.5rem'
           }}>
-            {/* Service 1: Learning Zone */}
+            {/* Service 1: Practice Arena */}
             <div style={{
               padding: '1.75rem',
-              borderRadius: '12px',
+              borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              backgroundColor: 'var(--ifm-card-background-color, #ffffff)',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+              backgroundColor: '#ffffff',
+              boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
+              transition: 'transform 0.15s ease',
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>📖</div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#0284c7' }}>
-                Curriculum Learning Zone
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>⚡</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#2563eb' }}>
+                Instant Practice Arena
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                Structured micro-lessons and misconception busting. Learn core principles step-by-step before testing your knowledge.
+              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+                Bite-sized curriculum questions with real-time feedback, streak rewards, and instant hints whenever you get stuck.
               </p>
             </div>
 
-            {/* Service 2: Practice Lab */}
+            {/* Service 2: Learning Zone */}
             <div style={{
               padding: '1.75rem',
-              borderRadius: '12px',
+              borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              backgroundColor: 'var(--ifm-card-background-color, #ffffff)',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+              backgroundColor: '#ffffff',
+              boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
+              transition: 'transform 0.15s ease',
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>⚡</div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#2563eb' }}>
-                Adaptive Practice Lab
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>📖</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0284c7' }}>
+                Curriculum Lessons
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                Dynamic S-expression assessment engine with instant grading, streak tracking, and automated session diagnostics.
+              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+                Step-by-step lesson guides covering key concepts, everyday examples, and common traps before starting a quiz.
               </p>
             </div>
 
             {/* Service 3: Prof. Turing */}
             <div style={{
               padding: '1.75rem',
-              borderRadius: '12px',
+              borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              backgroundColor: 'var(--ifm-card-background-color, #ffffff)',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+              backgroundColor: '#ffffff',
+              boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
+              transition: 'transform 0.15s ease',
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🤖</div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#059669' }}>
-                Prof. Turing Socratic Tutor
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>🎓</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#059669' }}>
+                Prof. Turing Audio Tutor
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                100% on-device AI assistant providing real-time voice guidance and conceptual hints without revealing direct answers.
+              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+                Friendly, voice-guided hints and Socratic prompts that guide your thinking without giving away the answers.
               </p>
             </div>
 
-            {/* Service 4: Deterministic Guardrails */}
+            {/* Service 4: 100% Accurate Verified Math */}
             <div style={{
               padding: '1.75rem',
-              borderRadius: '12px',
+              borderRadius: '16px',
               border: '1px solid #e2e8f0',
-              backgroundColor: 'var(--ifm-card-background-color, #ffffff)',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+              backgroundColor: '#ffffff',
+              boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
+              transition: 'transform 0.15s ease',
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🎯</div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#7c3aed' }}>
-                Deterministic Guardrails
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>🎯</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#7c3aed' }}>
+                Diagnostic Checks
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.5 }}>
-                AST flow governors and arithmetic solvers verify every question, eliminating hallucinations before rendering.
+              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+                Every incorrect option checks for common student slips (like adding fraction denominators) to explain exactly where you went wrong.
               </p>
             </div>
           </div>

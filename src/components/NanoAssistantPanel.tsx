@@ -274,31 +274,33 @@ PEDAGOGICAL RULES:
   return (
     <div
       style={{
-        background: '#090d16',
-        border: '1px solid #1e293b',
-        borderRadius: '14px',
-        padding: '1.25rem',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        padding: '1.5rem',
         marginTop: '1.5rem',
-        color: '#f8fafc',
+        color: '#1e293b',
+        boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1.1rem' }}>⚡</span>
-          <span style={{ fontWeight: 700, color: '#38bdf8', letterSpacing: '0.02em' }}>
-            Super Teacher Nano <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>[{keyStage} • {subject}]</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '1.3rem' }}>🎓</span>
+          <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem', letterSpacing: '-0.01em' }}>
+            Prof. Turing <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>• Friendly Tutor [{keyStage} • {subject}]</span>
           </span>
           {currentLang !== 'en' && (
             <span
               style={{
-                fontSize: '0.72rem',
-                background: '#1e3a8a',
-                color: '#bfdbfe',
+                fontSize: '0.75rem',
+                background: '#eff6ff',
+                color: '#1e40af',
+                border: '1px solid #bfdbfe',
                 padding: '2px 8px',
-                borderRadius: '4px',
-                fontWeight: 600,
+                borderRadius: '6px',
+                fontWeight: 700,
               }}
             >
               🌐 {currentLangMeta.label}
@@ -310,64 +312,74 @@ PEDAGOGICAL RULES:
             type="button"
             onClick={() => setVoiceEnabled(!voiceEnabled)}
             style={{
-              fontSize: '0.75rem',
-              background: voiceEnabled ? '#059669' : '#334155',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '4px 10px',
+              fontSize: '0.8rem',
+              background: voiceEnabled ? '#ecfdf5' : '#f1f5f9',
+              color: voiceEnabled ? '#047857' : '#64748b',
+              border: `1px solid ${voiceEnabled ? '#a7f3d0' : '#cbd5e1'}`,
+              borderRadius: '8px',
+              padding: '6px 12px',
               cursor: 'pointer',
-              fontWeight: 600,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
           >
-            {voiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+            {voiceEnabled ? '🔊 Audio Guide ON' : '🔇 Audio Guide OFF'}
           </button>
           <span
             style={{
-              fontSize: '0.75rem',
-              background: hasConsent ? '#064e3b' : '#1e293b',
-              color: hasConsent ? '#34d399' : '#94a3b8',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              fontWeight: 600,
-              border: `1px solid ${hasConsent ? '#059669' : '#334155'}`,
+              fontSize: '0.78rem',
+              background: hasConsent ? '#f0fdf4' : '#f8fafc',
+              color: hasConsent ? '#15803d' : '#64748b',
+              padding: '5px 10px',
+              borderRadius: '8px',
+              fontWeight: 700,
+              border: `1px solid ${hasConsent ? '#bbf7d0' : '#e2e8f0'}`,
             }}
           >
-            {hasConsent ? '🧠 100% On-Device AI' : '🌱 Eco Mode (Zero Data)'}
+            {hasConsent ? '🧠 Smart Tutor Ready' : '🌱 Offline Tutor Mode'}
           </span>
         </div>
       </div>
 
-      {/* Terminal Chat Box */}
+      {/* Chat Messages Container */}
       <div
         style={{
-          minHeight: '80px',
-          maxHeight: '180px',
+          minHeight: '90px',
+          maxHeight: '220px',
           overflowY: 'auto',
-          marginBottom: '0.75rem',
-          padding: '0.65rem',
-          background: '#030712',
-          borderRadius: '8px',
-          border: '1px solid #1f2937',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          fontSize: '0.9rem',
+          marginBottom: '1rem',
+          padding: '0.85rem',
+          background: '#f8fafc',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          fontSize: '0.92rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
         }}
       >
         {messages.map((m, i) => (
           <div
             key={i}
             style={{
-              margin: '6px 0',
-              color: m.role === 'turing' ? '#4ade80' : '#38bdf8',
-              lineHeight: 1.4,
+              padding: '0.65rem 0.85rem',
+              borderRadius: '10px',
+              background: m.role === 'turing' ? '#eff6ff' : '#ffffff',
+              border: `1px solid ${m.role === 'turing' ? '#bfdbfe' : '#e2e8f0'}`,
+              color: m.role === 'turing' ? '#1e3a8a' : '#0f172a',
+              lineHeight: 1.5,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              gap: '8px',
+              gap: '10px',
             }}
           >
             <div style={{ flex: 1 }}>
-              <strong>{m.role === 'turing' ? 'Super Teacher Nano: ' : 'pupil: '}</strong>
+              <strong style={{ color: m.role === 'turing' ? '#1d4ed8' : '#475569' }}>
+                {m.role === 'turing' ? '🎓 Prof. Turing: ' : '🎒 Pupil: '}
+              </strong>
               {m.text}
             </div>
             {m.role === 'turing' && m.text && (
@@ -378,9 +390,9 @@ PEDAGOGICAL RULES:
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: '#2563eb',
                   cursor: 'pointer',
-                  fontSize: '0.85rem',
+                  fontSize: '0.9rem',
                   padding: '2px 4px',
                 }}
               >
@@ -389,62 +401,65 @@ PEDAGOGICAL RULES:
             )}
           </div>
         ))}
-        {loading && <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>Super Teacher Nano is thinking...</div>}
+        {loading && <div style={{ color: '#64748b', fontStyle: 'italic', padding: '4px' }}>Prof. Turing is thinking...</div>}
         <div ref={terminalEndRef} />
       </div>
 
       {/* 3-Tier Scaffolding Buttons */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
         <button
           type="button"
           disabled={loading}
           onClick={() => handleScaffoldHint(1)}
           style={{
-            background: '#1e293b',
-            color: '#f8fafc',
-            border: '1px solid #334155',
-            borderRadius: '6px',
-            padding: '4px 10px',
-            fontSize: '0.75rem',
+            background: '#ffffff',
+            color: '#1e40af',
+            border: '1.5px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            fontSize: '0.82rem',
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
+            fontWeight: 700,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
-          💡 Level 1: Nudge
+          💡 Nudge Me
         </button>
         <button
           type="button"
           disabled={loading}
           onClick={() => handleScaffoldHint(2)}
           style={{
-            background: '#1e293b',
-            color: '#f8fafc',
-            border: '1px solid #334155',
-            borderRadius: '6px',
-            padding: '4px 10px',
-            fontSize: '0.75rem',
+            background: '#ffffff',
+            color: '#1e40af',
+            border: '1.5px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            fontSize: '0.82rem',
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
+            fontWeight: 700,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
-          🔍 Level 2: Clue
+          🔍 Remind Me of the Rule
         </button>
         <button
           type="button"
           disabled={loading}
           onClick={() => handleScaffoldHint(3)}
           style={{
-            background: '#1e293b',
-            color: '#f8fafc',
-            border: '1px solid #334155',
-            borderRadius: '6px',
-            padding: '4px 10px',
-            fontSize: '0.75rem',
+            background: '#ffffff',
+            color: '#1e40af',
+            border: '1.5px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            fontSize: '0.82rem',
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
+            fontWeight: 700,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
-          🧩 Level 3: Step Breakdown
+          🧩 Break Down Step 1
         </button>
       </div>
 
@@ -452,18 +467,18 @@ PEDAGOGICAL RULES:
       {suggestedLesson && (
         <div
           style={{
-            background: '#0f172a',
-            border: '1px dashed #38bdf8',
-            borderRadius: '6px',
-            padding: '6px 10px',
-            marginBottom: '0.75rem',
+            background: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: '10px',
+            padding: '8px 12px',
+            marginBottom: '1rem',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-            Matched Unit: <strong style={{ color: '#e2e8f0' }}>{suggestedLesson.title}</strong>
+          <span style={{ fontSize: '0.82rem', color: '#0369a1' }}>
+            Recommended Lesson: <strong>{suggestedLesson.title}</strong>
           </span>
           <button
             type="button"
@@ -473,33 +488,34 @@ PEDAGOGICAL RULES:
               background: '#0284c7',
               color: '#ffffff',
               border: 'none',
-              borderRadius: '4px',
-              padding: '3px 8px',
-              fontSize: '0.75rem',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.8rem',
               cursor: launchingLesson ? 'wait' : 'pointer',
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
-            {launchingLesson ? 'Loading...' : 'Launch Interactive Practice ⚡'}
+            {launchingLesson ? 'Loading...' : 'Go to Lesson ➔'}
           </button>
         </div>
       )}
 
-      {/* Input */}
+      {/* Input Form */}
       <form onSubmit={handleAsk} style={{ display: 'flex', gap: '8px' }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question, describe your steps, or request advice..."
+          placeholder="Ask Prof. Turing a question or explain what you think..."
           style={{
             flex: 1,
-            background: '#020617',
-            border: '1px solid #334155',
-            color: '#ffffff',
-            borderRadius: '6px',
-            padding: '8px 12px',
-            fontSize: '0.85rem',
+            background: '#ffffff',
+            border: '1.5px solid #cbd5e1',
+            color: '#0f172a',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            fontSize: '0.9rem',
+            fontWeight: 500,
           }}
         />
         <button
@@ -509,15 +525,16 @@ PEDAGOGICAL RULES:
             background: '#2563eb',
             color: '#ffffff',
             border: 'none',
-            borderRadius: '6px',
-            padding: '8px 18px',
+            borderRadius: '10px',
+            padding: '10px 20px',
             cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
             opacity: loading || !input.trim() ? 0.6 : 1,
-            fontWeight: 600,
-            fontSize: '0.85rem',
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
           }}
         >
-          Ask
+          Ask Tutor
         </button>
       </form>
     </div>

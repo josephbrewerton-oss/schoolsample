@@ -9,6 +9,8 @@ import { aiCaller } from './aicaller';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 import { translateQuestionData, translateLessonData } from './translationService';
 import { SUPPORTED_LANGUAGES } from './operational-language';
+import { MathQuestionGenerator } from './mathQuestionGenerator';
+import { ASTFlowGovernor } from './astGovernor';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -80,7 +82,49 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             difficultyInstruction = 'Difficulty: Brain Buster (Level 3 - Deep Thinking). Multi-step reasoning problem or scenario that stretches thinking and tests tricky edge cases.';
           }
 
-          // 1. Query verified offline curriculum knowledge base
+          // 1. Deterministic Fast-Path for Mathematics & Calculations (< 1ms, 0% hallucination)
+          if (MathQuestionGenerator.isMathSubject(subject, topic)) {
+            const mathQ = MathQuestionGenerator.generate(stage, topic);
+            let mathCandidate = {
+              id: mathQ.id,
+              axiom: `Standard mathematical operations and principles for ${stage}.`,
+              trap: `Common procedural or conceptual calculation slips.`,
+              hook: `How do numbers and mathematical rules structure real-world quantities?`,
+              guidedStep: `Work through the calculation step-by-step applying precedence rules.`,
+              prompt: mathQ.prompt,
+              options: mathQ.options,
+              answerKey: mathQ.answerKey,
+              hint: mathQ.hint,
+              explanation: mathQ.explanation,
+              misconceptions: mathQ.misconceptions,
+              socraticFollowUp: mathQ.socraticFollowUp,
+              difficulty,
+            };
+
+            if (lang && lang !== 'en') {
+              try {
+                const translated = await translateQuestionData(
+                  {
+                    prompt: mathCandidate.prompt,
+                    displayOptions: mathCandidate.options,
+                    hint: mathCandidate.hint,
+                    explanation: mathCandidate.explanation,
+                  },
+                  lang
+                );
+                mathCandidate = {
+                  ...mathCandidate,
+                  prompt: translated.prompt,
+                  options: translated.displayOptions,
+                  hint: translated.hint,
+                  explanation: translated.explanation,
+                };
+              } catch {}
+            }
+            return mathCandidate;
+          }
+
+          // 2. Query verified offline curriculum knowledge base
           const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
           let offlineQuestion = null;
           if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
@@ -95,21 +139,30 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             ? `🌱 [Warm-Up] ${basePrompt}` 
             : basePrompt;
 
+          let rawOptions = offlineQuestion ? [...offlineQuestion.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property'];
+          let rawAnswerKey = offlineQuestion !== null ? offlineQuestion.answerKey : 0;
+          let rawMisconceptions: string[] = rawOptions.map((opt, idx) => {
+            if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
+            return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
+          });
+
           let resultCandidate = {
             axiom: offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
             trap: offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
             hook: offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
             guidedStep: offlineKnowledge?.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
             prompt: displayPrompt,
-            options: offlineQuestion ? [...offlineQuestion.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property'],
-            answerKey: offlineQuestion !== null ? offlineQuestion.answerKey : 0,
+            options: rawOptions,
+            answerKey: rawAnswerKey,
             hint: offlineQuestion?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
             explanation: offlineQuestion?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
+            misconceptions: rawMisconceptions,
+            socraticFollowUp: offlineKnowledge?.socraticPivot || `Can you identify the defining feature of ${topic}?`,
             scaffoldHints: offlineKnowledge?.scaffoldHints,
             difficulty,
           };
 
-          // 2. If AI runtime is available, attempt dynamic synthesis grounded in verified axioms
+          // 3. If AI runtime is available, attempt dynamic diagnostic synthesis grounded in verified axioms
           try {
             const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
 Age/Stage Guidelines: ${stageGuidelines}
@@ -117,16 +170,25 @@ Challenge Level: ${difficultyInstruction}
 ${langInstruction}
 ${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}
 
-Generate an interactive multiple-choice question and lesson scaffolding. Return strictly a single JSON object with no Markdown:
+Generate an interactive diagnostic multiple-choice question and pedagogical feedback.
+Rule: Every distractor MUST target an authentic student misconception.
+Return strictly a single JSON object with no Markdown:
 {
   "axiom": "Stage-appropriate core rule",
   "trap": "Accurate pupil misconception",
   "hook": "Relatable real-world inquiry scenario",
   "guidedStep": "Practical or analytical activity",
   "prompt": "Direct multiple-choice question stem",
-  "options": ["Correct answer", "Misconception distractor", "Plausible alternative", "Boundary distractor"],
+  "options": ["Correct answer", "Misconception distractor 1", "Misconception distractor 2", "Boundary distractor 3"],
+  "misconceptions": [
+    "Correct! Accurately applies the principle.",
+    "Misconception explanation for why distractor 1 was chosen",
+    "Misconception explanation for why distractor 2 was chosen",
+    "Misconception explanation for why distractor 3 was chosen"
+  ],
   "answerKey": 0,
-  "hint": "Gentle Socratic clue guiding away from the misconception without giving answer"
+  "hint": "Gentle Socratic clue guiding away from the misconception without giving answer",
+  "socraticFollowUp": "Simpler scaffolding sub-question if the pupil gets stuck"
 }`;
 
             const rawResponse = await aiCaller.promptText({
@@ -149,7 +211,35 @@ Generate an interactive multiple-choice question and lesson scaffolding. Return 
             // Offline / on-device LLM unready: use verified offline curriculum knowledge
           }
 
-          // 3. If target language is non-English, ensure question content is translated
+          // 4. Pass candidate through AST Flow Governor to guarantee syntax, deduping, and arithmetic verification
+          const governed = ASTFlowGovernor.govern(
+            {
+              prompt: resultCandidate.prompt,
+              options: resultCandidate.options,
+              answerKey: resultCandidate.answerKey,
+              hint: resultCandidate.hint,
+              explanation: resultCandidate.explanation,
+              misconceptions: resultCandidate.misconceptions,
+              socraticFollowUp: resultCandidate.socraticFollowUp,
+            },
+            subject,
+            topic
+          );
+
+          if (governed.isValid && governed.sanitizedQuestion) {
+            resultCandidate = {
+              ...resultCandidate,
+              prompt: governed.sanitizedQuestion.prompt,
+              options: governed.sanitizedQuestion.options,
+              answerKey: governed.sanitizedQuestion.answerKey,
+              hint: governed.sanitizedQuestion.hint || resultCandidate.hint,
+              explanation: governed.sanitizedQuestion.explanation || resultCandidate.explanation,
+              misconceptions: governed.sanitizedQuestion.misconceptions || resultCandidate.misconceptions,
+              socraticFollowUp: governed.sanitizedQuestion.socraticFollowUp || resultCandidate.socraticFollowUp,
+            };
+          }
+
+          // 5. If target language is non-English, ensure question content is translated
           if (lang && lang !== 'en') {
             try {
               const translated = await translateQuestionData(
