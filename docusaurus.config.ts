@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 import webpack from 'webpack';
 
 const isProd = process.env.NODE_ENV === 'production';
-const baseUrl = process.env.BASE_URL || '/';
+const baseUrl = process.env.BASE_URL || (isProd ? '/schoolsample/' : '/');
 
 const config: Config = {
   title: 'St Joseph',
