@@ -278,7 +278,7 @@ export function resolveSeedCoordinate(seedKey) {
 
   // Fallback fuzzy search across keys
   const matched = Object.keys(OAK_SEED_REGISTRY).find(k => 
-    normalizedKey.includes(k) || k.includes(normalizedKey)
+  normalizedKey.includes(k) || k.includes(normalizedKey)
   );
 
   return matched ? OAK_SEED_REGISTRY[matched] : OAK_SEED_REGISTRY['ks3:sci:atomic'];
