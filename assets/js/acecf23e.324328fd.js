@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkst_joseph_curriculum_portal||=[]).push([[903],{1912(s){s.exports=JSON.parse('{"blogBasePath":"/schoolsample/blog","blogTitle":"Blog","authorsListPath":"/schoolsample/blog/authors"}')}}]);
