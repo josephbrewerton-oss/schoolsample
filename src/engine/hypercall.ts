@@ -50,7 +50,9 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           return getActiveCurriculumTree(standard);
         }
         if (intent === 'get:package') {
-          return dispatchAstIntent('getActiveCurriculum', payload?.stage);
+          const standard = (payload?.curriculum || 'uk_oak') as CurriculumProviderKey;
+          const tree = getActiveCurriculumTree(standard);
+          return payload?.stage ? tree[payload.stage] : tree;
         }
         throw new Error(`Unknown CurriculumNode intent: "${intent}"`);
       },

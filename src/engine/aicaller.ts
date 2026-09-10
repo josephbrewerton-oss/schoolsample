@@ -8,6 +8,8 @@ export interface AiInferenceOptions {
   /** Set to true to reuse the multi-turn session (e.g. for conversational chat). Default: false (stateless). */
   preserveContext?: boolean;
   onDownloadProgress?: (loaded: number, total: number) => void;
+  /** Maximum inference timeout in milliseconds. Defaults to 12000ms. */
+  timeoutMs?: number;
 }
 
 export interface ModelAvailability {
@@ -125,15 +127,25 @@ class AiRuntimeCaller {
       };
     }
 
-    try {
-      return await lm.create(createOptions);
-    } catch {
-      return await lm.create({
-        systemPrompt,
-        expectedInputLanguages: ['en'],
-        expectedOutputLanguages: ['en'],
-      });
-    }
+    const createPromise = (async () => {
+      try {
+        return await lm.create(createOptions);
+      } catch {
+        return await lm.create({
+          systemPrompt,
+          expectedInputLanguages: ['en'],
+          expectedOutputLanguages: ['en'],
+        });
+      }
+    })();
+
+    // Model weight downloading might take longer, allow 45s if monitoring progress, otherwise 20s
+    const creationTimeoutMs = opts?.onDownloadProgress ? 45000 : 20000;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`[AiCaller] Session initialization timed out after ${creationTimeoutMs}ms`)), creationTimeoutMs)
+    );
+
+    return Promise.race([createPromise, timeoutPromise]);
   }
 
   /**
@@ -159,14 +171,20 @@ class AiRuntimeCaller {
   }
 
   /**
-   * Single prompt execution
+   * Single prompt execution with strict timeout protection
    */
   async promptText(opts: AiInferenceOptions): Promise<string> {
     const isEphemeral = !opts.preserveContext;
     const session = await this.getSession(opts);
+    const timeoutMs = opts.timeoutMs ?? 12000;
+
+    const inferencePromise = session.prompt(opts.prompt);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`[AiCaller] Inference prompt timed out after ${timeoutMs}ms`)), timeoutMs)
+    );
 
     try {
-      return await session.prompt(opts.prompt);
+      return await Promise.race([inferencePromise, timeoutPromise]);
     } catch (err) {
       if (!isEphemeral) this.destroy();
       throw err;

@@ -40,7 +40,8 @@ export default function PracticeLabPage() {
   // 1. URL Query Parameter Ingestion & Component Mount
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => setBootIframe(true), 150);
+    // Allow main thread, DOM, and signaling bus ample time to settle before booting worker daemon
+    const timer = setTimeout(() => setBootIframe(true), 1000);
 
     if (typeof window !== 'undefined' && location?.search) {
       const searchParams = new URLSearchParams(location.search);

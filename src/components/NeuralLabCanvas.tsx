@@ -163,6 +163,13 @@ export default function NeuralLabCanvas({
     setSelectedAnswer(null);
     setCorrectIndex(null);
 
+    // Hard fallback timer ensuring the UI never gets stuck in a generating state
+    const safetyTimer = setTimeout(() => {
+      if (requestId === activeRequestIdRef.current) {
+        setIsGenerating(false);
+      }
+    }, 15000);
+
     try {
       const res = await dispatch('QuestionEngine', {
         intent: 'synthesize:governed',
@@ -192,6 +199,7 @@ export default function NeuralLabCanvas({
         console.error('[Dispatch Error]:', err);
       }
     } finally {
+      clearTimeout(safetyTimer);
       if (requestId === activeRequestIdRef.current) {
         setIsGenerating(false);
       }
