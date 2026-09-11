@@ -8,12 +8,13 @@
 - Data Privacy: Zero telemetry, zero cloud logging; user state persists exclusively in local IndexedDB.
 
 ## Curriculum Core Links
-- Portal Overview: https://josephbrewerton-oss.github.io/schoolsample/docs/intro
-- Primary Discovery (Years 1-6): https://josephbrewerton-oss.github.io/schoolsample/docs/primary-years-1-6/ks2-science
-- Secondary Core (Years 7-11): https://josephbrewerton-oss.github.io/schoolsample/docs/secondary-years-7-11/sciences/biology-cell-respiration
-- Sixth Form & Ethics (Years 12-14): https://josephbrewerton-oss.github.io/schoolsample/docs/sixth-form-years-12-14/alevel-advanced
+- Portal Overview: https://josephbrewerton-oss.github.io/schoolsample/
+- Interactive Practice Arena: https://josephbrewerton-oss.github.io/schoolsample/practice-lab
+- Curriculum Lessons & S-Expression Walkthroughs: https://josephbrewerton-oss.github.io/schoolsample/learning-zone
+- International Curriculum Studio: https://josephbrewerton-oss.github.io/schoolsample/curriculum-studio
+- Learner Progress & Offline Passport: https://josephbrewerton-oss.github.io/schoolsample/profile
+- School News & Technical Dispatches: https://josephbrewerton-oss.github.io/schoolsample/blog
 
-## Structured Question Datasets
-- Primary Question Bank: https://josephbrewerton-oss.github.io/schoolsample/data/questions-primary.json
-- Secondary Question Bank: https://josephbrewerton-oss.github.io/schoolsample/data/questions-secondary.json
-- Sixth Form Question Bank: https://josephbrewerton-oss.github.io/schoolsample/data/questions-sixthform.json
+## Structured Question & Knowledge Datasets
+- Master Curriculum Catalog: https://josephbrewerton-oss.github.io/schoolsample/manifests/catalog.json
+- Offline Semantic Search & RAG Index: https://josephbrewerton-oss.github.io/schoolsample/manifests/rag-index.json

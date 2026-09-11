@@ -4,12 +4,12 @@ import type * as Preset from '@docusaurus/preset-classic';
 import webpack from 'webpack';
 
 const isProd = process.env.NODE_ENV === 'production';
-const baseUrl = process.env.BASE_URL || (isProd ? '/schoolsample/' : '/');
+const baseUrl = process.env.BASE_URL || '/';
 
 const config: Config = {
   title: 'St Joseph',
   tagline: 'Education for All — Offline-First Curriculum Engine',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/logo.svg',
 
   url: 'https://josephbrewerton-oss.github.io',
   baseUrl,
@@ -93,7 +93,7 @@ const config: Config = {
                 {
                   tagName: 'link',
                   rel: 'icon',
-                  href: `${baseUrl}img/docusaurus.png`,
+                  href: `${baseUrl}img/logo.svg`,
                 },
                 {
                   tagName: 'link',
@@ -108,7 +108,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/logo.svg',
     colorMode: {
       respectPrefersColorScheme: true,
     },
