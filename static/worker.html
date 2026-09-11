@@ -147,25 +147,21 @@
         cachedSession = null;
       }
 
-      // Modern W3C Prompt API specification with backward-compatible fallbacks
-      const w3cConfig = {
-        systemPrompt: systemInstruction,
-        expectedInputs: [{ type: 'text', languages: ['en'] }],
-        expectedOutputs: [{ type: 'text', languages: ['en'] }],
-        outputLanguage: 'en',
-        expectedInputLanguages: ['en'],
-        expectedOutputLanguages: ['en'],
-        temperature: 0.2,
-        topK: 3,
-      };
-
+      // 1. Primary config: Standard Chrome Prompt API with explicit outputLanguage
       try {
-        cachedSession = await target.create(w3cConfig);
+        cachedSession = await target.create({
+          systemPrompt: systemInstruction,
+          outputLanguage: 'en',
+          expectedOutputLanguages: ['en'],
+          expectedInputLanguages: ['en'],
+          temperature: 0.2,
+          topK: 3,
+        });
         currentSystemInstruction = systemInstruction;
         return cachedSession;
       } catch (err1) {
         try {
-          // Fallback with minimal W3C expectedOutputs/outputLanguage
+          // 2. Minimal config with outputLanguage
           cachedSession = await target.create({
             systemPrompt: systemInstruction,
             outputLanguage: 'en',
@@ -176,11 +172,9 @@
           return cachedSession;
         } catch (err2) {
           try {
-            // Legacy Chrome create
+            // 3. Fallback without extra parameters
             cachedSession = await target.create({
               systemPrompt: systemInstruction,
-              expectedInputLanguages: ['en'],
-              expectedOutputLanguages: ['en'],
             });
             currentSystemInstruction = systemInstruction;
             return cachedSession;
@@ -277,41 +271,40 @@ Format strictly as:
  :answer-key 0
  :hint "Short clue under 15 words")`;
 
-        // Execution with 28s timeout to accommodate on-device Gemini Nano inference
+        // Non-destructive inference execution:
+        // Avoid aggressive AbortController aborts that tear down Chromium's native Mojo session.
         let response = '';
-        const abortCtrl = new AbortController();
-        const timeout = setTimeout(() => {
-          abortCtrl.abort(new Error('Prompt execution exceeded 28000ms'));
-        }, 28000);
+        let timerHandle;
+        const timeoutPromise = new Promise((_, reject) => {
+          timerHandle = setTimeout(() => {
+            reject(new Error('Prompt execution timeout (30s)'));
+          }, 30000);
+        });
 
         try {
           try {
-            // Modern W3C prompt with outputLanguage
-            response = await session.prompt(prompt, {
-              signal: abortCtrl.signal,
-              outputLanguage: 'en',
-            });
+            response = await Promise.race([session.prompt(prompt), timeoutPromise]);
           } catch (promptErr) {
-            // Check for session invalidation/destruction
+            const errMsg = String(promptErr?.message || '').toLowerCase();
             const isInvalidState = promptErr?.name === 'InvalidStateError' || 
-              String(promptErr?.message || '').toLowerCase().includes('destroyed');
-            
+              errMsg.includes('destroyed') || 
+              errMsg.includes('aborted');
+
             if (isInvalidState && !isRetry) {
-              console.warn('[Guest VM Daemon] Session was destroyed; refreshing session and retrying...');
+              console.warn('[Guest VM Daemon] Session was invalid or destroyed; provisioning fresh session and retrying...');
               resetWarmSession();
               session = await getOrCreateWarmSession(systemInstruction);
               if (session) {
-                response = await session.prompt(prompt, { signal: abortCtrl.signal });
+                response = await Promise.race([session.prompt(prompt), timeoutPromise]);
               } else {
                 throw promptErr;
               }
             } else {
-              // Try without outputLanguage option if browser prompt doesn't accept options object
-              response = await session.prompt(prompt, { signal: abortCtrl.signal });
+              throw promptErr;
             }
           }
         } finally {
-          clearTimeout(timeout);
+          clearTimeout(timerHandle);
         }
 
         let sanitized = (response || '')

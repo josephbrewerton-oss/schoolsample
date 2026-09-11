@@ -333,7 +333,7 @@ export default function LearningZonePage() {
         {/* Hidden WebRTC Neural Worker Daemon Frame */}
         <iframe
           ref={(el) => hypervisor.registerWorkerIframe(el)}
-          src={useBaseUrl('/worker.html')}
+          src={useBaseUrl('/worker.html?v=1.2.1')}
           style={{ display: 'none' }}
           title="neural-worker-daemon"
         />

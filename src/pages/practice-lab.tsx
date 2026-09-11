@@ -35,7 +35,7 @@ export default function PracticeLabPage() {
   const [activeUnit, setActiveUnit] = useState('Fractions and Decimals');
   const [activeAxiomCheck, setActiveAxiomCheck] = useState<string | undefined>(undefined);
 
-  const workerUrl = useBaseUrl('/worker.html');
+  const workerUrl = useBaseUrl('/worker.html?v=1.2.1');
 
   // 1. URL Query Parameter Ingestion & Component Mount
   useEffect(() => {
