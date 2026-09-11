@@ -67,15 +67,16 @@ export class PromptASTPreParser {
     // 5. Return clean, high-diagnostic prompt
     return `Generate 1 Oak Curriculum diagnostic multiple-choice question for ${keyStage} ${subject}: "${topic}".
 Focus: ${targetFocus} | Constraints: ${cleanKs}, ${cleanRegional}.${exemplarSnippet}
-Rule: Every distractor must embody an authentic student misconception.
+Pedagogical Rule: Every incorrect option MUST be a diagnostic distractor catching a recognized student misconception. Never use random or unrealistic choices.
 
 Output ONLY a valid Lisp S-expression in this exact format:
 (:route "quiz:mcq"
- :scratchpad "Short explanation of the concept"
- :prompt "Clear question about ${topic}?"
- :options ("Correct answer" "Plausible wrong answer 1" "Plausible wrong answer 2" "Plausible wrong answer 3")
- :misconceptions ("Correct deduction" "Trap: Explanation of error 1" "Trap: Explanation of error 2" "Trap: Explanation of error 3")
+ :scratchpad "Detailed step-by-step reasoning explaining the correct answer and diagnostic traps"
+ :prompt "High-standard National Curriculum question about ${topic}?"
+ :options ("Correct answer" "Misconception trap 1" "Misconception trap 2" "Misconception trap 3")
+ :misconceptions ("Correct reasoning" "Misconception: Explanation of why trap 1 is chosen" "Misconception: Explanation of why trap 2 is chosen" "Misconception: Explanation of why trap 3 is chosen")
  :answer-key 0
- :hint "Concise Socratic clue under 15 words.")`.trim();
+ :hint "Stage 1 conceptual clue"
+ :socratic-followup "Stage 2 procedural step if still stuck")`.trim();
   }
 }

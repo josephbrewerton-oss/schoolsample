@@ -14,6 +14,7 @@ const SettingsPage = lazy(() => import('./pages/settings'));
 const BlogPage = lazy(() => import('./pages/blog'));
 const PrivacyPage = lazy(() => import('./pages/privacy'));
 const LicensingPage = lazy(() => import('./pages/licensing'));
+const TeacherBeaconPage = lazy(() => import('./pages/teacher-beacon'));
 const NotFoundPage = lazy(() => import('./pages/not-found'));
 
 export default function App(): React.JSX.Element {
@@ -28,6 +29,7 @@ export default function App(): React.JSX.Element {
           <Route path="curriculum-studio" element={<CurriculumStudioPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="licensing" element={<LicensingPage />} />
+          <Route path="teacher-beacon" element={<TeacherBeaconPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
           <Route path="blog" element={<BlogPage />} />
           <Route path="blog/*" element={<BlogPage />} />

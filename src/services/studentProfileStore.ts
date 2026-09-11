@@ -1,5 +1,6 @@
 // src/services/studentProfileStore.ts
 import { getAllProgressRecords, clearAllStudentProgress, StudentRecord } from './dbStore';
+import { clearJotterDB } from './jotter-db';
 
 export interface LearnerProfile {
   alias: string;
@@ -219,6 +220,11 @@ export async function purgeAllLearnerData(): Promise<void> {
   }
 
   await clearAllStudentProgress();
+  try {
+    await clearJotterDB();
+  } catch (err) {
+    console.warn('[ProfileStore] Failed to clear Jotter DB:', err);
+  }
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('learner_profile_purged'));

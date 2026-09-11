@@ -73,6 +73,11 @@ export default function PersistentFooter(): React.JSX.Element {
           </h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
+              <Link to="/teacher-beacon" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>
+                📡 Classroom Beacon (Teacher Console)
+              </Link>
+            </li>
+            <li>
               <Link to="/licensing" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 600 }}>
                 🕊️ Mission &amp; Global Licensing
               </Link>

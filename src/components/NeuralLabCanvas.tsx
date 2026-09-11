@@ -247,8 +247,15 @@ export default function NeuralLabCanvas({
     if (isCorrect) {
       setScore((s) => s + 1);
       setStreak((st) => st + 1);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('active_student_misconception');
+      }
     } else {
       setStreak(0);
+      if (typeof window !== 'undefined' && activeQuestion.misconceptions?.[idx]) {
+        // Broadcast the specific misconception to the Classroom Beacon for teacher oversight
+        localStorage.setItem('active_student_misconception', activeQuestion.misconceptions[idx]);
+      }
     }
 
     // Record Metrics

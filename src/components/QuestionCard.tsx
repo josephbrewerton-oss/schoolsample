@@ -51,6 +51,12 @@ export const QuestionCard: React.FC<Props> = ({
   const [activeLang, setActiveLang] = useState<string>(() => currentLang || getSavedLanguage());
   const [showOriginal, setShowOriginal] = useState<boolean>(false);
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [hintStage, setHintStage] = useState<number>(0); // 0 = hidden, 1 = conceptual nudge, 2 = step method
+
+  // Reset hint stage when prompt changes
+  useEffect(() => {
+    setHintStage(0);
+  }, [prompt]);
 
   const [translatedData, setTranslatedData] = useState<{
     prompt: string;
@@ -343,12 +349,80 @@ export const QuestionCard: React.FC<Props> = ({
           fontSize: '1.35rem',
           fontWeight: 700,
           color: '#0f172a',
-          marginBottom: '1.75rem',
+          marginBottom: '1rem',
           lineHeight: 1.5,
         }}
       >
         {effectivePrompt}
       </div>
+
+      {/* Stepped Pedagogical Scaffolding Bar (Stage 1 Conceptual Nudge & Stage 2 Method Step) */}
+      {(effectiveHint || effectiveSocratic) && selectedAnswer === null && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          {hintStage === 0 ? (
+            <button
+              type="button"
+              onClick={() => setHintStage(1)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px',
+                borderRadius: '8px',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                color: '#475569',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+              title="Click for a gentle clue before answering"
+            >
+              💡 Need a clue? (Stage 1)
+            </button>
+          ) : (
+            <div
+              style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '10px',
+                padding: '0.85rem 1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {hintStage === 1 ? '🌱 Stage 1 Clue: Conceptual Nudge' : '🔍 Stage 2 Clue: Method Step'}
+                </span>
+                {hintStage === 1 && effectiveSocratic && (
+                  <button
+                    type="button"
+                    onClick={() => setHintStage(2)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#15803d',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Still stuck? Show Next Step ➔
+                  </button>
+                )}
+              </div>
+
+              <div style={{ fontSize: '0.92rem', color: '#14532d', lineHeight: 1.4 }}>
+                {hintStage === 1 ? (effectiveHint || effectiveSocratic) : (effectiveSocratic || effectiveHint)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Option Stack */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

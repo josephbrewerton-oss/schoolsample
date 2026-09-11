@@ -45,6 +45,15 @@ export class MathQuestionGenerator {
     const t = (topic || '').toLowerCase();
 
     // Route based on topic or Key Stage
+    if (t.includes('percentage') || t.includes('percent')) {
+      return this.generatePercentageQuestion();
+    }
+    if (t.includes('ratio') || t.includes('proportion')) {
+      return this.generateRatioQuestion();
+    }
+    if (t.includes('perimeter') || t.includes('area')) {
+      return this.generatePerimeterAreaQuestion();
+    }
     if (t.includes('fraction') || ks.includes('ks3') && Math.random() > 0.5) {
       return this.generateFractionQuestion();
     }
@@ -261,6 +270,149 @@ export class MathQuestionGenerator {
       hint: `Recall the first index law: a^m × a^n = a^(m + n).`,
       explanation: `When multiplying terms with the same base, add the indices: x^${p1} × x^${p2} = x^(${p1}+${p2}) = x^${correctPower}.`,
       socraticFollowUp: `Write out x^${p1} as x factors and x^${p2} as x factors. How many x's are being multiplied altogether?`
+    };
+  }
+
+  /**
+   * KS2/KS3: Percentage of an amount with 10% benchmark and decimal traps
+   */
+  private static generatePercentageQuestion(): GeneratedMathQuestion {
+    const percentages = [10, 20, 25, 50, 15, 75];
+    const amounts = [40, 60, 80, 120, 200, 240, 300];
+    const pct = percentages[Math.floor(Math.random() * percentages.length)];
+    const total = amounts[Math.floor(Math.random() * amounts.length)];
+
+    const correct = (pct / 100) * total;
+    // Trap 1: Subtracted percentage number from total instead of finding fraction (e.g. 60 - 20 = 40)
+    const trapSubtractPct = Math.abs(total - pct);
+    // Trap 2: Divided total by percentage (e.g. 80 / 20 = 4)
+    const trapDivide = Math.round(total / pct) || (correct + 5);
+    // Trap 3: Confused 10% with 1%
+    const trapOnePercent = correct / 10;
+
+    const rawOptions = [
+      { text: `${correct}`, misc: `Correct! ${pct}% of ${total} is ${correct}. Found using benchmark fractions.` },
+      { text: `${trapSubtractPct}`, misc: `Percentage subtraction trap: Subtracted the percentage number (${total} - ${pct}) directly instead of finding the proportional fraction of ${total}.` },
+      { text: `${trapDivide}`, misc: `Division slip: Divided the total by ${pct} instead of multiplying by ${pct}/100.` },
+      { text: `${trapOnePercent}`, misc: `Place value slip: Divided by 100 twice, finding 1% instead of ${pct}%.` }
+    ];
+
+    const seen = new Set<string>();
+    const cleanOptions = rawOptions.filter(o => {
+      if (seen.has(o.text)) return false;
+      seen.add(o.text);
+      return true;
+    });
+
+    const shuffled = cleanOptions.sort(() => Math.random() - 0.5);
+    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+
+    return {
+      id: `math_pct_${Date.now()}`,
+      prompt: `What is ${pct}% of ${total}?`,
+      options: shuffled.map(o => o.text),
+      answerKey: answerKey !== -1 ? answerKey : 0,
+      misconceptions: shuffled.map(o => o.misc),
+      hint: `Start by finding 10% of ${total} (divide by 10), then scale to ${pct}%.`,
+      explanation: `To find ${pct}% of ${total}: 10% of ${total} is ${total / 10}. Multiplying by ${pct / 10} gives ${correct}.`,
+      socraticFollowUp: `What is 10% of ${total}? How many 10% blocks fit into ${pct}%?`
+    };
+  }
+
+  /**
+   * KS2/KS3: Ratio Division with parts vs total confusion
+   */
+  private static generateRatioQuestion(): GeneratedMathQuestion {
+    const part1 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+    const part2 = Math.floor(Math.random() * 3) + 2; // 2 to 4
+    const totalParts = part1 + part2;
+    const multiplier = Math.floor(Math.random() * 8) + 4; // 4 to 11
+    const totalAmount = totalParts * multiplier;
+    const share1 = part1 * multiplier;
+    const share2 = part2 * multiplier;
+
+    const correct = share1;
+    // Trap 1: Divided total amount by the single part ratio rather than sum of parts (totalAmount / part1)
+    const trapDividedByOnePart = Math.round(totalAmount / part1);
+    // Trap 2: Gave the larger share instead of the requested first share
+    const trapOtherShare = share2;
+    // Trap 3: Subtracted parts from total
+    const trapSub = totalAmount - totalParts;
+
+    const rawOptions = [
+      { text: `${correct}`, misc: `Correct! ${totalAmount} shared in ratio ${part1}:${part2}. Total parts = ${totalParts}. One part = ${multiplier}, so ${part1} parts = ${correct}.` },
+      { text: `${trapOtherShare}`, misc: `Target part confusion: Calculated the other share (${part2} parts = ${share2}) instead of the first share (${part1} parts).` },
+      { text: `${trapDividedByOnePart}`, misc: `Total parts omission: Divided the total by ${part1} instead of dividing by the sum of parts (${part1} + ${part2} = ${totalParts}).` },
+      { text: `${trapSub}`, misc: `Additive misconception: Subtracted ratio numbers instead of sharing into equal parts.` }
+    ];
+
+    const seen = new Set<string>();
+    const cleanOptions = rawOptions.filter(o => {
+      if (seen.has(o.text)) return false;
+      seen.add(o.text);
+      return true;
+    });
+
+    const shuffled = cleanOptions.sort(() => Math.random() - 0.5);
+    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+
+    return {
+      id: `math_ratio_${Date.now()}`,
+      prompt: `Share £${totalAmount} in the ratio ${part1}:${part2}. What is the value of the first share?`,
+      options: shuffled.map(o => o.text),
+      answerKey: answerKey !== -1 ? answerKey : 0,
+      misconceptions: shuffled.map(o => o.misc),
+      hint: `Step 1: Add the ratio parts (${part1} + ${part2}) to find the total number of parts.`,
+      explanation: `Add the ratio parts: ${part1} + ${part2} = ${totalParts} parts. Divide £${totalAmount} by ${totalParts} = £${multiplier} per part. First share is ${part1} × £${multiplier} = £${correct}.`,
+      socraticFollowUp: `If £${totalAmount} is split into ${totalParts} equal piles, how much is in each pile?`
+    };
+  }
+
+  /**
+   * KS2: Area vs Perimeter - The single most common geometry misconception in primary schools
+   */
+  private static generatePerimeterAreaQuestion(): GeneratedMathQuestion {
+    const length = Math.floor(Math.random() * 6) + 4; // 4 to 9 cm
+    const width = Math.floor(Math.random() * 4) + 2;  // 2 to 5 cm
+
+    const isAskingArea = Math.random() > 0.5;
+    const area = length * width;
+    const perimeter = 2 * (length + width);
+
+    // Trap 1: Confused Area with Perimeter
+    const trapFormulaConfusion = isAskingArea ? perimeter : area;
+    // Trap 2: Added two sides only (half perimeter)
+    const trapHalfPerimeter = length + width;
+    // Trap 3: Multiplied and added (length * width + 2)
+    const trapCalculationSlip = isAskingArea ? (area + 2) : (perimeter - 2);
+
+    const correct = isAskingArea ? area : perimeter;
+    const correctUnit = isAskingArea ? 'cm²' : 'cm';
+    const trapUnit = isAskingArea ? 'cm' : 'cm²';
+
+    const rawOptions = [
+      { text: `${correct} ${correctUnit}`, misc: `Correct! ${isAskingArea ? `Area = length × width (${length} × ${width} = ${area} cm²).` : `Perimeter = sum of all 4 outer sides (2 × (${length} + ${width}) = ${perimeter} cm).`}` },
+      { text: `${trapFormulaConfusion} ${isAskingArea ? 'cm²' : 'cm'}`, misc: `Classic Area vs Perimeter confusion: Calculated ${isAskingArea ? 'Perimeter (outer boundary distance)' : 'Area (internal square units)'} instead of ${isAskingArea ? 'Area' : 'Perimeter'}!` },
+      { text: `${trapHalfPerimeter} ${correctUnit}`, misc: `Incomplete perimeter trap: Added only two adjacent sides (${length} + ${width}) and forgot the opposite two sides.` },
+      { text: `${correct} ${trapUnit}`, misc: `Unit confusion: Calculated the correct numerical value but selected the wrong units (${trapUnit} instead of ${correctUnit}).` }
+    ];
+
+    const shuffled = rawOptions.sort(() => Math.random() - 0.5);
+    const answerKey = shuffled.findIndex(o => o.text === `${correct} ${correctUnit}`);
+
+    return {
+      id: `math_geom_${Date.now()}`,
+      prompt: `A rectangle has a length of ${length} cm and a width of ${width} cm. What is its ${isAskingArea ? 'AREA' : 'PERIMETER'}?`,
+      options: shuffled.map(o => o.text),
+      answerKey: answerKey !== -1 ? answerKey : 0,
+      misconceptions: shuffled.map(o => o.misc),
+      hint: isAskingArea ? `Area is the space inside: multiply length by width.` : `Perimeter is the distance all the way around all 4 sides.`,
+      explanation: isAskingArea
+        ? `Area = length × width = ${length} × ${width} = ${area} cm². Units for area are always squared.`
+        : `Perimeter = 2 × (length + width) = 2 × (${length} + ${width}) = ${perimeter} cm.`,
+      socraticFollowUp: isAskingArea
+        ? `Are you measuring a fence around the outside (perimeter) or the grass carpet inside (area)?`
+        : `How many sides does a rectangle have in total? Did you count all of them?`
     };
   }
 }

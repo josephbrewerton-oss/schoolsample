@@ -500,12 +500,12 @@ export default function StudentProfilePage() {
             marginBottom: '2rem',
           }}
         >
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
-            🛡️ Data Sovereignty &amp; GDPR Rights
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+            🛡️ Student Record Download &amp; GDPR Data Rights
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
-            St Joseph is built under the <strong>UK GDPR and the Age Appropriate Design Code (Children&apos;s Code)</strong>.
-            All learning progress, star tallies, and error diagnostics are stored exclusively inside your browser&apos;s on-device storage. No personal data or learning analytics are transmitted to our servers or third parties.{' '}
+          <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.6, margin: '0 0 1.25rem 0' }}>
+            Under the <strong>UK GDPR, Data Protection Act 2018, and Children&apos;s Code</strong>, all learning analytics, star scores, and diagnostic attempts are stored exclusively inside your device&apos;s on-browser database. 
+            Students and teachers can download full transcripts for parent evenings or school portfolios, or reset all progress before passing a shared device to another pupil.{' '}
             <Link to="/privacy" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
               Read full legal disclaimers &rarr;
             </Link>
@@ -516,51 +516,80 @@ export default function StudentProfilePage() {
               type="button"
               onClick={exportLearnerPassportJson}
               style={{
-                padding: '9px 16px',
+                padding: '10px 18px',
                 background: '#0284c7',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '0.85rem',
+                fontWeight: 700,
+                fontSize: '0.88rem',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📥 Export Data (JSON)
+              📥 Download Record (JSON)
             </button>
 
             <button
               type="button"
               onClick={downloadLearnerCertificateHtml}
               style={{
-                padding: '9px 16px',
+                padding: '10px 18px',
                 background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#1e293b',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              📄 Download Report (HTML)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              style={{
+                padding: '10px 18px',
+                background: '#f8fafc',
                 border: '1px solid #cbd5e1',
                 color: '#334155',
                 borderRadius: '8px',
                 fontWeight: 600,
-                fontSize: '0.85rem',
+                fontSize: '0.88rem',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              📄 Download Certificate (HTML)
+              🖨️ Print Progress Sheet
             </button>
 
             <button
               type="button"
               onClick={() => setShowDeleteModal(true)}
               style={{
-                padding: '9px 16px',
+                padding: '10px 18px',
                 background: '#fee2e2',
                 border: '1px solid #fecaca',
-                color: '#dc2626',
+                color: '#b91c1c',
                 borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '0.85rem',
+                fontWeight: 700,
+                fontSize: '0.88rem',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              🗑️ Erase All My Data (GDPR Art. 17)
+              🗑️ Reset Student Record (Right to Erasure)
             </button>
           </div>
         </div>

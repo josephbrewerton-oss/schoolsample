@@ -1,19 +1,23 @@
-(ruleset :target "worker.html" :version "1.0.0"
+(ruleset :target "worker.html" :version "1.1.0"
   (grammar
-    (template "(view :title \"{{title}}\" :body (quiz :q \"{{question}}\" :opts (list {{options}}) :ans {{answerIndex}}))")
+    (template "(view :title \"{{title}}\" :body (quiz :q \"{{question}}\" :opts (list {{options}}) :ans {{answerIndex}} :misc (list {{misconceptions}}) :hints (list {{scaffoldHints}})))")
     (forbidden
       (pattern "Option A:")
       (pattern "Option B:")
       (pattern "A.")
       (pattern "B.")
       (pattern "C.")
-      (pattern "D.")))
+      (pattern "D.")
+      (pattern "All of the above")
+      (pattern "None of the above")))
   
   (constraints
     (rule :id "clean_question" :body ":q MUST contain ONLY the question string. Never list choices inside :q.")
     (rule :id "option_cardinality" :body ":opts MUST contain a list of exactly 4 choices.")
     (rule :id "zero_index_answer" :body ":ans MUST be the 0-based integer index (0, 1, 2, or 3) of the correct choice.")
-    (rule :id "syntax_purity" :body "Keep AST keywords (:title, :body, :q, :opts, :ans, list, view, quiz) in ASCII English."))
+    (rule :id "diagnostic_distractors" :body "Every incorrect distractor MUST represent an authentic student misconception or common trap (e.g. adding denominators, confusing area with perimeter, false friend vocabulary). Random filler numbers are strictly forbidden.")
+    (rule :id "stepped_hints" :body "Provide a two-stage scaffold hint: Stage 1 conceptual nudge, Stage 2 procedural step.")
+    (rule :id "syntax_purity" :body "Keep AST keywords (:title, :body, :q, :opts, :ans, :misc, :hints, list, view, quiz) in ASCII English."))
   
   (locales
     (lang :code "en" :name "English")

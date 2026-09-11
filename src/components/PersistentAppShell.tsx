@@ -1,12 +1,16 @@
-import React, { useEffect, Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, Suspense } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import UniversalTranslatorBar from './UniversalTranslatorBar';
 import PersistentNavbar from './PersistentNavbar';
 import PersistentFooter from './PersistentFooter';
 import ViewportSkeleton from './ViewportSkeleton';
+import { classroomBeacon, TeacherBroadcastCommand } from '../services/classroomBeacon';
+import { getLearnerProfile } from '../services/studentProfileStore';
 
 export default function PersistentAppShell(): React.JSX.Element {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [incomingBroadcast, setIncomingBroadcast] = useState<TeacherBroadcastCommand | null>(null);
 
   // Scroll restoration on route transition
   useEffect(() => {
@@ -39,6 +43,47 @@ export default function PersistentAppShell(): React.JSX.Element {
     document.documentElement.setAttribute('data-high-contrast', storedContrast ? 'true' : 'false');
   }, []);
 
+  // Connect pupil device to local classroom beacon (peer-to-peer over local school network)
+  useEffect(() => {
+    // If the teacher themselves is on the beacon console, don't broadcast as pupil
+    if (location.pathname === '/teacher-beacon') return;
+
+    classroomBeacon.startStudentBeacon(
+      () => {
+        const profile = getLearnerProfile();
+        const storedMisconception = typeof window !== 'undefined' ? localStorage.getItem('active_student_misconception') || undefined : undefined;
+        return {
+          studentId: profile.alias ? `pupil_${profile.alias.toLowerCase().replace(/\s+/g, '_')}` : 'desk_pupil',
+          alias: profile.alias || 'Pupil',
+          avatarEmoji: profile.avatarEmoji || '🦉',
+          keyStage: profile.keyStage || 'Key Stage 2',
+          cohortCode: profile.cohortCode || 'Year 4',
+          activeSubject: location.pathname.includes('learning-zone') ? 'Guided Lessons' : 'Interactive Practice',
+          activeTopic: location.pathname.replace(/^\//, '') || 'Home',
+          recentMisconception: storedMisconception,
+          starsEarned: profile.starsEarned || 0,
+          totalAttempts: 10,
+          accuracyPercent: 90,
+          status: storedMisconception ? 'need_help' : 'active',
+        };
+      },
+      (command) => {
+        setIncomingBroadcast(command);
+        if (command.type === 'NAVIGATE_TOPIC') {
+          // If teacher directs class to a unit, navigate smoothly
+          if (location.pathname !== '/practice-lab' && location.pathname !== '/learning-zone') {
+            navigate('/practice-lab');
+          }
+        }
+        setTimeout(() => setIncomingBroadcast(null), 6000);
+      }
+    );
+
+    return () => {
+      classroomBeacon.stopStudentBeacon();
+    };
+  }, [location.pathname, navigate]);
+
   return (
     <div
       id="app-root-shell"
@@ -49,6 +94,43 @@ export default function PersistentAppShell(): React.JSX.Element {
         width: '100%',
       }}
     >
+      {/* Teacher Incoming Broadcast Banner */}
+      {incomingBroadcast && (
+        <div
+          role="alert"
+          style={{
+            background: '#1e3a8a',
+            color: '#ffffff',
+            padding: '0.65rem 1rem',
+            textAlign: 'center',
+            fontSize: '0.92rem',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+          }}
+        >
+          <span>📢 Teacher Broadcast: {incomingBroadcast.message || 'Attention please!'}</span>
+          <button
+            type="button"
+            onClick={() => setIncomingBroadcast(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#93c5fd',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Unified Sticky Header: Zero-Shift Translator Bar + Navigation */}
       <header
         id="persistent-header-group"

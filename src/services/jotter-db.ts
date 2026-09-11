@@ -52,3 +52,14 @@ export async function getRecentJotterEntries(sessionId: string, limit = 5): Prom
     request.onerror = () => reject(request.error);
   });
 }
+
+export async function clearJotterDB(): Promise<void> {
+  const db = await openJotterDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const clearReq = store.clear();
+    clearReq.onsuccess = () => resolve();
+    clearReq.onerror = () => reject(clearReq.error);
+  });
+}
