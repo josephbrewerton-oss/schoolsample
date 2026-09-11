@@ -1,5 +1,5 @@
 // src/pages/practice-lab.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useLocation } from '@docusaurus/router';
@@ -13,6 +13,46 @@ import {
 import { dispatch } from '../engine/hypercall';
 import { hypervisor } from '../engine/hypervisor';
 
+// In-line error boundary to capture child crashes without wiping the page
+class ComponentGuard extends Component<
+  { label: string; children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`[Guard] Crash inside ${this.props.label}:`, error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          style={{
+            margin: '1rem 0',
+            padding: '1.25rem',
+            background: '#450a0a',
+            border: '1px solid #dc2626',
+            borderRadius: '8px',
+            color: '#fecaca',
+            fontFamily: 'monospace',
+          }}
+        >
+          <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#f87171' }}>
+            Error rendering {this.props.label}:
+          </strong>
+          <code>{(this.state.error as Error).message}</code>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function PracticeLabPage() {
   const [mounted, setMounted] = useState(false);
   const [bootIframe, setBootIframe] = useState(false);
@@ -22,14 +62,6 @@ export default function PracticeLabPage() {
 
   const location = useLocation();
 
-  useEffect(() => {
-    const unsub = listenToLanguageChange((newLang) => {
-      setCurrentLang(newLang);
-    });
-    return unsub;
-  }, []);
-
-  // Dynamic topic tracking for Super Teacher Nano
   const [activeStage, setActiveStage] = useState('Key Stage 2');
   const [activeSubject, setActiveSubject] = useState('Mathematics');
   const [activeUnit, setActiveUnit] = useState('Fractions and Decimals');
@@ -37,100 +69,124 @@ export default function PracticeLabPage() {
 
   const workerUrl = useBaseUrl('/worker.html?v=1.2.1');
 
-  // 1. URL Query Parameter Ingestion & Component Mount
+  // 1. Language Bus Listener
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setCurrentLang(newLang);
+    });
+    return unsub;
+  }, []);
+
+  // 2. Mount and Worker Delayed Activation
   useEffect(() => {
     setMounted(true);
-    // Allow main thread, DOM, and signaling bus ample time to settle before booting worker daemon
-    const timer = setTimeout(() => setBootIframe(true), 1000);
+    const timer = setTimeout(() => setBootIframe(true), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
+  // 3. Query Param Ingestion
+  useEffect(() => {
     if (typeof window !== 'undefined' && location?.search) {
       const searchParams = new URLSearchParams(location.search);
       const urlKs = searchParams.get('ks');
       const urlSub = searchParams.get('sub');
       const urlUnit = searchParams.get('unit');
 
-      if (urlKs) setActiveStage(urlKs);
-      if (urlSub) setActiveSubject(urlSub);
-      if (urlUnit) setActiveUnit(urlUnit);
+      if (urlKs && urlKs !== activeStage) setActiveStage(urlKs);
+      if (urlSub && urlSub !== activeSubject) setActiveSubject(urlSub);
+      if (urlUnit && urlUnit !== activeUnit) setActiveUnit(urlUnit);
     }
-
-    return () => clearTimeout(timer);
   }, [location.search]);
 
-  // 2. Hydrate Diagnostic Baseline via Hypercall Substrate on Topic Change
+  // 4. Baseline Dispatch with Safe Promise Guard
   useEffect(() => {
     let isCancelled = false;
 
-    dispatch('LessonSynthesizer', {
-      intent: 'inflate:baseline',
-      payload: {
-        stage: activeStage,
-        subject: activeSubject,
-        topic: activeUnit,
-      },
-    }).then((res) => {
-      if (!isCancelled && res.ok && res.data?.socraticCheck) {
-        setActiveAxiomCheck(res.data.socraticCheck);
+    try {
+      const call = dispatch('LessonSynthesizer', {
+        intent: 'inflate:baseline',
+        payload: {
+          stage: activeStage,
+          subject: activeSubject,
+          topic: activeUnit,
+        },
+      });
+
+      if (call && typeof call.then === 'function') {
+        call
+          .then((res) => {
+            if (!isCancelled && res?.ok && res?.data?.socraticCheck) {
+              setActiveAxiomCheck(res.data.socraticCheck);
+            }
+          })
+          .catch((err) => console.warn('[Baseline] Dispatch rejected:', err));
       }
-    });
+    } catch (err) {
+      console.warn('[Baseline] Dispatch threw synchronously:', err);
+    }
 
     return () => {
       isCancelled = true;
     };
   }, [activeStage, activeSubject, activeUnit]);
 
-  const handleLanguageChange = (newLang: string) => {
-    setCurrentLang(newLang);
-    setSavedLanguage(newLang);
-    const channel = new BroadcastChannel('neural_hypervisor_bus');
-    channel.postMessage({
-      type: 'SET_LANGUAGE',
-      lang: newLang,
-    });
-    channel.close();
-  };
-
   return (
     <Layout title="Practice Arena" description="St Joseph's Interactive Curriculum Practice Arena">
-      {/* Dynamic Base URL Worker Daemon */}
+      {/* Background worker iframe with null-safe ref */}
       {bootIframe && (
         <iframe
-          ref={(el) => hypervisor.registerWorkerIframe(el)}
+          ref={(el) => {
+            if (el && hypervisor?.registerWorkerIframe) {
+              hypervisor.registerWorkerIframe(el);
+            }
+          }}
           src={workerUrl}
           style={{ display: 'none', width: 0, height: 0, border: 'none' }}
           title="neural-engine-daemon"
         />
       )}
 
-      {mounted ? (
-        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.25rem 1rem 3rem 1rem' }}>
-          {/* S-Expression Canvas Engine */}
-          <NeuralLabCanvas
-            initialKeyStage={activeStage}
-            initialSubject={activeSubject}
-            initialUnit={activeUnit}
-            onTopicChange={(stage, sub, unit) => {
-              if (stage) setActiveStage(stage);
-              if (sub) setActiveSubject(sub);
-              if (unit) setActiveUnit(unit);
-            }}
-          />
+      {/* Explicit dark container so content never blends with a white layout */}
+      <div
+        style={{
+          minHeight: 'calc(100vh - 60px)',
+          backgroundColor: '#0f172a',
+          color: '#f8fafc',
+          padding: '1.5rem 1rem 3rem 1rem',
+        }}
+      >
+        {mounted ? (
+          <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <ComponentGuard label="NeuralLabCanvas">
+              <NeuralLabCanvas
+                initialKeyStage={activeStage}
+                initialSubject={activeSubject}
+                initialUnit={activeUnit}
+                onTopicChange={(stage, sub, unit) => {
+                  if (stage) setActiveStage(stage);
+                  if (sub) setActiveSubject(sub);
+                  if (unit) setActiveUnit(unit);
+                }}
+              />
+            </ComponentGuard>
 
-          {/* Synchronized Super Teacher Nano */}
-          <NanoAssistantPanel
-            seedKey={`${activeStage}:${activeSubject}:${activeUnit}`}
-            keyStage={activeStage}
-            subject={activeSubject}
-            unit={activeUnit}
-            contextTopic={`${activeStage} • ${activeSubject}: ${activeUnit}`}
-            activePrompt={activeAxiomCheck}
-          />
-        </main>
-      ) : (
-        <div style={{ maxWidth: '1100px', margin: '3rem auto', textAlign: 'center', color: '#64748b' }}>
-          <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading St Joseph&apos;s Practice Arena...</p>
-        </div>
-      )}
+            <ComponentGuard label="NanoAssistantPanel">
+              <NanoAssistantPanel
+                seedKey={`${activeStage}:${activeSubject}:${activeUnit}`}
+                keyStage={activeStage}
+                subject={activeSubject}
+                unit={activeUnit}
+                contextTopic={`${activeStage} • ${activeSubject}: ${activeUnit}`}
+                activePrompt={activeAxiomCheck}
+              />
+            </ComponentGuard>
+          </main>
+        ) : (
+          <div style={{ maxWidth: '1100px', margin: '3rem auto', textAlign: 'center', color: '#94a3b8' }}>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading St Joseph&apos;s Practice Arena...</p>
+          </div>
+        )}
+      </div>
     </Layout>
   );
 }

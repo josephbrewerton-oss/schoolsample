@@ -180,6 +180,12 @@ export const QuestionCard: React.FC<Props> = ({
       ? translatedData.socraticFollowUp
       : (socraticFollowUp || hint);
 
+  const effectiveHint =
+    isNonEnglish && !showOriginal && translatedData.hint
+      ? translatedData.hint
+      : hint;
+
+
   const currentLangMeta = SUPPORTED_LANGUAGES[activeLang] || SUPPORTED_LANGUAGES.en;
   const isResolvedCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
 
