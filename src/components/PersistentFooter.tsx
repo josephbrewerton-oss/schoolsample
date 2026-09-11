@@ -69,9 +69,14 @@ export default function PersistentFooter(): React.JSX.Element {
 
         <div>
           <h4 style={{ color: '#f8fafc', fontSize: '0.92rem', fontWeight: 600, marginBottom: '0.75rem' }}>
-            Edge & Standards
+            Mission & Standards
           </h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <li>
+              <Link to="/licensing" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 600 }}>
+                🕊️ Mission &amp; Global Licensing
+              </Link>
+            </li>
             <li>
               <Link to="/settings" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 ⚙️ Neural Engine Settings
@@ -121,8 +126,12 @@ export default function PersistentFooter(): React.JSX.Element {
             © {new Date().getFullYear()} St Joseph's Catholic Primary School & Open Curriculum Contributors.
           </span>
           <span>&bull;</span>
+          <Link to="/licensing" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: 600 }}>
+            🕊️ 100% Free for Catholic Organisations &amp; Emerging Nations
+          </Link>
+          <span>&bull;</span>
           <Link to="/privacy" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>
-            🛡️ Zero Cloud Egress • 🍪 No Tracking Cookies • 🇬🇧 UK GDPR &amp; Children&apos;s Code
+            🛡️ Zero Cloud Egress • 🍪 No Tracking Cookies • 🇬🇧 UK GDPR
           </Link>
         </div>
         <span>

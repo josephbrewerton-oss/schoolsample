@@ -30,6 +30,7 @@ export default function PersistentNavbar(): React.JSX.Element {
     { to: '/learning-zone', label: '📖 Lessons' },
     { to: '/profile', label: '⭐ Progress' },
     { to: '/curriculum-studio', label: '🌍 Studio' },
+    { to: '/licensing', label: '🕊️ Mission' },
     { to: '/blog', label: '📰 News' },
   ];
 

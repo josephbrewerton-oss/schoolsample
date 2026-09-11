@@ -1,6 +1,6 @@
 {
   "name": "St Joseph's Curriculum Portal",
-  "description": "Interactive UK National Curriculum learning portal and offline-first edge AI engine",
+  "description": "Interactive UK National Curriculum portal and offline-first edge AI engine, perpetually free for Catholic organisations and emerging nations",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

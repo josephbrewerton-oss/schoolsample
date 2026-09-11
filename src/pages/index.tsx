@@ -164,6 +164,90 @@ export default function Home() {
           </div>
         </section>
 
+        {/* St Joseph's Global Mission Banner */}
+        <section
+          style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdfa 100%)',
+            border: '2px solid #bbf7d0',
+            borderRadius: '20px',
+            padding: '2.5rem',
+            marginBottom: '3.5rem',
+            boxShadow: '0 10px 25px -5px rgba(21, 128, 61, 0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 14px',
+              borderRadius: '9999px',
+              background: '#ffffff',
+              border: '1px solid #86efac',
+              color: '#15803d',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              marginBottom: '1rem',
+            }}
+          >
+            <span>🕊️ St Joseph&apos;s Educational Covenant</span>
+            <span>&bull;</span>
+            <span>Perpetual Free Access</span>
+          </div>
+
+          <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem' }}>
+            Free for Catholic Organisations &amp; Emerging Nations
+          </h2>
+          <p style={{ fontSize: '1.05rem', color: '#334155', maxWidth: '720px', lineHeight: 1.6, margin: '0 auto 1.75rem auto' }}>
+            Powered by zero-cloud, on-device Edge AI. We believe high-calibre tutoring is a universal right.
+            All Catholic schools, parishes, dioceses, and developing communities worldwide hold an unconditional, perpetual free license with full offline capability.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Link
+              to="/licensing"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0.75rem 1.75rem',
+                borderRadius: '10px',
+                background: '#15803d',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(21, 128, 61, 0.25)',
+                transition: 'background-color 0.2s',
+              }}
+            >
+              🕊️ Read the Mission Charter &amp; Covenant
+            </Link>
+            <Link
+              to="/privacy"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0.75rem 1.75rem',
+                borderRadius: '10px',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+              }}
+            >
+              🛡️ Zero Cloud Egress Disclosures
+            </Link>
+          </div>
+        </section>
+
         {/* Licensing & Attribution */}
         <div style={{
           paddingTop: '2rem',
