@@ -188,7 +188,10 @@
         const capabilities = await window.ai.languageModel.capabilities();
         if (capabilities.available === "readily") {
           const session = await window.ai.languageModel.create({
-            systemPrompt: PEDAGOGICAL_SYSTEM_PROMPT
+            systemPrompt: PEDAGOGICAL_SYSTEM_PROMPT,
+            outputLanguage: 'en',
+            expectedOutputLanguages: ['en'],
+            expectedInputLanguages: ['en'],
           });
           const stream = session.promptStreaming(rawPrompt);
           let prevLen = 0;
