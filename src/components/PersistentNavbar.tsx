@@ -69,12 +69,12 @@ export default function PersistentNavbar(): React.JSX.Element {
             }}
           >
             <img
-              src="/img/logo.svg"
+              src={`${import.meta.env.BASE_URL}img/logo.svg`}
               alt="St Joseph's Logo"
               style={{ width: '28px', height: '28px', display: 'block' }}
               onError={(e) => {
                 // Fallback icon if svg is loading
-                (e.target as HTMLImageElement).src = '/img/favicon-32x32.png';
+                (e.target as HTMLImageElement).src = `${import.meta.env.BASE_URL}img/favicon-32x32.png`;
               }}
             />
             <span

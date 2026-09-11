@@ -50,9 +50,10 @@ export default function Home() {
                 padding: '0.9rem 2.25rem',
                 fontSize: '1.1rem',
                 borderRadius: '10px',
-                background: '#2563eb',
+                background: '#1d4ed8',
+                color: '#ffffff',
                 fontWeight: 700,
-                boxShadow: '0 4px 14px 0 rgba(37, 99, 235, 0.35)',
+                boxShadow: '0 4px 14px 0 rgba(29, 78, 216, 0.35)',
                 transition: 'all 0.2s ease',
               }}
             >
@@ -66,8 +67,8 @@ export default function Home() {
                 padding: '0.9rem 2.25rem',
                 fontSize: '1.1rem',
                 borderRadius: '10px',
-                border: '2px solid #0284c7',
-                color: '#0284c7',
+                border: '2px solid #0369a1',
+                color: '#0369a1',
                 background: '#ffffff',
                 fontWeight: 700,
                 transition: 'all 0.2s ease',
@@ -80,7 +81,7 @@ export default function Home() {
 
         {/* Core Capabilities Grid */}
         <section style={{ marginBottom: '4rem' }}>
-          <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '2.5rem', color: '#1e293b', fontWeight: 800 }}>
+          <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '2.5rem', color: '#0f172a', fontWeight: 800 }}>
             Designed for Pupil Success
           </h2>
 
@@ -99,10 +100,10 @@ export default function Home() {
               transition: 'transform 0.15s ease',
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>⚡</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#2563eb' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#1d4ed8' }}>
                 Instant Practice Arena
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
                 Bite-sized curriculum questions with real-time feedback, streak rewards, and instant hints whenever you get stuck.
               </p>
             </div>
@@ -117,10 +118,10 @@ export default function Home() {
               transition: 'transform 0.15s ease',
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>📖</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0284c7' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0369a1' }}>
                 Curriculum Lessons
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
                 Step-by-step lesson guides covering key concepts, everyday examples, and common traps before starting a quiz.
               </p>
             </div>
@@ -135,10 +136,10 @@ export default function Home() {
               transition: 'transform 0.15s ease',
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>🎓</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#059669' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#047857' }}>
                 Prof. Turing Audio Tutor
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
                 Friendly, voice-guided hints and Socratic prompts that guide your thinking without giving away the answers.
               </p>
             </div>
@@ -153,10 +154,10 @@ export default function Home() {
               transition: 'transform 0.15s ease',
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>🎯</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#7c3aed' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#6d28d9' }}>
                 Diagnostic Checks
               </h3>
-              <p style={{ fontSize: '0.95rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
                 Every incorrect option checks for common student slips (like adding fraction denominators) to explain exactly where you went wrong.
               </p>
             </div>
@@ -164,12 +165,13 @@ export default function Home() {
         </section>
 
         {/* Licensing & Attribution */}
-        <footer style={{
+        <div style={{
           paddingTop: '2rem',
           borderTop: '1px solid #e2e8f0',
           textAlign: 'center',
           fontSize: '0.875rem',
-          color: '#94a3b8'
+          color: '#334155',
+          lineHeight: 1.6,
         }}>
           St Joseph's Learning Portal &bull; Open-source, privacy-first educational technology.
           Curriculum materials licensed under{' '}
@@ -177,11 +179,11 @@ export default function Home() {
             href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#64748b' }}
+            style={{ color: '#1d4ed8', fontWeight: 600, textDecoration: 'underline' }}
           >
             OGL v3.0 (Oak National Academy)
           </a>.
-        </footer>
+        </div>
       </main>
     </Layout>
   );

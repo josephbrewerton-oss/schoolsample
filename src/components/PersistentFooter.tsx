@@ -2,13 +2,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function PersistentFooter(): React.JSX.Element {
+  const logoUrl = `${import.meta.env.BASE_URL}img/logo.svg`;
+
   return (
     <footer
       id="persistent-site-footer"
       role="contentinfo"
       style={{
         backgroundColor: '#0f172a',
-        color: '#94a3b8',
+        color: '#cbd5e1',
         padding: '3rem 1.5rem 2rem',
         borderTop: '1px solid #1e293b',
         fontSize: '0.88rem',
@@ -27,12 +29,12 @@ export default function PersistentFooter(): React.JSX.Element {
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
-            <img src="/img/logo.svg" alt="School crest" style={{ width: '24px', height: '24px' }} />
+            <img src={logoUrl} alt="School crest" style={{ width: '24px', height: '24px' }} />
             <span style={{ color: '#f8fafc', fontWeight: 700, fontSize: '1.05rem' }}>
               St Joseph's Portal
             </span>
           </div>
-          <p style={{ color: '#64748b', fontSize: '0.84rem', lineHeight: 1.6, maxWidth: '300px' }}>
+          <p style={{ color: '#cbd5e1', fontSize: '0.84rem', lineHeight: 1.6, maxWidth: '300px' }}>
             Interactive UK National Curriculum platform powered by edge AST substrates and on-device neural evaluation.
           </p>
         </div>
@@ -43,22 +45,22 @@ export default function PersistentFooter(): React.JSX.Element {
           </h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
-              <Link to="/practice-lab" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/practice-lab" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 ⚡ Interactive Practice Lab
               </Link>
             </li>
             <li>
-              <Link to="/learning-zone" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/learning-zone" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 📖 Curriculum Lessons
               </Link>
             </li>
             <li>
-              <Link to="/profile" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/profile" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 ⭐ Learner Passport & Badges
               </Link>
             </li>
             <li>
-              <Link to="/curriculum-studio" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/curriculum-studio" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 🌍 Curriculum Studio
               </Link>
             </li>
@@ -71,17 +73,17 @@ export default function PersistentFooter(): React.JSX.Element {
           </h4>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
-              <Link to="/settings" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/settings" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 ⚙️ Neural Engine Settings
               </Link>
             </li>
             <li>
-              <Link to="/privacy" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/privacy" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 🛡️ Privacy, GDPR &amp; Cookies
               </Link>
             </li>
             <li>
-              <Link to="/blog" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+              <Link to="/blog" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
                 📰 Curriculum News & Releases
               </Link>
             </li>
@@ -90,7 +92,7 @@ export default function PersistentFooter(): React.JSX.Element {
                 href="https://github.com/josephbrewerton-oss/schoolsample"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: '#94a3b8', textDecoration: 'none' }}
+                style={{ color: '#cbd5e1', textDecoration: 'none' }}
               >
                 📦 Open Source Repository ↗
               </a>
@@ -110,7 +112,7 @@ export default function PersistentFooter(): React.JSX.Element {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1rem',
-          color: '#64748b',
+          color: '#cbd5e1',
           fontSize: '0.8rem',
         }}
       >
