@@ -4,8 +4,8 @@
   "theme_color": "#2563eb",
   "background_color": "#ffffff",
   "display": "standalone",
-  "scope": "/schoolsample/",
-  "start_url": "/schoolsample/primary",
+  "scope": "./",
+  "start_url": "./",
   "icons": [
     {
       "src": "img/logo.svg",
