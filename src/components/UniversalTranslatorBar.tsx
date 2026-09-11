@@ -21,6 +21,23 @@ export default function UniversalTranslatorBar() {
   const [useGoogleFallback, setUseGoogleFallback] = useState<boolean>(false);
   const googleScriptLoadedRef = useRef(false);
 
+  // Synchronize CSS variable --universal-bar-height with actual bar height
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const bar = document.getElementById('universal-translator-bar');
+    if (!bar) return;
+
+    const syncHeight = () => {
+      const height = bar.offsetHeight || 0;
+      document.documentElement.style.setProperty('--universal-bar-height', `${height}px`);
+    };
+
+    syncHeight();
+    const ro = new ResizeObserver(() => syncHeight());
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [isCollapsed, useGoogleFallback]);
+
   // Initialize from storage on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -146,13 +163,10 @@ export default function UniversalTranslatorBar() {
       className="notranslate"
       aria-label="Universal Language Translator"
       style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 9999,
+        width: '100%',
         background: '#0f172a',
         color: '#f8fafc',
         borderBottom: '1px solid #1e293b',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         fontSize: '0.85rem',
       }}

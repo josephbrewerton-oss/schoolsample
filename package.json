@@ -2,26 +2,26 @@
   "name": "st-joseph-curriculum-portal",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "license": "AGPL-3.0-or-later",
   "scripts": {
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start --host 0.0.0.0 --port 3000",
-    "obfuscate": "javascript-obfuscator static/js/webrtc-agent.js --output static/js/webrtc-agent.js --compact true --control-flow-flattening true --dead-code-injection true",
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "python3 scripts/generate-icons.py && npm run ingest:oak && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
     "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
-    "build": "npm run ingest:oak && node scripts/build.mjs",
     "lint": "node -e \"console.log('Linting passed')\"",
-    "mine:watch": "npx tsx scripts/watchSubstrates.ts",
-    "dev": "docusaurus start --host 0.0.0.0 --port 3000",
-    "deploy": "docusaurus deploy"
+    "mine:watch": "npx tsx scripts/watchSubstrates.ts"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
+    "@vitejs/plugin-react": "^6.1.1",
     "chokidar": "^5.0.0",
     "process": "^0.11.10",
-    "typescript": "~5.4.0"
+    "typescript": "~5.4.0",
+    "vite": "^8.3.0"
   },
   "browserslist": {
     "production": [
@@ -44,6 +44,7 @@
     "@docusaurus/preset-classic": "^3.10.2",
     "@mlc-ai/web-llm": "^0.2.84",
     "@school-ai/edge-runtime": "file:packages/edge-runtime",
-    "edge-runtime": "^4.0.1"
+    "edge-runtime": "^4.0.1",
+    "react-router-dom": "^7.18.3"
   }
 }

@@ -7,9 +7,9 @@ const isProd = process.env.NODE_ENV === 'production';
 const baseUrl = process.env.BASE_URL || '/';
 
 const config: Config = {
-  title: 'St Joseph',
+  title: "St Joseph's Curriculum Portal",
   tagline: 'Education for All — Offline-First Curriculum Engine',
-  favicon: 'img/logo.svg',
+  favicon: 'favicon.ico',
 
   url: 'https://josephbrewerton-oss.github.io',
   baseUrl,
@@ -18,6 +18,51 @@ const config: Config = {
   projectName: 'schoolsample',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
+
+  headTags: [
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'icon',
+        type: 'image/x-icon',
+        href: `${baseUrl}favicon.ico`,
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        href: `${baseUrl}img/favicon-32x32.png`,
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        href: `${baseUrl}img/favicon-16x16.png`,
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: `${baseUrl}img/logo.svg`,
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'apple-touch-icon',
+        sizes: '180x180',
+        href: `${baseUrl}img/apple-touch-icon.png`,
+      },
+    },
+  ],
 
   scripts: [
     {
@@ -93,7 +138,7 @@ const config: Config = {
                 {
                   tagName: 'link',
                   rel: 'icon',
-                  href: `${baseUrl}img/logo.svg`,
+                  href: `${baseUrl}img/favicon-32x32.png`,
                 },
                 {
                   tagName: 'link',
@@ -113,7 +158,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "St Joseph's Learning Portal",
+      title: "St Joseph's Portal",
       logo: {
         alt: 'School Logo',
         src: 'img/logo.svg',
@@ -121,27 +166,27 @@ const config: Config = {
       items: [
         {
           to: '/practice-lab',
-          label: '⚡ Practice Arena',
+          label: '⚡ Practice',
           position: 'left',
         },
         {
           to: '/learning-zone',
-          label: '📖 Curriculum Lessons',
+          label: '📖 Lessons',
           position: 'left',
         },
         {
           to: '/profile',
-          label: '⭐ My Progress',
-          position: 'left',
-        },
-        {
-          to: '/blog',
-          label: 'School News',
+          label: '⭐ Progress',
           position: 'left',
         },
         {
           to: '/curriculum-studio',
-          label: '🌍 Curriculum Studio',
+          label: '🌍 Studio',
+          position: 'left',
+        },
+        {
+          to: '/blog',
+          label: '📰 News',
           position: 'left',
         },
         {

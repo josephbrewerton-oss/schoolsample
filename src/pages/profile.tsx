@@ -505,7 +505,10 @@ export default function StudentProfilePage() {
           </h2>
           <p style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
             St Joseph is built under the <strong>UK GDPR and the Age Appropriate Design Code (Children&apos;s Code)</strong>.
-            All learning progress, star tallies, and error diagnostics are stored exclusively inside your browser&apos;s on-device storage. No personal data or learning analytics are transmitted to our servers or third parties.
+            All learning progress, star tallies, and error diagnostics are stored exclusively inside your browser&apos;s on-device storage. No personal data or learning analytics are transmitted to our servers or third parties.{' '}
+            <Link to="/privacy" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+              Read full legal disclaimers &rarr;
+            </Link>
           </p>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>

@@ -4,34 +4,44 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   deploy:
-    name: Build & Deploy Docusaurus
+    name: Build & Deploy Vite SPA
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: 18
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
       - name: Build website
-        run: npm run build
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
         env:
-          BASE_URL: /schoolsample/
+          BASE_URL: /${{ github.event.repository.name }}/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./dist
           enable_jekyll: false

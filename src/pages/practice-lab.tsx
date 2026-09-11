@@ -6,7 +6,6 @@ import { useLocation } from '@docusaurus/router';
 import NeuralLabCanvas from '../components/NeuralLabCanvas';
 import NanoAssistantPanel from '../components/NanoAssistantPanel';
 import {
-  LanguageSelector,
   getSavedLanguage,
   listenToLanguageChange,
   setSavedLanguage,
@@ -104,11 +103,7 @@ export default function PracticeLabPage() {
       )}
 
       {mounted ? (
-        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1rem' }}>
-            <LanguageSelector currentLang={currentLang} onSelect={handleLanguageChange} />
-          </div>
-
+        <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.25rem 1rem 3rem 1rem' }}>
           {/* S-Expression Canvas Engine */}
           <NeuralLabCanvas
             initialKeyStage={activeStage}

@@ -1,11 +1,28 @@
-// This file is not used by "docusaurus start/build" commands.
-// It is here to improve your IDE experience (type-checking, autocompletion...),
-// and can also run the package.json "typecheck" script manually.
 {
-  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
-    "strict": true
+    "paths": {
+      "@theme/Layout": ["src/shims/LayoutShim.tsx"],
+      "@docusaurus/Link": ["src/shims/docusaurusLink.tsx"],
+      "@docusaurus/useBaseUrl": ["src/shims/docusaurusUseBaseUrl.ts"],
+      "@docusaurus/router": ["src/shims/docusaurusRouter.ts"],
+      "@docusaurus/BrowserOnly": ["src/shims/docusaurusBrowserOnly.tsx"]
+    }
   },
-  "exclude": [".docusaurus", "build"]
+  "include": ["src", "vite.config.ts"]
 }

@@ -230,6 +230,11 @@ export default function SettingsPage() {
                     <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
                       📦 Model size: ~1.5 GB in Chrome cache &nbsp;|&nbsp; 📶 Recommended only on unmetered school Wi-Fi &nbsp;|&nbsp; 🔒 100% On-device
                     </div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem' }}>
+                      <Link to="/privacy" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+                        Read full UK GDPR, Children's Code &amp; No-Cookies Disclaimers &rarr;
+                      </Link>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

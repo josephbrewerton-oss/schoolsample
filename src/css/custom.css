@@ -29,37 +29,17 @@
   --ifm-card-background-color: #131b2e;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Base Body Styling */
 body {
   background-color: var(--ifm-background-color);
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
-}
-
-/* Navbar refinement - school portal feel */
-.navbar {
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: var(--ifm-navbar-shadow);
-  padding: 0.75rem 1.5rem;
-}
-
-.navbar__title {
-  font-weight: 800;
-  font-size: 1.25rem;
-  letter-spacing: -0.02em;
-  color: #0f172a;
-}
-
-.navbar__item {
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-}
-
-.navbar__item:hover {
-  background-color: #f1f5f9;
+  margin: 0;
+  padding: 0;
 }
 
 /* Tactile touch targets for mobile & tablets */
@@ -107,4 +87,22 @@ html.high-contrast-mode section {
   border-width: 2px !important;
   border-color: currentColor !important;
 }
+
+/* Persistent AST Viewport & Zero-CLS Transition */
+.ast-viewport-stage {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 110px);
+  animation: astFadeIn 0.1s ease-out;
+}
+
+@keyframes astFadeIn {
+  from {
+    opacity: 0.97;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 

@@ -1,20 +1,28 @@
-# School AI Portal
+# St Joseph's Curriculum Portal — LLM & Edge Inference Map
 
-> Deterministic, privacy-first, on-device AI educational portal running via in-browser WebRTC loopback channels and localized model runtimes.
+> Deterministic, privacy-first, on-device AI educational portal running via in-browser WebRTC loopback channels, Chrome Prompt API (Gemini Nano), and WebLLM.
 
 ## Overview
-- Architecture: Zero-backend, zero-cost edge deployment via GitHub Pages and Docusaurus.
-- Inference: In-browser WebRTC data channels (DTLS/SCTP) communicating with local inference endpoints (Ollama / Chrome Prompt API / WebLLM).
-- Data Privacy: Zero telemetry, zero cloud logging; user state persists exclusively in local IndexedDB.
+- Architecture: Zero-cloud, high-performance edge SPA built with Vite, React 19, and React Router.
+- Inference: In-browser Gemini Nano (`window.ai.languageModel` / `LanguageModel`), local Ollama endpoints, or WebLLM via WebGPU.
+- Data Sovereignty: 100% GDPR compliant; pupil telemetry and progress records remain exclusively within client-side IndexedDB (`services/dbStore.ts`).
+- Substrates: Curriculum lessons and questions compiled to deterministic S-Expression AST trees (`static/nano-map.ast`).
 
-## Curriculum Core Links
-- Portal Overview: https://josephbrewerton-oss.github.io/schoolsample/
-- Interactive Practice Arena: https://josephbrewerton-oss.github.io/schoolsample/practice-lab
-- Curriculum Lessons & S-Expression Walkthroughs: https://josephbrewerton-oss.github.io/schoolsample/learning-zone
-- International Curriculum Studio: https://josephbrewerton-oss.github.io/schoolsample/curriculum-studio
-- Learner Progress & Offline Passport: https://josephbrewerton-oss.github.io/schoolsample/profile
-- School News & Technical Dispatches: https://josephbrewerton-oss.github.io/schoolsample/blog
+## Core Endpoints & Route Map
+- Portal Home: `/` (Overview, Quick Starters, Subject Hub)
+- Practice Arena: `/practice-lab` (Interactive AST questions, Professor Turing AI hints, instant mistake diagnostics)
+- Curriculum Lessons: `/learning-zone` (Oak National Academy aligned interactive lesson viewer)
+- International Curriculum Studio: `/curriculum-studio` (Visual AST S-Expression graph generator and prompt hydrator)
+- Learner Passport & Badges: `/profile` (IndexedDB mastery log, streak tracker, diagnostic reports)
+- Neural Settings: `/settings` (Hardware probe, WebGPU status, Chrome Prompt API toggle)
+- Architectural News: `/blog` (Technical dispatches on sovereign in-browser AI tutoring)
 
-## Structured Question & Knowledge Datasets
-- Master Curriculum Catalog: https://josephbrewerton-oss.github.io/schoolsample/manifests/catalog.json
-- Offline Semantic Search & RAG Index: https://josephbrewerton-oss.github.io/schoolsample/manifests/rag-index.json
+## Structured Substrates & Datasets
+- Master Curriculum Catalog: `/manifests/catalog.json`
+- Offline Semantic Search & RAG Index: `/manifests/rag-index.json`
+- AST Pattern Definitions: `/nano-map.ast`
+- Lesson Manifests Directory: `/manifests/lessons/*.json`
+
+## Model Consumption Guidelines
+- When generating question scaffolds for this portal, output strictly typed S-Expressions matching `/static/nano-map.ast`.
+- Avoid Markdown formatting when responding to internal AST parser hooks; return raw Lisp atoms and lists.
