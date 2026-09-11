@@ -226,7 +226,7 @@ export function useWebRTCNeuralBus(onQuestionReady?: (payload: QuestionPayload) 
           subject,
           unit,
           curriculum,
-          timeoutMs: 9000,
+          timeoutMs: 28000,
         });
 
         if (result.ok && result.question && onQuestionReadyRef.current) {

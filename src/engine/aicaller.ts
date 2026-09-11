@@ -66,10 +66,28 @@ class AiRuntimeCaller {
 
     try {
       if (typeof lm.availability === 'function') {
-        const status = await lm.availability({
-          expectedInputLanguages: ['en'],
-          expectedOutputLanguages: ['en'],
-        });
+        let status: any = 'no';
+        try {
+          // Modern W3C availability check
+          status = await lm.availability({
+            expectedInputs: [{ type: 'text', languages: ['en'] }],
+            expectedOutputs: [{ type: 'text', languages: ['en'] }],
+            outputLanguage: 'en',
+            expectedInputLanguages: ['en'],
+            expectedOutputLanguages: ['en'],
+          });
+        } catch {
+          try {
+            status = await lm.availability({
+              outputLanguage: 'en',
+              expectedInputLanguages: ['en'],
+              expectedOutputLanguages: ['en'],
+            });
+          } catch {
+            status = await lm.availability();
+          }
+        }
+
         const mappedStatus =
           status === 'readily' || status === 'available'
             ? 'readily'
@@ -111,10 +129,14 @@ class AiRuntimeCaller {
 
     const systemPrompt = opts?.systemPrompt || 'You are an elite UK Curriculum Socratic educator.';
 
+    // Fully-specified W3C Prompt API configuration
     const createOptions: any = {
       systemPrompt,
       temperature: opts?.temperature ?? 0.2,
       topK: opts?.topK ?? 3,
+      expectedInputs: [{ type: 'text', languages: ['en'] }],
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+      outputLanguage: 'en',
       expectedInputLanguages: ['en'],
       expectedOutputLanguages: ['en'],
     };
@@ -131,16 +153,25 @@ class AiRuntimeCaller {
       try {
         return await lm.create(createOptions);
       } catch {
-        return await lm.create({
-          systemPrompt,
-          expectedInputLanguages: ['en'],
-          expectedOutputLanguages: ['en'],
-        });
+        try {
+          return await lm.create({
+            systemPrompt,
+            outputLanguage: 'en',
+            expectedInputLanguages: ['en'],
+            expectedOutputLanguages: ['en'],
+          });
+        } catch {
+          return await lm.create({
+            systemPrompt,
+            expectedInputLanguages: ['en'],
+            expectedOutputLanguages: ['en'],
+          });
+        }
       }
     })();
 
-    // Model weight downloading might take longer, allow 45s if monitoring progress, otherwise 20s
-    const creationTimeoutMs = opts?.onDownloadProgress ? 45000 : 20000;
+    // Model weight downloading might take longer, allow 45s if monitoring progress, otherwise 25s
+    const creationTimeoutMs = opts?.onDownloadProgress ? 45000 : 25000;
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`[AiCaller] Session initialization timed out after ${creationTimeoutMs}ms`)), creationTimeoutMs)
     );
@@ -175,10 +206,23 @@ class AiRuntimeCaller {
    */
   async promptText(opts: AiInferenceOptions): Promise<string> {
     const isEphemeral = !opts.preserveContext;
-    const session = await this.getSession(opts);
-    const timeoutMs = opts.timeoutMs ?? 12000;
+    let session = await this.getSession(opts);
+    const timeoutMs = opts.timeoutMs ?? 25000;
 
-    const inferencePromise = session.prompt(opts.prompt);
+    const executeCall = async (s: any) => {
+      try {
+        return await s.prompt(opts.prompt, { outputLanguage: 'en' });
+      } catch (err: any) {
+        if (err?.name === 'InvalidStateError' || String(err?.message || '').toLowerCase().includes('destroyed')) {
+          this.destroy();
+          session = await this.getSession(opts);
+          return await session.prompt(opts.prompt);
+        }
+        return await s.prompt(opts.prompt);
+      }
+    };
+
+    const inferencePromise = executeCall(session);
     const timeoutPromise = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`[AiCaller] Inference prompt timed out after ${timeoutMs}ms`)), timeoutMs)
     );
@@ -200,13 +244,23 @@ class AiRuntimeCaller {
    */
   async *promptStream(opts: AiInferenceOptions): AsyncGenerator<string, void, unknown> {
     const isEphemeral = !opts.preserveContext;
-    const session = await this.getSession(opts);
+    let session = await this.getSession(opts);
 
     try {
-      const stream = session.promptStreaming ? session.promptStreaming(opts.prompt) : null;
+      let stream: any = null;
+      try {
+        stream = session.promptStreaming ? session.promptStreaming(opts.prompt, { outputLanguage: 'en' }) : null;
+      } catch {
+        stream = session.promptStreaming ? session.promptStreaming(opts.prompt) : null;
+      }
 
       if (!stream) {
-        const text = await session.prompt(opts.prompt);
+        let text = '';
+        try {
+          text = await session.prompt(opts.prompt, { outputLanguage: 'en' });
+        } catch {
+          text = await session.prompt(opts.prompt);
+        }
         yield text;
         return;
       }

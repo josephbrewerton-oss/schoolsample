@@ -477,7 +477,7 @@ export class HypervisorHost {
    */
   public async executeInference(req: HypervisorInferenceRequest): Promise<HypervisorInferenceResult> {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const timeoutMs = req.timeoutMs || 9000;
+    const timeoutMs = req.timeoutMs || 30000;
     const startTime = Date.now();
 
     this.state = 'executing';

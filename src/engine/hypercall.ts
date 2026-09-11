@@ -175,7 +175,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
               curriculum,
               difficulty,
               lang,
-              timeoutMs: 8500,
+              timeoutMs: 28000,
             });
 
             if (vmResult.ok && vmResult.question) {

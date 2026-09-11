@@ -130,7 +130,7 @@
       }
     }
 
-    // Session Management with Warm Session Pool
+    // Session Management with Warm Session Pool adhering to W3C Prompt API
     async function getOrCreateWarmSession(systemInstruction) {
       const aiHost = window.ai || self.ai || window.parent?.ai || (typeof ai !== 'undefined' ? ai : null);
       const GlobalLM = window.LanguageModel || window.parent?.LanguageModel;
@@ -147,26 +147,47 @@
         cachedSession = null;
       }
 
-      const baseConfig = {
+      // Modern W3C Prompt API specification with backward-compatible fallbacks
+      const w3cConfig = {
         systemPrompt: systemInstruction,
+        expectedInputs: [{ type: 'text', languages: ['en'] }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        outputLanguage: 'en',
         expectedInputLanguages: ['en'],
         expectedOutputLanguages: ['en'],
+        temperature: 0.2,
+        topK: 3,
       };
 
       try {
-        cachedSession = await target.create(baseConfig);
+        cachedSession = await target.create(w3cConfig);
         currentSystemInstruction = systemInstruction;
         return cachedSession;
-      } catch {
+      } catch (err1) {
         try {
+          // Fallback with minimal W3C expectedOutputs/outputLanguage
           cachedSession = await target.create({
-            expectedInputLanguages: ['en'],
+            systemPrompt: systemInstruction,
+            outputLanguage: 'en',
             expectedOutputLanguages: ['en'],
+            expectedInputLanguages: ['en'],
           });
           currentSystemInstruction = systemInstruction;
           return cachedSession;
-        } catch {
-          return null;
+        } catch (err2) {
+          try {
+            // Legacy Chrome create
+            cachedSession = await target.create({
+              systemPrompt: systemInstruction,
+              expectedInputLanguages: ['en'],
+              expectedOutputLanguages: ['en'],
+            });
+            currentSystemInstruction = systemInstruction;
+            return cachedSession;
+          } catch (err3) {
+            console.warn('[Guest VM Daemon] All LanguageModel create variations failed:', err3);
+            return null;
+          }
         }
       }
     }
@@ -179,10 +200,42 @@
       currentSystemInstruction = '';
     }
 
-    // Process Inference Intent with S-Expression adherence to quiz.rules.ast
-    async function processInferenceRequest(payload) {
+    // Inference Request Queue & Deduplication
+    const processedRequestIds = new Set();
+    const inferenceQueue = [];
+
+    function enqueueInference(payload) {
       const requestId = payload.requestId || `req_${Date.now()}`;
+      if (processedRequestIds.has(requestId)) {
+        return;
+      }
+      processedRequestIds.add(requestId);
+      if (processedRequestIds.size > 200) {
+        const oldest = processedRequestIds.values().next().value;
+        processedRequestIds.delete(oldest);
+      }
+
+      inferenceQueue.push({ ...payload, requestId });
+      runNextInference();
+    }
+
+    async function runNextInference() {
+      if (isBusy || inferenceQueue.length === 0) return;
+      const nextPayload = inferenceQueue.shift();
+      if (!nextPayload) return;
+
       isBusy = true;
+      try {
+        await executeInferenceWithRetry(nextPayload);
+      } finally {
+        isBusy = false;
+        // Schedule next request in queue
+        setTimeout(runNextInference, 10);
+      }
+    }
+
+    async function executeInferenceWithRetry(payload, isRetry = false) {
+      const requestId = payload.requestId;
 
       try {
         const subject = payload.subject || payload.sub || 'English';
@@ -197,7 +250,7 @@
           const hcRes = await makeHypercall('curriculumnode', {
             intent: 'get:package',
             payload: { stage: keyStage, subject, topic },
-          }, 1200);
+          }, 1500);
 
           if (hcRes.ok && hcRes.data) {
             curriculumAxiom = hcRes.data.coreAxiom || hcRes.data.axiom || '';
@@ -205,39 +258,63 @@
           }
         } catch {}
 
-        const systemInstruction = `You are an expert UK curriculum teacher. Create multiple-choice questions strictly matching the subject, topic, and Key Stage level. Output strictly as a valid Lisp S-expression without Markdown backticks or commentary. Format strictly adhering to quiz.rules.ast.`;
+        const systemInstruction = `UK National Curriculum Educator. Output strictly 1 valid Lisp S-expression adhering to quiz.rules.ast. No markdown fences or commentary.`;
 
-        const session = await getOrCreateWarmSession(systemInstruction);
+        let session = await getOrCreateWarmSession(systemInstruction);
         if (!session) {
           throw new Error('On-device LanguageModel session unavailable on this device.');
         }
 
         const prompt = `Topic: "${topic}" (${keyStage} ${subject}).
-${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"` : ''}
-${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"` : ''}
-Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
-Constraint: Exactly 4 distinct options. Answer key must be 0-indexed integer (0, 1, 2, or 3). Hint must be concise and under 15 words. No 'A)' or 'Option 1' prefixes.
+${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
+Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). The :answer-key must be the 0-indexed integer of the correct answer. Hint under 15 words.
 
 Format strictly as:
 (:route "quiz:mcq"
- :scratchpad "Core pedagogical rule explaining why the correct option is true"
- :prompt "Question prompt directly testing ${topic}?"
+ :scratchpad "Pedagogical rule for correct answer"
+ :prompt "Clear question prompt?"
  :options ("Option 1" "Option 2" "Option 3" "Option 4")
  :answer-key 0
  :hint "Short clue under 15 words")`;
 
-        // Execution with 7.5s internal abort protection
+        // Execution with 28s timeout to accommodate on-device Gemini Nano inference
         let response = '';
         const abortCtrl = new AbortController();
-        const timeout = setTimeout(() => abortCtrl.abort(), 7500);
+        const timeout = setTimeout(() => {
+          abortCtrl.abort(new Error('Prompt execution exceeded 28000ms'));
+        }, 28000);
 
         try {
-          response = await session.prompt(prompt, { signal: abortCtrl.signal });
+          try {
+            // Modern W3C prompt with outputLanguage
+            response = await session.prompt(prompt, {
+              signal: abortCtrl.signal,
+              outputLanguage: 'en',
+            });
+          } catch (promptErr) {
+            // Check for session invalidation/destruction
+            const isInvalidState = promptErr?.name === 'InvalidStateError' || 
+              String(promptErr?.message || '').toLowerCase().includes('destroyed');
+            
+            if (isInvalidState && !isRetry) {
+              console.warn('[Guest VM Daemon] Session was destroyed; refreshing session and retrying...');
+              resetWarmSession();
+              session = await getOrCreateWarmSession(systemInstruction);
+              if (session) {
+                response = await session.prompt(prompt, { signal: abortCtrl.signal });
+              } else {
+                throw promptErr;
+              }
+            } else {
+              // Try without outputLanguage option if browser prompt doesn't accept options object
+              response = await session.prompt(prompt, { signal: abortCtrl.signal });
+            }
+          }
         } finally {
           clearTimeout(timeout);
         }
 
-        let sanitized = response
+        let sanitized = (response || '')
           .replace(/```(?:lisp|scheme)?/gi, '')
           .replace(/```/g, '')
           .trim();
@@ -266,8 +343,6 @@ Format strictly as:
           requestId,
           error: err?.message || 'Inference execution failed in guest VM daemon.',
         });
-      } finally {
-        isBusy = false;
       }
     }
 
@@ -297,7 +372,7 @@ Format strictly as:
 
         case 'REQUEST_QUESTION':
         case 'EXEC_PROMPT':
-          processInferenceRequest(data);
+          enqueueInference(data);
           break;
 
         default:

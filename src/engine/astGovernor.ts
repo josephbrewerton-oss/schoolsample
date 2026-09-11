@@ -286,6 +286,26 @@ export class ASTFlowGovernor {
       });
     }
 
+    // 7. Deterministic Option Shuffling (Fisher-Yates Anti-Bias Guard)
+    // Ensures the correct answer is evenly distributed across A, B, C, D (indices 0..3)
+    const paired = uniqueOptions.map((opt, i) => ({
+      opt,
+      misconception: misconceptions[i] || '',
+      isCorrect: i === targetAnswerKey,
+    }));
+
+    // Fisher-Yates shuffle
+    for (let i = paired.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = paired[i];
+      paired[i] = paired[j];
+      paired[j] = temp;
+    }
+
+    const shuffledOptions = paired.map((p) => p.opt);
+    const shuffledMisconceptions = paired.map((p) => p.misconception);
+    const finalAnswerKey = paired.findIndex((p) => p.isCorrect);
+
     return {
       isValid: true,
       sanitizedQuestion: {
@@ -293,11 +313,11 @@ export class ASTFlowGovernor {
         route: raw.route || 'quiz:mcq',
         scratchpad: String(raw.scratchpad || ''),
         prompt: cleanPrompt,
-        options: uniqueOptions,
-        answerKey: targetAnswerKey,
+        options: shuffledOptions,
+        answerKey: finalAnswerKey >= 0 ? finalAnswerKey : 0,
         hint: (raw as any).hint?.trim() || `Think about the key definition of ${expectedTopic}.`,
         explanation: raw.explanation || `The correct answer aligns directly with curriculum principles for ${expectedTopic}.`,
-        misconceptions,
+        misconceptions: shuffledMisconceptions,
         socraticFollowUp: raw.socraticFollowUp || `Can you identify which rule or definition applies to ${expectedTopic}?`,
       },
     };
