@@ -1,9 +1,9 @@
 // src/pages/settings.tsx
 import React, { useState, useEffect } from 'react';
-import Layout from '@theme/Layout';
+import { Link } from 'react-router-dom';
+import PageMeta from '../components/PageMeta';
 import { CurriculumProviderKey } from '../data/curriculumRegistry';
 import { getInstalledCurriculumPacks, CustomCurriculumPack } from '../services/curriculumPackStore';
-import Link from '@docusaurus/Link';
 import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import {
   SUPPORTED_LANGUAGES,
@@ -11,6 +11,7 @@ import {
   setSavedLanguage,
 } from '../engine/operational-language';
 import { translatePageDOM, restorePageDOM } from '../engine/universalDomTranslator';
+import { getComplianceCaveat } from '../data/complianceCaveats';
 
 export default function SettingsPage() {
   const [curriculumStandard, setCurriculumStandard] = useState<CurriculumProviderKey>('uk_oak');
@@ -124,7 +125,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <Layout title="Settings" description="Manage local neural engine and curriculum preferences.">
+    <PageMeta title="Settings" description="Manage local neural engine and curriculum preferences.">
       <main style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         <div
           style={{
@@ -196,87 +197,86 @@ export default function SettingsPage() {
                 School Chromebooks and modern PCs can run AI models right inside Chrome! When supported, Chrome downloads the model once to the device cache. After that, it generates customized practice questions and Socratic hints <strong>completely offline</strong> without needing school Wi-Fi or sending data to the cloud.
               </div>
 
-              {/* Explicit UK GDPR / Children's Code Resource Consent Card */}
-              <div
-                style={{
-                  marginTop: '1rem',
-                  padding: '1rem 1.25rem',
-                  background: hasAiConsent ? '#f0fdf4' : '#fffbeb',
-                  border: `2px solid ${hasAiConsent ? '#86efac' : '#fcd34d'}`,
-                  borderRadius: '10px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: '260px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{hasAiConsent ? '🛡️' : '🔒'}</span>
-                      <strong style={{ color: hasAiConsent ? '#166534' : '#92400e', fontSize: '0.95rem' }}>
-                        Pupil Data & Device Consent (UK Children's Code / GDPR)
-                      </strong>
-                    </div>
-                    <p style={{ fontSize: '0.85rem', color: hasAiConsent ? '#14532d' : '#78350f', margin: '0.35rem 0 0.5rem 0', lineHeight: 1.45 }}>
-                      {hasAiConsent ? (
-                        <>
-                          <strong>Status: In-Browser AI Permitted.</strong> Your browser is authorized to use on-device Gemini Nano when present. 
-                          Questions are generated locally with zero cloud telemetry.
-                        </>
-                      ) : (
-                        <>
-                          <strong>Status: Eco Mode (Default).</strong> Zero downloads and zero extra storage used. 
-                          To protect device storage quotas and mobile data limits, model downloading is turned off until explicitly enabled.
-                        </>
-                      )}
-                    </p>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                      📦 Model size: ~1.5 GB in Chrome cache &nbsp;|&nbsp; 📶 Recommended only on unmetered school Wi-Fi &nbsp;|&nbsp; 🔒 100% On-device
-                    </div>
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.78rem' }}>
-                      <Link to="/privacy" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
-                        Read full UK GDPR, Children's Code &amp; No-Cookies Disclaimers &rarr;
-                      </Link>
-                    </div>
-                  </div>
+              {/* Explicit UK GDPR / Children's Code / CAADCA / DPDP Resource Consent Card */}
+              {(() => {
+                const caveat = getComplianceCaveat(portalLanguage);
+                return (
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      padding: '1rem 1.25rem',
+                      background: hasAiConsent ? '#f0fdf4' : '#fffbeb',
+                      border: `2px solid ${hasAiConsent ? '#86efac' : '#fcd34d'}`,
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '260px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '1.1rem' }}>{hasAiConsent ? '🛡️' : '🔒'}</span>
+                          <strong style={{ color: hasAiConsent ? '#166534' : '#92400e', fontSize: '0.95rem' }}>
+                            {caveat.badgeTitle} &bull; UK GDPR &amp; CAADCA &amp; India DPDP
+                          </strong>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: hasAiConsent ? '#14532d' : '#78350f', margin: '0.35rem 0 0.5rem 0', lineHeight: 1.45 }}>
+                          {hasAiConsent ? caveat.activeSummary : caveat.ecoSummary}
+                        </p>
+                        <div style={{ fontSize: '0.78rem', color: '#78350f', background: '#fff7ed', padding: '6px 10px', borderRadius: '6px', border: '1px solid #ffedd5', marginBottom: '8px', lineHeight: 1.4 }}>
+                          <div><strong>California (AB 2273 CAADCA &amp; SOPIPA):</strong> {caveat.californiaNotice}</div>
+                          <div style={{ marginTop: '3px' }}><strong>India (DPDP Act Sec 5(3)):</strong> {caveat.indiaNotice}</div>
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                          📦 Model size: ~1.5 GB in Chrome cache &nbsp;|&nbsp; 📶 Unmetered Wi-Fi suggested &nbsp;|&nbsp; 🔒 100% On-device
+                        </div>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.78rem' }}>
+                          <Link to="/privacy" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+                            Read full UK GDPR, Children's Code &amp; California/India Disclaimers &rarr;
+                          </Link>
+                        </div>
+                      </div>
 
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {hasAiConsent ? (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleConsent(false)}
-                        style={{
-                          padding: '8px 14px',
-                          borderRadius: '8px',
-                          border: '1px solid #ef4444',
-                          background: '#ffffff',
-                          color: '#dc2626',
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        🛑 Switch Back to Eco Mode
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleConsent(true)}
-                        style={{
-                          padding: '8px 14px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: '#16a34a',
-                          color: '#ffffff',
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 4px rgba(22, 163, 74, 0.2)',
-                        }}
-                      >
-                        ✅ Allow In-Browser AI Download
-                      </button>
-                    )}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {hasAiConsent ? (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleConsent(false)}
+                            style={{
+                              padding: '8px 14px',
+                              borderRadius: '8px',
+                              border: '1px solid #ef4444',
+                              background: '#ffffff',
+                              color: '#dc2626',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            🛑 {caveat.ecoBtn}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleConsent(true)}
+                            style={{
+                              padding: '8px 14px',
+                              borderRadius: '8px',
+                              border: 'none',
+                              background: '#16a34a',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 4px rgba(22, 163, 74, 0.2)',
+                            }}
+                          >
+                            {caveat.activateBtn}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
             {/* Default Challenge Level */}
@@ -390,6 +390,29 @@ export default function SettingsPage() {
               </select>
             </div>
 
+            {/* PWA Offline App & Service Worker Status Card */}
+            <div style={{
+              marginBottom: '2rem',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              background: '#f8fafc',
+              border: '1px solid #cbd5e1',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📲</span> Progressive Web App (PWA) Offline Engine
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: '#475569', margin: 0, lineHeight: 1.45 }}>
+                    St Joseph's Portal installs as a standalone app on Chromebooks, Windows, iPads, and Android tablets. Pre-caches lessons and AST substrates for complete offline learning when Wi-Fi drops.
+                  </p>
+                  <div style={{ fontSize: '0.82rem', color: '#16a34a', fontWeight: 700, marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🟢</span> Service Worker Registered &bull; Cache Status: Active
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Overseas & Custom Curriculum Studio Card */}
             <div style={{
               marginBottom: '2rem',
@@ -455,6 +478,6 @@ export default function SettingsPage() {
           </form>
         </div>
       </main>
-    </Layout>
+    </PageMeta>
   );
 }

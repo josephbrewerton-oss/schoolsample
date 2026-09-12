@@ -7,7 +7,7 @@ import {
   getRandomCachedAST,
   getTuringDiagnosticSummary 
 } from '../services/dbStore';
-import { resolveSeedCoordinate } from '@site/static/promptStrategies';
+import { resolveSeedCoordinate } from '../../static/promptStrategies';
 import { aiCaller } from './aicaller';
 
 /**

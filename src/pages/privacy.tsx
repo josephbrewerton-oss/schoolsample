@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '@theme/Layout';
+import PageMeta from '../components/PageMeta';
 
 export default function PrivacyPage(): React.JSX.Element {
   return (
-    <Layout
+    <PageMeta
       title="Privacy, GDPR & Legal Disclaimers"
       description="Legal compliance disclosures for St Joseph's Curriculum Portal: UK GDPR, Children's Code, PECR No-Cookies Policy, and UNCRC safeguarding standards."
     >
@@ -303,7 +303,7 @@ export default function PrivacyPage(): React.JSX.Element {
             </div>
           </section>
 
-          {/* Section 5 */}
+          {/* Section 5: International Jurisdictions: California & India */}
           <section
             style={{
               background: '#ffffff',
@@ -314,7 +314,47 @@ export default function PrivacyPage(): React.JSX.Element {
             }}
           >
             <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📖</span> 5. Educational Frameworks &amp; Copyright Disclaimers
+              <span>🌐</span> 5. California (AB 2273 &amp; SOPIPA) &amp; India (DPDP Act 2023) Compliance
+            </h2>
+            <div style={{ color: '#334155', fontSize: '0.94rem', lineHeight: 1.7, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <p>
+                To support international classrooms and overseas school partnerships, our privacy architecture complies with the highest standards in both North America and South Asia:
+              </p>
+              <ul style={{ paddingLeft: '1.25rem', margin: 0 }}>
+                <li>
+                  <strong>State of California (USA):</strong>
+                  <br />
+                  &bull; <em>California Age-Appropriate Design Code Act (AB 2273 / CAADCA):</em> Implements highest privacy by default, prohibits commercial nudges, and uses plain, age-appropriate language.
+                  <br />
+                  &bull; <em>Student Online Personal Information Protection Act (SOPIPA):</em> We never amass student profiles for commercial use, target advertisements to pupils, or sell pupil data.
+                  <br />
+                  &bull; <em>Cal. Civil Code § 1632 Translation Mandate:</em> All legal caveats and on-device AI consent notices are available in Spanish and all portal operational languages.
+                </li>
+                <li style={{ marginTop: '0.75rem' }}>
+                  <strong>Republic of India:</strong>
+                  <br />
+                  &bull; <em>Digital Personal Data Protection Act, 2023 (DPDP Act) Section 9:</em> Prohibits behavioral tracking or targeted advertising directed at children. Because all inference is on-device without cloud data fiduciaries, no child personal data is transmitted.
+                  <br />
+                  &bull; <em>DPDP Act Section 5(3) Multi-Language Mandate:</em> Notices and consent disclosures are provided in regional languages (including Hindi, Bengali, and Urdu) in accordance with the 8th Schedule to the Constitution of India.
+                  <br />
+                  &bull; <em>MeitY AI Labelling Rules:</em> All AI tutoring interactions and synthetic question generations are clearly labelled with on-device AI badges.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Section 6 */}
+          <section
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+            }}
+          >
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📖</span> 6. Educational Frameworks &amp; Copyright Disclaimers
             </h2>
             <div style={{ color: '#334155', fontSize: '0.94rem', lineHeight: 1.7, display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <p>
@@ -360,6 +400,6 @@ export default function PrivacyPage(): React.JSX.Element {
           </div>
         </div>
       </div>
-    </Layout>
+    </PageMeta>
   );
 }

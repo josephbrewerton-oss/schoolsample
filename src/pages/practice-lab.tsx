@@ -1,15 +1,14 @@
 // src/pages/practice-lab.tsx
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
-import Layout from '@theme/Layout';
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import { useLocation } from '@docusaurus/router';
+import { useLocation } from 'react-router-dom';
 import NeuralLabCanvas from '../components/NeuralLabCanvas';
 import NanoAssistantPanel from '../components/NanoAssistantPanel';
+import PageMeta from '../components/PageMeta';
+import { getAssetUrl } from '../utils/url';
 import {
   getSavedLanguage,
   listenToLanguageChange,
-  setSavedLanguage,
-} from '@site/src/engine/operational-language';
+} from '../engine/operational-language';
 import { dispatch } from '../engine/hypercall';
 import { hypervisor } from '../engine/hypervisor';
 
@@ -67,7 +66,7 @@ export default function PracticeLabPage() {
   const [activeUnit, setActiveUnit] = useState('Fractions and Decimals');
   const [activeAxiomCheck, setActiveAxiomCheck] = useState<string | undefined>(undefined);
 
-  const workerUrl = useBaseUrl('/worker.html?v=1.2.1');
+  const workerUrl = getAssetUrl('worker.html?v=1.2.1');
 
   // 1. Language Bus Listener
   useEffect(() => {
@@ -131,7 +130,7 @@ export default function PracticeLabPage() {
   }, [activeStage, activeSubject, activeUnit]);
 
   return (
-    <Layout title="Practice Arena" description="St Joseph's Interactive Curriculum Practice Arena">
+    <PageMeta title="Practice Arena" description="St Joseph's Interactive Curriculum Practice Arena">
       {/* Background worker iframe with null-safe ref */}
       {bootIframe && (
         <iframe
@@ -187,6 +186,6 @@ export default function PracticeLabPage() {
           </div>
         )}
       </div>
-    </Layout>
+    </PageMeta>
   );
 }

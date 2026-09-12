@@ -1,7 +1,7 @@
 // src/pages/curriculum-studio.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from '@theme/Layout';
-import Link from '@docusaurus/Link';
+import { Link } from 'react-router-dom';
+import PageMeta from '../components/PageMeta';
 import {
   CustomCurriculumPack,
   CustomCurriculumLesson,
@@ -169,7 +169,7 @@ export default function CurriculumStudioPage() {
   };
 
   return (
-    <Layout
+    <PageMeta
       title="International Curriculum Studio"
       description="Import, customize, and deploy overseas and regional national curricula for offline learning."
     >
@@ -1176,6 +1176,6 @@ export default function CurriculumStudioPage() {
         )}
 
       </main>
-    </Layout>
+    </PageMeta>
   );
 }

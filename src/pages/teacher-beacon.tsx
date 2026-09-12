@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '@theme/Layout';
+import PageMeta from '../components/PageMeta';
 import { classroomBeacon, StudentBeaconTelemetry } from '../services/classroomBeacon';
 
 export default function TeacherBeaconPage(): React.JSX.Element {
@@ -51,7 +51,7 @@ export default function TeacherBeaconPage(): React.JSX.Element {
   };
 
   return (
-    <Layout
+    <PageMeta
       title="Classroom Beacon — Teacher Live Console"
       description="Local peer-to-peer classroom supervisor. Real-time pupil progress with zero cloud egress and 100% UK GDPR compliance."
     >
@@ -338,6 +338,6 @@ export default function TeacherBeaconPage(): React.JSX.Element {
         </div>
 
       </div>
-    </Layout>
+    </PageMeta>
   );
 }

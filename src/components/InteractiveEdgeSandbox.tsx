@@ -1,6 +1,5 @@
 // src/components/InteractiveEdgeSandbox.tsx
 import React, { useState } from 'react';
-import BrowserOnly from '@docusaurus/BrowserOnly';
 import SExprViewRenderer from './SExprViewRenderer';
 import { aiCaller } from '../engine/aicaller';
 
@@ -142,9 +141,5 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
 }
 
 export default function InteractiveEdgeSandbox(props: SandboxProps) {
-  return (
-    <BrowserOnly fallback={<div style={{ padding: '2rem', color: '#94a3b8' }}>Loading teacher authoring suite...</div>}>
-      {() => <TeacherSandboxInner {...props} />}
-    </BrowserOnly>
-  );
+  return <TeacherSandboxInner {...props} />;
 }

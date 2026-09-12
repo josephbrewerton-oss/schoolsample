@@ -6,7 +6,7 @@ import { parseSExpr } from '../utils/sexprParser';
 import { SExprAST } from '../types/sexpr';
 import SExprViewRenderer from './SExprViewRenderer';
 import { Channels } from '../utils/channelBus';
-import useBaseUrl from '@docusaurus/useBaseUrl';
+import { getAssetUrl } from '../utils/url';
 import { VFS_CURRICULUM_SEEDS } from '../manifests/vfsSeedModules';
 import { EngineFlow } from '../engine/engineflow';
 
@@ -30,7 +30,7 @@ export default function DynamicLessonViewer({
   defaultSubject,
   defaultStream = 'academic',
 }: EngineProps): React.JSX.Element {
-  const baseUrl = useBaseUrl('/');
+  const baseUrl = getAssetUrl('/');
   const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
   // Multi-stream catalog state

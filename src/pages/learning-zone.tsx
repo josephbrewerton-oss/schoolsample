@@ -1,14 +1,14 @@
 // src/pages/learning-zone.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Layout from '@theme/Layout';
-import Link from '@docusaurus/Link';
-import useBaseUrl from '@docusaurus/useBaseUrl';
+import { Link, useSearchParams } from 'react-router-dom';
+import PageMeta from '../components/PageMeta';
+import { getAssetUrl } from '../utils/url';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
+import SeedInflationStudio from '../components/SeedInflationStudio';
 import { dispatch } from '../engine/hypercall';
 import { hypervisor } from '../engine/hypervisor';
 import {
-  LanguageSelector,
   SUPPORTED_LANGUAGES,
   getSavedLanguage,
   listenToLanguageChange,
@@ -36,6 +36,35 @@ export default function LearningZonePage() {
     }
     return 'uk_oak';
   });
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [userRole, setUserRole] = useState<'pupil' | 'teacher'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('learning_zone_role') as 'pupil' | 'teacher') || 'pupil';
+    }
+    return 'pupil';
+  });
+  const [pupilTab, setPupilTab] = useState<'learn' | 'tutor' | 'full'>('learn');
+
+  const handleRoleChange = (role: 'pupil' | 'teacher') => {
+    setUserRole(role);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('learning_zone_role', role);
+    }
+  };
+
+  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation'>(() => {
+    return searchParams.get('tab') === 'inflation' ? 'inflation' : 'lesson';
+  });
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'inflation' && activeViewMode !== 'inflation') {
+      setActiveViewMode('inflation');
+    } else if (!tab && activeViewMode !== 'lesson') {
+      setActiveViewMode('lesson');
+    }
+  }, [searchParams]);
 
   const [currentLang, setCurrentLang] = useState<string>(() => {
     return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
@@ -324,7 +353,7 @@ export default function LearningZonePage() {
   const practiceLabUrl = `/practice-lab?ks=${encodeURIComponent(selectedKeyStage)}&sub=${encodeURIComponent(selectedSubject)}&unit=${encodeURIComponent(selectedUnit)}`;
 
   return (
-    <Layout
+    <PageMeta
       title="Curriculum Learning Zone"
       description="Deterministic concept exploration and misconception diagnostics."
     >
@@ -333,237 +362,584 @@ export default function LearningZonePage() {
         {/* Hidden WebRTC Neural Worker Daemon Frame */}
         <iframe
           ref={(el) => hypervisor.registerWorkerIframe(el)}
-          src={useBaseUrl('/worker.html?v=1.2.1')}
+          src={getAssetUrl('worker.html?v=1.2.1')}
           style={{ display: 'none' }}
           title="neural-worker-daemon"
         />
 
-        {/* Language Selection Header */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '1rem' }}>
-          <LanguageSelector currentLang={currentLang} onSelect={handleLanguageChange} />
-        </div>
-
-        {/* Top Selector Control Bar */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <CurriculumSelector
-            keyStage={selectedKeyStage}
-            subject={selectedSubject}
-            unit={selectedUnit}
-            status="online"
-            isReady={!isCompiling}
-            sessionId={sessionId}
-            curriculumTree={curriculumTree}
-            buttonLabel={isCompiling ? '⚡ Compiling...' : '📖 Generate Lesson'}
-            onKeyStageChange={(newKs, firstSub, firstUnit) => {
-              setSelectedKeyStage(newKs);
-              if (firstSub) setSelectedSubject(firstSub);
-              if (firstUnit) setSelectedUnit(firstUnit);
-            }}
-            onSubjectChange={(newSub, firstUnit) => {
-              setSelectedSubject(newSub);
-              if (firstUnit) setSelectedUnit(firstUnit);
-            }}
-            onUnitChange={(newUnit) => setSelectedUnit(newUnit)}
-            onSessionIdChange={setSessionId}
-            onNewQuestion={() => compileLessonForTopic(selectedKeyStage, selectedSubject, selectedUnit)}
-            onDownloadReport={() => {}}
-          />
-        </div>
-
-        {/* Main Lesson Sheet */}
+        {/* Header Bar: Pupil View vs. Teacher / Master View */}
         <div
           style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.25rem',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
             background: '#ffffff',
+            padding: '0.75rem 1.25rem',
+            borderRadius: '14px',
             border: '1px solid #e2e8f0',
-            borderRadius: '16px',
-            padding: '2.5rem',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-            minHeight: '480px',
-            opacity: isCompiling ? 0.7 : 1,
-            transition: 'opacity 0.2s ease',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase' }}>
-                {selectedKeyStage.toUpperCase()} &bull; {selectedSubject.toUpperCase()} ({curriculumSetting.toUpperCase()} Standard)
-              </span>
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: '0.25rem 0' }}>
-                {effectiveLesson.title || selectedUnit}
-              </h2>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              {isNonEnglish && (
-                <button
-                  type="button"
-                  onClick={() => setShowOriginal(!showOriginal)}
-                  className="button button--outline button--primary"
-                  style={{
-                    borderRadius: '8px',
-                    padding: '0.5rem 1rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  {showOriginal ? `🌐 Show ${currentLangMeta.label}` : '🇬🇧 Show Original'}
-                </button>
-              )}
-
+          {/* Primary Role Switch: Pupil vs Teacher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Mode:
+            </span>
+            <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: '10px', gap: '3px' }}>
               <button
                 type="button"
-                onClick={handleSpeakLesson}
-                className="button button--secondary"
+                id="learning-role-pupil"
+                onClick={() => handleRoleChange('pupil')}
                 style={{
-                  borderRadius: '8px',
-                  padding: '0.5rem 1rem',
-                  fontWeight: 600,
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: userRole === 'pupil' ? '#2563eb' : 'transparent',
+                  color: userRole === 'pupil' ? '#ffffff' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: userRole === 'pupil' ? '0 2px 4px rgba(37,99,235,0.2)' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
-                title="Listen to lesson overview"
               >
-                🔊 Read Aloud
+                <span>🎒 Pupil View</span>
+                <span style={{ fontSize: '0.7rem', opacity: userRole === 'pupil' ? 0.9 : 0.6 }}>(Focused)</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleSynthesizeFullLesson}
-                disabled={isSynthesizingFull || isCompiling}
-                className="button button--secondary"
+                id="learning-role-teacher"
+                onClick={() => handleRoleChange('teacher')}
                 style={{
-                  borderRadius: '8px',
-                  padding: '0.6rem 1.25rem',
-                  fontWeight: 600,
-                  cursor: isSynthesizingFull ? 'wait' : 'pointer',
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: userRole === 'teacher' ? '#0f172a' : 'transparent',
+                  color: userRole === 'teacher' ? '#ffffff' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: userRole === 'teacher' ? '0 2px 4px rgba(15,23,42,0.2)' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                {isSynthesizingFull ? '✨ Synthesizing Lesson...' : '✨ Expand Full Lesson (AI)'}
+                <span>👩‍🏫 Teacher View</span>
+                <span style={{ fontSize: '0.7rem', opacity: userRole === 'teacher' ? 0.9 : 0.6 }}>(Lesson Plan & Diagnostics)</span>
               </button>
-              <Link
-                to={practiceLabUrl}
-                className="button button--primary"
-                style={{
-                  borderRadius: '8px',
-                  padding: '0.6rem 1.25rem',
-                  fontWeight: 600,
-                  background: '#2563eb',
-                }}
-              >
-                ⚡ Test in Practice Lab
-              </Link>
             </div>
           </div>
 
-          {/* Translation Status Badge */}
-          {isNonEnglish && (
-            <div
+          {/* Secondary Switch: In Teacher Mode, offer Seed Inflation Engine shortcut */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {userRole === 'teacher' && (
+              <div style={{ display: 'flex', background: '#f8fafc', padding: '3px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '3px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveViewMode('lesson');
+                    setSearchParams({});
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activeViewMode === 'lesson' ? '#ffffff' : 'transparent',
+                    color: activeViewMode === 'lesson' ? '#0f172a' : '#64748b',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: activeViewMode === 'lesson' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                  }}
+                >
+                  Lesson Plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveViewMode('inflation');
+                    setSearchParams({ tab: 'inflation' });
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activeViewMode === 'inflation' ? '#2563eb' : 'transparent',
+                    color: activeViewMode === 'inflation' ? '#ffffff' : '#64748b',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: activeViewMode === 'inflation' ? '0 1px 2px rgba(37,99,235,0.2)' : 'none',
+                  }}
+                >
+                  🌱 Seed Engine
+                </button>
+              </div>
+            )}
+
+            {/* Quick Practice shortcut button */}
+            <Link
+              to={practiceLabUrl}
               style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: '#eff6ff',
+                color: '#1d4ed8',
+                border: '1px solid #bfdbfe',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                marginBottom: '1rem',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                background: showOriginal ? '#fef3c7' : '#eff6ff',
-                color: showOriginal ? '#92400e' : '#1e40af',
-                border: `1px solid ${showOriginal ? '#fde68a' : '#bfdbfe'}`,
               }}
             >
-              {isTranslatingLesson ? (
-                <span>⚡ Translating lesson into {currentLangMeta.label} ({currentLangMeta.nativeLabel})...</span>
-              ) : showOriginal ? (
-                <span>🇬🇧 Viewing English Original (Translation into {currentLangMeta.label} ready)</span>
-              ) : (
-                <span>🌐 Translated into {currentLangMeta.label} ({currentLangMeta.nativeLabel})</span>
-              )}
-            </div>
-          )}
-
-          <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '1rem 0 1.5rem 0' }} />
-
-          {/* Diagnostic Pillars */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-            
-            <div style={{ padding: '1.5rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📐</span> Core Axiom
-              </div>
-              <p style={{ color: '#334155', fontSize: '1rem', lineHeight: 1.6, fontWeight: 500, margin: 0 }}>
-                {effectiveLesson.axiom}
-              </p>
-            </div>
-
-            <div style={{ padding: '1.5rem', borderRadius: '12px', background: '#fffbeb', border: '1px solid #fef3c7' }}>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#b45309', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>⚠️</span> Cognitive Trap (Common Error)
-              </div>
-              <p style={{ color: '#92400e', fontSize: '1rem', lineHeight: 1.6, fontWeight: 500, margin: 0 }}>
-                {effectiveLesson.trap}
-              </p>
-            </div>
-
+              <span>⚡ Practice Quiz</span>
+              <span>➔</span>
+            </Link>
           </div>
+        </div>
 
-          {/* Structured Lesson Delivery Flow */}
-          <div style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '12px', background: '#f0fdf4', border: '1px solid #dcfce7' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#166534', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📋</span> Structured Lesson Steps
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                <strong style={{ color: '#15803d' }}>Step 1: Inquiry Hook</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}>{effectiveLesson.hook}</p>
-              </div>
-
-              <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                <strong style={{ color: '#15803d' }}>Step 2: Guided Practice & Activity</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}>{effectiveLesson.guidedStep}</p>
-              </div>
-
-              <div style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                <strong style={{ color: '#15803d' }}>Step 3: Socratic Check for Understanding</strong>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b' }}><em>"{effectiveLesson.socraticCheck}"</em></p>
-              </div>
+        {activeViewMode === 'inflation' && userRole === 'teacher' ? (
+          <SeedInflationStudio />
+        ) : (
+          <>
+            {/* Top Selector Control Bar */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <CurriculumSelector
+                keyStage={selectedKeyStage}
+                subject={selectedSubject}
+                unit={selectedUnit}
+                status="online"
+                isReady={!isCompiling}
+                sessionId={sessionId}
+                curriculumTree={curriculumTree}
+                buttonLabel={isCompiling ? '⚡ Compiling...' : '📖 Change Topic'}
+                onKeyStageChange={(newKs, firstSub, firstUnit) => {
+                  setSelectedKeyStage(newKs);
+                  if (firstSub) setSelectedSubject(firstSub);
+                  if (firstUnit) setSelectedUnit(firstUnit);
+                }}
+                onSubjectChange={(newSub, firstUnit) => {
+                  setSelectedSubject(newSub);
+                  if (firstUnit) setSelectedUnit(firstUnit);
+                }}
+                onUnitChange={(newUnit) => setSelectedUnit(newUnit)}
+                onSessionIdChange={setSessionId}
+                onNewQuestion={() => compileLessonForTopic(selectedKeyStage, selectedSubject, selectedUnit)}
+                onDownloadReport={() => {}}
+              />
             </div>
-          </div>
 
-          {/* Expanded AI Lesson Narrative Block */}
-          {effectiveFullText && (
+            {/* Main Lesson Sheet */}
             <div
               style={{
-                marginBottom: '2rem',
-                padding: '1.75rem',
-                borderRadius: '12px',
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: userRole === 'pupil' ? '1.75rem 2rem' : '2.25rem',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.04)',
+                minHeight: '440px',
+                opacity: isCompiling ? 0.7 : 1,
+                transition: 'opacity 0.2s ease',
               }}
             >
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>✨</span> Synthesized Comprehensive Lesson
-              </h3>
-              <div style={{ color: '#334155', fontSize: '1rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-                {effectiveFullText}
+              {/* Lesson Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {selectedKeyStage.toUpperCase()} &bull; {selectedSubject.toUpperCase()}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '1px 7px',
+                        borderRadius: '9999px',
+                        background: userRole === 'pupil' ? '#eff6ff' : '#f8fafc',
+                        color: userRole === 'pupil' ? '#1d4ed8' : '#475569',
+                        border: '1px solid #cbd5e1',
+                      }}
+                    >
+                      {userRole === 'pupil' ? '🎒 Pupil View' : '👩‍🏫 Teacher Lesson Plan'}
+                    </span>
+                  </div>
+                  <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+                    {effectiveLesson.title || selectedUnit}
+                  </h1>
+                </div>
+
+                {/* Compact Control Cluster */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {isNonEnglish && (
+                    <button
+                      type="button"
+                      onClick={() => setShowOriginal(!showOriginal)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        background: showOriginal ? '#fef3c7' : '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: showOriginal ? '#92400e' : '#334155',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {showOriginal ? `🌐 ${currentLangMeta.label}` : '🇬🇧 Original'}
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleSpeakLesson}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#1e293b',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                    title="Listen to lesson overview"
+                  >
+                    <span>🔊</span>
+                    <span>Read Aloud</span>
+                  </button>
+
+                  <Link
+                    to={practiceLabUrl}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: '8px',
+                      background: '#2563eb',
+                      color: '#ffffff',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 6px rgba(37,99,235,0.25)',
+                    }}
+                  >
+                    <span>⚡ Practice Now</span>
+                  </Link>
+                </div>
               </div>
+
+              {/* Translation Alert (if non-English) */}
+              {isNonEnglish && (
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    marginBottom: '1rem',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    background: showOriginal ? '#fffbeb' : '#eff6ff',
+                    color: showOriginal ? '#b45309' : '#1e40af',
+                    border: `1px solid ${showOriginal ? '#fef3c7' : '#bfdbfe'}`,
+                  }}
+                >
+                  {isTranslatingLesson ? (
+                    <span>⚡ Translating into {currentLangMeta.label}...</span>
+                  ) : showOriginal ? (
+                    <span>🇬🇧 Viewing English Original</span>
+                  ) : (
+                    <span>🌐 Translated into {currentLangMeta.label} ({currentLangMeta.nativeLabel})</span>
+                  )}
+                </div>
+              )}
+
+              {/* ========================================================================= */}
+              {/* PUPIL VIEW: Uncluttered, Calm 3-Step Journey with Socratic Tutor on Demand */}
+              {/* ========================================================================= */}
+              {userRole === 'pupil' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* Clean Pupil Sub-Tabs to prevent vertical scrolling fatigue */}
+                  <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPupilTab('learn')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: pupilTab === 'learn' ? '#eff6ff' : 'transparent',
+                        color: pupilTab === 'learn' ? '#1d4ed8' : '#64748b',
+                        fontWeight: pupilTab === 'learn' ? 700 : 500,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      📖 Lesson Steps
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPupilTab('tutor')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: pupilTab === 'tutor' ? '#eff6ff' : 'transparent',
+                        color: pupilTab === 'tutor' ? '#1d4ed8' : '#64748b',
+                        fontWeight: pupilTab === 'tutor' ? 700 : 500,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>💬 Ask Prof. Turing</span>
+                      <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1e40af', padding: '1px 5px', borderRadius: '4px' }}>AI Tutor</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPupilTab('full')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: pupilTab === 'full' ? '#eff6ff' : 'transparent',
+                        color: pupilTab === 'full' ? '#1d4ed8' : '#64748b',
+                        fontWeight: pupilTab === 'full' ? 700 : 500,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      📝 Detailed Reading
+                    </button>
+                  </div>
+
+                  {/* Pupil Tab 1: 3-Step Clean Lesson Card */}
+                  {pupilTab === 'learn' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {/* Step 1: Core Fact Banner */}
+                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          Key Fact to Remember:
+                        </div>
+                        <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0f172a', margin: 0, lineHeight: 1.5 }}>
+                          {effectiveLesson.axiom}
+                        </p>
+                      </div>
+
+                      {/* Step 2: What are we investigating? */}
+                      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          1. Think About This:
+                        </div>
+                        <p style={{ fontSize: '1.05rem', color: '#1e293b', margin: 0, lineHeight: 1.6 }}>
+                          {effectiveLesson.hook}
+                        </p>
+                      </div>
+
+                      {/* Step 3: Practice Activity */}
+                      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          2. How It Works:
+                        </div>
+                        <p style={{ fontSize: '1.05rem', color: '#1e293b', margin: 0, lineHeight: 1.6 }}>
+                          {effectiveLesson.guidedStep}
+                        </p>
+                      </div>
+
+                      {/* Step 4: Watch Out Trap */}
+                      <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '1.25rem' }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          ⚠️ Common Trap to Avoid:
+                        </div>
+                        <p style={{ fontSize: '1rem', color: '#92400e', margin: 0, lineHeight: 1.5 }}>
+                          {effectiveLesson.trap}
+                        </p>
+                      </div>
+
+                      {/* Prompt to Test */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', marginTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1d4ed8' }}>Ready to test what you learned?</div>
+                          <div style={{ fontSize: '0.95rem', color: '#334155' }}>Try 3 quick practice questions with instant stars and hints.</div>
+                        </div>
+                        <Link
+                          to={practiceLabUrl}
+                          style={{
+                            padding: '10px 22px',
+                            borderRadius: '10px',
+                            background: '#2563eb',
+                            color: '#ffffff',
+                            fontWeight: 700,
+                            textDecoration: 'none',
+                            fontSize: '0.95rem',
+                            boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                          }}
+                        >
+                          ⚡ Start Practice Quiz
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pupil Tab 2: Socratic AI Tutor */}
+                  {pupilTab === 'tutor' && (
+                    <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
+                      <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#475569' }}>
+                        Need help understanding <strong>{effectiveLesson.title}</strong>? Ask Professor Turing for a friendly hint or question!
+                      </div>
+                      <TuringTutor
+                        key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}-${currentLang}`}
+                        seedKey={`${selectedKeyStage}:${selectedSubject}:${selectedUnit}:${currentLang}`}
+                        keyStage={selectedKeyStage}
+                        subject={selectedSubject}
+                        unit={selectedUnit}
+                        contextTopic={selectedUnit}
+                        activePrompt={effectiveLesson.socraticCheck}
+                      />
+                    </div>
+                  )}
+
+                  {/* Pupil Tab 3: Full Reading Narrative */}
+                  {pupilTab === 'full' && (
+                    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.5rem', lineHeight: 1.7, color: '#334155', whiteSpace: 'pre-wrap' }}>
+                      {effectiveFullText}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* ========================================================================= */
+                /* TEACHER VIEW: Full Pedagogical Architecture, Diagnostic Pillars, & AI Expand */
+                /* ========================================================================= */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {/* Teacher Action Toolbar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155' }}>
+                      Pedagogical Blueprint &bull; Diagnostic Architecture
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSynthesizeFullLesson}
+                      disabled={isSynthesizingFull || isCompiling}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: '#0f172a',
+                        fontWeight: 600,
+                        fontSize: '0.82rem',
+                        cursor: isSynthesizingFull ? 'wait' : 'pointer',
+                      }}
+                    >
+                      {isSynthesizingFull ? '✨ Synthesizing Lesson...' : '✨ Expand Detailed Lesson Plan (AI)'}
+                    </button>
+                  </div>
+
+                  {/* Diagnostic Pillars */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                    <div style={{ padding: '1.25rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>📐</span> Pedagogical Axiom (Standard)
+                      </div>
+                      <p style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.6, fontWeight: 500, margin: 0 }}>
+                        {effectiveLesson.axiom}
+                      </p>
+                    </div>
+
+                    <div style={{ padding: '1.25rem', borderRadius: '12px', background: '#fffbeb', border: '1px solid #fef3c7' }}>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#b45309', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>⚠️</span> Cognitive Trap (Student Misconception)
+                      </div>
+                      <p style={{ color: '#92400e', fontSize: '0.95rem', lineHeight: 1.6, fontWeight: 500, margin: 0 }}>
+                        {effectiveLesson.trap}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Structured Lesson Delivery Flow */}
+                  <div style={{ padding: '1.25rem', borderRadius: '12px', background: '#f0fdf4', border: '1px solid #dcfce7' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#166534', margin: '0 0 0.85rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>📋</span> 3-Part Lesson Delivery Flow
+                    </h3>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ padding: '0.85rem 1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                        <strong style={{ color: '#15803d', fontSize: '0.85rem' }}>Phase 1: Inquiry Hook</strong>
+                        <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b', fontSize: '0.92rem' }}>{effectiveLesson.hook}</p>
+                      </div>
+
+                      <div style={{ padding: '0.85rem 1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                        <strong style={{ color: '#15803d', fontSize: '0.85rem' }}>Phase 2: Guided Practice &amp; Activity</strong>
+                        <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b', fontSize: '0.92rem' }}>{effectiveLesson.guidedStep}</p>
+                      </div>
+
+                      <div style={{ padding: '0.85rem 1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                        <strong style={{ color: '#15803d', fontSize: '0.85rem' }}>Phase 3: Socratic Check for Understanding</strong>
+                        <p style={{ margin: '0.25rem 0 0 0', color: '#1e293b', fontSize: '0.92rem' }}><em>"{effectiveLesson.socraticCheck}"</em></p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded AI Lesson Narrative Block */}
+                  {effectiveFullText && (
+                    <div
+                      style={{
+                        padding: '1.5rem',
+                        borderRadius: '12px',
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+                      }}
+                    >
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>✨</span> Teacher Lesson Outline &amp; Narrative
+                      </h3>
+                      <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                        {effectiveFullText}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Socratic Assistant Panel */}
+                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1.25rem' }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '0.75rem' }}>
+                      🎓 AI Socratic Tutor Simulation:
+                    </div>
+                    <TuringTutor
+                      key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}-${currentLang}`}
+                      seedKey={`${selectedKeyStage}:${selectedSubject}:${selectedUnit}:${currentLang}`}
+                      keyStage={selectedKeyStage}
+                      subject={selectedSubject}
+                      unit={selectedUnit}
+                      contextTopic={selectedUnit}
+                      activePrompt={effectiveLesson.socraticCheck}
+                    />
+                  </div>
+                </div>
+              )}
+
             </div>
-          )}
-
-          {/* Socratic Assistant Panel */}
-          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1.5rem' }}>
-            <TuringTutor
-              key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}-${currentLang}`}
-              seedKey={`${selectedKeyStage}:${selectedSubject}:${selectedUnit}:${currentLang}`}
-              keyStage={selectedKeyStage}
-              subject={selectedSubject}
-              unit={selectedUnit}
-              contextTopic={selectedUnit}
-              activePrompt={effectiveLesson.socraticCheck}
-            />
-          </div>
-
-        </div>
+          </>
+        )}
       </main>
-    </Layout>
+    </PageMeta>
   );
 }

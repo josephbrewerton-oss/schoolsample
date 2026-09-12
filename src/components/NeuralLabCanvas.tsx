@@ -4,7 +4,7 @@ import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import { dispatch } from '../engine/hypercall';
 import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
-import { hasUserGrantedAiConsent } from '../engine/aicaller';
+import { hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 
 interface NeuralLabCanvasProps {
@@ -435,25 +435,36 @@ export default function NeuralLabCanvas({
                 : 'Hypervisor: Active'}
             </span>
 
-            {/* Transparent Resource/Consent Badge */}
-            <span
+            {/* Transparent Resource/Consent Interactive Badge */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextState = !hasConsent;
+                setUserAiConsent(nextState);
+                requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty);
+              }}
               style={{
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 padding: '4px 10px',
                 borderRadius: '6px',
-                background: hasConsent ? '#f0fdf4' : '#f8fafc',
-                color: hasConsent ? '#15803d' : '#475569',
-                border: `1px solid ${hasConsent ? '#bbf7d0' : '#cbd5e1'}`,
+                background: hasConsent ? '#f0fdf4' : '#fffbeb',
+                color: hasConsent ? '#15803d' : '#92400e',
+                border: `1px solid ${hasConsent ? '#bbf7d0' : '#fde68a'}`,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
               }}
               title={
                 hasConsent
-                  ? 'Smart AI Assistance Enabled. 100% private.'
-                  : 'Fast Offline Curriculum Mode. Zero data downloads.'
+                  ? 'On-Device Gemini Nano active (100% private). Click to switch to Eco Mode.'
+                  : 'Fast offline mode. Click to enable on-device Gemini Nano live tutoring.'
               }
             >
-              {hasConsent ? '🧠 Smart AI Enabled' : '🌱 Fast Offline Mode'}
-            </span>
+              <span>{hasConsent ? '🧠' : '⚡'}</span>
+              <span>{hasConsent ? 'Nano AI: Active' : 'Enable Nano AI'}</span>
+            </button>
           </div>
         </div>
 

@@ -2,12 +2,12 @@ if (typeof window !== 'undefined' && !(window as any).process) {
   (window as any).process = { env: { NODE_ENV: 'development' } };
 }
 import React from 'react';
-import Link from '@docusaurus/Link';
-import Layout from '@theme/Layout';
+import { Link } from 'react-router-dom';
+import PageMeta from '../components/PageMeta';
 
 export default function Home() {
   return (
-    <Layout
+    <PageMeta
       title="Home"
       description="St Joseph's Primary & Secondary Interactive Learning Portal"
     >
@@ -77,6 +77,59 @@ export default function Home() {
               📖 Explore Lesson Walkthroughs
             </Link>
           </div>
+        </section>
+
+        {/* Developing-Nation Safe Architecture: Compression & Inflation Banner */}
+        <section
+          style={{
+            background: '#0f172a',
+            borderRadius: '20px',
+            padding: '2rem 2.5rem',
+            marginBottom: '3.5rem',
+            color: '#f8fafc',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1.5rem',
+            boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)',
+          }}
+        >
+          <div style={{ maxWidth: '680px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '1.2rem' }}>🌱</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Developing-Nation Safe Architecture &bull; 99.999% Bandwidth Saved
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', margin: '0 0 8px 0' }}>
+              Sub-Kilobyte AST Seeds &amp; On-Device Model Inflation
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+              Instead of draining prepaid mobile data with 50MB streaming video, we compress entire curriculum topics into ~350-byte AST seeds. The on-device engine inflates them into interactive lessons, procedural SVG visualizers, and diagnostic misconception profilers with 0 bytes of network traffic.
+            </p>
+          </div>
+
+          <Link
+            to="/learning-zone?tab=inflation"
+            style={{
+              padding: '0.85rem 1.75rem',
+              borderRadius: '10px',
+              background: '#2563eb',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span>Explore Seed Inflation Studio</span>
+            <span>➔</span>
+          </Link>
         </section>
 
         {/* Core Capabilities Grid */}
@@ -269,6 +322,6 @@ export default function Home() {
           </a>.
         </div>
       </main>
-    </Layout>
+    </PageMeta>
   );
 }

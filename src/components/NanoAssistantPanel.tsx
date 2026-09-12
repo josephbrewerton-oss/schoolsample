@@ -1,6 +1,6 @@
 // src/components/NanoAssistantPanel.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { aiCaller, hasUserGrantedAiConsent } from '../engine/aicaller';
+import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 import {
   getSavedLanguage,
@@ -8,6 +8,7 @@ import {
   SUPPORTED_LANGUAGES,
 } from '../engine/operational-language';
 import { translateText, speakInLanguage } from '../engine/translationService';
+import { getComplianceCaveat } from '../data/complianceCaveats';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -327,21 +328,82 @@ PEDAGOGICAL RULES:
           >
             {voiceEnabled ? '🔊 Audio Guide ON' : '🔇 Audio Guide OFF'}
           </button>
-          <span
+          <button
+            type="button"
+            onClick={() => setUserAiConsent(!hasConsent)}
             style={{
               fontSize: '0.78rem',
-              background: hasConsent ? '#f0fdf4' : '#f8fafc',
-              color: hasConsent ? '#15803d' : '#64748b',
+              background: hasConsent ? '#f0fdf4' : '#fef3c7',
+              color: hasConsent ? '#15803d' : '#92400e',
               padding: '5px 10px',
               borderRadius: '8px',
               fontWeight: 700,
-              border: `1px solid ${hasConsent ? '#bbf7d0' : '#e2e8f0'}`,
+              border: `1px solid ${hasConsent ? '#bbf7d0' : '#fde68a'}`,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
+            title={hasConsent ? 'Click to switch to Eco Mode' : 'Click to enable local Gemini Nano AI'}
           >
-            {hasConsent ? '🧠 Smart Tutor Ready' : '🌱 Offline Tutor Mode'}
-          </span>
+            <span>{hasConsent ? '🧠 Smart Tutor Ready' : '⚡ Enable Gemini Nano'}</span>
+          </button>
         </div>
       </div>
+
+      {/* Just-In-Time In-Context Consent Banner when Nano is OFF (California CAADCA & India DPDP Act compliant) */}
+      {!hasConsent && (() => {
+        const caveat = getComplianceCaveat(currentLang);
+        return (
+          <div
+            style={{
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              padding: '0.75rem 1rem',
+              marginBottom: '0.85rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ flex: 1, minWidth: '220px' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🛡️</span> {caveat.badgeTitle}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                {caveat.badgeSubtitle}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: '#b45309', marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <span>• {caveat.californiaNotice}</span>
+                <span>• {caveat.indiaNotice}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setUserAiConsent(true)}
+                style={{
+                  background: '#d97706',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 14px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(217,119,6,0.3)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {caveat.activateBtn}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Chat Messages Container */}
       <div

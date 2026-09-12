@@ -10,6 +10,8 @@ import {
   translateText,
   speakInLanguage,
 } from '../engine/translationService';
+import { ProceduralManipulative } from './ProceduralManipulative';
+import { ASTKnowledgeSeed } from '../engine/seedInflationEngine';
 
 interface Props {
   subject: string;
@@ -52,10 +54,27 @@ export const QuestionCard: React.FC<Props> = ({
   const [showOriginal, setShowOriginal] = useState<boolean>(false);
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [hintStage, setHintStage] = useState<number>(0); // 0 = hidden, 1 = conceptual nudge, 2 = step method
+  const [showMentalMirror, setShowMentalMirror] = useState<boolean>(false);
 
-  // Reset hint stage when prompt changes
+  const inferredCpaType = useMemo<ASTKnowledgeSeed['cpaType'] | null>(() => {
+    const combined = `${subject} ${unit} ${prompt}`.toLowerCase();
+    if (combined.includes('fraction')) return 'fractions';
+    if (combined.includes('circuit') || combined.includes('electric') || combined.includes('lamp') || combined.includes('battery')) return 'circuits';
+    if ((combined.includes('equation') || combined.includes('reaction')) && (combined.includes('chemical') || combined.includes('balance') || combined.includes('subscript') || combined.includes('reactant') || combined.includes('h2') || combined.includes('stoich'))) return 'chemical-balance';
+    if (combined.includes('equation') || combined.includes('solve for x') || combined.includes('algebra')) return 'balance-scale';
+    if (combined.includes('atom') || combined.includes('nucleus') || combined.includes('electron') || combined.includes('proton')) return 'atomic';
+    if (combined.includes('place value') || combined.includes('tens') || combined.includes('ones') || combined.includes('bundles of 10') || combined.includes('partition')) return 'place-value';
+    if (combined.includes('ratio') || combined.includes('share') || combined.includes('parts')) return 'ratio-bar';
+    if (combined.includes('negative') || combined.includes('number line') || combined.includes('direction inversion')) return 'number-line';
+    if (combined.includes('photosynthesis') || combined.includes('biomass') || combined.includes('chloroplast') || combined.includes('van helmont') || combined.includes('co2')) return 'photosynthesis';
+    if (combined.includes('newton') || combined.includes('thrust') || combined.includes('resistive force') || combined.includes('resultant force') || combined.includes('drag') || combined.includes('constant speed')) return 'force-vectors';
+    return null;
+  }, [subject, unit, prompt]);
+
+  // Reset hint stage & mirror when prompt changes
   useEffect(() => {
     setHintStage(0);
+    setShowMentalMirror(false);
   }, [prompt]);
 
   const [translatedData, setTranslatedData] = useState<{
@@ -569,6 +588,41 @@ export const QuestionCard: React.FC<Props> = ({
                   <strong>🌱 Helpful Clue:</strong> {effectiveSocratic}
                 </div>
               )}
+
+              {inferredCpaType && (
+                <div style={{ paddingTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowMentalMirror(!showMentalMirror)}
+                    style={{
+                      background: showMentalMirror ? '#e0f2fe' : '#ffffff',
+                      color: '#0369a1',
+                      border: '1px solid #7dd3fc',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>🪞</span>
+                    <span>{showMentalMirror ? 'Hide Procedural Visual Mirror' : 'Open Zero-Footprint Mental Mirror (0 KB)'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Collapsible Procedural Mental Mirror Manipulative */}
+          {showMentalMirror && inferredCpaType && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <ProceduralManipulative
+                cpaType={inferredCpaType}
+                seedTopic={unit}
+              />
             </div>
           )}
 

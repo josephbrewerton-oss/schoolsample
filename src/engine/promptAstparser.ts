@@ -4,7 +4,7 @@ import {
   REGIONAL_CONSTRAINTS, 
   SUBJECT_DEFINITIONS,
   resolveKeyStageRule 
-} from '@site/static/promptStrategies';
+} from '../../static/promptStrategies';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 
 export interface PromptInferenceParams {

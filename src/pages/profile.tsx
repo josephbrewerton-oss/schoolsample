@@ -1,7 +1,7 @@
 // src/pages/profile.tsx
 import React, { useState, useEffect } from 'react';
-import Layout from '@theme/Layout';
-import Link from '@docusaurus/Link';
+import { Link } from 'react-router-dom';
+import PageMeta from '../components/PageMeta';
 import {
   getLearnerProfile,
   saveLearnerProfile,
@@ -76,7 +76,7 @@ export default function StudentProfilePage() {
   };
 
   return (
-    <Layout title="Learner Profile & Passport" description="100% On-Device, GDPR-Compliant Student Learning Passport">
+    <PageMeta title="Learner Profile & Passport" description="100% On-Device, GDPR-Compliant Student Learning Passport">
       <main style={{ maxWidth: '960px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         {/* Top Header & Privacy Guarantee Pill */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -665,6 +665,6 @@ export default function StudentProfilePage() {
           </div>
         )}
       </main>
-    </Layout>
+    </PageMeta>
   );
 }

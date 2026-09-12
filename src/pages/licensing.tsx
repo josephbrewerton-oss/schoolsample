@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '@theme/Layout';
+import PageMeta from '../components/PageMeta';
 
 export default function LicensingPage(): React.JSX.Element {
   const [selectedOrgType, setSelectedOrgType] = useState<string>('catholic');
@@ -53,7 +53,7 @@ export default function LicensingPage(): React.JSX.Element {
   const currentOrg = orgTypes.find((o) => o.id === selectedOrgType) || orgTypes[0];
 
   return (
-    <Layout
+    <PageMeta
       title="Mission & Licensing Covenant"
       description="St Joseph's Educational Covenant: Guaranteed 100% free access in perpetuity for all Catholic organisations and emerging nations worldwide."
     >
@@ -485,6 +485,6 @@ export default function LicensingPage(): React.JSX.Element {
         </section>
 
       </div>
-    </Layout>
+    </PageMeta>
   );
 }

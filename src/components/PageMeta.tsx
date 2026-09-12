@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
 
-export interface LayoutProps {
-  children: React.ReactNode;
+export interface PageMetaProps {
   title?: string;
   description?: string;
-  wrapperClassName?: string;
-  noFooter?: boolean;
+  children?: React.ReactNode;
 }
 
-export default function Layout({ children, title, description }: LayoutProps): React.JSX.Element {
+/**
+ * Standard client-side React component to set document title and meta description,
+ * replacing the previous @theme/Layout shim.
+ */
+export default function PageMeta({ title, description, children }: PageMetaProps): React.JSX.Element {
   useEffect(() => {
     if (title) {
       document.title = `${title} | St Joseph's Curriculum Portal`;

@@ -1,10 +1,88 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import { hasUserGrantedAiConsent, setUserAiConsent, aiCaller } from '../engine/aicaller';
+import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
+import { getComplianceCaveat } from '../data/complianceCaveats';
 
 export default function PersistentNavbar(): React.JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [hasNanoConsent, setHasNanoConsent] = useState(false);
+  const [nanoAvailable, setNanoAvailable] = useState<'checking' | 'yes' | 'after-download' | 'no'>('checking');
+  const [showNanoPopover, setShowNanoPopover] = useState(false);
+  const [currentLang, setCurrentLang] = useState<string>(() => {
+    return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
+  });
   const location = useLocation();
+
+  useEffect(() => {
+    const unsub = listenToLanguageChange((lang) => {
+      setCurrentLang(lang);
+    });
+    return unsub;
+  }, []);
+
+  // Listen for Nano AI Consent & Hardware Capabilities
+  useEffect(() => {
+    setHasNanoConsent(hasUserGrantedAiConsent());
+    
+    aiCaller.checkAvailability().then((avail) => {
+      if (avail.status === 'readily') setNanoAvailable('yes');
+      else if (avail.status === 'after-download') setNanoAvailable('after-download');
+      else setNanoAvailable('no');
+    }).catch(() => setNanoAvailable('no'));
+
+    const handleConsentChange = (e: any) => {
+      setHasNanoConsent(Boolean(e.detail));
+    };
+    window.addEventListener('ai_consent_changed', handleConsentChange);
+    window.addEventListener('storage', () => setHasNanoConsent(hasUserGrantedAiConsent()));
+
+    return () => {
+      window.removeEventListener('ai_consent_changed', handleConsentChange);
+    };
+  }, []);
+
+  // Listen for PWA install prompt
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Check if already in standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsInstalled(true);
+      return;
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+    }
+    setInstallPrompt(null);
+  };
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -28,6 +106,7 @@ export default function PersistentNavbar(): React.JSX.Element {
   const navLinks = [
     { to: '/practice-lab', label: '⚡ Practice' },
     { to: '/learning-zone', label: '📖 Lessons' },
+    { to: '/learning-zone?tab=inflation', label: '🌱 Seed Engine' },
     { to: '/profile', label: '⭐ Progress' },
     { to: '/curriculum-studio', label: '🌍 Studio' },
     { to: '/teacher-beacon', label: '📡 Beacon' },
@@ -132,6 +211,114 @@ export default function PersistentNavbar(): React.JSX.Element {
 
         {/* Right Actions (Settings & Theme Toggle & Mobile Hamburger) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          {/* Nano Live Engine Status Pill */}
+          <div style={{ position: 'relative' }}>
+            {(() => {
+              const caveat = getComplianceCaveat(currentLang);
+              return (
+                <>
+                  <button
+                    type="button"
+                    id="navbar-nano-status-pill"
+                    onClick={() => setShowNanoPopover(!showNanoPopover)}
+                    title="On-Device Gemini Nano AI Status"
+                    style={{
+                      background: hasNanoConsent ? '#ecfdf5' : '#f8fafc',
+                      color: hasNanoConsent ? '#065f46' : '#475569',
+                      border: `1px solid ${hasNanoConsent ? '#a7f3d0' : '#cbd5e1'}`,
+                      borderRadius: '6px',
+                      padding: '0.35rem 0.65rem',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span>{hasNanoConsent ? '🧠' : '🌱'}</span>
+                    <span>{hasNanoConsent ? caveat.statusOn : caveat.statusEco}</span>
+                  </button>
+
+                  {/* In-Context Nano Control Popover */}
+                  {showNanoPopover && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: '125%',
+                        width: '290px',
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                        zIndex: 9999,
+                        textAlign: 'left',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '0.9rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>🧠</span> Gemini Nano (Local AI)
+                        </strong>
+                        <button
+                          type="button"
+                          onClick={() => setShowNanoPopover(false)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '0.9rem' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 10px 0', lineHeight: 1.45 }}>
+                        {hasNanoConsent ? caveat.activeSummary : caveat.ecoSummary}
+                      </p>
+
+                      <div style={{ marginBottom: '8px', fontSize: '0.72rem', color: '#b45309', background: '#fffbeb', padding: '6px 8px', borderRadius: '6px', border: '1px solid #fde68a', lineHeight: 1.35 }}>
+                        <div><strong>CA / India Safe:</strong></div>
+                        <div>{caveat.californiaNotice}</div>
+                        <div style={{ marginTop: '2px' }}>{caveat.indiaNotice}</div>
+                      </div>
+
+                      <div style={{ marginBottom: '10px', fontSize: '0.75rem', color: '#64748b', background: '#f8fafc', padding: '6px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <strong>Device: </strong>
+                        {nanoAvailable === 'yes' ? (
+                          <span style={{ color: '#16a34a', fontWeight: 700 }}>{caveat.deviceReadyText}</span>
+                        ) : nanoAvailable === 'after-download' ? (
+                          <span style={{ color: '#2563eb', fontWeight: 700 }}>{caveat.deviceDownloadText}</span>
+                        ) : (
+                          <span style={{ color: '#64748b' }}>{caveat.deviceUnsupportedText}</span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserAiConsent(!hasNanoConsent);
+                          setShowNanoPopover(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          background: hasNanoConsent ? '#fee2e2' : '#2563eb',
+                          color: hasNanoConsent ? '#991b1b' : '#ffffff',
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {hasNanoConsent ? caveat.ecoBtn : caveat.activateBtn}
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
           <NavLink
             to="/settings"
             style={({ isActive }) => ({
@@ -155,6 +342,32 @@ export default function PersistentNavbar(): React.JSX.Element {
           >
             ⚙️ Settings
           </NavLink>
+
+          {/* PWA Install Button (Displays when install prompt is available) */}
+          {installPrompt && !isInstalled && (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              title="Install St Joseph's App on this device"
+              style={{
+                background: '#2563eb',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.35rem 0.65rem',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 2px 4px rgba(37,99,235,0.25)',
+              }}
+            >
+              <span>📲</span>
+              <span>Install</span>
+            </button>
+          )}
 
           <button
             type="button"

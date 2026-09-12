@@ -1,8 +1,6 @@
 // src/components/AstHarmoniser.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import Link from '@docusaurus/Link';
-import BrowserOnly from '@docusaurus/BrowserOnly';
-import { useLocation, useHistory } from '@docusaurus/router';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { parseSExpr } from '../utils/sexprParser';
 import { SExprAST } from '../types/sexpr';
 import SExprViewRenderer from './SExprViewRenderer';
@@ -255,7 +253,7 @@ export function resolveHarmonisedRoute(rawPath: string, search: string = ''): Ro
 
 function AstHarmoniserClient(): React.JSX.Element {
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate();
   const rawPath = location?.pathname || (typeof window !== 'undefined' ? window.location.pathname : '/');
   const rawSearch = location?.search || (typeof window !== 'undefined' ? window.location.search : '');
 
@@ -275,7 +273,7 @@ function AstHarmoniserClient(): React.JSX.Element {
     if (isPaused) return;
 
     if (countdown <= 0) {
-      history.push(resolution.targetPath);
+      navigate(resolution.targetPath);
       return;
     }
 
@@ -284,7 +282,7 @@ function AstHarmoniserClient(): React.JSX.Element {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [countdown, isPaused, resolution.targetPath, history]);
+  }, [countdown, isPaused, resolution.targetPath, navigate]);
 
   // Construct S-Expression AST representing this harmonised route
   const harmonisedAstSource = useMemo(() => {
@@ -316,9 +314,9 @@ function AstHarmoniserClient(): React.JSX.Element {
 
   const handleAstAction = (action: string) => {
     if (action === 'navigate:target') {
-      history.push(resolution.targetPath);
+      navigate(resolution.targetPath);
     } else if (action === 'navigate:home') {
-      history.push('/');
+      navigate('/');
     }
   };
 
@@ -741,9 +739,5 @@ function AstHarmoniserStaticFallback(): React.JSX.Element {
 }
 
 export default function AstHarmoniser(): React.JSX.Element {
-  return (
-    <BrowserOnly fallback={<AstHarmoniserStaticFallback />}>
-      {() => <AstHarmoniserClient />}
-    </BrowserOnly>
-  );
+  return <AstHarmoniserClient />;
 }
