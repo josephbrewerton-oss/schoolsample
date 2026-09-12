@@ -1,11 +1,15 @@
 {
-  "name": "School AI Portal",
-  "short_name": "SchoolPortal",
+  "id": "/",
+  "name": "St Joseph's Curriculum Portal",
+  "short_name": "St Joseph's",
+  "description": "Interactive UK National Curriculum portal with offline-first AST seeds and on-device Edge AI tutoring.",
   "theme_color": "#2563eb",
   "background_color": "#ffffff",
   "display": "standalone",
+  "orientation": "any",
   "scope": "./",
   "start_url": "./",
+  "categories": ["education", "kids", "books"],
   "icons": [
     {
       "src": "img/favicon-32x32.png",
@@ -15,12 +19,20 @@
     {
       "src": "img/logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "img/logo-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "img/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "img/logo.svg",
