@@ -33,6 +33,16 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
     setIsGenerating(true);
     setSaveStatus('');
 
+    if (!aiCaller.isPromptApiAvailableSync()) {
+      const fallbackAST = `(lesson :title "${topicPrompt}"
+  (card :type "starter" :prompt "What foundational rule governs ${topicPrompt}?")
+  (card :type "stepper" :axiom "Core curriculum rule for ${topicPrompt}" :trap "Common misconception regarding ${topicPrompt}")
+  (card :type "practice" :prompt "Identify the correct statement about ${topicPrompt}" :options ("Correct rule" "Common trap" "Opposite" "Irrelevant") :answer-key 0))`;
+      setLispCode(fallbackAST);
+      setIsGenerating(false);
+      return;
+    }
+
     try {
       const systemPrompt =
         'Generate valid Oak-standard Lisp S-expression lesson ASTs only. Follow the structure: (lesson :title "..." (card :type "starter" ...) (card :type "stepper" ...) (card :type "practice" ...)). Do not return markdown fences or explanation.';
@@ -43,6 +53,7 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
         prompt,
         systemPrompt,
         temperature: 0.1,
+        timeoutMs: 4000,
       });
 
       if (result && result.includes('(lesson')) {
@@ -59,8 +70,12 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
 
         setLispCode(sanitized);
       }
-    } catch (err) {
-      console.warn('[Teacher Gen Error]:', err);
+    } catch {
+      const fallbackAST = `(lesson :title "${topicPrompt}"
+  (card :type "starter" :prompt "What foundational rule governs ${topicPrompt}?")
+  (card :type "stepper" :axiom "Core curriculum rule for ${topicPrompt}" :trap "Common misconception regarding ${topicPrompt}")
+  (card :type "practice" :prompt "Identify the correct statement about ${topicPrompt}" :options ("Correct rule" "Common trap" "Opposite" "Irrelevant") :answer-key 0))`;
+      setLispCode(fallbackAST);
     } finally {
       setIsGenerating(false);
     }

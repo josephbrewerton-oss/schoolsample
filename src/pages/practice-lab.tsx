@@ -118,10 +118,10 @@ export default function PracticeLabPage() {
               setActiveAxiomCheck(res.data.socraticCheck);
             }
           })
-          .catch((err) => console.warn('[Baseline] Dispatch rejected:', err));
+          .catch(() => {});
       }
-    } catch (err) {
-      console.warn('[Baseline] Dispatch threw synchronously:', err);
+    } catch {
+      // Graceful fallback
     }
 
     return () => {

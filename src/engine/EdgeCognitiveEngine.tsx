@@ -38,8 +38,13 @@ export async function runLocalInference(
   try {
     const cached = await getRandomCachedAST(topicKey.toLowerCase());
     if (cached) fallbackAST = cached;
-  } catch (err) {
-    console.warn('[DB Bank Warning] Failed fetching cached AST fallback:', err);
+  } catch {
+    // Memory-only fallback
+  }
+
+  // Fast-path: Instant fallback for school Chromebooks without Prompt API
+  if (!aiCaller.isPromptApiAvailableSync()) {
+    return fallbackAST;
   }
 
   const inferencePromise = (async () => {
@@ -48,6 +53,7 @@ export async function runLocalInference(
         prompt,
         systemPrompt: systemPrompt || 
           "You are an expert Oak Curriculum compiler. Output ONLY a valid Lisp S-expression. Never output markdown backticks or conversational text.",
+        timeoutMs: 4000,
       });
 
       let sanitized = healSExprString(rawResponse || '');
@@ -66,13 +72,12 @@ export async function runLocalInference(
       const isLessonValid = sanitized.includes(':axiom') && sanitized.includes(':trap');
 
       if (isQuizValid || isLessonValid) {
-        saveVerifiedAST(topicKey.toLowerCase(), sanitized).catch(console.error);
+        saveVerifiedAST(topicKey.toLowerCase(), sanitized).catch(() => {});
         return sanitized;
       }
 
       return fallbackAST;
-    } catch (err) {
-      console.warn('[AI Engine Error]', err);
+    } catch {
       return fallbackAST;
     }
   })();
@@ -80,7 +85,7 @@ export async function runLocalInference(
   const timeoutPromise = new Promise<string>((resolve) =>
     setTimeout(() => {
       resolve(fallbackAST);
-    }, 6000)
+    }, 4000)
   );
 
   return Promise.race([inferencePromise, timeoutPromise]);
@@ -126,8 +131,21 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
     setTerminalLogs((prev) => [
       ...prev,
       `\n> [Input]: ${promptText}`,
-      '⚡ Querying student diagnostic state and connecting to Gemini Nano...',
+      aiCaller.isPromptApiAvailableSync()
+        ? '⚡ Querying student diagnostic state and connecting to Gemini Nano...'
+        : '⚡ Consulting certified curriculum rule engine...',
     ]);
+
+    if (!aiCaller.isPromptApiAvailableSync()) {
+      setTimeout(() => {
+        setTerminalLogs((prev) => [
+          ...prev,
+          `💡 [Curriculum Rule Engine]: Break the problem down into fundamental units. What does the core curriculum definition state?`,
+        ]);
+        setIsProcessing(false);
+      }, 50);
+      return;
+    }
 
     try {
       const diagnostics = await getTuringDiagnosticSummary(topicId);
@@ -150,8 +168,7 @@ export default function InteractiveEdgeSandbox({ runtimeConfig }: { runtimeConfi
           return next;
         });
       }
-    } catch (err: any) {
-      console.warn('[Nano Inference Error]', err);
+    } catch {
       setTerminalLogs((prev) => [
         ...prev,
         `💡 [Offline Socratic Rule]: Break the problem down into fundamental units. What does the core definition state?`,

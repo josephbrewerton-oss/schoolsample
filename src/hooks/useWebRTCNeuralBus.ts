@@ -2,15 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { extractQuestionFromAst, ExtractedQuestion } from '../utils/astQuestionExtractor';
 import { EngineFlow } from '../engine/engineflow';
-import { hypervisor, HypervisorHost, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
+import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
 import { RawASTQuestion } from '../engine/astGovernor';
-import {
-  decodeBinaryFrame,
-  isBinaryFrame,
-  OP_TOKEN_CHUNK,
-  OP_AST_NODE_COMPLETE,
-  OP_STREAM_EOF,
-} from '../utils/binaryStreamProtocol';
 
 export interface QuestionPayload {
   question: RawASTQuestion | ExtractedQuestion;
@@ -31,11 +24,8 @@ export function useWebRTCNeuralBus(
   const [status, setStatus] = useState<string>('Supervising Guest VM...');
   const [isReady, setIsReady] = useState<boolean>(false);
 
-  const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RTCDataChannel | null>(null);
-  const busRef = useRef<BroadcastChannel | null>(null);
   const rawStreamRef = useRef<string>('');
-  const sessionIdRef = useRef<string>(`session_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`);
 
   const inFlightContextRef = useRef<{
     keyStage: string;
@@ -98,20 +88,29 @@ export function useWebRTCNeuralBus(
     processGovernedAST(rawASTString);
   }, [processGovernedAST]);
 
-  // 1. Subscribe to Hypervisor Host State & Telemetry
+  // 1. Subscribe to Hypervisor Host State & WebRTC DataChannel Telemetry
   useEffect(() => {
-    const unsub = hypervisor.subscribe((state, currentMetrics) => {
+    const unsubState = hypervisor.subscribe((state, currentMetrics) => {
       setInstanceState(state);
       setMetrics(currentMetrics);
 
+      const isRtc = currentMetrics.rtcDataChannelState === 'open';
+      channelRef.current = hypervisor.getDataChannel();
+
       if (state === 'ready') {
         setIsReady(true);
-        setStatus('Guest VM Ready • Hypervised');
+        setStatus(
+          isRtc
+            ? 'Guest VM Online (WebRTC DataChannel • Zero-Copy)'
+            : 'Guest VM Ready • Hypervised'
+        );
       } else if (state === 'executing') {
         setStatus('Inference Active (Watchdog Armed)');
       } else if (state === 'booting') {
         setIsReady(false);
         setStatus('Guest VM Booting...');
+      } else if (currentMetrics.rtcDataChannelState === 'reconnecting') {
+        setStatus('Reconnecting WebRTC Loopback...');
       } else if (state === 'watchdog_timeout') {
         setIsReady(false);
         setStatus('Watchdog Timeout • Recycled VM');
@@ -121,145 +120,21 @@ export function useWebRTCNeuralBus(
       }
     });
 
-    return unsub;
-  }, []);
-
-  // 2. WebRTC Peer Connection for low-latency peer data plane
-  useEffect(() => {
-    let isCurrentMount = true;
-    const bus = new BroadcastChannel('webrtc-neural-signaling');
-    busRef.current = bus;
-
-    const pc = new RTCPeerConnection({ iceServers: [] });
-    pcRef.current = pc;
-
-    pc.ondatachannel = (event) => {
-      if (!isCurrentMount) return;
-      const dc = event.channel;
-      dc.binaryType = 'arraybuffer';
-      channelRef.current = dc;
-
-      dc.onopen = () => {
-        if (!isCurrentMount) return;
-        setIsReady(true);
-        setStatus('Guest VM Online (WebRTC DataChannel • Zero-Copy)');
-      };
-
-      dc.onclose = () => {
-        if (!isCurrentMount) return;
-        if (hypervisor.getState() !== 'ready') {
-          setIsReady(false);
-          setStatus('Daemon Disconnected');
-        }
-      };
-
-      dc.onmessage = (msgEvent) => {
-        // Zero-copy binary ArrayBuffer stream
-        if (msgEvent.data instanceof ArrayBuffer) {
-          const decoded = decodeBinaryFrame(msgEvent.data);
-          if (!decoded) return;
-
-          if (decoded.opcode === OP_TOKEN_CHUNK) {
-            rawStreamRef.current += decoded.payloadText;
-            if (onTokenChunkRef.current) {
-              onTokenChunkRef.current(decoded.payloadText);
-            }
-            if (decoded.isFinal) {
-              finalizeAndGovernStream();
-            }
-            return;
-          }
-
-          if (decoded.opcode === OP_AST_NODE_COMPLETE) {
-            let rawASTString = decoded.payloadText;
-            if (decoded.payloadText.startsWith('{') && decoded.payloadText.endsWith('}')) {
-              try {
-                const envelope = JSON.parse(decoded.payloadText);
-                if (envelope.type === 'AST_RESPONSE' && envelope.raw) {
-                  rawASTString = envelope.raw;
-                }
-              } catch {}
-            }
-            processGovernedAST(rawASTString);
-            return;
-          }
-
-          if (decoded.opcode === OP_STREAM_EOF) {
-            finalizeAndGovernStream();
-            return;
-          }
-          return;
-        }
-
-        const raw = msgEvent.data;
-        if (!raw) return;
-
-        if (raw === '__EOF__') {
-          finalizeAndGovernStream();
-          return;
-        }
-
-        rawStreamRef.current += raw;
-      };
-    };
-
-    pc.onicecandidate = (e) => {
-      if (e.candidate && isCurrentMount) {
-        bus.postMessage({
-          type: 'candidate',
-          candidate: e.candidate.toJSON(),
-          sessionId: sessionIdRef.current,
-        });
+    const unsubTokens = hypervisor.addTokenChunkListener((tokenChunk, streamId, isFinal) => {
+      rawStreamRef.current += tokenChunk;
+      if (onTokenChunkRef.current) {
+        onTokenChunkRef.current(tokenChunk);
       }
-    };
-
-    bus.onmessage = async (e) => {
-      if (!isCurrentMount) return;
-      const data = e.data;
-      if (!data) return;
-
-      if (data.type === 'daemon_ready') {
-        bus.postMessage({ type: 'peer_ready', sessionId: sessionIdRef.current });
-      } else if (data.type === 'offer') {
-        if (pc.signalingState !== 'stable' || channelRef.current?.readyState === 'open') {
-          return;
-        }
-
-        try {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          bus.postMessage({
-            type: 'answer',
-            sdp: pc.localDescription?.toJSON(),
-            sessionId: sessionIdRef.current,
-          });
-        } catch {}
-      } else if (data.type === 'candidate' && data.candidate) {
-        try {
-          if (pc.remoteDescription && pc.signalingState !== 'closed') {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          }
-        } catch {}
+      if (isFinal) {
+        finalizeAndGovernStream();
       }
-    };
-
-    const heartbeat = setInterval(() => {
-      if (channelRef.current?.readyState === 'open') {
-        clearInterval(heartbeat);
-      } else {
-        bus.postMessage({ type: 'peer_ready', sessionId: sessionIdRef.current });
-      }
-    }, 600);
+    });
 
     return () => {
-      isCurrentMount = false;
-      clearInterval(heartbeat);
-      try { channelRef.current?.close(); } catch {}
-      try { pc.close(); } catch {}
-      try { bus.close(); } catch {}
+      unsubState();
+      unsubTokens();
     };
-  }, []);
+  }, [finalizeAndGovernStream]);
 
   /**
    * Dispatches an intent to the hypervised guest VM
@@ -302,8 +177,8 @@ export function useWebRTCNeuralBus(
           });
           return true;
         }
-      } catch (err) {
-        console.warn('[NeuralBus Hook] Hypervisor inference execution note:', err);
+      } catch {
+        // Fallback smoothly
       }
 
       // Fallback to DataChannel if open
@@ -330,6 +205,10 @@ export function useWebRTCNeuralBus(
     hypervisor.resetGuestInstance();
   }, []);
 
+  const reconnect = useCallback((reason: string = 'manual_trigger') => {
+    hypervisor.reconnectRTCDataChannel(reason);
+  }, []);
+
   return {
     isReady,
     status,
@@ -337,5 +216,6 @@ export function useWebRTCNeuralBus(
     metrics,
     sendIntent,
     resetInstance,
+    reconnect,
   };
 }

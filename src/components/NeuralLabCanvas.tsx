@@ -208,9 +208,18 @@ export default function NeuralLabCanvas({
           hint: res.data.hint || '',
         });
       }
-    } catch (err) {
+    } catch {
       if (requestId === activeRequestIdRef.current) {
-        console.error('[Dispatch Error]:', err);
+        const fallbackOffline = findCurriculumKnowledge(ks, sub, u);
+        if (fallbackOffline && fallbackOffline.questions?.length > 0) {
+          handleNewQuestion({
+            question: fallbackOffline.questions[0],
+            keyStage: ks,
+            subject: sub,
+            unit: u,
+            hint: fallbackOffline.questions[0].hint || '',
+          });
+        }
       }
     } finally {
       clearTimeout(safetyTimer);

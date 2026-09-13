@@ -201,6 +201,19 @@ function AiTutorNode({
 
     const systemPrompt = `You are a concise, Socratic tutor. ${regionalSystemRule} Guide the student with 1 short question or rule under 15 words. Never give the direct answer.`;
 
+    if (!aiCaller.isPromptApiAvailableSync()) {
+      const fallback = `Let's focus on the first step of this problem.`;
+      setLogs((prev) => {
+        if (prev.length === 0) return prev;
+        const next = [...prev];
+        next[next.length - 1] = { role: 'tutor', text: fallback };
+        return next;
+      });
+      speak(fallback);
+      setBusy(false);
+      return;
+    }
+
     try {
       const stream = aiCaller.promptStream({
         prompt: userText,
@@ -220,8 +233,7 @@ function AiTutorNode({
       }
 
       speak(accumulated);
-    } catch (err) {
-      console.warn('[Nano Inference Error]', err);
+    } catch {
       const fallback = `Let's focus on the first step of this problem.`;
       setLogs((prev) => {
         if (prev.length === 0) return prev;

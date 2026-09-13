@@ -39,6 +39,8 @@ export function setUserAiConsent(granted: boolean): void {
 class AiRuntimeCaller {
   private chatSession: any = null;
   private activeSystemPrompt: string = '';
+  private cachedAvailability: ModelAvailability | null = null;
+  private availabilityPromise: Promise<ModelAvailability> | null = null;
 
   /**
    * Safe accessor for the Prompt API root across Chromium revisions
@@ -58,58 +60,103 @@ class AiRuntimeCaller {
   }
 
   /**
+   * Synchronous check for native Prompt API presence (window.ai / LanguageModel).
+   * 0ms, zero overhead, safe for low-spec Chromebooks.
+   */
+  public hasNativePromptApi(): boolean {
+    return this.getAiRoot() !== null;
+  }
+
+  /**
+   * Synchronous check whether Prompt API is supported and consented to.
+   */
+  public isPromptApiAvailableSync(): boolean {
+    if (!this.hasNativePromptApi()) return false;
+    if (!hasUserGrantedAiConsent()) return false;
+    if (this.cachedAvailability && this.cachedAvailability.status === 'no') return false;
+    return true;
+  }
+
+  /**
    * Diagnostic check across Desktop & Mobile runtimes (hardware capability check only)
    */
   async checkAvailability(): Promise<ModelAvailability> {
-    const lm = this.getAiRoot();
-    if (!lm) return { status: 'no' };
+    if (this.cachedAvailability) {
+      return this.cachedAvailability;
+    }
 
-    try {
-      if (typeof lm.availability === 'function') {
-        let status: any = 'no';
-        try {
-          // Modern W3C availability check
-          status = await lm.availability({
-            expectedInputs: [{ type: 'text', languages: ['en'] }],
-            expectedOutputs: [{ type: 'text', languages: ['en'] }],
-            outputLanguage: 'en',
-            expectedInputLanguages: ['en'],
-            expectedOutputLanguages: ['en'],
-          });
-        } catch {
+    if (this.availabilityPromise) {
+      return this.availabilityPromise;
+    }
+
+    const lm = this.getAiRoot();
+    if (!lm) {
+      this.cachedAvailability = { status: 'no' };
+      return this.cachedAvailability;
+    }
+
+    this.availabilityPromise = (async () => {
+      try {
+        if (typeof lm.availability === 'function') {
+          let status: any = 'no';
           try {
+            // Modern W3C availability check
             status = await lm.availability({
+              expectedInputs: [{ type: 'text', languages: ['en'] }],
+              expectedOutputs: [{ type: 'text', languages: ['en'] }],
               outputLanguage: 'en',
               expectedInputLanguages: ['en'],
               expectedOutputLanguages: ['en'],
             });
           } catch {
-            status = await lm.availability();
+            try {
+              status = await lm.availability({
+                outputLanguage: 'en',
+                expectedInputLanguages: ['en'],
+                expectedOutputLanguages: ['en'],
+              });
+            } catch {
+              status = await lm.availability();
+            }
           }
+
+          const mappedStatus =
+            status === 'readily' || status === 'available'
+              ? 'readily'
+              : status === 'after-download' || status === 'downloadable'
+              ? 'after-download'
+              : 'no';
+          this.cachedAvailability = { status: mappedStatus };
+          return this.cachedAvailability;
         }
 
-        const mappedStatus =
-          status === 'readily' || status === 'available'
-            ? 'readily'
-            : status === 'after-download' || status === 'downloadable'
-            ? 'after-download'
-            : 'no';
-        return { status: mappedStatus };
-      }
+        if (typeof lm.capabilities === 'function') {
+          const caps = await lm.capabilities();
+          const mappedStatus =
+            caps?.available === 'readily' || caps?.available === 'available'
+              ? 'readily'
+              : caps?.available === 'after-download' || caps?.available === 'downloadable'
+              ? 'after-download'
+              : caps?.available || 'no';
+          this.cachedAvailability = {
+            status: mappedStatus,
+            maxTokens: caps?.maxTokens,
+            temperature: caps?.defaultTemperature,
+          };
+          return this.cachedAvailability;
+        }
 
-      if (typeof lm.capabilities === 'function') {
-        const caps = await lm.capabilities();
-        return {
-          status: caps?.available || 'no',
-          maxTokens: caps?.maxTokens,
-          temperature: caps?.defaultTemperature,
-        };
+        this.cachedAvailability = { status: 'no' };
+        return this.cachedAvailability;
+      } catch {
+        this.cachedAvailability = { status: 'no' };
+        return this.cachedAvailability;
+      } finally {
+        this.availabilityPromise = null;
       }
+    })();
 
-      return { status: 'no' };
-    } catch {
-      return { status: 'no' };
-    }
+    return this.availabilityPromise;
   }
 
   /**
@@ -205,6 +252,9 @@ class AiRuntimeCaller {
    * Single prompt execution with strict timeout protection
    */
   async promptText(opts: AiInferenceOptions): Promise<string> {
+    if (!this.hasNativePromptApi() || !hasUserGrantedAiConsent()) {
+      throw new Error('Native Prompt API is unavailable or consent is withheld.');
+    }
     const isEphemeral = !opts.preserveContext;
     let session = await this.getSession(opts);
     const timeoutMs = opts.timeoutMs ?? 25000;
@@ -243,6 +293,9 @@ class AiRuntimeCaller {
    * Streaming prompt execution supporting both AsyncIterable and ReadableStream
    */
   async *promptStream(opts: AiInferenceOptions): AsyncGenerator<string, void, unknown> {
+    if (!this.hasNativePromptApi() || !hasUserGrantedAiConsent()) {
+      throw new Error('Native Prompt API is unavailable or consent is withheld.');
+    }
     const isEphemeral = !opts.preserveContext;
     let session = await this.getSession(opts);
 

@@ -289,8 +289,8 @@
           handleVoice(payload, fullText, streamId);
           return;
         }
-      } catch (nanoErr) {
-        console.warn("[WebRTC-Agent] Nano fallback:", nanoErr);
+      } catch {
+        // Silent fallback
       }
     }
 

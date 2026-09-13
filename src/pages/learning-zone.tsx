@@ -286,8 +286,8 @@ export default function LearningZonePage() {
             },
           });
         }
-      } catch (err) {
-        console.error('[Governed Compilation Error]:', err);
+      } catch {
+        // Fallback gracefully without console error
       } finally {
         if (requestId === activeRequestIdRef.current) {
           setIsCompiling(false);
@@ -326,8 +326,8 @@ export default function LearningZonePage() {
       } else {
         setFullLessonText(buildDefaultNarrative(selectedUnit, lessonData));
       }
-    } catch (err) {
-      console.error('[Full Lesson Synthesis Error]:', err);
+    } catch {
+      setFullLessonText(buildDefaultNarrative(selectedUnit, lessonData));
     } finally {
       setIsSynthesizingFull(false);
     }

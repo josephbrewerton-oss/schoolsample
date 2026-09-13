@@ -165,37 +165,37 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             difficulty,
           };
 
-          // 3. Primary Execution: Supervised Guest VM Inference with Armed Watchdog
+          // 3. Supervised Inference (Only if Prompt API is natively present & consented to)
           let synthesized = false;
-          try {
-            const vmResult = await hypervisor.executeInference({
-              keyStage: stage,
-              subject,
-              unit: topic,
-              curriculum,
-              difficulty,
-              lang,
-              timeoutMs: 28000,
-            });
-
-            if (vmResult.ok && vmResult.question) {
-              resultCandidate = {
-                ...resultCandidate,
-                ...vmResult.question,
-                options: vmResult.question.options,
-                answerKey: vmResult.question.answerKey,
-                prompt: vmResult.question.prompt,
-              };
-              synthesized = true;
-            }
-          } catch (vmErr) {
-            // Guest VM offline or timed out: try local prompt or fallback smoothly
-          }
-
-          // If Guest VM was offline, attempt local browser prompt or fallback to verified offline curriculum
-          if (!synthesized) {
+          if (aiCaller.isPromptApiAvailableSync()) {
             try {
-              const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
+              const vmResult = await hypervisor.executeInference({
+                keyStage: stage,
+                subject,
+                unit: topic,
+                curriculum,
+                difficulty,
+                lang,
+                timeoutMs: 4000,
+              });
+
+              if (vmResult.ok && vmResult.question) {
+                resultCandidate = {
+                  ...resultCandidate,
+                  ...vmResult.question,
+                  options: vmResult.question.options,
+                  answerKey: vmResult.question.answerKey,
+                  prompt: vmResult.question.prompt,
+                };
+                synthesized = true;
+              }
+            } catch {
+              // Guest VM offline or timed out: fall back smoothly without console warnings
+            }
+
+            if (!synthesized) {
+              try {
+                const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
 Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
@@ -222,42 +222,11 @@ Return strictly a single JSON object with no Markdown:
   "socraticFollowUp": "Simpler scaffolding sub-question if the pupil gets stuck"
 }`;
 
-              // 100% Off-Main-Thread Execution: Delegate to Guest VM Daemon
-              let vmHandled = false;
-              if (hypervisor) {
-                try {
-                  const vmRes = await hypervisor.executeInference({
-                    keyStage: stage,
-                    subject,
-                    unit: topic,
-                    curriculum,
-                    difficulty,
-                    lang,
-                    timeoutMs: 12000,
-                  });
-                  if (vmRes.ok && vmRes.question) {
-                    resultCandidate = {
-                      ...resultCandidate,
-                      prompt: vmRes.question.prompt,
-                      options: vmRes.question.options,
-                      answerKey: vmRes.question.answerKey,
-                      hint: vmRes.question.hint || resultCandidate.hint,
-                      explanation: (vmRes.question as any).explanation || resultCandidate.explanation,
-                      misconceptions: (vmRes.question as any).misconceptions || resultCandidate.misconceptions,
-                      socraticFollowUp: (vmRes.question as any).socraticFollowUp || resultCandidate.socraticFollowUp,
-                    };
-                    vmHandled = true;
-                  }
-                } catch {
-                  // Fall back to direct inference if guest daemon is booting or timed out
-                }
-              }
-
-              if (!vmHandled) {
                 const rawResponse = await aiCaller.promptText({
                   prompt,
                   systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
                   preserveContext: false,
+                  timeoutMs: 4000,
                 });
 
                 const match = rawResponse.match(/\{[\s\S]*?\}/);
@@ -270,9 +239,9 @@ Return strictly a single JSON object with no Markdown:
                     };
                   }
                 }
+              } catch {
+                // Silently proceed to verified governed candidate
               }
-            } catch (err) {
-              // Offline / on-device LLM unready: use verified offline curriculum knowledge
             }
           }
 
@@ -325,7 +294,7 @@ Return strictly a single JSON object with no Markdown:
                 explanation: translated.explanation,
               };
             } catch (err) {
-              console.warn('[QuestionEngine Translation Fallback]:', err);
+              // Gracefully keep resultCandidate in default English
             }
           }
 
@@ -392,8 +361,8 @@ Return strictly a single JSON object with no Markdown:
                 ...recordToReturn,
                 ...translated,
               };
-            } catch (err) {
-              console.warn('[Lesson Baseline Translation Fallback]:', err);
+            } catch {
+              // Return original record
             }
           }
 
@@ -450,14 +419,20 @@ One reflective question to verify understanding.`;
 
           let generatedText = '';
 
-          try {
-            generatedText = await aiCaller.promptText({
-              prompt,
-              systemPrompt: `You are Super Teacher Nano. Return comprehensive structured UK curriculum lessons in clear Markdown strictly adhering to ${stageGuidelines}`,
-              preserveContext: false,
-            });
-          } catch (err) {
-            console.warn('[Lesson Synthesis Fallback Activated]:', err);
+          if (aiCaller.isPromptApiAvailableSync()) {
+            try {
+              generatedText = await aiCaller.promptText({
+                prompt,
+                systemPrompt: `You are Super Teacher Nano. Return comprehensive structured UK curriculum lessons in clear Markdown strictly adhering to ${stageGuidelines}`,
+                preserveContext: false,
+                timeoutMs: 4000,
+              });
+            } catch {
+              // Silently degrade to deterministic structured narrative
+            }
+          }
+
+          if (!generatedText) {
             generatedText = `### ${topic}\n\n**1. Conceptual Narrative**\n${payload?.axiom || 'Core understanding of this topic.'}\n\n**2. Guided Demonstration**\n${payload?.steps?.[1] || 'Explore the properties and behaviors in detail.'}\n\n**3. Misconception Breakdown**\nMany students believe that "${payload?.trap || 'an incorrect assumption'}". In practice, we evaluate the evidence.\n\n**4. Socratic Check**\n${payload?.steps?.[2] || 'How would you explain this in your own words?'}`;
           }
 
@@ -481,8 +456,8 @@ One reflective question to verify understanding.`;
 
           try {
             await putBufferedLesson(updatedRecord);
-          } catch (e) {
-            console.warn('[DB putBufferedLesson Skip]:', e);
+          } catch {
+            // Memory-only mode
           }
 
           return {

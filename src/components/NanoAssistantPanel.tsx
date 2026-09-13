@@ -174,6 +174,40 @@ PEDAGOGICAL RULES:
     const updatedMessages = [...messages, { role: 'pupil' as const, text: userText }];
     setMessages([...updatedMessages, { role: 'turing' as const, text: '' }]);
 
+    const getRuleFallback = async (): Promise<string> => {
+      let fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
+      if (customInstruction?.includes('analogy') && topicKnowledge?.scaffoldHints.level1) {
+        fallback = topicKnowledge.scaffoldHints.level1;
+      } else if (customInstruction?.includes('rule') && topicKnowledge?.scaffoldHints.level2) {
+        fallback = topicKnowledge.scaffoldHints.level2;
+      } else if (customInstruction?.includes('step') && topicKnowledge?.scaffoldHints.level3) {
+        fallback = topicKnowledge.scaffoldHints.level3;
+      } else if (topicKnowledge) {
+        fallback = `Remember the key rule: ${topicKnowledge.coreAxiom}. How can we apply that here?`;
+      }
+
+      if (currentLang && currentLang !== 'en') {
+        try {
+          fallback = await translateText(fallback, currentLang);
+        } catch {
+          // Keep english fallback
+        }
+      }
+      return fallback;
+    };
+
+    if (!aiCaller.isPromptApiAvailableSync()) {
+      const fallback = await getRuleFallback();
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = { role: 'turing', text: fallback };
+        return copy;
+      });
+      speak(fallback);
+      setLoading(false);
+      return;
+    }
+
     try {
       // Package recent conversation context into the prompt
       const conversationHistory = updatedMessages
@@ -189,6 +223,7 @@ PEDAGOGICAL RULES:
         prompt: fullPrompt,
         systemPrompt: buildSystemPrompt(),
         preserveContext: false, // Prevents Chrome session port collisions
+        timeoutMs: 4000,
       });
 
       let cleaned =
@@ -211,27 +246,8 @@ PEDAGOGICAL RULES:
       });
 
       speak(cleaned);
-    } catch (err) {
-      console.error('[Super Teacher Error]:', err);
-      let fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
-      if (customInstruction?.includes('analogy') && topicKnowledge?.scaffoldHints.level1) {
-        fallback = topicKnowledge.scaffoldHints.level1;
-      } else if (customInstruction?.includes('rule') && topicKnowledge?.scaffoldHints.level2) {
-        fallback = topicKnowledge.scaffoldHints.level2;
-      } else if (customInstruction?.includes('step') && topicKnowledge?.scaffoldHints.level3) {
-        fallback = topicKnowledge.scaffoldHints.level3;
-      } else if (topicKnowledge) {
-        fallback = `Remember the key rule: ${topicKnowledge.coreAxiom}. How can we apply that here?`;
-      }
-
-      if (currentLang && currentLang !== 'en') {
-        try {
-          fallback = await translateText(fallback, currentLang);
-        } catch (e) {
-          // Keep english fallback
-        }
-      }
-
+    } catch {
+      const fallback = await getRuleFallback();
       setMessages((prev) => {
         const copy = [...prev];
         copy[copy.length - 1] = { role: 'turing', text: fallback };
