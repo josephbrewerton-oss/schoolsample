@@ -12,6 +12,8 @@ import {
 } from '../engine/operational-language';
 import { translatePageDOM, restorePageDOM } from '../engine/universalDomTranslator';
 import { getComplianceCaveat } from '../data/complianceCaveats';
+import { isDataSaverActive, setDataSaverMode, listenToDataSaverChanges } from '../services/dataSaverStore';
+import { downloadCurriculumForOffline, getOfflineStatus, SyncProgress, OfflineStatus } from '../services/offlineSyncService';
 
 export default function SettingsPage() {
   const [curriculumStandard, setCurriculumStandard] = useState<CurriculumProviderKey>('uk_oak');
@@ -23,9 +25,19 @@ export default function SettingsPage() {
   const [portalLanguage, setPortalLanguage] = useState<string>('en');
   const [cacheClearNotice, setCacheClearNotice] = useState('');
   const [customPacks, setCustomPacks] = useState<CustomCurriculumPack[]>([]);
+  const [dataSaver, setDataSaver] = useState<boolean>(() => isDataSaverActive());
+  const [offlineStatus, setOfflineStatus] = useState<OfflineStatus>({ isCached: false, cachedCount: 0 });
+  const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   useEffect(() => {
     setCustomPacks(getInstalledCurriculumPacks());
+    getOfflineStatus().then(setOfflineStatus);
+
+    const unsubDataSaver = listenToDataSaverChanges((enabled) => {
+      setDataSaver(enabled);
+    });
+
     // 1. Load saved curriculum standard & difficulty & consent & language
     const savedStandard = localStorage.getItem('curriculum_standard') as CurriculumProviderKey;
     if (savedStandard) {
@@ -57,7 +69,31 @@ export default function SettingsPage() {
     }
 
     checkNano();
+
+    return () => {
+      unsubDataSaver();
+    };
   }, []);
+
+  const handleStartOfflineSync = async () => {
+    setIsSyncing(true);
+    setSyncProgress({
+      total: 0,
+      completed: 0,
+      percent: 0,
+      currentFile: 'Preparing offline pre-cache...',
+      status: 'syncing',
+    });
+
+    const res = await downloadCurriculumForOffline((prog) => {
+      setSyncProgress(prog);
+    });
+
+    setIsSyncing(false);
+    if (res.success) {
+      getOfflineStatus().then(setOfflineStatus);
+    }
+  };
 
   const handleToggleConsent = (granted: boolean) => {
     setUserAiConsent(granted);
@@ -388,6 +424,128 @@ export default function SettingsPage() {
                 <option value="international">International / Cambridge Standard (Universal Scope)</option>
                 <option value="custom_imported">Custom / Overseas Imported Syllabi Only</option>
               </select>
+            </div>
+
+            {/* Developing Nations & Low-Bandwidth Optimization Card */}
+            <div
+              style={{
+                marginBottom: '2rem',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                background: dataSaver ? '#ecfdf5' : '#f8fafc',
+                border: `1px solid ${dataSaver ? '#6ee7b7' : '#cbd5e1'}`,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '1rem' }}>
+                <div style={{ maxWidth: '640px' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: dataSaver ? '#065f46' : '#0f172a', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🌱</span> Developing Nations & Metered Data Optimization
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: dataSaver ? '#047857' : '#475569', margin: 0, lineHeight: 1.5 }}>
+                    Designed for rural schools, refugee learning centers, and students on metered mobile data (pay-per-MB).
+                    Stops background prefetching, strips expensive GPU drop-shadows and canvas loops to protect battery on low-end hardware, and enforces zero cloud network egress.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  id="settings-data-saver-toggle"
+                  onClick={() => setDataSaverMode(!dataSaver)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: dataSaver ? '#059669' : '#2563eb',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>📶</span> {dataSaver ? 'Data Saver: ACTIVE' : 'Enable Data Saver Mode'}
+                </button>
+              </div>
+
+              {/* Offline Pre-cache Trigger */}
+              <div
+                style={{
+                  marginTop: '1.25rem',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <strong style={{ fontSize: '0.92rem', color: '#0f172a', display: 'block', marginBottom: '3px' }}>
+                      📥 One-Click Offline Curriculum Preloader
+                    </strong>
+                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                      Cache all 12 UK Curriculum units and AST substrates onto this device while on Wi-Fi. (Footprint: ~1.8 MB total).
+                    </span>
+                    <div style={{ marginTop: '4px', fontSize: '0.78rem', color: offlineStatus.isCached ? '#15803d' : '#b45309', fontWeight: 600 }}>
+                      {offlineStatus.isCached
+                        ? `✓ Offline Ready: ${offlineStatus.cachedCount} assets cached locally in browser`
+                        : `Offline cache partial (${offlineStatus.cachedCount} items stored)`}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="settings-offline-sync-btn"
+                    onClick={handleStartOfflineSync}
+                    disabled={isSyncing}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '6px',
+                      background: isSyncing ? '#94a3b8' : '#0f172a',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
+                      cursor: isSyncing ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>{isSyncing ? '⏳' : '⚡'}</span>
+                    <span>{isSyncing ? 'Saving Offline...' : 'Save Entire Portal Offline'}</span>
+                  </button>
+                </div>
+
+                {/* Live Progress Bar */}
+                {syncProgress && (
+                  <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#475569', marginBottom: '4px' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
+                        {syncProgress.currentFile}
+                      </span>
+                      <strong>{syncProgress.percent}% ({syncProgress.completed}/{syncProgress.total})</strong>
+                    </div>
+                    <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          width: `${syncProgress.percent}%`,
+                          height: '100%',
+                          background: syncProgress.status === 'completed' ? '#16a34a' : '#2563eb',
+                          transition: 'width 0.2s ease',
+                        }}
+                      />
+                    </div>
+                    {syncProgress.status === 'completed' && (
+                      <p style={{ margin: '6px 0 0 0', fontSize: '0.78rem', color: '#16a34a', fontWeight: 700 }}>
+                        🎉 Complete! The entire curriculum portal is saved. You can now use this device in airplane mode or with zero internet!
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* PWA Offline App & Service Worker Status Card */}

@@ -17,11 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@theme/Layout": ["src/shims/LayoutShim.tsx"],
-      "@docusaurus/Link": ["src/shims/docusaurusLink.tsx"],
-      "@docusaurus/useBaseUrl": ["src/shims/docusaurusUseBaseUrl.ts"],
-      "@docusaurus/router": ["src/shims/docusaurusRouter.ts"],
-      "@docusaurus/BrowserOnly": ["src/shims/docusaurusBrowserOnly.tsx"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src", "vite.config.ts"]

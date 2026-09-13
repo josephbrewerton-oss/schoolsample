@@ -9,6 +9,7 @@ import {
 } from '../services/dbStore';
 import { resolveSeedCoordinate } from '../../static/promptStrategies';
 import { aiCaller } from './aicaller';
+import { healSExprString } from '../utils/astQuestionExtractor';
 
 /**
  * Generates an instant, route-appropriate fallback AST based on topicKey.
@@ -49,10 +50,7 @@ export async function runLocalInference(
           "You are an expert Oak Curriculum compiler. Output ONLY a valid Lisp S-expression. Never output markdown backticks or conversational text.",
       });
 
-      let sanitized = (rawResponse || '')
-        .replace(/```(?:lisp|scheme)?/gi, '')
-        .replace(/```/g, '')
-        .trim();
+      let sanitized = healSExprString(rawResponse || '');
 
       const firstParen = sanitized.indexOf('(');
       const lastParen = sanitized.lastIndexOf(')');
@@ -61,8 +59,10 @@ export async function runLocalInference(
         sanitized = sanitized.substring(firstParen, lastParen + 1);
       }
 
-      // Multi-route AST Validation
-      const isQuizValid = sanitized.includes(':prompt') && sanitized.includes(':options');
+      // Multi-route AST Validation (supporting both longhand :prompt/:options and shorthand :q/:opts)
+      const hasPrompt = sanitized.includes(':prompt') || sanitized.includes(':q') || sanitized.includes(':question');
+      const hasOptions = sanitized.includes(':options') || sanitized.includes(':opts') || sanitized.includes(':choices');
+      const isQuizValid = hasPrompt && hasOptions;
       const isLessonValid = sanitized.includes(':axiom') && sanitized.includes(':trap');
 
       if (isQuizValid || isLessonValid) {

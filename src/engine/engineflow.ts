@@ -112,26 +112,36 @@ Format strictly as an S-expression:
   public static normalizeASTToQuestion(parsed: any): RawASTQuestion & { hint?: string } | null {
     if (!parsed) return null;
 
-    // 1. Extract prompt string
-    let prompt = '';
-    if (typeof parsed.prompt === 'string') {
-      prompt = parsed.prompt;
-    } else if (parsed.prompt?.children && Array.isArray(parsed.prompt.children)) {
-      prompt = parsed.prompt.children.join(' ');
-    } else if (parsed.prompt && typeof parsed.prompt === 'object') {
-      prompt = parsed.prompt.text || parsed.prompt.value || Object.values(parsed.prompt).join(' ');
+    // Handle nested (view ... (quiz ...)) or (body (quiz ...)) structures
+    let target = parsed;
+    if (parsed.body && typeof parsed.body === 'object') {
+      target = parsed.body.quiz || parsed.body;
+    } else if (parsed.quiz && typeof parsed.quiz === 'object') {
+      target = parsed.quiz;
     }
 
-    // 2. Extract options list handling array variants and (list ...) tags
+    // 1. Extract prompt string (:prompt, :q, :question)
+    let prompt = '';
+    const rawPrompt = target.prompt ?? target.q ?? target.question;
+    if (typeof rawPrompt === 'string') {
+      prompt = rawPrompt;
+    } else if (rawPrompt?.children && Array.isArray(rawPrompt.children)) {
+      prompt = rawPrompt.children.join(' ');
+    } else if (rawPrompt && typeof rawPrompt === 'object') {
+      prompt = rawPrompt.text || rawPrompt.value || Object.values(rawPrompt).join(' ');
+    }
+
+    // 2. Extract options list (:options, :opts, :choices) handling array variants and (list ...) tags
     let rawOptionsList: any[] = [];
-    if (Array.isArray(parsed.options)) {
-      rawOptionsList = parsed.options;
-    } else if (parsed.options?.children && Array.isArray(parsed.options.children)) {
-      rawOptionsList = parsed.options.children;
-    } else if (parsed.options?.list && Array.isArray(parsed.options.list)) {
-      rawOptionsList = parsed.options.list;
-    } else if (parsed.list && Array.isArray(parsed.list)) {
-      rawOptionsList = parsed.list;
+    const rawOpts = target.options ?? target.opts ?? target.choices;
+    if (Array.isArray(rawOpts)) {
+      rawOptionsList = rawOpts;
+    } else if (rawOpts?.children && Array.isArray(rawOpts.children)) {
+      rawOptionsList = rawOpts.children;
+    } else if (rawOpts?.list && Array.isArray(rawOpts.list)) {
+      rawOptionsList = rawOpts.list;
+    } else if (target.list && Array.isArray(target.list)) {
+      rawOptionsList = target.list;
     }
 
     const options: string[] = rawOptionsList
@@ -146,24 +156,38 @@ Format strictly as an S-expression:
       .filter((opt) => opt.length > 0 && !opt.includes('<DISTRACTOR') && !opt.includes('<CORRECT>'));
 
     // 3. Extract auxiliary attributes
-    const scratchpad = typeof parsed.scratchpad === 'string'
-      ? parsed.scratchpad
-      : (parsed.scratchpad?.children?.[0] || '');
+    const rawScratchpad = target.scratchpad ?? target.calc ?? target.reasoning;
+    const scratchpad = typeof rawScratchpad === 'string'
+      ? rawScratchpad
+      : (rawScratchpad?.children?.[0] || '');
 
-    const hint = typeof parsed.hint === 'string'
-      ? parsed.hint
-      : (parsed.hint?.children?.[0] || '');
+    const rawHint = target.hint ?? target.hints;
+    let hint = '';
+    if (typeof rawHint === 'string') {
+      hint = rawHint;
+    } else if (Array.isArray(rawHint)) {
+      hint = typeof rawHint[0] === 'string' ? rawHint[0] : (rawHint[0]?.children?.[0] || '');
+    } else if (rawHint?.list && Array.isArray(rawHint.list)) {
+      hint = typeof rawHint.list[0] === 'string' ? rawHint.list[0] : (rawHint.list[0]?.children?.[0] || '');
+    } else if (rawHint?.children?.[0]) {
+      hint = rawHint.children[0];
+    }
 
-    const rawKey = parsed['answer-key'] ?? parsed.answerKey ?? parsed.answer_key ?? 0;
+    const rawKey = target['answer-key'] ?? target.ans ?? target.answerKey ?? target.answer_key ?? target.answer ?? 0;
     const answerKey = typeof rawKey === 'number' ? rawKey : parseInt(String(rawKey), 10) || 0;
 
     let misconceptions: string[] | undefined = undefined;
-    if (Array.isArray(parsed.misconceptions)) {
-      misconceptions = parsed.misconceptions.map((m: any) =>
+    const rawMisc = target.misconceptions ?? target.misc;
+    if (Array.isArray(rawMisc)) {
+      misconceptions = rawMisc.map((m: any) =>
         typeof m === 'string' ? m.trim() : typeof m?.children?.[0] === 'string' ? m.children[0].trim() : String(m)
       );
-    } else if (parsed.trap) {
-      const trapText = typeof parsed.trap === 'string' ? parsed.trap : parsed.trap?.children?.[0];
+    } else if (rawMisc?.list && Array.isArray(rawMisc.list)) {
+      misconceptions = rawMisc.list.map((m: any) =>
+        typeof m === 'string' ? m.trim() : typeof m?.children?.[0] === 'string' ? m.children[0].trim() : String(m)
+      );
+    } else if (target.trap) {
+      const trapText = typeof target.trap === 'string' ? target.trap : target.trap?.children?.[0];
       if (trapText) {
         misconceptions = options.map((_, i) =>
           i === answerKey ? 'Correct conceptual deduction.' : `Common trap: ${trapText}`
@@ -171,16 +195,18 @@ Format strictly as an S-expression:
       }
     }
 
-    const explanation = typeof parsed.explanation === 'string'
-      ? parsed.explanation.trim()
-      : typeof parsed.axiom === 'string'
-      ? parsed.axiom.trim()
+    const explanation = typeof target.explanation === 'string'
+      ? target.explanation.trim()
+      : typeof target.axiom === 'string'
+      ? target.axiom.trim()
       : undefined;
 
-    const socraticFollowUp = typeof parsed.socratic === 'string'
-      ? parsed.socratic.trim()
-      : typeof parsed.socraticFollowUp === 'string'
-      ? parsed.socraticFollowUp.trim()
+    const socraticFollowUp = typeof target.socratic === 'string'
+      ? target.socratic.trim()
+      : typeof target['socratic-followup'] === 'string'
+      ? target['socratic-followup'].trim()
+      : typeof target.socraticFollowUp === 'string'
+      ? target.socraticFollowUp.trim()
       : undefined;
 
     // Fail normalization if essential components are absent or poisoned by templates
@@ -189,7 +215,7 @@ Format strictly as an S-expression:
     }
 
     return {
-      route: parsed.route || 'quiz:mcq',
+      route: target.route || parsed.route || 'quiz:mcq',
       prompt: prompt.trim(),
       scratchpad: scratchpad.trim(),
       hint: hint.trim(),

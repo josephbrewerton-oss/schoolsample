@@ -222,20 +222,53 @@ Return strictly a single JSON object with no Markdown:
   "socraticFollowUp": "Simpler scaffolding sub-question if the pupil gets stuck"
 }`;
 
-              const rawResponse = await aiCaller.promptText({
-                prompt,
-                systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
-                preserveContext: false,
-              });
+              // 100% Off-Main-Thread Execution: Delegate to Guest VM Daemon
+              let vmHandled = false;
+              if (hypervisor) {
+                try {
+                  const vmRes = await hypervisor.executeInference({
+                    keyStage: stage,
+                    subject,
+                    unit: topic,
+                    curriculum,
+                    difficulty,
+                    lang,
+                    timeoutMs: 12000,
+                  });
+                  if (vmRes.ok && vmRes.question) {
+                    resultCandidate = {
+                      ...resultCandidate,
+                      prompt: vmRes.question.prompt,
+                      options: vmRes.question.options,
+                      answerKey: vmRes.question.answerKey,
+                      hint: vmRes.question.hint || resultCandidate.hint,
+                      explanation: (vmRes.question as any).explanation || resultCandidate.explanation,
+                      misconceptions: (vmRes.question as any).misconceptions || resultCandidate.misconceptions,
+                      socraticFollowUp: (vmRes.question as any).socraticFollowUp || resultCandidate.socraticFollowUp,
+                    };
+                    vmHandled = true;
+                  }
+                } catch {
+                  // Fall back to direct inference if guest daemon is booting or timed out
+                }
+              }
 
-              const match = rawResponse.match(/\{[\s\S]*?\}/);
-              if (match) {
-                const parsed = JSON.parse(match[0]);
-                if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
-                  resultCandidate = {
-                    ...resultCandidate,
-                    ...parsed,
-                  };
+              if (!vmHandled) {
+                const rawResponse = await aiCaller.promptText({
+                  prompt,
+                  systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
+                  preserveContext: false,
+                });
+
+                const match = rawResponse.match(/\{[\s\S]*?\}/);
+                if (match) {
+                  const parsed = JSON.parse(match[0]);
+                  if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
+                    resultCandidate = {
+                      ...resultCandidate,
+                      ...parsed,
+                    };
+                  }
                 }
               }
             } catch (err) {

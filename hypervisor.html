@@ -1,13 +1,123 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LISP-RT Hypervisor Neural Terminal</title>
+  <style>
+    html {
+      scrollbar-gutter: stable;
+    }
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      background: #020617;
+      color: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .terminal-container {
+      position: relative;
+      width: 100%;
+      max-width: 820px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 820px;
+      height: auto;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      background: #050a05;
+    }
+    /* Full WCAG Screen Reader DOM Mirror: Visually hidden but completely readable by screen readers */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    .sr-only:focus {
+      position: static;
+      width: auto;
+      height: auto;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0;
+      overflow: visible;
+      clip: auto;
+      white-space: normal;
+      background: #0284c7;
+      color: #ffffff;
+      border-radius: 4px;
+      z-index: 100;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 820px;
+      margin-top: 1rem;
+      gap: 1rem;
+    }
+    button {
+      padding: 8px 16px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    #status {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal-container">
+    <!-- Visual 2D Canvas -->
+    <canvas id="screen" width="800" height="480" role="img" aria-label="LISP-RT Neural Terminal Output Screen"></canvas>
+
+    <!-- Full Screen-Reader DOM Mirror for WCAG Accessibility -->
+    <div id="sr-terminal-mirror" class="sr-only" role="region" aria-label="Neural Terminal Screen Reader Mirror" aria-live="polite">
+      <h3>Terminal Output Log</h3>
+      <div id="sr-terminal-text" tabindex="0">LISP-RT HYPERVISOR v1.0.0. Awaiting Neural Bus Link...</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div id="status" role="status" aria-live="polite">[AWAITING NEURAL BUS LINK]</div>
+    <button id="btn-dispatch" type="button" aria-label="Dispatch quadratic equation practice quiz AST to neural silicon">
+      ⚡ Dispatch AST Intent
+    </button>
+  </div>
+
+  <script type="module">
     const canvas = document.getElementById('screen');
     const ctx = canvas.getContext('2d');
     const status = document.getElementById('status');
+    const srText = document.getElementById('sr-terminal-text');
     const bus = new BroadcastChannel('webrtc-neural-signaling');
     let pc = null;
     let channel = null;
     let astBuffer = '';
 
     function renderScreen(text) {
+      // 1. Visual 2D Canvas rendering
       ctx.fillStyle = '#050a05';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#00ff66';
@@ -17,6 +127,11 @@
       lines.forEach((line, idx) => {
         ctx.fillText(line, 40, 60 + (idx * 28));
       });
+
+      // 2. Full Screen-Reader DOM Mirror update (WCAG 2.1 AA Compliance)
+      if (srText) {
+        srText.textContent = text;
+      }
     }
 
     renderScreen('> LISP-RT HYPERVISOR v1.0.0\n> AWAITING NEURAL BUS LINK...');
@@ -94,3 +209,5 @@
       channel.send('Generate a short quadratic equation practice quiz node.');
     };
   </script>
+</body>
+</html>

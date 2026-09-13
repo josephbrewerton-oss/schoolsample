@@ -33,9 +33,7 @@ const packageJson = {
     build: "tsup",
     dev: "tsup --watch"
   },
-  peerDependencies: {
-    "@mlc-ai/web-llm": "^0.2.78"
-  },
+  peerDependencies: {},
   devDependencies: {
     tsup: "^8.5.1",
     typescript: "^5.4.0"
@@ -69,12 +67,12 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   minify: true,
-  external: ["@mlc-ai/web-llm"]
+  external: []
 });
 `;
 
 // 5. Types (src/types/index.ts)
-const typesCode = `export type BackendTier = "chrome-nano" | "webgpu-webllm" | "webrtc-daemon";
+const typesCode = `export type BackendTier = "chrome-nano" | "webrtc-daemon" | "rule-engine";
 
 export interface ParsedAstNode {
   route: string;
@@ -142,17 +140,13 @@ export class AstCompiler {
 `;
 
 // 7. Core Engine (src/core/Engine.ts)
-const engineCode = `import * as webllm from "@mlc-ai/web-llm";
-import { BackendTier, EngineExecutionResult, EngineOptions } from "../types";
+const engineCode = `import { BackendTier, EngineExecutionResult, EngineOptions } from "../types";
 import { AstCompiler } from "./AstCompiler";
 
 export class EdgeCognitiveEngine {
-  private webllmEngine: webllm.MLCEngineInterface | null = null;
-  private modelName: string;
   private channel: BroadcastChannel | null = null;
 
   constructor(options?: EngineOptions) {
-    this.modelName = options?.model || "Llama-3.2-1B-Instruct-q4f32_1-MLC";
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       this.channel = new BroadcastChannel(options?.channelName || "schoolai-bus");
     }
@@ -172,22 +166,15 @@ export class EdgeCognitiveEngine {
           return { text: result, source: "chrome-nano" };
         }
       } catch (e) {
-        console.warn("Chrome AI invocation failed, trying WebGPU fallback:", e);
+        console.warn("Chrome AI invocation failed:", e);
       }
     }
 
-    // 2. WebGPU WebLLM
-    if (this.webllmEngine) {
-      const reply = await this.webllmEngine.chat.completions.create({
-        messages: [
-          ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
-          { role: "user" as const, content: prompt }
-        ]
-      });
-      return { text: reply.choices[0].message.content || "", source: "webgpu-webllm" };
-    }
-
-    throw new Error("No client-side hardware inference backend available.");
+    // 2. Offline Deterministic Rule Fallback
+    return {
+      text: '(:prompt "Offline Rule Question" :options ("True" "False") :answer-key 0)',
+      source: "rule-engine"
+    };
   }
 
   async executeAstWithRepair(prompt: string, systemPrompt: string, maxRetries = 2): Promise<EngineExecutionResult> {

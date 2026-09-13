@@ -105,4 +105,24 @@ html.high-contrast-mode section {
   }
 }
 
+/* Developing Nations & Low-Bandwidth / Data-Saver Hardware Optimizations */
+html[data-data-saver="true"] {
+  /* Disable non-critical GPU and CPU intensive animations */
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Strip expensive composite filters & heavy blur computations on low-end GPUs */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+html[data-data-saver="true"] .ast-viewport-stage {
+  animation: none !important;
+}
+
 

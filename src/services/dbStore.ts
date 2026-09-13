@@ -40,6 +40,9 @@ export interface CachedASTRecord {
   topicKey: string;
   rawAST: string;
   createdAt: number;
+  lastAccessedAt?: number;
+  accessCount?: number;
+  isPinned?: boolean;
 }
 
 export interface CachedLessonRecord {
@@ -54,6 +57,49 @@ export interface CachedLessonRecord {
   socraticCheck: string;
   fullText?: string;
   updatedAt: number;
+  lastAccessedAt?: number;
+  accessCount?: number;
+  isPinned?: boolean;
+}
+
+/**
+ * Permanent Core Syllabus Manifests & Question Banks Registry.
+ * These are pinned permanently in local storage and are 100% exempt from LRU eviction.
+ */
+export const PINNED_CORE_MANIFESTS = new Set<string>([
+  'catalog',
+  'catalog.json',
+  'master-catalog',
+  'school',
+  'communion',
+  'reconciliation',
+  'first-reconciliation',
+  'first-holy-communion',
+  'order-of-the-mass',
+  'sacrament-of-baptism',
+  'sacrament-of-confirmation',
+  'holy-trinity-creed',
+  'paschal-mystery',
+  'mary-and-rosary',
+  'gcse-re-trinity',
+  'catholic-social-teaching',
+  'catholic-sources-of-authority',
+  'catholic-eschatology',
+  'uk_oak_core',
+  'question_banks',
+]);
+
+/**
+ * Returns true if the domain or key belongs to pinned core syllabus manifests or question banks.
+ */
+export function isCoreSyllabusPinned(keyOrDomain: string): boolean {
+  if (!keyOrDomain) return false;
+  const lower = keyOrDomain.toLowerCase().trim();
+  if (PINNED_CORE_MANIFESTS.has(lower)) return true;
+  for (const pinned of PINNED_CORE_MANIFESTS) {
+    if (lower.includes(pinned)) return true;
+  }
+  return false;
 }
 
 export function openLocalDB(): Promise<IDBDatabase> {
@@ -120,7 +166,23 @@ export async function getBufferedLesson(key: string): Promise<CachedLessonRecord
       const tx = db.transaction(STORE_LESSONS, 'readonly');
       const store = tx.objectStore(STORE_LESSONS);
       const req = store.get(key);
-      req.onsuccess = () => resolve((req.result as CachedLessonRecord) || null);
+      req.onsuccess = () => {
+        const record = req.result as CachedLessonRecord | undefined;
+        if (record) {
+          // Touch LRU access timestamp asynchronously
+          try {
+            const touchTx = db.transaction(STORE_LESSONS, 'readwrite');
+            touchTx.objectStore(STORE_LESSONS).put({
+              ...record,
+              lastAccessedAt: Date.now(),
+              accessCount: (record.accessCount || 0) + 1,
+            });
+          } catch {}
+          resolve(record);
+        } else {
+          resolve(null);
+        }
+      };
       req.onerror = () => resolve(null);
     });
   } catch (err) {
@@ -132,13 +194,23 @@ export async function getBufferedLesson(key: string): Promise<CachedLessonRecord
 export async function putBufferedLesson(lesson: CachedLessonRecord): Promise<void> {
   try {
     const db = await openLocalDB();
-    return new Promise((resolve, reject) => {
+    const updatedRecord: CachedLessonRecord = {
+      ...lesson,
+      updatedAt: lesson.updatedAt || Date.now(),
+      lastAccessedAt: Date.now(),
+      accessCount: (lesson.accessCount || 0) + 1,
+      isPinned: lesson.isPinned || isCoreSyllabusPinned(lesson.key) || isCoreSyllabusPinned(lesson.subject),
+    };
+    await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE_LESSONS, 'readwrite');
       const store = tx.objectStore(STORE_LESSONS);
-      const req = store.put(lesson);
+      const req = store.put(updatedRecord);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
+
+    // Enforce LRU eviction asynchronously to protect storage quotas
+    enforceStorageQuotaLRU().catch((err) => console.warn('[dbStore] LRU eviction error:', err));
   } catch (err) {
     console.warn('[dbStore] Lesson cache write error:', err);
   }
@@ -313,8 +385,14 @@ export async function saveVerifiedAST(topicKey: string, rawAST: string): Promise
       topicKey,
       rawAST,
       createdAt: Date.now(),
+      lastAccessedAt: Date.now(),
+      accessCount: 1,
+      isPinned: isCoreSyllabusPinned(topicKey),
     });
-    req.onsuccess = () => resolve();
+    req.onsuccess = () => {
+      resolve();
+      enforceStorageQuotaLRU().catch(() => {});
+    };
     req.onerror = () => reject(req.error);
   });
 }
@@ -432,7 +510,184 @@ export async function bootstrapVfsViews(defaultViews: Record<string, string>): P
   }
 }
 
-// --- Storage Management ---
+// --- Storage Management & LRU Eviction ---
+
+export interface StorageQuotaLRUMetrics {
+  usageBytes: number;
+  quotaBytes: number;
+  usagePercent: number;
+  totalLessonTraces: number;
+  totalAstBankItems: number;
+  pinnedManifestsCount: number;
+  evictedLessonTraces: number;
+  evictedAstItems: number;
+  lastEvictionTime: number;
+}
+
+let globalEvictionMetrics: StorageQuotaLRUMetrics = {
+  usageBytes: 0,
+  quotaBytes: 0,
+  usagePercent: 0,
+  totalLessonTraces: 0,
+  totalAstBankItems: 0,
+  pinnedManifestsCount: PINNED_CORE_MANIFESTS.size,
+  evictedLessonTraces: 0,
+  evictedAstItems: 0,
+  lastEvictionTime: 0,
+};
+
+export const MAX_UNPINNED_LESSON_TRACES = 35;
+export const TARGET_UNPINNED_LESSON_TRACES = 25;
+export const MAX_UNPINNED_AST_ITEMS = 60;
+export const TARGET_UNPINNED_AST_ITEMS = 40;
+
+/**
+ * Executes LRU (Least Recently Used) eviction on unpinned generated lesson traces
+ * while permanently preserving core syllabus manifests (catalog.json, question banks, Oak modules).
+ */
+export async function enforceStorageQuotaLRU(): Promise<StorageQuotaLRUMetrics> {
+  try {
+    const db = await openLocalDB();
+
+    // 1. Storage Quota Inspection via StorageManager API
+    let usageBytes = 0;
+    let quotaBytes = 0;
+    let usagePercent = 0;
+
+    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
+      try {
+        const estimate = await navigator.storage.estimate();
+        usageBytes = estimate.usage || 0;
+        quotaBytes = estimate.quota || 0;
+        if (quotaBytes > 0) {
+          usagePercent = Math.round((usageBytes / quotaBytes) * 100);
+        }
+      } catch {}
+    }
+
+    let newlyEvictedLessons = 0;
+    let newlyEvictedAst = 0;
+
+    // 2. Scan and prune unpinned generated lesson traces (STORE_LESSONS)
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE_LESSONS, 'readwrite');
+      const store = tx.objectStore(STORE_LESSONS);
+      const req = store.getAll();
+
+      req.onsuccess = () => {
+        const lessons = (req.result as CachedLessonRecord[]) || [];
+        globalEvictionMetrics.totalLessonTraces = lessons.length;
+
+        // Strictly separate unpinned vs permanently pinned lessons
+        const unpinned = lessons.filter(
+          (l) => !l.isPinned && !isCoreSyllabusPinned(l.key) && !isCoreSyllabusPinned(l.subject)
+        );
+
+        const shouldEvict = unpinned.length > MAX_UNPINNED_LESSON_TRACES || usagePercent > 75;
+        if (shouldEvict && unpinned.length > TARGET_UNPINNED_LESSON_TRACES) {
+          // Sort ascending by lastAccessedAt (oldest accessed first)
+          unpinned.sort((a, b) => {
+            const timeA = a.lastAccessedAt || a.updatedAt || 0;
+            const timeB = b.lastAccessedAt || b.updatedAt || 0;
+            return timeA - timeB;
+          });
+
+          const excessCount = unpinned.length - TARGET_UNPINNED_LESSON_TRACES;
+          const toEvict = unpinned.slice(0, excessCount);
+
+          for (const item of toEvict) {
+            store.delete(item.key);
+            newlyEvictedLessons++;
+          }
+          console.log(
+            `[Storage Quota LRU] Evicted ${newlyEvictedLessons} generated lesson traces (preserved ${
+              lessons.length - unpinned.length
+            } pinned manifests).`
+          );
+        }
+        resolve();
+      };
+      req.onerror = () => resolve();
+    });
+
+    // 3. Scan and prune unpinned ephemeral synthetic AST question bank items (STORE_AST_BANK)
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE_AST_BANK, 'readwrite');
+      const store = tx.objectStore(STORE_AST_BANK);
+      const req = store.getAll();
+
+      req.onsuccess = () => {
+        const astItems = (req.result as CachedASTRecord[]) || [];
+        globalEvictionMetrics.totalAstBankItems = astItems.length;
+
+        const unpinned = astItems.filter(
+          (item) => !item.isPinned && !isCoreSyllabusPinned(item.topicKey)
+        );
+
+        if (unpinned.length > MAX_UNPINNED_AST_ITEMS || usagePercent > 75) {
+          unpinned.sort((a, b) => {
+            const timeA = a.lastAccessedAt || a.createdAt || 0;
+            const timeB = b.lastAccessedAt || b.createdAt || 0;
+            return timeA - timeB;
+          });
+
+          const excessCount = unpinned.length - TARGET_UNPINNED_AST_ITEMS;
+          const toEvict = unpinned.slice(0, Math.max(0, excessCount));
+
+          for (const item of toEvict) {
+            if (item.id !== undefined) {
+              store.delete(item.id);
+              newlyEvictedAst++;
+            }
+          }
+        }
+        resolve();
+      };
+      req.onerror = () => resolve();
+    });
+
+    // 4. Count permanently pinned manifests
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE_MANIFESTS, 'readonly');
+      const store = tx.objectStore(STORE_MANIFESTS);
+      const countReq = store.count();
+      countReq.onsuccess = () => {
+        globalEvictionMetrics.pinnedManifestsCount = Math.max(
+          countReq.result,
+          PINNED_CORE_MANIFESTS.size
+        );
+        resolve();
+      };
+      countReq.onerror = () => resolve();
+    });
+
+    globalEvictionMetrics = {
+      ...globalEvictionMetrics,
+      usageBytes,
+      quotaBytes,
+      usagePercent,
+      evictedLessonTraces: globalEvictionMetrics.evictedLessonTraces + newlyEvictedLessons,
+      evictedAstItems: globalEvictionMetrics.evictedAstItems + newlyEvictedAst,
+      lastEvictionTime: Date.now(),
+    };
+
+    return globalEvictionMetrics;
+  } catch (err) {
+    console.warn('[Storage Quota LRU] Error enforcing quota:', err);
+    return globalEvictionMetrics;
+  }
+}
+
+/**
+ * Diagnostic accessor for storage quota and LRU eviction status
+ */
+export async function getStorageQuotaMetrics(): Promise<StorageQuotaLRUMetrics> {
+  try {
+    return await enforceStorageQuotaLRU();
+  } catch {
+    return globalEvictionMetrics;
+  }
+}
 
 export async function purgeInactiveManifests(
   activeDomainId: string,
@@ -447,9 +702,14 @@ export async function purgeInactiveManifests(
     keysReq.onsuccess = () => {
       const keys = keysReq.result as string[];
       keys.forEach((key) => {
-        if (key !== activeDomainId && !preservedDomains.includes(key)) {
+        // PERMANENT PINNING: Never delete core syllabus manifests or question banks
+        if (
+          key !== activeDomainId &&
+          !preservedDomains.includes(key) &&
+          !isCoreSyllabusPinned(key)
+        ) {
           store.delete(key);
-          console.log(`🧹 Ephemeral Cache Purge: Cleared manifest [${key}] from local IndexedDB`);
+          console.log(`🧹 Ephemeral Cache Purge: Cleared unpinned manifest [${key}] from local IndexedDB`);
         }
       });
       resolve();

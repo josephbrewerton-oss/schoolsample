@@ -21,21 +21,146 @@
     let currentSystemInstruction = '';
     const pendingHypercalls = new Map();
 
-    function sendToHypervisor(payload) {
-      const msg = { ...payload, __neural_guest__: true };
-      
-      // 1. Direct parent postMessage (< 0.1ms fast-path)
-      if (window.parent && window.parent !== window) {
+    // Binary Protocol Constants for Zero-Copy ArrayBuffer Transfers
+    const PROTOCOL_MAGIC_0 = 0x53; // 'S'
+    const PROTOCOL_MAGIC_1 = 0x4a; // 'J'
+    const PROTOCOL_VERSION = 0x02;
+
+    const OP_TOKEN_CHUNK = 0x01;
+    const OP_AST_NODE_CHUNK = 0x02;
+    const OP_AST_NODE_COMPLETE = 0x03;
+    const OP_HEARTBEAT_PING = 0x04;
+    const OP_HEARTBEAT_PONG = 0x05;
+    const OP_STATUS = 0x06;
+    const OP_ERROR = 0x07;
+    const OP_STREAM_EOF = 0x0f;
+
+    const FLAG_IS_FINAL = 0x0001;
+    const FLAG_IS_GOVERNED = 0x0002;
+    const FLAG_IS_JSON = 0x0004;
+
+    const textEncoder = new TextEncoder();
+    const textDecoder = new TextDecoder('utf-8', { fatal: false });
+
+    function isBinaryFrame(data) {
+      if (!(data instanceof ArrayBuffer)) return false;
+      if (data.byteLength < 16) return false;
+      const view = new DataView(data);
+      return view.getUint8(0) === PROTOCOL_MAGIC_0 && view.getUint8(1) === PROTOCOL_MAGIC_1;
+    }
+
+    function encodeBinaryFrame(opcode, payload = '', streamId = 0, flags = 0) {
+      const payloadBytes = typeof payload === 'string' ? textEncoder.encode(payload) : payload;
+      const totalLength = 16 + payloadBytes.byteLength;
+      const buffer = new ArrayBuffer(totalLength);
+      const view = new DataView(buffer);
+      const uint8 = new Uint8Array(buffer);
+
+      view.setUint8(0, PROTOCOL_MAGIC_0);
+      view.setUint8(1, PROTOCOL_MAGIC_1);
+      view.setUint8(2, PROTOCOL_VERSION);
+      view.setUint8(3, opcode);
+      view.setUint16(4, flags, false);
+      view.setUint32(6, streamId >>> 0, false);
+      view.setUint16(10, 0, false);
+      view.setUint32(12, payloadBytes.byteLength, false);
+
+      uint8.set(payloadBytes, 16);
+      return buffer;
+    }
+
+    function decodeBinaryFrame(buffer) {
+      if (!isBinaryFrame(buffer)) return null;
+      const view = new DataView(buffer);
+      const opcode = view.getUint8(3);
+      const flags = view.getUint16(4, false);
+      const streamId = view.getUint32(6, false);
+      const payloadLength = view.getUint32(12, false);
+      const safeLen = Math.min(payloadLength, buffer.byteLength - 16);
+      const payloadBytes = new Uint8Array(buffer, 16, safeLen);
+      const payloadText = textDecoder.decode(payloadBytes);
+      return {
+        opcode,
+        flags,
+        streamId,
+        isFinal: Boolean(flags & FLAG_IS_FINAL),
+        payloadText,
+      };
+    }
+
+    function hashRequestId(idStr) {
+      if (typeof idStr === 'number') return idStr >>> 0;
+      let hash = 0;
+      const str = String(idStr || '');
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash) >>> 0;
+    }
+
+    function sendTokenChunk(token, requestId, isFinal = false) {
+      const numericStreamId = hashRequestId(requestId);
+      const flags = isFinal ? FLAG_IS_FINAL : 0;
+
+      // 1. WebRTC DataChannel Zero-Copy Loopback
+      if (activeChannel && activeChannel.readyState === 'open') {
         try {
-          window.parent.postMessage(msg, '*');
+          const frameBuffer = encodeBinaryFrame(OP_TOKEN_CHUNK, token, numericStreamId, flags);
+          activeChannel.send(frameBuffer);
         } catch {}
       }
 
-      // 2. WebRTC DataChannel (if open)
-      if (activeChannel && activeChannel.readyState === 'open') {
+      // 2. Transferable ArrayBuffer to host window (< 0.1ms, zero memory copy)
+      if (window.parent && window.parent !== window) {
         try {
-          activeChannel.send(JSON.stringify(msg));
-          activeChannel.send('__EOF__');
+          const postBuffer = encodeBinaryFrame(OP_TOKEN_CHUNK, token, numericStreamId, flags);
+          window.parent.postMessage(
+            { type: 'NEURAL_BINARY_FRAME', buffer: postBuffer, __neural_guest__: true },
+            '*',
+            [postBuffer]
+          );
+        } catch {}
+      }
+    }
+
+    function sendToHypervisor(payload) {
+      const msg = { ...payload, __neural_guest__: true };
+      const numericId = hashRequestId(payload.requestId || 0);
+
+      // Zero-copy transferable binary representation for token streams and AST nodes
+      if (payload.type === 'AST_RESPONSE' || payload.type === 'AST_ERROR') {
+        const jsonStr = JSON.stringify(msg);
+        const opcode = payload.type === 'AST_RESPONSE' ? OP_AST_NODE_COMPLETE : OP_ERROR;
+        const flags = FLAG_IS_FINAL | FLAG_IS_JSON;
+
+        // 1. Transferable ArrayBuffer to parent host (< 0.1ms fast-path)
+        if (window.parent && window.parent !== window) {
+          try {
+            const transferBuffer = encodeBinaryFrame(opcode, jsonStr, numericId, flags);
+            window.parent.postMessage(
+              { type: 'NEURAL_BINARY_FRAME', buffer: transferBuffer, __neural_guest__: true },
+              '*',
+              [transferBuffer] // ZERO-COPY TRANSFERABLE OBJECT
+            );
+          } catch {}
+        }
+
+        // 2. WebRTC DataChannel Loopback (zero-copy binary transfer)
+        if (activeChannel && activeChannel.readyState === 'open') {
+          try {
+            const dcBuffer = encodeBinaryFrame(opcode, jsonStr, numericId, flags);
+            activeChannel.send(dcBuffer);
+            const eofBuffer = encodeBinaryFrame(OP_STREAM_EOF, '', numericId, FLAG_IS_FINAL);
+            activeChannel.send(eofBuffer);
+          } catch {}
+        }
+      }
+
+      // Standard fallback for inspection and non-binary listeners
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage(msg, '*');
         } catch {}
       }
 
@@ -95,11 +220,12 @@
       };
 
       const dc = pc.createDataChannel('neural-bus', { ordered: true });
+      dc.binaryType = 'arraybuffer';
       activeChannel = dc;
 
       dc.onopen = () => {
         isConnecting = false;
-        console.log('[Guest VM Daemon] DataChannel OPEN. Connected to Hypervisor.');
+        console.log('[Guest VM Daemon] DataChannel OPEN (Binary ArrayBuffer Enabled). Connected to Hypervisor.');
       };
 
       dc.onclose = () => {
@@ -108,7 +234,24 @@
       };
 
       dc.onmessage = async (event) => {
-        if (event.data === '__EOF__' || isBusy) return;
+        if (isBusy) return;
+        if (event.data === '__EOF__') return;
+
+        // Zero-copy binary frame handling
+        if (event.data instanceof ArrayBuffer) {
+          const decoded = decodeBinaryFrame(event.data);
+          if (decoded) {
+            if (decoded.opcode === OP_STREAM_EOF) return;
+            if (decoded.payloadText && decoded.payloadText.startsWith('{')) {
+              try {
+                const parsed = JSON.parse(decoded.payloadText);
+                processHypervisorCommand(parsed);
+              } catch {}
+            }
+          }
+          return;
+        }
+
         try {
           const parsed = JSON.parse(event.data);
           processHypervisorCommand(parsed);
@@ -252,14 +395,14 @@
           }
         } catch {}
 
-        const systemInstruction = `UK National Curriculum Educator. Output strictly 1 valid Lisp S-expression adhering to quiz.rules.ast. No markdown fences or commentary.`;
+        const systemInstruction = payload.systemPrompt || `UK National Curriculum Educator. Output strictly 1 valid Lisp S-expression adhering to quiz.rules.ast. No markdown fences or commentary.`;
 
         let session = await getOrCreateWarmSession(systemInstruction);
         if (!session) {
           throw new Error('On-device LanguageModel session unavailable on this device.');
         }
 
-        const prompt = `Topic: "${topic}" (${keyStage} ${subject}).
+        const prompt = payload.prompt || `Topic: "${topic}" (${keyStage} ${subject}).
 ${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
 Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). The :answer-key must be the 0-indexed integer of the correct answer. Hint under 15 words.
 
@@ -272,7 +415,7 @@ Format strictly as:
  :hint "Short clue under 15 words")`;
 
         // Non-destructive inference execution:
-        // Avoid aggressive AbortController aborts that tear down Chromium's native Mojo session.
+        // Stream tokens using zero-copy transferable ArrayBuffers to minimize GC spikes on host
         let response = '';
         let timerHandle;
         const timeoutPromise = new Promise((_, reject) => {
@@ -283,7 +426,23 @@ Format strictly as:
 
         try {
           try {
-            response = await Promise.race([session.prompt(prompt), timeoutPromise]);
+            if (typeof session.promptStreaming === 'function') {
+              const stream = session.promptStreaming(prompt);
+              let prevLen = 0;
+              for await (const chunk of stream) {
+                const newChunk = chunk.slice(prevLen);
+                prevLen = chunk.length;
+                response += newChunk;
+                if (newChunk) {
+                  sendTokenChunk(newChunk, requestId, false);
+                  // Microtask yield keeps the Guest VM event loop smooth
+                  await new Promise((r) => setTimeout(r, 0));
+                }
+              }
+              sendTokenChunk('', requestId, true);
+            } else {
+              response = await Promise.race([session.prompt(prompt), timeoutPromise]);
+            }
           } catch (promptErr) {
             const errMsg = String(promptErr?.message || '').toLowerCase();
             const isInvalidState = promptErr?.name === 'InvalidStateError' || 
@@ -295,7 +454,23 @@ Format strictly as:
               resetWarmSession();
               session = await getOrCreateWarmSession(systemInstruction);
               if (session) {
-                response = await Promise.race([session.prompt(prompt), timeoutPromise]);
+                if (typeof session.promptStreaming === 'function') {
+                  const stream = session.promptStreaming(prompt);
+                  let prevLen = 0;
+                  response = '';
+                  for await (const chunk of stream) {
+                    const newChunk = chunk.slice(prevLen);
+                    prevLen = chunk.length;
+                    response += newChunk;
+                    if (newChunk) {
+                      sendTokenChunk(newChunk, requestId, false);
+                      await new Promise((r) => setTimeout(r, 0));
+                    }
+                  }
+                  sendTokenChunk('', requestId, true);
+                } else {
+                  response = await Promise.race([session.prompt(prompt), timeoutPromise]);
+                }
               } else {
                 throw promptErr;
               }

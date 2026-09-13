@@ -7,6 +7,7 @@ import {
 } from '../services/dbStore';
 import { OakStage, OakSubject, OakTopic } from '../curriculum/oakCatalogue';
 import { runLocalInference } from './EdgeCognitiveEngine';
+import { healSExprString } from '../utils/astQuestionExtractor';
 
 export type ASTNode = {
   tag: string;
@@ -19,7 +20,8 @@ export type ASTNode = {
  */
 // In src/engine/ast-loader.ts -> tokenize()
 function tokenize(input: string): string[] {
-  const sanitized = input
+  const healed = healSExprString(input);
+  const sanitized = healed
     .replace(/```(?:lisp|scheme)?/gi, '')
     .replace(/```/g, '')
     .replace(/;;.*$/gm, '')
@@ -81,11 +83,13 @@ function tokenize(input: string): string[] {
  * Recursively parses token stream into an AST node tree or structured literal list.
  */
 export function parseAST(source: string): ASTNode | null {
+  if (!source || typeof source !== 'string') return null;
   const tokens = tokenize(source);
+  if (tokens.length === 0) return null;
   let cursor = 0;
 
   function parseList(): any {
-    if (tokens[cursor] !== '(') return null;
+    if (cursor >= tokens.length || tokens[cursor] !== '(') return null;
     cursor++; // consume '('
 
     const firstToken = tokens[cursor];
@@ -94,32 +98,32 @@ export function parseAST(source: string): ASTNode | null {
       const props: Record<string, any> = {};
       while (cursor < tokens.length && tokens[cursor] !== ')') {
         const keyToken = tokens[cursor++];
-        if (keyToken.startsWith(':')) {
+        if (keyToken && keyToken.startsWith(':')) {
           const key = keyToken.slice(1);
-          if (tokens[cursor] === '(') {
+          if (cursor < tokens.length && tokens[cursor] === '(') {
             props[key] = parseList();
-          } else {
+          } else if (cursor < tokens.length) {
             const val = tokens[cursor++];
             props[key] = val && val.startsWith('"') ? JSON.parse(val) : val;
           }
         }
       }
-      if (tokens[cursor] === ')') cursor++;
+      if (cursor < tokens.length && tokens[cursor] === ')') cursor++;
       return props;
     }
 
-    const tag = tokens[cursor++];
+    const tag = cursor < tokens.length ? tokens[cursor++] : 'node';
     const node: ASTNode = { tag, props: {}, children: [] };
 
     while (cursor < tokens.length && tokens[cursor] !== ')') {
       const current = tokens[cursor];
 
-      if (current.startsWith(':')) {
+      if (current && current.startsWith(':')) {
         const key = current.slice(1);
         cursor++;
-        if (tokens[cursor] === '(') {
+        if (cursor < tokens.length && tokens[cursor] === '(') {
           node.props[key] = parseList();
-        } else {
+        } else if (cursor < tokens.length) {
           const valToken = tokens[cursor++];
           node.props[key] = valToken && valToken.startsWith('"') ? JSON.parse(valToken) : valToken;
         }
@@ -127,11 +131,13 @@ export function parseAST(source: string): ASTNode | null {
         node.children.push(parseList());
       } else {
         cursor++;
-        node.children.push(current.startsWith('"') ? JSON.parse(current) : current);
+        if (current !== undefined) {
+          node.children.push(current.startsWith('"') ? JSON.parse(current) : current);
+        }
       }
     }
 
-    if (tokens[cursor] === ')') cursor++;
+    if (cursor < tokens.length && tokens[cursor] === ')') cursor++;
     return node;
   }
 

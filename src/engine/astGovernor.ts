@@ -45,9 +45,9 @@ export class ASTFlowGovernor {
   }
 
   /**
-   * Deterministic Fraction/Decimal/Arithmetic Solver
+   * Deterministic Fraction/Decimal/Arithmetic/Unit Solver
    */
-  private static verifyArithmetic(rawPrompt: any, rawScratchpad: any = ''): string | null {
+  public static verifyArithmetic(rawPrompt: any, rawScratchpad: any = ''): string | null {
     const prompt = String(rawPrompt || '');
     const scratchpad = String(rawScratchpad || '');
 
@@ -69,7 +69,25 @@ export class ASTFlowGovernor {
       }
     }
 
-    // 2. Fraction Multiplication: (a/b) * (c/d) or a/b * c/d
+    // 2. Percentage Calculation (e.g. "15% of 80", "What is 20% of 150?")
+    const percentMatch = prompt.match(/(\d+(?:\.\d+)?)\s*%\s*(?:of)\s*(\d+(?:\.\d+)?)/i);
+    if (percentMatch) {
+      const pct = parseFloat(percentMatch[1]);
+      const total = parseFloat(percentMatch[2]);
+      if (!isNaN(pct) && !isNaN(total)) {
+        const result = (pct / 100) * total;
+        const formatted = Number.isInteger(result) ? String(result) : String(parseFloat(result.toFixed(2)));
+        return formatted;
+      }
+    }
+
+    // 3. UK National Curriculum Standard Unit Conversions
+    const unitConversion = this.evaluateUnitConversion(prompt);
+    if (unitConversion !== null) {
+      return unitConversion;
+    }
+
+    // 4. Fraction Multiplication: (a/b) * (c/d) or a/b * c/d
     const fracMulMatch = prompt.match(/\(?(\d+)\/(\d+)\)?\s*[\*xX×]\s*\(?(\d+)\/(\d+)\)?/);
     if (fracMulMatch) {
       const [, a, b, c, d] = fracMulMatch.map(Number);
@@ -83,7 +101,7 @@ export class ASTFlowGovernor {
       return simpDen === 1 ? `${simpNum}` : `${simpNum}/${simpDen}`;
     }
 
-    // 3. Fraction Addition / Subtraction: a/b +/- c/d
+    // 5. Fraction Addition / Subtraction: a/b +/- c/d
     const fracAddMatch = prompt.match(/\(?(\d+)\/(\d+)\)?\s*([\+\-])\s*\(?(\d+)\/(\d+)\)?/);
     if (fracAddMatch) {
       const [, a, b, op, c, d] = fracAddMatch;
@@ -100,7 +118,7 @@ export class ASTFlowGovernor {
       return simpDen === 1 ? `${simpNum}` : `${simpNum}/${simpDen}`;
     }
 
-    // 4. Decimal Division: e.g. "0.5/2"
+    // 6. Decimal Division: e.g. "0.5/2"
     const decDivMatch = prompt.match(/([\d\.]+)\s*\/\s*(\d+)/);
     if (decDivMatch) {
       const decVal = parseFloat(decDivMatch[1]);
@@ -122,12 +140,14 @@ export class ASTFlowGovernor {
       }
     }
 
-    // 5. Decimal / Integer Arithmetic: e.g. "0.75 + 0.25"
-    const basicMathMatch = prompt.match(/([\d\.]+)\s*([\+\-\*\/])\s*([\d\.]+)/);
-    if (basicMathMatch) {
-      const num1 = parseFloat(basicMathMatch[1]);
-      const op = basicMathMatch[2];
-      const num2 = parseFloat(basicMathMatch[3]);
+    // 7. Negative Integers and Two-Operand Arithmetic: e.g. "-4 + (-7)", "7 + -10", "0.75 + 0.25"
+    const arithmeticMatch = prompt.match(/(-?\d+(?:\.\d+)?)\s*([\+\-\*\/×÷])\s*\(?(-?\d+(?:\.\d+)?)\)?/);
+    if (arithmeticMatch) {
+      const num1 = parseFloat(arithmeticMatch[1]);
+      let op = arithmeticMatch[2];
+      if (op === '×') op = '*';
+      if (op === '÷') op = '/';
+      const num2 = parseFloat(arithmeticMatch[3]);
 
       if (!isNaN(num1) && !isNaN(num2)) {
         let result: number | null = null;
@@ -139,24 +159,178 @@ export class ASTFlowGovernor {
         }
 
         if (result !== null) {
-          const fixedDecimals = Math.max(
-            (basicMathMatch[1].split('.')[1] || '').length,
-            (basicMathMatch[3].split('.')[1] || '').length
-          );
-          return fixedDecimals > 0 ? result.toFixed(fixedDecimals) : String(result);
+          const formatted = Number.isInteger(result) ? String(result) : String(parseFloat(result.toFixed(4)));
+          return formatted;
         }
       }
     }
 
-    // 6. Scratchpad fallback: "... = 1/3"
+    // 8. BIDMAS / PEMDAS Compound Arithmetic Scratchpad Evaluator
     if (scratchpad) {
+      // Look for trailing equality "= 12" or "= 3/4"
       const padEqMatch = scratchpad.match(/=\s*([0-9\.\/%a-zA-Z\s]+)$/);
       if (padEqMatch) {
         return padEqMatch[1].trim();
       }
+
+      // Look for compound arithmetic expression in scratchpad (e.g. "(5 + 3) * 2 = 16")
+      const exprMatch = scratchpad.match(/([\d\.\+\-\*\/\(\)\s]{4,})\s*=\s*(-?[\d\.]+)/);
+      if (exprMatch) {
+        const computed = this.safeEvaluateBIDMAS(exprMatch[1]);
+        if (computed !== null) {
+          return Number.isInteger(computed) ? String(computed) : String(parseFloat(computed.toFixed(4)));
+        }
+        return exprMatch[2].trim();
+      }
     }
 
     return null;
+  }
+
+  /**
+   * Deterministic Evaluator for Standard UK Curriculum Unit Conversions
+   */
+  private static evaluateUnitConversion(prompt: string): string | null {
+    // Length: mm <-> cm, cm <-> m, m <-> km
+    const mmToCm = prompt.match(/(\d+(?:\.\d+)?)\s*(?:mm|millimetres|millimeters)\s*(?:to|in|into|as)\s*(?:cm|centimetres|centimeters)/i);
+    if (mmToCm) return String(parseFloat((parseFloat(mmToCm[1]) / 10).toFixed(4)));
+
+    const cmToMm = prompt.match(/(\d+(?:\.\d+)?)\s*(?:cm|centimetres|centimeters)\s*(?:to|in|into|as)\s*(?:mm|millimetres|millimeters)/i);
+    if (cmToMm) return String(parseFloat((parseFloat(cmToMm[1]) * 10).toFixed(4)));
+
+    const cmToM = prompt.match(/(\d+(?:\.\d+)?)\s*(?:cm|centimetres|centimeters)\s*(?:to|in|into|as)\s*(?:m|metres|meters)/i);
+    if (cmToM) return String(parseFloat((parseFloat(cmToM[1]) / 100).toFixed(4)));
+
+    const mToCm = prompt.match(/(\d+(?:\.\d+)?)\s*(?:m|metres|meters)\s*(?:to|in|into|as)\s*(?:cm|centimetres|centimeters)/i);
+    if (mToCm) return String(parseFloat((parseFloat(mToCm[1]) * 100).toFixed(4)));
+
+    const mToKm = prompt.match(/(\d+(?:\.\d+)?)\s*(?:m|metres|meters)\s*(?:to|in|into|as)\s*(?:km|kilometres|kilometers)/i);
+    if (mToKm) return String(parseFloat((parseFloat(mToKm[1]) / 1000).toFixed(4)));
+
+    const kmToM = prompt.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometres|kilometers)\s*(?:to|in|into|as)\s*(?:m|metres|meters)/i);
+    if (kmToM) return String(parseFloat((parseFloat(kmToM[1]) * 1000).toFixed(4)));
+
+    // Mass: g <-> kg
+    const gToKg = prompt.match(/(\d+(?:\.\d+)?)\s*(?:g|grams)\s*(?:to|in|into|as)\s*(?:kg|kilograms)/i);
+    if (gToKg) return String(parseFloat((parseFloat(gToKg[1]) / 1000).toFixed(4)));
+
+    const kgToG = prompt.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilograms)\s*(?:to|in|into|as)\s*(?:g|grams)/i);
+    if (kgToG) return String(parseFloat((parseFloat(kgToG[1]) * 1000).toFixed(4)));
+
+    // Volume: ml <-> l
+    const mlToL = prompt.match(/(\d+(?:\.\d+)?)\s*(?:ml|millilitres|milliliters)\s*(?:to|in|into|as)\s*(?:l|litres|liters)/i);
+    if (mlToL) return String(parseFloat((parseFloat(mlToL[1]) / 1000).toFixed(4)));
+
+    const lToMl = prompt.match(/(\d+(?:\.\d+)?)\s*(?:l|litres|liters)\s*(?:to|in|into|as)\s*(?:ml|millilitres|milliliters)/i);
+    if (lToMl) return String(parseFloat((parseFloat(lToMl[1]) * 1000).toFixed(4)));
+
+    // Currency: £ <-> p
+    const poundsToPence = prompt.match(/(?:£|GBP\s*)(\d+(?:\.\d+)?)\s*(?:to|in|into|as)\s*(?:p|pence)/i);
+    if (poundsToPence) return String(Math.round(parseFloat(poundsToPence[1]) * 100));
+
+    const penceToPounds = prompt.match(/(\d+)\s*(?:p|pence)\s*(?:to|in|into|as)\s*(?:£|pounds)/i);
+    if (penceToPounds) return String(parseFloat((parseFloat(penceToPounds[1]) / 100).toFixed(2)));
+
+    // Time: minutes <-> hours
+    const hrsToMins = prompt.match(/(\d+(?:\.\d+)?)\s*(?:hours|hrs)\s*(?:to|in|into|as)\s*(?:minutes|mins)/i);
+    if (hrsToMins) return String(parseFloat((parseFloat(hrsToMins[1]) * 60).toFixed(2)));
+
+    const minsToHrs = prompt.match(/(\d+)\s*(?:minutes|mins)\s*(?:to|in|into|as)\s*(?:hours|hrs)/i);
+    if (minsToHrs) return String(parseFloat((parseFloat(minsToHrs[1]) / 60).toFixed(2)));
+
+    return null;
+  }
+
+  /**
+   * Safe, deterministic token-based arithmetic evaluator for BIDMAS / PEMDAS expressions.
+   * Does NOT use eval().
+   */
+  private static safeEvaluateBIDMAS(expr: string): number | null {
+    try {
+      const sanitized = expr.replace(/\s+/g, '');
+      if (!/^[0-9\.\+\-\*\/\(\)]+$/.test(sanitized)) return null;
+
+      // Tokenize
+      const tokens: string[] = [];
+      let current = '';
+      for (let i = 0; i < sanitized.length; i++) {
+        const c = sanitized[i];
+        if (/[0-9\.]/.test(c)) {
+          current += c;
+        } else if ('+-*/()'.includes(c)) {
+          if (current) {
+            tokens.push(current);
+            current = '';
+          }
+          // Check unary minus
+          if (c === '-' && (tokens.length === 0 || '(*+/-'.includes(tokens[tokens.length - 1]))) {
+            current = '-';
+          } else {
+            tokens.push(c);
+          }
+        }
+      }
+      if (current) tokens.push(current);
+
+      // Shunting-yard algorithm to Reverse Polish Notation (RPN)
+      const outputQueue: string[] = [];
+      const opStack: string[] = [];
+      const precedence: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+      for (const token of tokens) {
+        if (!isNaN(Number(token))) {
+          outputQueue.push(token);
+        } else if ('+-*/'.includes(token)) {
+          while (
+            opStack.length > 0 &&
+            opStack[opStack.length - 1] !== '(' &&
+            precedence[opStack[opStack.length - 1]] >= precedence[token]
+          ) {
+            outputQueue.push(opStack.pop()!);
+          }
+          opStack.push(token);
+        } else if (token === '(') {
+          opStack.push(token);
+        } else if (token === ')') {
+          while (opStack.length > 0 && opStack[opStack.length - 1] !== '(') {
+            outputQueue.push(opStack.pop()!);
+          }
+          if (opStack.pop() !== '(') return null; // Mismatched parentheses
+        }
+      }
+
+      while (opStack.length > 0) {
+        const op = opStack.pop()!;
+        if (op === '(' || op === ')') return null;
+        outputQueue.push(op);
+      }
+
+      // Evaluate RPN
+      const evalStack: number[] = [];
+      for (const token of outputQueue) {
+        if (!isNaN(Number(token))) {
+          evalStack.push(Number(token));
+        } else {
+          if (evalStack.length < 2) return null;
+          const b = evalStack.pop()!;
+          const a = evalStack.pop()!;
+          switch (token) {
+            case '+': evalStack.push(a + b); break;
+            case '-': evalStack.push(a - b); break;
+            case '*': evalStack.push(a * b); break;
+            case '/':
+              if (b === 0) return null;
+              evalStack.push(a / b);
+              break;
+            default: return null;
+          }
+        }
+      }
+
+      return evalStack.length === 1 ? evalStack[0] : null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -208,6 +382,14 @@ export class ASTFlowGovernor {
         const lower = opt.toLowerCase();
         if (opt.length <= 1 || opt === '\\' || opt === '/') return false;
         if (lower.includes('said amelia') || lower.includes('said tom')) return false;
+        if (
+          lower.includes('all of the above') ||
+          lower.includes('none of the above') ||
+          lower.includes('all of these') ||
+          lower.includes('none of these')
+        ) {
+          return false;
+        }
         if (opt.includes('<STEM>') || opt.includes('<DISTRACTOR') || opt.includes('<CORRECT>')) return false;
         return true;
       });
@@ -226,10 +408,10 @@ export class ASTFlowGovernor {
 
     // 4. Distractor Auto-Repair: Pad to at least 4 valid options instead of rejecting
     const genericDistractors = [
-      `None of these features apply to ${expectedTopic}`,
-      `Conditions remain constant without any change in ${expectedTopic}`,
-      `The opposite of the expected pattern occurs`,
-      `This principle is completely irrelevant to ${expectedSubject}`
+      `Alternative condition specific to higher level stages of ${expectedTopic}`,
+      `Conditions remain constant without any variation in ${expectedTopic}`,
+      `The opposite of the expected pattern occurs in this case`,
+      `This principle relates to other distinct topics in ${expectedSubject}`
     ];
 
     while (uniqueOptions.length < 4) {

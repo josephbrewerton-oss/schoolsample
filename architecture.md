@@ -1,7 +1,7 @@
 # School AI Portal (Schoolsample) — System Architecture & Context
 
 ## 1. Project Overview & Commercial Thesis
-The School AI Portal is a zero-marginal-cost, privacy-first interactive learning and practice engine built on Docusaurus, edge-first local LLMs (Gemini Nano / `window.ai`), and immediate-mode Canvas rendering.
+The School AI Portal is a zero-marginal-cost, privacy-first interactive learning and practice engine built on Vite 6+, React 19, edge-first local LLMs (Gemini Nano / `window.ai`), and immediate-mode Canvas rendering.
 
 * **Zero Cloud Compute Costs:** Inference, Socratic evaluation, AST compilation, and state validation run 100% client-side in the student's browser.
 * **UK GDPR / Safeguarding Compliance:** Zero student data, telemetry, or generated quiz tokens leave the local device sandbox.

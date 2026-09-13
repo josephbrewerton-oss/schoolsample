@@ -6,6 +6,7 @@ import PersistentFooter from './PersistentFooter';
 import ViewportSkeleton from './ViewportSkeleton';
 import { classroomBeacon, TeacherBroadcastCommand } from '../services/classroomBeacon';
 import { getLearnerProfile } from '../services/studentProfileStore';
+import { hypervisor } from '../engine/hypervisor';
 
 export default function PersistentAppShell(): React.JSX.Element {
   const location = useLocation();
@@ -163,6 +164,19 @@ export default function PersistentAppShell(): React.JSX.Element {
 
       {/* 4. Persistent Site Footer */}
       <PersistentFooter />
+
+      {/* 5. Off-Main-Thread Neural WebRTC Guest VM Daemon */}
+      <iframe
+        id="neural-worker-guest-vm"
+        ref={(el) => {
+          if (el && hypervisor?.registerWorkerIframe) {
+            hypervisor.registerWorkerIframe(el);
+          }
+        }}
+        src={`${import.meta.env.BASE_URL}worker.html?v=1.2.2`}
+        style={{ display: 'none', width: 0, height: 0, border: 'none' }}
+        title="neural-worker-guest-vm"
+      />
     </div>
   );
 }

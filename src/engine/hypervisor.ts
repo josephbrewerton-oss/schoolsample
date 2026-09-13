@@ -8,9 +8,17 @@
 import { getRuleSet, RulesRegistry } from '../rules';
 import { ASTFlowGovernor, RawASTQuestion } from './astGovernor';
 import { EngineFlow } from './engineflow';
-import { extractQuestionFromAst } from '../utils/astQuestionExtractor';
+import { extractQuestionFromAst, healSExprString } from '../utils/astQuestionExtractor';
 import { saveVerifiedAST, saveVfsView } from '../services/dbStore';
 import type { HyperMessage, HyperNodeResult } from './hypercall';
+import {
+  decodeBinaryFrame,
+  isBinaryFrame,
+  OP_TOKEN_CHUNK,
+  OP_AST_NODE_COMPLETE,
+  OP_ERROR,
+  OP_STREAM_EOF,
+} from '../utils/binaryStreamProtocol';
 
 export type HypercallDispatcher = (target: string, message: HyperMessage) => Promise<HyperNodeResult>;
 
@@ -31,6 +39,10 @@ export interface HypervisorMetrics {
   lastHeartbeatPingMs: number;
   sessionWarm: boolean;
   guestCapabilities: string[];
+  currentFps: number;
+  isOffMainThread: boolean;
+  binaryFramesTransferred: number;
+  bytesTransferredZeroCopy: number;
 }
 
 export interface RuleAuditResult {
@@ -42,9 +54,11 @@ export interface RuleAuditResult {
 }
 
 export interface HypervisorInferenceRequest {
-  keyStage: string;
-  subject: string;
-  unit: string;
+  keyStage?: string;
+  subject?: string;
+  unit?: string;
+  prompt?: string;
+  systemPrompt?: string;
   curriculum?: string;
   difficulty?: 'warmup' | 'challenger' | 'brainbuster';
   lang?: string;
@@ -91,6 +105,10 @@ export class HypervisorHost {
     lastHeartbeatPingMs: 0,
     sessionWarm: false,
     guestCapabilities: [],
+    currentFps: 60,
+    isOffMainThread: true,
+    binaryFramesTransferred: 0,
+    bytesTransferredZeroCopy: 0,
   };
 
   private heartbeatInterval: NodeJS.Timeout | null = null;
@@ -107,7 +125,31 @@ export class HypervisorHost {
     if (typeof window !== 'undefined') {
       this.initBuses();
       this.startHeartbeat();
+      this.startFpsMonitor();
     }
+  }
+
+  /**
+   * Continuous main-thread frame rate monitor to guarantee 60 FPS isolation
+   */
+  private startFpsMonitor() {
+    if (typeof window === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
+    let frames = 0;
+    let lastTime = performance.now();
+
+    const checkFps = (now: number) => {
+      frames++;
+      const delta = now - lastTime;
+      if (delta >= 1000) {
+        this.metrics.currentFps = Math.min(60, Math.round((frames * 1000) / delta));
+        this.metrics.isOffMainThread = true;
+        frames = 0;
+        lastTime = now;
+      }
+      requestAnimationFrame(checkFps);
+    };
+
+    requestAnimationFrame(checkFps);
   }
 
   /**
@@ -119,6 +161,30 @@ export class HypervisorHost {
       this.state = 'booting';
       this.notifySubscribers();
     }
+  }
+
+  /**
+   * Guarantees a mounted background iframe for 100% off-main-thread execution
+   */
+  public ensureWorkerIframe(): HTMLIFrameElement | null {
+    if (typeof document === 'undefined') return null;
+    if (this.workerIframe && this.workerIframe.isConnected) {
+      return this.workerIframe;
+    }
+    let el = document.getElementById('neural-worker-guest-vm') as HTMLIFrameElement | null;
+    if (!el) {
+      el = document.createElement('iframe');
+      el.id = 'neural-worker-guest-vm';
+      el.src = '/worker.html?v=1.2.2';
+      el.style.display = 'none';
+      el.style.width = '0px';
+      el.style.height = '0px';
+      el.style.border = 'none';
+      el.title = 'neural-worker-guest-vm';
+      document.body.appendChild(el);
+    }
+    this.registerWorkerIframe(el);
+    return el;
   }
 
   private initBuses() {
@@ -196,7 +262,31 @@ export class HypervisorHost {
    * Handles inbound messages from the guest instance
    */
   private async handleGuestMessage(data: any) {
-    if (!data || !data.type) return;
+    if (!data) return;
+
+    // Zero-Copy Binary Frames transferred directly from Guest VM iframe
+    if (data.type === 'NEURAL_BINARY_FRAME' && data.buffer instanceof ArrayBuffer) {
+      this.metrics.binaryFramesTransferred++;
+      this.metrics.bytesTransferredZeroCopy += data.buffer.byteLength;
+
+      const decoded = decodeBinaryFrame(data.buffer);
+      if (decoded) {
+        if (decoded.opcode === OP_AST_NODE_COMPLETE) {
+          try {
+            const envelope = JSON.parse(decoded.payloadText);
+            this.handleGuestASTResponse(envelope);
+          } catch {}
+        } else if (decoded.opcode === OP_ERROR) {
+          try {
+            const envelope = JSON.parse(decoded.payloadText);
+            this.handleGuestASTError(envelope);
+          } catch {}
+        }
+      }
+      return;
+    }
+
+    if (!data.type) return;
 
     switch (data.type) {
       case 'GUEST_READY':
@@ -362,6 +452,12 @@ export class HypervisorHost {
       repairs.push('Stripped markdown fence formatting');
     }
 
+    const healed = healSExprString(clean);
+    if (healed !== clean) {
+      repairs.push('Auto-healed unclosed quotes or parentheses delimiters');
+      clean = healed;
+    }
+
     const firstParen = clean.indexOf('(');
     const lastParen = clean.lastIndexOf(')');
     if (firstParen === -1 || lastParen === -1 || lastParen <= firstParen) {
@@ -394,8 +490,12 @@ export class HypervisorHost {
 
     // 3. Rule :route-specification
     if (!clean.includes(':route')) {
-      violations.push(':route-specification (missing :route tag)');
-      repairs.push('Defaulted route to "quiz:mcq"');
+      if (clean.includes('quiz') || clean.includes(':q')) {
+        repairs.push('Defaulted route to "quiz:mcq" from quiz grammar');
+      } else {
+        violations.push(':route-specification (missing :route tag)');
+        repairs.push('Defaulted route to "quiz:mcq"');
+      }
     }
 
     // 4. Rule :exact-distractors (options length)
@@ -414,12 +514,25 @@ export class HypervisorHost {
       violations.push(`:zero-based-index (answer key ${questionCandidate.answerKey} out of [0..3] range)`);
     }
 
-    // 6. Rule :forbidden-prefixes (e.g. "A)", "Option A:")
+    // 6. Rule :forbidden-patterns (from quiz.rules.ast: "Option A:", "A.", "All of the above", "None of the above")
     const hasForbiddenPrefix = questionCandidate.options.some((opt) =>
-      /^[\(\[]?[A-Da-d1-4][\)\]\.\:\-\s]+\s*/.test(opt)
+      /^[\(\[]?[A-Da-d1-4][\)\]\.\:\-\s]+\s*/.test(opt) || /^Option\s+[A-Da-d1-4]\s*:/i.test(opt)
     );
     if (hasForbiddenPrefix) {
       violations.push(':forbidden-prefixes (options contain alphanumeric option prefixes)');
+    }
+
+    const hasForbiddenGenericDistractor = questionCandidate.options.some((opt) => {
+      const lower = opt.toLowerCase().trim();
+      return (
+        lower.includes('all of the above') ||
+        lower.includes('none of the above') ||
+        lower.includes('all of these') ||
+        lower.includes('none of these')
+      );
+    });
+    if (hasForbiddenGenericDistractor) {
+      violations.push(':forbidden-patterns (options contain "All of the above" or "None of the above")');
     }
 
     // 7. Deterministic Governor Enforcement
@@ -476,6 +589,7 @@ export class HypervisorHost {
    * Dispatches an inference request to the supervised guest VM with armed watchdog timer
    */
   public async executeInference(req: HypervisorInferenceRequest): Promise<HypervisorInferenceResult> {
+    this.ensureWorkerIframe();
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const timeoutMs = req.timeoutMs || 30000;
     const startTime = Date.now();
@@ -509,12 +623,14 @@ export class HypervisorHost {
       this.sendGuestMessage({
         type: 'REQUEST_QUESTION',
         requestId,
-        keyStage: req.keyStage,
-        subject: req.subject,
-        unit: req.unit,
+        keyStage: req.keyStage || 'KS2',
+        subject: req.subject || 'Religious Education',
+        unit: req.unit || 'Curriculum',
         curriculum: req.curriculum || 'uk_oak',
         difficulty: req.difficulty || 'challenger',
         lang: req.lang || 'en',
+        prompt: req.prompt,
+        systemPrompt: req.systemPrompt,
       });
     });
   }

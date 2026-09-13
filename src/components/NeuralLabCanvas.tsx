@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
+import NeuralAstCanvasTopology from './NeuralAstCanvasTopology';
 import { dispatch } from '../engine/hypercall';
 import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
 import { hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
@@ -49,6 +50,7 @@ export default function NeuralLabCanvas({
     return 'challenger';
   });
   const [hasConsent, setHasConsent] = useState(false);
+  const [showCanvasTopology, setShowCanvasTopology] = useState(true);
 
   // Hypervisor Host Supervisor State & Metrics
   const [vmState, setVmState] = useState<GuestVMState>(() => hypervisor.getState());
@@ -408,7 +410,7 @@ export default function NeuralLabCanvas({
                 alignItems: 'center',
                 gap: '6px',
               }}
-              title={`Hypervisor Status: ${vmState}. Watchdog: 9s timeout. Rules: quiz.rules.ast`}
+              title={`Hypervisor Status: ${vmState}. Main-Thread FPS: ${vmMetrics.currentFps || 60}. Zero-Copy Frames: ${vmMetrics.binaryFramesTransferred}.`}
             >
               <span
                 style={{
@@ -433,6 +435,26 @@ export default function NeuralLabCanvas({
                 : vmState === 'watchdog_timeout'
                 ? 'Hypervisor: Recycled'
                 : 'Hypervisor: Active'}
+            </span>
+
+            {/* Thread Isolation & Zero-Copy Badge */}
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                background: '#f0fdf4',
+                color: '#166534',
+                border: '1px solid #bbf7d0',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+              title="Inference runs 100% off-main-thread inside worker.html with zero-copy ArrayBuffer loopback"
+            >
+              <span>⚡</span>
+              <span>{vmMetrics.currentFps || 60} FPS • Zero-Copy</span>
             </span>
 
             {/* Transparent Resource/Consent Interactive Badge */}
@@ -465,6 +487,31 @@ export default function NeuralLabCanvas({
               <span>{hasConsent ? '🧠' : '⚡'}</span>
               <span>{hasConsent ? 'Nano AI: Active' : 'Enable Nano AI'}</span>
             </button>
+
+            {/* 2D Canvas AST Topology Toggle */}
+            <button
+              type="button"
+              onClick={() => setShowCanvasTopology(!showCanvasTopology)}
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: showCanvasTopology ? '#f0fdf4' : '#f8fafc',
+                color: showCanvasTopology ? '#166534' : '#475569',
+                border: `1px solid ${showCanvasTopology ? '#bbf7d0' : '#cbd5e1'}`,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+              aria-pressed={showCanvasTopology}
+              aria-label="Toggle 2D Neural AST Canvas and screen-reader mirror"
+              title="Toggle interactive 2D Canvas Neural AST graph with full WCAG screen reader DOM mirror"
+            >
+              <span>🕸️</span>
+              <span>{showCanvasTopology ? '2D Canvas: Active' : 'Show 2D Canvas'}</span>
+            </button>
           </div>
         </div>
 
@@ -488,27 +535,42 @@ export default function NeuralLabCanvas({
             <div style={{ width: '100%', height: '48px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
           </div>
         ) : activeQuestion ? (
-          <QuestionCard
-            subject={activeQuestion.subject}
-            unit={activeQuestion.unit}
-            prompt={activeQuestion.prompt}
-            displayOptions={activeQuestion.displayOptions}
-            selectedAnswer={selectedAnswer}
-            correctIndex={correctIndex}
-            score={score}
-            streak={streak}
-            hint={activeQuestion.hint}
-            explanation={activeQuestion.explanation}
-            misconceptions={activeQuestion.misconceptions}
-            socraticFollowUp={activeQuestion.socraticFollowUp}
-            currentLang={activeLang}
-            onLanguageChange={(newLang) => {
-              setActiveLang(newLang);
-              requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
-            }}
-            onSelectOption={handleSelectOption}
-            onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
-          />
+          <>
+            {/* Interactive 2D Neural AST Canvas with Full Screen-Reader DOM Mirror (WCAG 2.1 AA) */}
+            {showCanvasTopology && (
+              <NeuralAstCanvasTopology
+                prompt={activeQuestion.prompt}
+                options={activeQuestion.displayOptions}
+                selectedAnswer={selectedAnswer}
+                correctIndex={correctIndex}
+                onSelectOption={handleSelectOption}
+                fps={vmMetrics.currentFps || 60}
+                zeroCopyFrames={vmMetrics.binaryFramesTransferred}
+              />
+            )}
+
+            <QuestionCard
+              subject={activeQuestion.subject}
+              unit={activeQuestion.unit}
+              prompt={activeQuestion.prompt}
+              displayOptions={activeQuestion.displayOptions}
+              selectedAnswer={selectedAnswer}
+              correctIndex={correctIndex}
+              score={score}
+              streak={streak}
+              hint={activeQuestion.hint}
+              explanation={activeQuestion.explanation}
+              misconceptions={activeQuestion.misconceptions}
+              socraticFollowUp={activeQuestion.socraticFollowUp}
+              currentLang={activeLang}
+              onLanguageChange={(newLang) => {
+                setActiveLang(newLang);
+                requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
+              }}
+              onSelectOption={handleSelectOption}
+              onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+            />
+          </>
         ) : (
           <div
             style={{

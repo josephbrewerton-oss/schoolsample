@@ -1,97 +1,77 @@
+# St Joseph's Curriculum Portal — Filemap
 
-FullName
---------
-C:\programming_projects\schoolsample\blog
-C:\programming_projects\schoolsample\docs
-C:\programming_projects\schoolsample\packages
-C:\programming_projects\schoolsample\scripts
-C:\programming_projects\schoolsample\src
-C:\programming_projects\schoolsample\static
-C:\programming_projects\schoolsample\architecture.md
-C:\programming_projects\schoolsample\docusaurus.config.ts
-C:\programming_projects\schoolsample\package-lock.json
-C:\programming_projects\schoolsample\package.json
-C:\programming_projects\schoolsample\README.md
-C:\programming_projects\schoolsample\sidebars.ts
-C:\programming_projects\schoolsample\src - Shortcut.lnk
-C:\programming_projects\schoolsample\tsconfig.json
-C:\programming_projects\schoolsample\blog\2026-08-16-school-ai-breakthrough.md
-C:\programming_projects\schoolsample\docs\primary-years-1-6
-C:\programming_projects\schoolsample\docs\secondary-years-7-11
-C:\programming_projects\schoolsample\docs\sixth-form-years-12-14
-C:\programming_projects\schoolsample\docs\intro.md
-C:\programming_projects\schoolsample\docs\practice-lab.mdx
-C:\programming_projects\schoolsample\docs\questions.json
-C:\programming_projects\schoolsample\docs\primary-years-1-6\ks2-science.md
-C:\programming_projects\schoolsample\docs\secondary-years-7-11\mathematics
-C:\programming_projects\schoolsample\docs\secondary-years-7-11\sciences
-C:\programming_projects\schoolsample\docs\secondary-years-7-11\socratic-reasoning
-C:\programming_projects\schoolsample\docs\secondary-years-7-11\mathematics\quadratic-equations.md
-C:\programming_projects\schoolsample\docs\secondary-years-7-11\sciences\biology-cell-respiration.md
-C:\programming_projects\schoolsample\docs\secondary-years-7-11\socratic-reasoning\debate-sparring.md
-C:\programming_projects\schoolsample\docs\sixth-form-years-12-14\alevel-advanced.md
-C:\programming_projects\schoolsample\packages\edge-runtime
-C:\programming_projects\schoolsample\packages\edge-runtime\dist
-C:\programming_projects\schoolsample\packages\edge-runtime\src
-C:\programming_projects\schoolsample\packages\edge-runtime\package-lock.json
-C:\programming_projects\schoolsample\packages\edge-runtime\package.json
-C:\programming_projects\schoolsample\packages\edge-runtime\tsconfig.json
-C:\programming_projects\schoolsample\packages\edge-runtime\tsup.config.ts
-C:\programming_projects\schoolsample\packages\edge-runtime\dist\index.d.mts
-C:\programming_projects\schoolsample\packages\edge-runtime\dist\index.d.ts
-C:\programming_projects\schoolsample\packages\edge-runtime\dist\index.js
-C:\programming_projects\schoolsample\packages\edge-runtime\dist\index.js.map
-C:\programming_projects\schoolsample\packages\edge-runtime\dist\index.mjs
-C:\programming_projects\schoolsample\packages\edge-runtime\dist\index.mjs.map
-C:\programming_projects\schoolsample\packages\edge-runtime\src\core
-C:\programming_projects\schoolsample\packages\edge-runtime\src\types
-C:\programming_projects\schoolsample\packages\edge-runtime\src\index.ts
-C:\programming_projects\schoolsample\scripts\fetch-live-oak.ts
-C:\programming_projects\schoolsample\scripts\ingest-oak.ts
-C:\programming_projects\schoolsample\scripts\setup-sdk.js
-C:\programming_projects\schoolsample\scripts\write-engine.js
-C:\programming_projects\schoolsample\src\components
-C:\programming_projects\schoolsample\src\css
-C:\programming_projects\schoolsample\src\data
-C:\programming_projects\schoolsample\src\engine
-C:\programming_projects\schoolsample\src\manifests
-C:\programming_projects\schoolsample\src\pages
-C:\programming_projects\schoolsample\src\services
-C:\programming_projects\schoolsample\src\types
-C:\programming_projects\schoolsample\src\utils
-C:\programming_projects\schoolsample\src\components\DynamicLessonViewer.tsx
-C:\programming_projects\schoolsample\src\components\InteractiveEdgeSandbox.tsx
-C:\programming_projects\schoolsample\src\css\custom.css
-C:\programming_projects\schoolsample\src\data\lessons.ts
-C:\programming_projects\schoolsample\src\data\questions.ts
-C:\programming_projects\schoolsample\src\engine\EdgeCognitiveEngine.ts
-C:\programming_projects\schoolsample\src\manifests\communion.ts
-C:\programming_projects\schoolsample\src\manifests\school.ts
-C:\programming_projects\schoolsample\src\pages\index.tsx
-C:\programming_projects\schoolsample\src\pages\settings.tsx
-C:\programming_projects\schoolsample\src\services\dbStore.ts
-C:\programming_projects\schoolsample\src\types\learning-ast.ts
-C:\programming_projects\schoolsample\src\utils\aiEngine.ts
-C:\programming_projects\schoolsample\static\data
-C:\programming_projects\schoolsample\static\img
-C:\programming_projects\schoolsample\static\js
-C:\programming_projects\schoolsample\static\manifests
-C:\programming_projects\schoolsample\static\.nojekyll
-C:\programming_projects\schoolsample\static\llms.txt
-C:\programming_projects\schoolsample\static\robots.txt
-C:\programming_projects\schoolsample\static\data\questions-primary.json
-C:\programming_projects\schoolsample\static\data\questions-secondary.json
-C:\programming_projects\schoolsample\static\data\questions-sixthform.json
-C:\programming_projects\schoolsample\static\img\logo.svg
-C:\programming_projects\schoolsample\static\js\webrtc-agent.js
-C:\programming_projects\schoolsample\static\manifests\lessons
-C:\programming_projects\schoolsample\static\manifests\catalog.json
-C:\programming_projects\schoolsample\static\manifests\history-ks2.json
-C:\programming_projects\schoolsample\static\manifests\oak-angles-triangles.json
-C:\programming_projects\schoolsample\static\manifests\oak-states-of-matter.json
-C:\programming_projects\schoolsample\static\manifests\lessons\angles-triangles.json
-C:\programming_projects\schoolsample\static\manifests\lessons\cell-biology.json
-C:\programming_projects\schoolsample\static\manifests\lessons\first-holy-communion.json
-C:\programming_projects\schoolsample\static\manifests\lessons\gcse-re-trinity.json
-C:\programming_projects\schoolsample\static\manifests\lessons\romans-britain.json
-C:\programming_projects\schoolsample\static\manifests\lessons\states-of-matter.json
+Current active repository structure (Vite 6+ SPA, Edge AI Engine, PWA):
+
+## Root Configuration
+- `package.json` — Root dependency and script manifest (Pure Vite SPA, sub-second build)
+- `tsconfig.json` — TypeScript configuration
+- `vite.config.ts` — Vite 6 build configuration with rollup manual vendor chunking
+- `index.html` — Application entry point, critical inline CSS, PWA meta tags
+- `metadata.json` — AI Studio applet metadata (edge execution, no remote cloud dependencies)
+- `AGENTS.md` — Project context, on-device Gemini Nano and offline-first directives
+- `Filemap.md` — Active directory index
+
+## Source Code (`src/`)
+- `src/main.tsx` — Root React 19 application bootstrapper, service worker registration
+- `src/App.tsx` — Router setup with React Router 7 and persistent layout routes
+- `src/types.ts` — Shared TypeScript types
+- `src/registerServiceWorker.ts` — Offline PWA service worker lifecycle manager
+- `src/components/`
+  - `src/components/PersistentAppShell.tsx` — Universal Translator bar, Persistent Navbar, Footer, and sandboxed Worker guest VM
+  - `src/components/PersistentNavbar.tsx` — Responsive navigation, Gemini Nano indicator, Data Saver toggle, PWA install prompt
+  - `src/components/InteractiveEdgeSandbox.tsx` — In-browser local interactive practice sandbox
+  - `src/components/DynamicLessonViewer.tsx` — Lesson viewer for interactive curriculum units
+  - `src/components/UniversalTranslatorBar.tsx` — Multi-language switcher and live DOM translation controller
+  - `src/components/PageMeta.tsx` — Dynamic page title and meta description tag updater
+- `src/css/`
+  - `src/css/custom.css` — Global styling, high-contrast mode, zero-CLS rules, and low-bandwidth/Data-Saver hardware rules
+- `src/data/`
+  - `src/data/curriculumRegistry.ts` — Curriculum standard catalog
+  - `src/data/curriculumPacks.ts` — Pre-bundled curriculum pack definitions
+  - `src/data/complianceCaveats.ts` — Translations and local AI caveats
+  - `src/data/lessons.ts` — Lesson metadata
+  - `src/data/questions.ts` — Question data structures
+- `src/engine/`
+  - `src/engine/aicaller.ts` — Unified on-device Chrome Prompt API / Gemini Nano client
+  - `src/engine/fastEndpoint.ts` — Substrate gateway for dynamic imports
+  - `src/engine/hypervisor.ts` — Hypervisor host coordinating off-main-thread worker execution
+  - `src/engine/operational-language.ts` — Supported language state and event emitter
+  - `src/engine/universalDomTranslator.ts` — Live DOM translation engine
+  - `src/engine/EdgeCognitiveEngine.ts` — Local cognitive engine
+- `src/pages/`
+  - `src/pages/index.tsx` — Home portal dashboard & curriculum stream browser
+  - `src/pages/practice-lab.tsx` — Practice lab with real-time on-device feedback
+  - `src/pages/learning-zone.tsx` — Interactive learning zone & lesson viewer
+  - `src/pages/profile.tsx` — Student offline mastery profile & badges
+  - `src/pages/curriculum-studio.tsx` — Overseas curriculum importer & CSV editor
+  - `src/pages/teacher-beacon.tsx` — Local WebRTC peer-to-peer classroom sync
+  - `src/pages/settings.tsx` — Settings, PWA status, Nano AI consent, and Low-Bandwidth Data Saver
+  - `src/pages/licensing.tsx` — Perpetual free licensing declaration for Catholic schools & emerging nations
+  - `src/pages/privacy.tsx` — Zero-cloud leakage privacy policy
+  - `src/pages/blog.tsx` — News and updates
+  - `src/pages/not-found.tsx` — 404 handler
+- `src/services/`
+  - `src/services/dataSaverStore.ts` — Ultra-low bandwidth & battery saver controller
+  - `src/services/offlineSyncService.ts` — One-click curriculum pre-cacher for offline learning
+  - `src/services/curriculumPackStore.ts` — Custom curriculum packs storage in IndexedDB
+  - `src/services/dbStore.ts` — IndexedDB local state store
+  - `src/services/jotter-db.ts` — Local student exercise jotter
+- `src/utils/`
+  - `src/utils/sexprParser.ts` — S-Expression AST parser for curriculum logic
+
+## Static Assets (`static/`)
+- `static/manifest.json` — PWA Web App Manifest
+- `static/sw.js` — Service worker script (Cache-first offline strategy)
+- `static/worker.html` — Sandboxed neural worker guest VM iframe daemon
+- `static/nano-map.ast` — Curriculum knowledge graph compiled in Lisp-like S-Expressions
+- `static/manifests/`
+  - `static/manifests/rag-index.json` — Complete local search & RAG index of all curriculum lessons
+  - `static/manifests/lessons/*.json` — Pre-compiled JSON curriculum units
+- `static/img/` — Favicons, app icons, and logos
+- `static/js/webrtc-agent.js` — Local peer-to-peer data channel agent
+- `static/patterns/` — S-Expression question templates (.ast)
+
+## Scripts (`scripts/`)
+- `scripts/compile-oak-manifest.cjs` — Ingests and compiles Oak curriculum into offline manifests
+- `scripts/generate-icons.py` — Vector logo and favicon asset generator
+- `scripts/setup-sdk.js` — Scaffolds local `@school-ai/edge-runtime` package

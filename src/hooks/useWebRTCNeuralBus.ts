@@ -4,6 +4,13 @@ import { extractQuestionFromAst, ExtractedQuestion } from '../utils/astQuestionE
 import { EngineFlow } from '../engine/engineflow';
 import { hypervisor, HypervisorHost, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
 import { RawASTQuestion } from '../engine/astGovernor';
+import {
+  decodeBinaryFrame,
+  isBinaryFrame,
+  OP_TOKEN_CHUNK,
+  OP_AST_NODE_COMPLETE,
+  OP_STREAM_EOF,
+} from '../utils/binaryStreamProtocol';
 
 export interface QuestionPayload {
   question: RawASTQuestion | ExtractedQuestion;
@@ -15,7 +22,10 @@ export interface QuestionPayload {
   governed?: boolean;
 }
 
-export function useWebRTCNeuralBus(onQuestionReady?: (payload: QuestionPayload) => void) {
+export function useWebRTCNeuralBus(
+  onQuestionReady?: (payload: QuestionPayload) => void,
+  onTokenChunk?: (chunk: string) => void
+) {
   const [instanceState, setInstanceState] = useState<GuestVMState>(() => hypervisor.getState());
   const [metrics, setMetrics] = useState<HypervisorMetrics>(() => hypervisor.getMetrics());
   const [status, setStatus] = useState<string>('Supervising Guest VM...');
@@ -43,6 +53,50 @@ export function useWebRTCNeuralBus(onQuestionReady?: (payload: QuestionPayload) 
   useEffect(() => {
     onQuestionReadyRef.current = onQuestionReady;
   }, [onQuestionReady]);
+
+  const onTokenChunkRef = useRef(onTokenChunk);
+  useEffect(() => {
+    onTokenChunkRef.current = onTokenChunk;
+  }, [onTokenChunk]);
+
+  const processGovernedAST = useCallback((rawASTString: string) => {
+    const audit = hypervisor.auditAndGovernAST(rawASTString, {
+      keyStage: inFlightContextRef.current.keyStage,
+      subject: inFlightContextRef.current.subject,
+      unit: inFlightContextRef.current.unit,
+      curriculum: inFlightContextRef.current.curriculum,
+    });
+
+    if (audit.passed && audit.governedQuestion && onQuestionReadyRef.current) {
+      onQuestionReadyRef.current({
+        question: audit.governedQuestion,
+        keyStage: inFlightContextRef.current.keyStage,
+        subject: inFlightContextRef.current.subject,
+        unit: inFlightContextRef.current.unit,
+        curriculum: inFlightContextRef.current.curriculum,
+        hint: audit.governedQuestion.hint,
+        governed: true,
+      });
+    }
+  }, []);
+
+  const finalizeAndGovernStream = useCallback(() => {
+    const fullText = rawStreamRef.current;
+    rawStreamRef.current = '';
+    if (!fullText) return;
+
+    let rawASTString = fullText;
+    if (fullText.startsWith('{') && fullText.endsWith('}')) {
+      try {
+        const envelope = JSON.parse(fullText);
+        if (envelope.type === 'AST_RESPONSE' && envelope.raw) {
+          rawASTString = envelope.raw;
+        }
+      } catch {}
+    }
+
+    processGovernedAST(rawASTString);
+  }, [processGovernedAST]);
 
   // 1. Subscribe to Hypervisor Host State & Telemetry
   useEffect(() => {
@@ -82,12 +136,13 @@ export function useWebRTCNeuralBus(onQuestionReady?: (payload: QuestionPayload) 
     pc.ondatachannel = (event) => {
       if (!isCurrentMount) return;
       const dc = event.channel;
+      dc.binaryType = 'arraybuffer';
       channelRef.current = dc;
 
       dc.onopen = () => {
         if (!isCurrentMount) return;
         setIsReady(true);
-        setStatus('Guest VM Online (WebRTC DataChannel)');
+        setStatus('Guest VM Online (WebRTC DataChannel • Zero-Copy)');
       };
 
       dc.onclose = () => {
@@ -99,42 +154,48 @@ export function useWebRTCNeuralBus(onQuestionReady?: (payload: QuestionPayload) 
       };
 
       dc.onmessage = (msgEvent) => {
+        // Zero-copy binary ArrayBuffer stream
+        if (msgEvent.data instanceof ArrayBuffer) {
+          const decoded = decodeBinaryFrame(msgEvent.data);
+          if (!decoded) return;
+
+          if (decoded.opcode === OP_TOKEN_CHUNK) {
+            rawStreamRef.current += decoded.payloadText;
+            if (onTokenChunkRef.current) {
+              onTokenChunkRef.current(decoded.payloadText);
+            }
+            if (decoded.isFinal) {
+              finalizeAndGovernStream();
+            }
+            return;
+          }
+
+          if (decoded.opcode === OP_AST_NODE_COMPLETE) {
+            let rawASTString = decoded.payloadText;
+            if (decoded.payloadText.startsWith('{') && decoded.payloadText.endsWith('}')) {
+              try {
+                const envelope = JSON.parse(decoded.payloadText);
+                if (envelope.type === 'AST_RESPONSE' && envelope.raw) {
+                  rawASTString = envelope.raw;
+                }
+              } catch {}
+            }
+            processGovernedAST(rawASTString);
+            return;
+          }
+
+          if (decoded.opcode === OP_STREAM_EOF) {
+            finalizeAndGovernStream();
+            return;
+          }
+          return;
+        }
+
         const raw = msgEvent.data;
         if (!raw) return;
 
         if (raw === '__EOF__') {
-          const fullText = rawStreamRef.current;
-          rawStreamRef.current = '';
-
-          let rawASTString = fullText;
-          if (fullText.startsWith('{') && fullText.endsWith('}')) {
-            try {
-              const envelope = JSON.parse(fullText);
-              if (envelope.type === 'AST_RESPONSE' && envelope.raw) {
-                rawASTString = envelope.raw;
-              }
-            } catch {}
-          }
-
-          // Pass raw AST through Hypervisor Rulebook Audit & ASTFlowGovernor
-          const audit = hypervisor.auditAndGovernAST(rawASTString, {
-            keyStage: inFlightContextRef.current.keyStage,
-            subject: inFlightContextRef.current.subject,
-            unit: inFlightContextRef.current.unit,
-            curriculum: inFlightContextRef.current.curriculum,
-          });
-
-          if (audit.passed && audit.governedQuestion && onQuestionReadyRef.current) {
-            onQuestionReadyRef.current({
-              question: audit.governedQuestion,
-              keyStage: inFlightContextRef.current.keyStage,
-              subject: inFlightContextRef.current.subject,
-              unit: inFlightContextRef.current.unit,
-              curriculum: inFlightContextRef.current.curriculum,
-              hint: audit.governedQuestion.hint,
-              governed: true,
-            });
-          }
+          finalizeAndGovernStream();
           return;
         }
 

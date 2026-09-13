@@ -8,15 +8,16 @@
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "python3 scripts/generate-icons.py && npm run ingest:oak && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "test": "npm run test:ast",
+    "test:ast": "npx tsx scripts/test-ast-manifests.ts",
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
     "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
     "lint": "node -e \"console.log('Linting passed')\"",
     "mine:watch": "npx tsx scripts/watchSubstrates.ts"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.10.2",
-    "@docusaurus/tsconfig": "3.10.2",
-    "@docusaurus/types": "3.10.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.1.1",
     "chokidar": "^5.0.0",
     "process": "^0.11.10",
@@ -39,12 +40,8 @@
     "node": ">=20.0"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.10.2",
-    "@docusaurus/plugin-pwa": "^3.10.2",
-    "@docusaurus/preset-classic": "^3.10.2",
-    "@mlc-ai/web-llm": "^0.2.84",
-    "@school-ai/edge-runtime": "file:packages/edge-runtime",
-    "edge-runtime": "^4.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.3"
   }
 }

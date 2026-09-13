@@ -3,6 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { hasUserGrantedAiConsent, setUserAiConsent, aiCaller } from '../engine/aicaller';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import { getComplianceCaveat } from '../data/complianceCaveats';
+import { isDataSaverActive, setDataSaverMode, listenToDataSaverChanges } from '../services/dataSaverStore';
 
 export default function PersistentNavbar(): React.JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -12,6 +13,7 @@ export default function PersistentNavbar(): React.JSX.Element {
   const [hasNanoConsent, setHasNanoConsent] = useState(false);
   const [nanoAvailable, setNanoAvailable] = useState<'checking' | 'yes' | 'after-download' | 'no'>('checking');
   const [showNanoPopover, setShowNanoPopover] = useState(false);
+  const [dataSaverActive, setDataSaverActive] = useState<boolean>(() => isDataSaverActive());
   const [currentLang, setCurrentLang] = useState<string>(() => {
     return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
   });
@@ -43,6 +45,14 @@ export default function PersistentNavbar(): React.JSX.Element {
     return () => {
       window.removeEventListener('ai_consent_changed', handleConsentChange);
     };
+  }, []);
+
+  // Listen for Data Saver changes
+  useEffect(() => {
+    const unsub = listenToDataSaverChanges((enabled) => {
+      setDataSaverActive(enabled);
+    });
+    return unsub;
   }, []);
 
   // Listen for PWA install prompt
@@ -319,6 +329,30 @@ export default function PersistentNavbar(): React.JSX.Element {
             })()}
           </div>
 
+          {/* Data Saver Mode (Zero Data / Developing Nations) */}
+          <button
+            type="button"
+            id="navbar-data-saver-btn"
+            onClick={() => setDataSaverMode(!dataSaverActive)}
+            title={dataSaverActive ? 'Data Saver: ON (Low bandwidth mode). Click to toggle.' : 'Data Saver: OFF. Click to enable ultra-low bandwidth mode.'}
+            style={{
+              background: dataSaverActive ? (colorMode === 'dark' ? '#064e3b' : '#ecfdf5') : 'transparent',
+              color: dataSaverActive ? (colorMode === 'dark' ? '#6ee7b7' : '#065f46') : (colorMode === 'dark' ? '#94a3b8' : '#475569'),
+              border: `1px solid ${dataSaverActive ? '#10b981' : (colorMode === 'dark' ? '#334155' : '#cbd5e1')}`,
+              borderRadius: '6px',
+              padding: '0.35rem 0.6rem',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{dataSaverActive ? '📶 Data Saver: ON' : '📶 Data Saver'}</span>
+          </button>
+
           <NavLink
             to="/settings"
             style={({ isActive }) => ({
@@ -472,6 +506,31 @@ export default function PersistentNavbar(): React.JSX.Element {
           >
             ⚙️ Settings
           </NavLink>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDataSaverMode(!dataSaverActive);
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              padding: '0.6rem 0.8rem',
+              borderRadius: '6px',
+              border: `1px solid ${dataSaverActive ? '#10b981' : '#cbd5e1'}`,
+              background: dataSaverActive ? (colorMode === 'dark' ? '#064e3b' : '#ecfdf5') : 'transparent',
+              color: dataSaverActive ? (colorMode === 'dark' ? '#6ee7b7' : '#065f46') : (colorMode === 'dark' ? '#f8fafc' : '#1e293b'),
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>📶 Data Saver (Low Bandwidth)</span>
+            <span>{dataSaverActive ? 'ON' : 'OFF'}</span>
+          </button>
         </div>
       )}
     </nav>
