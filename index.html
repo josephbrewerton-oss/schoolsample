@@ -156,6 +156,16 @@
         </div>
       </div>
     </div>
+    <script>
+  window.global = window;
+  window.process = {
+    env: { DEBUG: undefined },
+    browser: true,
+    version: '',
+    versions: {},
+    nextTick: function (fn) { setTimeout(fn, 0); }
+  };
+</script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

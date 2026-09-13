@@ -564,7 +564,7 @@ export async function dispatch(
     const result = await node.execute(message.intent, message.payload);
     return { ok: true, data: result };
   } catch (err: any) {
-    console.error(`[Hypercall Execution Error] Target: "${target}", Intent: "${message.intent}"`, err);
+    console.error('[Hypercall Execution Error]', { target, intent: message?.intent, err });
     return { ok: false, error: err?.message || 'Unknown substrate execution error' };
   }
 }

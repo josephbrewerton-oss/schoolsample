@@ -158,6 +158,8 @@ set GIT_USER=josephbrewerton-oss && npm run deploy
 
 ## ⚖️ Licensing & Terms
 
+joseph.brewerton@gmail.com
+
 ### 1. Platform & Engine Source Code (Dual Licensing)
 
 The software engine, AST compilers, hypercall dispatch system, and UI components are available under a dual-licensing model:
