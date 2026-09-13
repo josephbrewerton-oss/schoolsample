@@ -15,6 +15,9 @@
     "lint": "node -e \"console.log('Linting passed')\"",
     "mine:watch": "npx tsx scripts/watchSubstrates.ts"
   },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
