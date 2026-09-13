@@ -242,6 +242,13 @@
           const decoded = decodeBinaryFrame(event.data);
           if (decoded) {
             if (decoded.opcode === OP_STREAM_EOF) return;
+            if (decoded.opcode === OP_HEARTBEAT_PING) {
+              try {
+                const pongBuffer = encodeBinaryFrame(OP_HEARTBEAT_PONG, '', decoded.streamId, FLAG_IS_FINAL);
+                dc.send(pongBuffer);
+              } catch {}
+              return;
+            }
             if (decoded.payloadText && decoded.payloadText.startsWith('{')) {
               try {
                 const parsed = JSON.parse(decoded.payloadText);
@@ -322,7 +329,6 @@
             currentSystemInstruction = systemInstruction;
             return cachedSession;
           } catch (err3) {
-            console.warn('[Guest VM Daemon] All LanguageModel create variations failed:', err3);
             return null;
           }
         }
@@ -399,7 +405,29 @@
 
         let session = await getOrCreateWarmSession(systemInstruction);
         if (!session) {
-          throw new Error('On-device LanguageModel session unavailable on this device.');
+          // Instantaneous Rule-Based Degradation for school Chromebooks / managed desktops
+          const axiom = curriculumAxiom || `Fundamental curriculum standard for ${topic} in ${subject}.`;
+          const trap = cognitiveTrap || `Common student misconception regarding ${topic}.`;
+          const rulePrompt = `Which statement accurately describes ${topic}?`;
+          const ruleOptions = [
+            axiom,
+            trap,
+            `Opposite condition or property of ${topic}.`,
+            `Unrelated process having no measurable effect on ${topic}.`
+          ];
+          const ruleAST = `(:route "quiz:mcq"\n :scratchpad ${JSON.stringify(axiom)}\n :prompt ${JSON.stringify(rulePrompt)}\n :options (${JSON.stringify(ruleOptions[0])} ${JSON.stringify(ruleOptions[1])} ${JSON.stringify(ruleOptions[2])} ${JSON.stringify(ruleOptions[3])})\n :answer-key 0\n :hint "Focus on the foundational rule: ${axiom.slice(0, 45).replace(/"/g, '')}..."\n :governed true)`;
+
+          sendTokenChunk(ruleAST, requestId, true);
+          sendToHypervisor({
+            type: 'AST_RESPONSE',
+            requestId,
+            raw: ruleAST,
+            keyStage,
+            subject,
+            unit: topic,
+            fallback: true,
+          });
+          return;
         }
 
         const prompt = payload.prompt || `Topic: "${topic}" (${keyStage} ${subject}).
@@ -450,7 +478,6 @@ Format strictly as:
               errMsg.includes('aborted');
 
             if (isInvalidState && !isRetry) {
-              console.warn('[Guest VM Daemon] Session was invalid or destroyed; provisioning fresh session and retrying...');
               resetWarmSession();
               session = await getOrCreateWarmSession(systemInstruction);
               if (session) {
@@ -502,14 +529,27 @@ Format strictly as:
           unit: topic,
         });
       } catch (err) {
-        console.error('[Guest VM Inference Error]:', err);
-        // On fatal session failure, discard warm session
         resetWarmSession();
+        // On session failure, emit instantaneous governed fallback AST
+        const axiom = curriculumAxiom || `Fundamental curriculum standard for ${topic} in ${subject}.`;
+        const rulePrompt = `Which statement accurately describes ${topic}?`;
+        const ruleOptions = [
+          axiom,
+          cognitiveTrap || `Common misconception regarding ${topic}.`,
+          `Opposite condition or property of ${topic}.`,
+          `Unrelated process having no effect on ${topic}.`
+        ];
+        const ruleAST = `(:route "quiz:mcq"\n :scratchpad ${JSON.stringify(axiom)}\n :prompt ${JSON.stringify(rulePrompt)}\n :options (${JSON.stringify(ruleOptions[0])} ${JSON.stringify(ruleOptions[1])} ${JSON.stringify(ruleOptions[2])} ${JSON.stringify(ruleOptions[3])})\n :answer-key 0\n :hint "Focus on the foundational rule: ${axiom.slice(0, 45).replace(/"/g, '')}..."\n :governed true)`;
 
+        sendTokenChunk(ruleAST, requestId, true);
         sendToHypervisor({
-          type: 'AST_ERROR',
+          type: 'AST_RESPONSE',
           requestId,
-          error: err?.message || 'Inference execution failed in guest VM daemon.',
+          raw: ruleAST,
+          keyStage,
+          subject,
+          unit: topic,
+          fallback: true,
         });
       }
     }
@@ -519,12 +559,30 @@ Format strictly as:
 
       switch (data.type) {
         case 'SUPERVISOR_PING':
+          // If data channel loopback was closed or dropped due to background tab freezing, re-offer
+          if (!activeChannel || activeChannel.readyState !== 'open') {
+            initAndOffer();
+          }
           sendToHypervisor({
             type: 'SUPERVISOR_PONG',
             pingTimestamp: data.timestamp,
             sessionWarm: Boolean(cachedSession),
             isBusy,
           });
+          break;
+
+        case 'RECONNECT_RTC':
+          console.log('[Guest VM Daemon] Received RECONNECT_RTC command from Hypervisor. Resetting connection and re-offering...');
+          if (activeChannel) {
+            try { activeChannel.close(); } catch {}
+            activeChannel = null;
+          }
+          if (pc) {
+            try { pc.close(); } catch {}
+            pc = null;
+          }
+          isConnecting = false;
+          initAndOffer();
           break;
 
         case 'RESET_INSTANCE':
@@ -564,7 +622,18 @@ Format strictly as:
         return;
       }
 
-      if (data.type === 'peer_ready') {
+      if (data.type === 'peer_ready' || data.type === 'reconnect_rtc') {
+        if (data.force || !activeChannel || activeChannel.readyState !== 'open') {
+          if (activeChannel) {
+            try { activeChannel.close(); } catch {}
+            activeChannel = null;
+          }
+          if (pc) {
+            try { pc.close(); } catch {}
+            pc = null;
+          }
+          isConnecting = false;
+        }
         initAndOffer();
       } else if (data.type === 'answer' && pc) {
         if (pc.signalingState === 'have-local-offer') {
@@ -580,6 +649,22 @@ Format strictly as:
         } catch {}
       }
     };
+
+    // Lifecycle Watchdog: Reconnect if the browser unfroze or restored the tab
+    const checkAndRestoreConnection = () => {
+      if (!activeChannel || activeChannel.readyState !== 'open') {
+        initAndOffer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAndRestoreConnection();
+      }
+    });
+    window.addEventListener('focus', checkAndRestoreConnection);
+    window.addEventListener('pageshow', checkAndRestoreConnection);
+    document.addEventListener('resume', checkAndRestoreConnection);
 
     // Announce availability to Hypervisor Host
     sendToHypervisor({
