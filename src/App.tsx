@@ -1,21 +1,34 @@
 import React, { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PersistentAppShell from './components/PersistentAppShell';
-
-// Eager load Home Page for instant FCP / LCP
 import HomePage from './pages/index';
 
-// Code-split secondary heavy pages on-demand
-const PracticeLabPage = lazy(() => import('./pages/practice-lab'));
-const LearningZonePage = lazy(() => import('./pages/learning-zone'));
-const ProfilePage = lazy(() => import('./pages/profile'));
-const CurriculumStudioPage = lazy(() => import('./pages/curriculum-studio'));
-const SettingsPage = lazy(() => import('./pages/settings'));
-const BlogPage = lazy(() => import('./pages/blog'));
-const PrivacyPage = lazy(() => import('./pages/privacy'));
-const LicensingPage = lazy(() => import('./pages/licensing'));
-const TeacherBeaconPage = lazy(() => import('./pages/teacher-beacon'));
-const NotFoundPage = lazy(() => import('./pages/not-found'));
+// Helper: If a deployed chunk 404s after a new build, reload the window to fetch the new manifest
+function lazyRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (error) {
+      console.warn('Chunk load error, refreshing page...', error);
+      // Force reload once to grab new asset hashes
+      window.location.reload();
+      throw error;
+    }
+  });
+}
+
+const PracticeLabPage = lazyRetry(() => import('./pages/practice-lab'));
+const LearningZonePage = lazyRetry(() => import('./pages/learning-zone'));
+const ProfilePage = lazyRetry(() => import('./pages/profile'));
+const CurriculumStudioPage = lazyRetry(() => import('./pages/curriculum-studio'));
+const SettingsPage = lazyRetry(() => import('./pages/settings'));
+const BlogPage = lazyRetry(() => import('./pages/blog'));
+const PrivacyPage = lazyRetry(() => import('./pages/privacy'));
+const LicensingPage = lazyRetry(() => import('./pages/licensing'));
+const TeacherBeaconPage = lazyRetry(() => import('./pages/teacher-beacon'));
+const NotFoundPage = lazyRetry(() => import('./pages/not-found'));
 
 export default function App(): React.JSX.Element {
   return (
