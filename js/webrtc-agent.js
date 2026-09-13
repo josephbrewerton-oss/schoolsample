@@ -129,6 +129,66 @@
     return `${PEDAGOGICAL_SYSTEM_PROMPT}\n\nStudent Question: "${rawInput}"\nTutor Hint:`;
   }
 
+  // Zero-Copy Binary Protocol for RTCDataChannel Loopback
+  const PROTOCOL_MAGIC_0 = 0x53;
+  const PROTOCOL_MAGIC_1 = 0x4a;
+  const OP_TOKEN_CHUNK = 0x01;
+  const OP_STREAM_EOF = 0x0f;
+  const FLAG_IS_FINAL = 0x0001;
+
+  const agentEncoder = new TextEncoder();
+  const agentDecoder = new TextDecoder('utf-8', { fatal: false });
+
+  function encodeBinaryToken(token, streamId, isDone = false) {
+    const numericStreamId = typeof streamId === 'number' ? streamId : (parseInt(streamId, 10) || 0);
+    const textBytes = agentEncoder.encode(token);
+    const buffer = new ArrayBuffer(16 + textBytes.byteLength);
+    const view = new DataView(buffer);
+    const uint8 = new Uint8Array(buffer);
+
+    view.setUint8(0, PROTOCOL_MAGIC_0);
+    view.setUint8(1, PROTOCOL_MAGIC_1);
+    view.setUint8(2, 0x02); // Version
+    view.setUint8(3, isDone ? OP_STREAM_EOF : OP_TOKEN_CHUNK);
+    view.setUint16(4, isDone ? FLAG_IS_FINAL : 0, false);
+    view.setUint32(6, numericStreamId >>> 0, false);
+    view.setUint16(10, 0, false);
+    view.setUint32(12, textBytes.byteLength, false);
+
+    uint8.set(textBytes, 16);
+    return buffer;
+  }
+
+  function decodeBinaryToken(buffer) {
+    if (!(buffer instanceof ArrayBuffer) || buffer.byteLength < 16) return null;
+    const view = new DataView(buffer);
+    if (view.getUint8(0) !== PROTOCOL_MAGIC_0 || view.getUint8(1) !== PROTOCOL_MAGIC_1) return null;
+
+    const opcode = view.getUint8(3);
+    const flags = view.getUint16(4, false);
+    const streamId = view.getUint32(6, false);
+    const length = view.getUint32(12, false);
+    const textBytes = new Uint8Array(buffer, 16, Math.min(length, buffer.byteLength - 16));
+    const chunk = agentDecoder.decode(textBytes);
+
+    return {
+      opcode,
+      streamId,
+      chunk,
+      isDone: Boolean(flags & FLAG_IS_FINAL) || opcode === OP_STREAM_EOF,
+    };
+  }
+
+  function sendStreamToken(channel, streamId, chunk, isDone = false) {
+    if (!channel || channel.readyState !== "open") return;
+    try {
+      const buffer = encodeBinaryToken(chunk, streamId, isDone);
+      channel.send(buffer);
+    } catch {
+      channel.send(JSON.stringify({ streamId, chunk, done: isDone }));
+    }
+  }
+
   async function initWebRTCHud() {
     try {
       openSchoolDB().catch(() => {});
@@ -144,20 +204,38 @@
 
       pc2.ondatachannel = (event) => {
         receiveChannel = event.channel;
+        receiveChannel.binaryType = "arraybuffer";
         receiveChannel.onmessage = handleAIInference;
       };
 
       sendChannel = pc1.createDataChannel("ai-telemetry-channel");
+      sendChannel.binaryType = "arraybuffer";
       sendChannel.onopen = () => {
-        updateElem("webrtc-status", "ONLINE (DTLS-SRTP)");
+        updateElem("webrtc-status", "ONLINE (DTLS-SRTP • ZERO-COPY)");
         updateElem("webrtc-cors", "BYPASSED (SCTP/UDP)");
       };
 
       sendChannel.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        let streamId = null;
+        let chunk = "";
+
+        if (event.data instanceof ArrayBuffer) {
+          const decoded = decodeBinaryToken(event.data);
+          if (decoded) {
+            streamId = decoded.streamId;
+            chunk = decoded.chunk;
+          }
+        } else {
+          try {
+            const data = JSON.parse(event.data);
+            streamId = data.streamId;
+            chunk = data.chunk;
+          } catch {}
+        }
+
         const display = document.getElementById("ai-output-box");
-        if (data.streamId === currentStreamId && display) {
-          display.innerText += data.chunk;
+        if (display && chunk) {
+          display.innerText += chunk;
         }
       };
 
@@ -203,10 +281,10 @@
             fullText += newChunk;
             packetCounter++;
             updateElem("webrtc-packets", packetCounter);
-            receiveChannel.send(JSON.stringify({ streamId, chunk: newChunk, done: false }));
+            sendStreamToken(receiveChannel, streamId, newChunk, false);
           }
 
-          receiveChannel.send(JSON.stringify({ streamId, chunk: "", done: true }));
+          sendStreamToken(receiveChannel, streamId, "", true);
           setLastTutorQuestion(payload.topic, fullText);
           handleVoice(payload, fullText, streamId);
           return;
@@ -255,14 +333,14 @@
               fullText += parsed.response;
               packetCounter++;
               updateElem("webrtc-packets", packetCounter);
-              receiveChannel.send(JSON.stringify({ streamId, chunk: parsed.response, done: false }));
+              sendStreamToken(receiveChannel, streamId, parsed.response, false);
             }
           }
         }
       }
 
       if (streamId === currentStreamId) {
-        receiveChannel.send(JSON.stringify({ streamId, chunk: "", done: true }));
+        sendStreamToken(receiveChannel, streamId, "", true);
         setLastTutorQuestion(payload.topic, fullText);
         handleVoice(payload, fullText, streamId);
       }
@@ -297,12 +375,12 @@
           packetCounter++;
           updateElem("webrtc-packets", packetCounter);
           if (receiveChannel && receiveChannel.readyState === "open") {
-            receiveChannel.send(JSON.stringify({ streamId, chunk: fallbackText[index], done: false }));
+            sendStreamToken(receiveChannel, streamId, fallbackText[index], false);
           }
           index++;
         } else {
           if (receiveChannel && receiveChannel.readyState === "open") {
-            receiveChannel.send(JSON.stringify({ streamId, chunk: "", done: true }));
+            sendStreamToken(receiveChannel, streamId, "", true);
           }
           clearInterval(interval);
           setLastTutorQuestion(payload.topic, fullText);
