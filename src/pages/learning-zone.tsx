@@ -6,6 +6,7 @@ import { getAssetUrl } from '../utils/url';
 import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
 import SeedInflationStudio from '../components/SeedInflationStudio';
+import LocalKeyGuard from '../components/LocalKeyGuard';
 import { dispatch } from '../engine/hypercall';
 
 const FirstCommunionMasteryLab = React.lazy(() => import('../components/FirstCommunionMasteryLab'));
@@ -517,7 +518,12 @@ export default function LearningZonePage() {
         </div>
 
         {activeViewMode === 'inflation' && userRole === 'teacher' ? (
-          <SeedInflationStudio />
+          <LocalKeyGuard
+            featureTitle="Internal Seed Inflation &amp; AST Engine"
+            featureDescription="This module contains proprietary procedural curriculum generators, misconception graphs, and AST seeds. An authorized local cryptographic key is required to activate it on this device."
+          >
+            <SeedInflationStudio />
+          </LocalKeyGuard>
         ) : activeViewMode === 'first-communion' ? (
           <>
             <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>

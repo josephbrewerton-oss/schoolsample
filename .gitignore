@@ -4,11 +4,16 @@ node_modules/
 # Build outputs & caches
 dist/
 build/
+dist-public-release/
 .cache-loader
 
 # Environment & local overrides
 .env
 .env.local
+local-key.json
+*.key
+*.key.json
+static/internal-key.json
 
 # Editor & OS temporary files
 *.bak

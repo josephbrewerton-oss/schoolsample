@@ -1,6 +1,6 @@
 {
   "version": "1.2.0-compact",
-  "generatedAt": 1789404715960,
+  "generatedAt": 1789408831778,
   "streams": [
     {
       "id": "academic",
@@ -51,16 +51,6 @@
       "title": "The Order and Structure of the Mass",
       "badgeIcon": "⛪",
       "manifestPath": "/manifests/lessons/order-of-the-mass.json"
-    },
-    {
-      "id": "liturgical-year",
-      "stream": "faith",
-      "keyStage": "KS2",
-      "subject": "Religious Formation",
-      "unit": "Liturgy & Worship",
-      "title": "The Liturgical Year: Easter & Sacred Seasons",
-      "badgeIcon": "📅",
-      "manifestPath": "/manifests/lessons/liturgical-year.json"
     },
     {
       "id": "sacrament-of-baptism",
