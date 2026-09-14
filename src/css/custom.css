@@ -93,7 +93,20 @@ html.high-contrast-mode section {
   position: relative;
   width: 100%;
   min-height: calc(100vh - 110px);
-  animation: astFadeIn 0.1s ease-out;
+  contain: layout style;
+  animation: astFadeIn 0.08s ease-out;
+}
+
+/* Isolate large interactive panels to avoid cascading document reflows */
+.procedural-manipulative-card,
+.canvas-topology-container,
+.lesson-content-card {
+  contain: layout paint;
+}
+
+/* Ensure images and SVGs have natural aspect-ratio preservation */
+img, svg {
+  max-width: 100%;
 }
 
 @keyframes astFadeIn {

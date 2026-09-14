@@ -588,7 +588,7 @@ function getLexiconTranslation(text: string, targetLang: string): string | null 
 }
 
 /**
- * Universal DOM Translator: walks through all visible text nodes in the page,
+ * Universal DOM Translator: walks through visible text nodes in the page,
  * stores the original English string, and replaces it with the translated version.
  */
 export async function translatePageDOM(targetLang: string): Promise<void> {
@@ -611,8 +611,9 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
   isUniversalTranslationRunning = true;
 
   try {
+    const rootScope = document.getElementById('ast-persistent-viewport') || document.body;
     const walker = document.createTreeWalker(
-      document.body,
+      rootScope,
       NodeFilter.SHOW_TEXT,
       {
         acceptNode(node) {
@@ -637,7 +638,7 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
     }
 
     // Process nodes in fast chunks to avoid UI stutter
-    const batchSize = 25;
+    const batchSize = 35;
     for (let i = 0; i < textNodesToTranslate.length; i += batchSize) {
       const batch = textNodesToTranslate.slice(i, i + batchSize);
 
@@ -703,8 +704,9 @@ export function restorePageDOM(): void {
   document.documentElement.dir = 'ltr';
   currentActiveTargetLang = 'en';
 
+  const rootScope = document.getElementById('ast-persistent-viewport') || document.body;
   const walker = document.createTreeWalker(
-    document.body,
+    rootScope,
     NodeFilter.SHOW_TEXT,
     {
       acceptNode(node) {
@@ -740,15 +742,20 @@ export function enableUniversalObserver(targetLang: string): void {
 
   if (!targetLang || targetLang === 'en') return;
 
+  const targetContainer = document.getElementById('ast-persistent-viewport') || document.body;
   let debounceTimer: any = null;
-  universalObserver = new MutationObserver(() => {
+  universalObserver = new MutationObserver((mutations) => {
+    // Only trigger if new child nodes were actually added to avoid infinite loops on text mutations
+    const hasAddedNodes = mutations.some((m) => m.addedNodes && m.addedNodes.length > 0);
+    if (!hasAddedNodes) return;
+
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       translatePageDOM(targetLang);
-    }, 250);
+    }, 350);
   });
 
-  universalObserver.observe(document.body, {
+  universalObserver.observe(targetContainer, {
     childList: true,
     subtree: true,
   });

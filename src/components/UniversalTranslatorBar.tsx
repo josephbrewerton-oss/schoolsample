@@ -21,21 +21,28 @@ export default function UniversalTranslatorBar() {
   const [useGoogleFallback, setUseGoogleFallback] = useState<boolean>(false);
   const googleScriptLoadedRef = useRef(false);
 
-  // Synchronize CSS variable --universal-bar-height with actual bar height
+  // Ensure CSS variable --universal-bar-height is set once or on actual height changes without triggering synchronous reflow
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const bar = document.getElementById('universal-translator-bar');
     if (!bar) return;
 
+    let rAFId: number;
     const syncHeight = () => {
-      const height = bar.offsetHeight || 0;
-      document.documentElement.style.setProperty('--universal-bar-height', `${height}px`);
+      rAFId = requestAnimationFrame(() => {
+        if (!bar) return;
+        const height = bar.getBoundingClientRect().height || (isCollapsed ? 34 : 41);
+        document.documentElement.style.setProperty('--universal-bar-height', `${Math.round(height)}px`);
+      });
     };
 
     syncHeight();
     const ro = new ResizeObserver(() => syncHeight());
     ro.observe(bar);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(rAFId);
+      ro.disconnect();
+    };
   }, [isCollapsed, useGoogleFallback]);
 
   // Initialize from storage on mount

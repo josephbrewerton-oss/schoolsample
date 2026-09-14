@@ -13,27 +13,28 @@ export default function PersistentAppShell(): React.JSX.Element {
   const navigate = useNavigate();
   const [incomingBroadcast, setIncomingBroadcast] = useState<TeacherBroadcastCommand | null>(null);
 
-  // Scroll restoration on route transition
+  // Scroll restoration on route transition (batched via requestAnimationFrame to prevent forced synchronous reflow)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (location.hash) {
-      const targetId = decodeURIComponent(location.hash.replace(/^#/, ''));
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView();
-        return;
+    const rAF = requestAnimationFrame(() => {
+      if (location.hash) {
+        const targetId = decodeURIComponent(location.hash.replace(/^#/, ''));
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'auto' });
+          return;
+        }
       }
-    }
 
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      const viewport = document.getElementById('ast-persistent-viewport');
+      if (viewport) {
+        viewport.scrollTop = 0;
+      }
+    });
 
-    const viewport = document.getElementById('ast-persistent-viewport');
-    if (viewport) {
-      viewport.scrollTop = 0;
-    }
+    return () => cancelAnimationFrame(rAF);
   }, [location.pathname, location.hash]);
 
   // Read stored accessibility preferences
