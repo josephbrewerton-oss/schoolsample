@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { speakInLanguage } from '../engine/translationService';
 import SevenSacramentsGuide from './SevenSacramentsGuide';
 import LiturgicalCalendarGuide from './LiturgicalCalendarGuide';
+import LatinMassPrayersChapel from './LatinMassPrayersChapel';
 
 export interface LiturgyStep {
   id: string;
@@ -303,7 +304,7 @@ const CATHOLIC_PRAYERS: CatholicPrayer[] = [
 ];
 
 export default function FirstCommunionMasteryLab() {
-  const [activeTab, setActiveTab] = useState<'mass-walk' | 'seven-sacraments' | 'liturgical-seasons' | 'sacred-objects' | 'prayers' | 'journal'>('mass-walk');
+  const [activeTab, setActiveTab] = useState<'mass-walk' | 'seven-sacraments' | 'liturgical-seasons' | 'sacred-objects' | 'prayers' | 'latin-prayers' | 'journal'>('mass-walk');
 
   // Liturgy ordering game state
   const [sequenceSelection, setSequenceSelection] = useState<string[]>([]);
@@ -589,6 +590,30 @@ export default function FirstCommunionMasteryLab() {
         >
           <span>🙏</span>
           <span>Catholic Prayers Lab</span>
+        </button>
+
+        <button
+          type="button"
+          id="fc-tab-latin-prayers"
+          onClick={() => setActiveTab('latin-prayers')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: activeTab === 'latin-prayers' ? '#78350f' : 'transparent',
+            color: activeTab === 'latin-prayers' ? '#ffffff' : '#78350f',
+            fontWeight: 800,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderBottom: activeTab === 'latin-prayers' ? '2px solid #f59e0b' : 'none',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>🇻🇦</span>
+          <span>Latin & English Mass Prayers</span>
         </button>
 
         <button
@@ -1364,6 +1389,11 @@ export default function FirstCommunionMasteryLab() {
             )}
           </div>
         </div>
+      )}
+
+      {/* TAB: SACRED LATIN & ENGLISH MASS PRAYERS CHAPEL */}
+      {activeTab === 'latin-prayers' && (
+        <LatinMassPrayersChapel />
       )}
 
       {/* TAB 4: FAMILY & PARISH MASS JOURNAL */}
