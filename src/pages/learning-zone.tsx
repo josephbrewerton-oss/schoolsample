@@ -633,7 +633,7 @@ export default function LearningZonePage() {
                       Catholic First Holy Communion Masterclass Available
                     </strong>
                     <span style={{ display: 'block', fontSize: '0.8rem', color: '#713f12' }}>
-                      Interactive Walk Through the Mass, Sacred Altar Vessels, and Prayer Studio.
+                      Interactive Walk Through the Mass, The Seven Sacraments, Liturgical Seasons (Easter &amp; Lent), and Sacred Altar Vessels.
                     </span>
                   </div>
                 </div>

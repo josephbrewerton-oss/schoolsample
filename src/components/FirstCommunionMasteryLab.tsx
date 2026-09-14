@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { speakInLanguage } from '../engine/translationService';
+import SevenSacramentsGuide from './SevenSacramentsGuide';
+import LiturgicalCalendarGuide from './LiturgicalCalendarGuide';
 
 export interface LiturgyStep {
   id: string;
@@ -223,13 +225,49 @@ const SACRED_OBJECTS: SacredObject[] = [
     catechismRef: 'CCC 1378'
   },
   {
-    id: 'vestments',
-    name: 'The Alb & Chasuble',
+    id: 'alb',
+    name: 'The Alb',
     icon: '🥋',
     category: 'Vestment',
-    description: 'The pure white robe (Alb) recalling baptismal purity, and the outer vestment (Chasuble) whose colour matches the church season.',
-    spiritualMeaning: 'The chasuble represents the sweet yoke of Christ and charity covering all things. Colours: Green (Ordinary Time), Purple (Advent/Lent), White/Gold (Easter/Christmas), Red (Pentecost/Martyrs).',
+    description: 'A full-length, pure white linen tunic worn by the priest, deacon, and altar servers, reaching from the neck down to the feet.',
+    spiritualMeaning: 'Recalls the white baptismal garment. It represents the soul cleansed from sin, putting on Jesus Christ in holiness and purity.',
     catechismRef: 'CCC 1155'
+  },
+  {
+    id: 'cincture',
+    name: 'The Cincture',
+    icon: '🎗️',
+    category: 'Vestment',
+    description: 'A thick rope or cord belt with tassels at the ends, tied securely around the waist over the white alb.',
+    spiritualMeaning: 'Symbolizes self-control, purity of heart, and spiritual vigilance—being girded and ready to serve Christ at the altar.',
+    catechismRef: 'CCC 1155'
+  },
+  {
+    id: 'stole',
+    name: 'The Stole',
+    icon: '🧣',
+    category: 'Vestment',
+    description: 'A long, narrow scarf-like band of coloured silk worn around the neck and over the shoulders by the priest during Mass and the sacraments.',
+    spiritualMeaning: 'The essential badge of priestly authority and ministerial power granted by Christ to celebrate the Holy Sacrifice of the Mass and grant forgiveness.',
+    catechismRef: 'CCC 1155'
+  },
+  {
+    id: 'chasuble',
+    name: 'The Chasuble',
+    icon: '👘',
+    category: 'Vestment',
+    description: 'The flowing, sleeveless outer vestment worn by the priest over the alb and stole during the Holy Sacrifice of the Mass.',
+    spiritualMeaning: 'Symbolizes the sweet yoke of Christ and Christian charity covering all things. Its liturgical colour changes with church seasons (Green, Purple, White/Gold, Red, Rose).',
+    catechismRef: 'CCC 1155'
+  },
+  {
+    id: 'humeral-veil',
+    name: 'The Humeral Veil',
+    icon: '✨',
+    category: 'Vestment',
+    description: 'A rich silk shawl worn over the shoulders and hands of the priest when holding the Monstrance during Eucharistic Adoration and Benediction.',
+    spiritualMeaning: 'Hides the priest’s human hands so the faithful recognize that it is Jesus Himself in the Blessed Sacrament Who is blessing them.',
+    catechismRef: 'CCC 1378'
   }
 ];
 
@@ -265,7 +303,7 @@ const CATHOLIC_PRAYERS: CatholicPrayer[] = [
 ];
 
 export default function FirstCommunionMasteryLab() {
-  const [activeTab, setActiveTab] = useState<'mass-walk' | 'sacred-objects' | 'prayers' | 'journal'>('mass-walk');
+  const [activeTab, setActiveTab] = useState<'mass-walk' | 'seven-sacraments' | 'liturgical-seasons' | 'sacred-objects' | 'prayers' | 'journal'>('mass-walk');
 
   // Liturgy ordering game state
   const [sequenceSelection, setSequenceSelection] = useState<string[]>([]);
@@ -459,6 +497,52 @@ export default function FirstCommunionMasteryLab() {
         >
           <span>🕊️</span>
           <span>Walk Through the Mass</span>
+        </button>
+
+        <button
+          type="button"
+          id="fc-tab-seven-sacraments"
+          onClick={() => setActiveTab('seven-sacraments')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: activeTab === 'seven-sacraments' ? '#4338ca' : 'transparent',
+            color: activeTab === 'seven-sacraments' ? '#ffffff' : '#334155',
+            fontWeight: 700,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>✝️</span>
+          <span>The Seven Sacraments</span>
+        </button>
+
+        <button
+          type="button"
+          id="fc-tab-liturgical-seasons"
+          onClick={() => setActiveTab('liturgical-seasons')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: activeTab === 'liturgical-seasons' ? '#4338ca' : 'transparent',
+            color: activeTab === 'liturgical-seasons' ? '#ffffff' : '#334155',
+            fontWeight: 700,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>📅</span>
+          <span>Liturgical Seasons & Easter</span>
         </button>
 
         <button
@@ -803,6 +887,20 @@ export default function FirstCommunionMasteryLab() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* TAB: THE SEVEN SACRAMENTS */}
+      {activeTab === 'seven-sacraments' && (
+        <div style={{ padding: '1.5rem' }}>
+          <SevenSacramentsGuide />
+        </div>
+      )}
+
+      {/* TAB: LITURGICAL SEASONS & EASTER */}
+      {activeTab === 'liturgical-seasons' && (
+        <div style={{ padding: '1.5rem' }}>
+          <LiturgicalCalendarGuide />
         </div>
       )}
 
