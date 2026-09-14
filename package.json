@@ -12,19 +12,20 @@
     "test:ast": "npx tsx scripts/test-ast-manifests.ts",
     "ingest:oak": "npx tsx scripts/ingest-oak.ts",
     "ingest:bulk": "npx tsx scripts/ingest-bulk-oak.ts",
-    "lint": "node -e \"console.log('Linting passed')\"",
+    "lint": "tsc --noEmit",
     "mine:watch": "npx tsx scripts/watchSubstrates.ts"
   },
   "overrides": {
     "esbuild": "^0.28.1"
   },
   "devDependencies": {
+    "@types/node": "^26.5.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.1.1",
     "chokidar": "^5.0.0",
     "process": "^0.11.10",
-    "typescript": "~5.4.0",
+    "typescript": "^5.6.3",
     "vite": "^8.3.0"
   },
   "browserslist": {
@@ -43,6 +44,8 @@
     "node": ">=20.0"
   },
   "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.85",
+    "idb": "^8.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.3"

@@ -200,9 +200,9 @@ export async function getLessonManifest(
     c: [
       {
         i: `${id}-q1`,
-        p: knowledge?.diagnosticQuestions?.[0]?.prompt || `Examine the core concepts of ${knowledge?.title || id}.`,
-        a: knowledge?.diagnosticQuestions?.[0]?.options?.[0] || 'Core understanding',
-        h: knowledge?.diagnosticQuestions?.[0]?.hint || knowledge?.scaffoldHints?.level1 || 'Think about the foundational concepts.',
+        p: knowledge?.questions?.[0]?.prompt || `Examine the core concepts of ${knowledge?.title || id}.`,
+        a: knowledge?.questions?.[0]?.options?.[0] || 'Core understanding',
+        h: knowledge?.questions?.[0]?.hint || knowledge?.scaffoldHints?.level1 || 'Think about the foundational concepts.',
         e: knowledge?.coreAxiom || 'Standard curriculum guidance.',
         r: [],
       },

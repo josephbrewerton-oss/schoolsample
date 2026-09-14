@@ -53,7 +53,7 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
         prompt,
         systemPrompt,
         temperature: 0.1,
-        timeoutMs: 4000,
+        timeoutMs: 15000,
       });
 
       if (result && result.includes('(lesson')) {

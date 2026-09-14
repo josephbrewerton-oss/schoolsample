@@ -619,7 +619,7 @@ export const ProceduralManipulative: React.FC<Props> = ({
     return (
       <div style={{ background: '#0f172a', borderRadius: '12px', padding: '1.5rem', color: '#f8fafc' }}>
         <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.5rem', textAlign: 'center' }}>
-          Carbon Atom ($^{12}_6\text{C}$): Nucleus vs Empty Space
+          {'Carbon Atom ($^{12}_6\\text{C}$): Nucleus vs Empty Space'}
         </h4>
         <svg width="100%" height="220" viewBox="0 0 500 220" style={{ maxWidth: '500px', margin: '0 auto', display: 'block' }}>
           {/* Shell 2 (Outer - 4 valence electrons) */}

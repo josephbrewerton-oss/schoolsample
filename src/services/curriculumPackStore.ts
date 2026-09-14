@@ -161,7 +161,7 @@ export function findCustomTopicKnowledge(
           topicId: lesson.id,
           title: lesson.topicTitle,
           subject: lesson.subjectTitle,
-          stage: lesson.stageTitle,
+          keyStage: lesson.stageTitle,
           coreAxiom: lesson.axiom,
           cognitiveTrap: lesson.trap || 'Failing to apply the core principle consistently.',
           hook: lesson.hook || `How does ${lesson.topicTitle} operate in real world contexts?`,

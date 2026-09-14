@@ -6,7 +6,7 @@
 // 1. Direct Re-Exports
 export * from './hookengine';
 export * from './useCurriculumStandard';
-export * from './useKnowledgestage';
+export * from './useKnowledgeStage';
 export * from './useWebRTCNeuralBus';
 
 // 2. Runtime Capability & Discovery Reflection

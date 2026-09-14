@@ -223,7 +223,7 @@ PEDAGOGICAL RULES:
         prompt: fullPrompt,
         systemPrompt: buildSystemPrompt(),
         preserveContext: false, // Prevents Chrome session port collisions
-        timeoutMs: 4000,
+        timeoutMs: 15000,
       });
 
       let cleaned =
@@ -360,9 +360,9 @@ PEDAGOGICAL RULES:
               alignItems: 'center',
               gap: '4px',
             }}
-            title={hasConsent ? 'Click to switch to Eco Mode' : 'Click to enable local Gemini Nano AI'}
+            title={hasConsent ? 'Click to switch to Eco Mode' : 'Click to enable on-device neural AI'}
           >
-            <span>{hasConsent ? '🧠 Smart Tutor Ready' : '⚡ Enable Gemini Nano'}</span>
+            <span>{hasConsent ? (aiCaller.hasNativePromptApi() ? '🧠 Gemini Nano Ready' : '⚡ WebLLM WebGPU Ready') : '⚡ Enable On-Device AI'}</span>
           </button>
         </div>
       </div>

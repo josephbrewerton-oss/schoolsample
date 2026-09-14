@@ -1,6 +1,6 @@
 // src/curriculum/index.ts
-import defaultUkCurriculum from './curriculum.ast.ts';
-import minedSubstrateAst from './curriculumoutput.ast.ts';
+import defaultUkCurriculum from './curriculum.ast';
+import minedSubstrateAst from './curriculumoutput.ast';
 import { parseAST, ASTNode } from '../engine/ast-loader';
 import { 
   OAK_CURRICULUM_CATALOGUE, 

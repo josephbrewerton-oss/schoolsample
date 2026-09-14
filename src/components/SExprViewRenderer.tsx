@@ -1,15 +1,23 @@
 // src/components/SExprViewRenderer.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { SExprAST, SExprNode } from '../types/sexpr';
+import { parseSExpr } from '../utils/sexprParser';
 import { aiCaller } from '../engine/aicaller';
 
 interface Props {
-  ast: SExprAST;
+  ast?: SExprAST;
+  source?: string;
   onAction?: (action: string, payload?: any) => void;
 }
 
-export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.Element | null {
-  if (ast === null || ast === undefined) {
+export default function SExprViewRenderer({ ast, source, onAction }: Props): React.JSX.Element | null {
+  const resolvedAst = useMemo(() => {
+    if (ast !== undefined) return ast;
+    if (source) return parseSExpr(source);
+    return null;
+  }, [ast, source]);
+
+  if (resolvedAst === null || resolvedAst === undefined) {
     return (
       <div style={{ padding: '1rem', color: '#64748b', fontSize: '0.875rem' }}>
         Loading curriculum node...
@@ -17,11 +25,11 @@ export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.E
     );
   }
 
-  if (typeof ast !== 'object') {
-    return <span>{String(ast)}</span>;
+  if (typeof resolvedAst !== 'object') {
+    return <span>{String(resolvedAst)}</span>;
   }
 
-  const { tag, props = {}, children = [] } = ast as SExprNode;
+  const { tag, props = {}, children = [] } = resolvedAst as SExprNode;
 
   const isTeacherMode =
     typeof window !== 'undefined' &&
@@ -42,8 +50,9 @@ export default function SExprViewRenderer({ ast, onAction }: Props): React.JSX.E
       );
 
     case 'header': {
-      const Level = (`h${props.level || 2}` as keyof JSX.IntrinsicElements);
-      return <Level className={props.className}>{renderChildren()}</Level>;
+      const headingLevel = props.level === 1 ? 'h1' : props.level === 3 ? 'h3' : props.level === 4 ? 'h4' : 'h2';
+      const HeadingTag = headingLevel as 'h1' | 'h2' | 'h3' | 'h4';
+      return <HeadingTag className={props.className}>{renderChildren()}</HeadingTag>;
     }
 
     case 'text':

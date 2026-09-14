@@ -193,7 +193,7 @@ export async function getLearnerAnalytics(): Promise<LearnerAnalytics> {
 
   // Explicit sort to guarantee newest-first history
   const recentHistory = [...records]
-    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .sort((a, b) => (b.answeredAt || (b as any).timestamp || 0) - (a.answeredAt || (a as any).timestamp || 0))
     .slice(0, 15);
 
   return {

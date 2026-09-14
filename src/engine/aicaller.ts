@@ -1,4 +1,5 @@
 // src/engine/aicaller.ts
+import { edgeCognitiveEngine } from './EdgeCognitiveEngine';
 
 export interface AiInferenceOptions {
   prompt: string;
@@ -68,13 +69,33 @@ class AiRuntimeCaller {
   }
 
   /**
-   * Synchronous check whether Prompt API is supported and consented to.
+   * Check if WebLLM / WebGPU on-device neural fallback is available (Safari 18+, Firefox, non-Chromium)
+   */
+  public hasWebLlmFallback(): boolean {
+    return edgeCognitiveEngine.isSupported();
+  }
+
+  /**
+   * Identifies the active on-device engine tier
+   */
+  public getActiveEngineType(): 'chrome-builtin-nano' | 'webgpu-webllm' | 'rule-engine' {
+    if (this.hasNativePromptApi()) return 'chrome-builtin-nano';
+    if (edgeCognitiveEngine.isSupported()) return 'webgpu-webllm';
+    return 'rule-engine';
+  }
+
+  /**
+   * Synchronous check whether on-device AI (Native Prompt API or WebLLM fallback) is supported and consented to.
    */
   public isPromptApiAvailableSync(): boolean {
-    if (!this.hasNativePromptApi()) return false;
     if (!hasUserGrantedAiConsent()) return false;
-    if (this.cachedAvailability && this.cachedAvailability.status === 'no') return false;
-    return true;
+    if (this.hasNativePromptApi()) {
+      if (this.cachedAvailability && this.cachedAvailability.status === 'no') return false;
+      return true;
+    }
+    // Safari / Firefox / non-Chromium WebLLM / WebGPU fallback path:
+    if (edgeCognitiveEngine.isSupported()) return true;
+    return false;
   }
 
   /**
@@ -91,6 +112,16 @@ class AiRuntimeCaller {
 
     const lm = this.getAiRoot();
     if (!lm) {
+      // Check WebLLM / WebGPU fallback for Safari / Firefox / non-Chromium
+      if (edgeCognitiveEngine.isSupported()) {
+        this.cachedAvailability = {
+          status: 'readily',
+          maxTokens: 4096,
+          temperature: 0.2,
+        };
+        return this.cachedAvailability;
+      }
+
       this.cachedAvailability = { status: 'no' };
       return this.cachedAvailability;
     }
@@ -249,106 +280,135 @@ class AiRuntimeCaller {
   }
 
   /**
-   * Single prompt execution with strict timeout protection
+   * Single prompt execution with strict timeout protection and WebLLM fallback
    */
   async promptText(opts: AiInferenceOptions): Promise<string> {
-    if (!this.hasNativePromptApi() || !hasUserGrantedAiConsent()) {
-      throw new Error('Native Prompt API is unavailable or consent is withheld.');
+    if (!hasUserGrantedAiConsent()) {
+      throw new Error('User has not consented to in-browser AI model execution.');
     }
-    const isEphemeral = !opts.preserveContext;
-    let session = await this.getSession(opts);
-    const timeoutMs = opts.timeoutMs ?? 25000;
 
-    const executeCall = async (s: any) => {
-      try {
-        return await s.prompt(opts.prompt, { outputLanguage: 'en' });
-      } catch (err: any) {
-        if (err?.name === 'InvalidStateError' || String(err?.message || '').toLowerCase().includes('destroyed')) {
-          this.destroy();
-          session = await this.getSession(opts);
-          return await session.prompt(opts.prompt);
+    // Tier 1: Chrome Native Prompt API
+    if (this.hasNativePromptApi()) {
+      const isEphemeral = !opts.preserveContext;
+      let session = await this.getSession(opts);
+      const timeoutMs = opts.timeoutMs ?? 25000;
+
+      const executeCall = async (s: any) => {
+        try {
+          return await s.prompt(opts.prompt, { outputLanguage: 'en' });
+        } catch (err: any) {
+          if (err?.name === 'InvalidStateError' || String(err?.message || '').toLowerCase().includes('destroyed')) {
+            this.destroy();
+            session = await this.getSession(opts);
+            return await session.prompt(opts.prompt);
+          }
+          return await s.prompt(opts.prompt);
         }
-        return await s.prompt(opts.prompt);
-      }
-    };
+      };
 
-    const inferencePromise = executeCall(session);
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`[AiCaller] Inference prompt timed out after ${timeoutMs}ms`)), timeoutMs)
-    );
+      const inferencePromise = executeCall(session);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`[AiCaller] Inference prompt timed out after ${timeoutMs}ms`)), timeoutMs)
+      );
 
-    try {
-      return await Promise.race([inferencePromise, timeoutPromise]);
-    } catch (err) {
-      if (!isEphemeral) this.destroy();
-      throw err;
-    } finally {
-      if (isEphemeral && session?.destroy) {
-        try { session.destroy(); } catch {}
+      try {
+        return await Promise.race([inferencePromise, timeoutPromise]);
+      } catch (err) {
+        if (!isEphemeral) this.destroy();
+        console.warn('[AiCaller] Chrome AI prompt failed, invoking WebLLM fallback:', err);
+        // Fall through to Tier 2
+      } finally {
+        if (isEphemeral && session?.destroy) {
+          try { session.destroy(); } catch {}
+        }
       }
     }
+
+    // Tier 2: WebLLM / WebGPU neural execution for Safari 18+, Firefox, and non-Chromium
+    if (edgeCognitiveEngine.isSupported()) {
+      const res = await edgeCognitiveEngine.infer(opts.prompt, opts.systemPrompt);
+      return res.output;
+    }
+
+    throw new Error('No on-device AI inference engine is available in this browser environment.');
   }
 
   /**
-   * Streaming prompt execution supporting both AsyncIterable and ReadableStream
+   * Streaming prompt execution supporting native Chrome API and WebLLM WebGPU streams
    */
   async *promptStream(opts: AiInferenceOptions): AsyncGenerator<string, void, unknown> {
-    if (!this.hasNativePromptApi() || !hasUserGrantedAiConsent()) {
-      throw new Error('Native Prompt API is unavailable or consent is withheld.');
+    if (!hasUserGrantedAiConsent()) {
+      throw new Error('User has not consented to in-browser AI model execution.');
     }
-    const isEphemeral = !opts.preserveContext;
-    let session = await this.getSession(opts);
 
-    try {
-      let stream: any = null;
+    // Tier 1: Chrome Native Prompt API Streaming
+    if (this.hasNativePromptApi()) {
+      const isEphemeral = !opts.preserveContext;
+      let session = await this.getSession(opts);
+
       try {
-        stream = session.promptStreaming ? session.promptStreaming(opts.prompt, { outputLanguage: 'en' }) : null;
-      } catch {
-        stream = session.promptStreaming ? session.promptStreaming(opts.prompt) : null;
-      }
-
-      if (!stream) {
-        let text = '';
+        let stream: any = null;
         try {
-          text = await session.prompt(opts.prompt, { outputLanguage: 'en' });
+          stream = session.promptStreaming ? session.promptStreaming(opts.prompt, { outputLanguage: 'en' }) : null;
         } catch {
-          text = await session.prompt(opts.prompt);
+          stream = session.promptStreaming ? session.promptStreaming(opts.prompt) : null;
         }
-        yield text;
-        return;
-      }
 
-      if (Symbol.asyncIterator in stream) {
-        let previous = '';
-        for await (const chunk of stream) {
-          const delta = chunk.startsWith(previous) ? chunk.slice(previous.length) : chunk;
-          previous = chunk;
-          yield delta;
+        if (!stream) {
+          let text = '';
+          try {
+            text = await session.prompt(opts.prompt, { outputLanguage: 'en' });
+          } catch {
+            text = await session.prompt(opts.prompt);
+          }
+          yield text;
+          return;
         }
-      } else if (typeof stream.getReader === 'function') {
-        const reader = stream.getReader();
-        let previous = '';
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = typeof value === 'string' ? value : new TextDecoder().decode(value);
+
+        if (Symbol.asyncIterator in stream) {
+          let previous = '';
+          for await (const chunk of stream) {
             const delta = chunk.startsWith(previous) ? chunk.slice(previous.length) : chunk;
             previous = chunk;
             yield delta;
           }
-        } finally {
-          reader.releaseLock();
+        } else if (typeof stream.getReader === 'function') {
+          const reader = stream.getReader();
+          let previous = '';
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              const chunk = typeof value === 'string' ? value : new TextDecoder().decode(value);
+              const delta = chunk.startsWith(previous) ? chunk.slice(previous.length) : chunk;
+              previous = chunk;
+              yield delta;
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
+        return;
+      } catch (err) {
+        if (!isEphemeral) this.destroy();
+        console.warn('[AiCaller] Native stream failed, trying WebLLM streaming:', err);
+        // Fall through to Tier 2
+      } finally {
+        if (isEphemeral && session?.destroy) {
+          try { session.destroy(); } catch {}
         }
       }
-    } catch (err) {
-      if (!isEphemeral) this.destroy();
-      throw err;
-    } finally {
-      if (isEphemeral && session?.destroy) {
-        try { session.destroy(); } catch {}
-      }
     }
+
+    // Tier 2: WebLLM / WebGPU real-time token stream
+    if (edgeCognitiveEngine.isSupported()) {
+      for await (const token of edgeCognitiveEngine.inferStream(opts.prompt, opts.systemPrompt)) {
+        yield token;
+      }
+      return;
+    }
+
+    throw new Error('No on-device AI inference engine is available in this browser environment.');
   }
 
   /**

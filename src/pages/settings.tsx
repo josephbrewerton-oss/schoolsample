@@ -4,6 +4,7 @@ import PageMeta from '../components/PageMeta';
 import { CurriculumProviderKey } from '../data/curriculumRegistry';
 import { getInstalledCurriculumPacks, CustomCurriculumPack } from '../services/curriculumPackStore';
 import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
+import { edgeCognitiveEngine } from '../engine/EdgeCognitiveEngine';
 import {
   SUPPORTED_LANGUAGES,
   getSavedLanguage,
@@ -109,20 +110,26 @@ export default function SettingsPage() {
   };
 
   const handleTestBrainpower = async () => {
-    setTestResult('Testing device brainpower...');
+    setTestResult('Analyzing device hardware and memory profile...');
     try {
       const avail = await aiCaller.checkAvailability();
+      const memGuard = edgeCognitiveEngine.getMemoryGuardStatus();
+
       if (!hasAiConsent) {
-        setTestResult('🌱 Eco Mode Active: On-device model execution is disabled until you give explicit consent below.');
+        setTestResult('🌱 Eco Mode Active: On-device neural downloads disabled until consent is granted below. Operating in Tier 3 (Verified Offline Curriculum Rules).');
       } else if (avail.status === 'readily') {
-        setTestResult('🎉 High Brainpower: On-device Gemini Nano is ready to generate live custom questions!');
+        setTestResult('🎉 Tier 1 Active (Chrome Gemini Nano): Hardware-accelerated on-device neural runtime verified & ready for instant zero-cloud Socratic dialogues!');
       } else if (avail.status === 'after-download') {
-        setTestResult('📥 Model Download Available: Your Chromebook can download Gemini Nano in Chrome for offline AI.');
+        setTestResult('📥 Tier 1 Available: Managed Chrome can download on-device Gemini Nano for offline neural inference.');
+      } else if (edgeCognitiveEngine.isSupported() && !memGuard.tripped) {
+        setTestResult('⚡ Tier 2 Active (WebLLM WebGPU Neural Engine): On-device neural shader pipeline supported with memory guard protection active.');
+      } else if (memGuard.tripped) {
+        setTestResult(`🛡️ Tier 3 Active (Local Socratic Rule Synthesizer): ${memGuard.reason} Memory guard successfully engaged to prevent browser tab termination.`);
       } else {
-        setTestResult('⚡ Eco Mode Active: Running fast, battery-safe verified curriculum questions directly from your device.');
+        setTestResult('⚡ Tier 3 Active (Local Socratic Rule Synthesizer): Running instant, battery-safe verified curriculum rules directly from your device.');
       }
     } catch {
-      setTestResult('⚡ Eco Mode Active: Verified offline curriculum questions ready.');
+      setTestResult('⚡ Tier 3 Active: Verified offline curriculum questions ready.');
     }
   };
 
@@ -263,7 +270,7 @@ export default function SettingsPage() {
                           <div style={{ marginTop: '3px' }}><strong>India (DPDP Act Sec 5(3)):</strong> {caveat.indiaNotice}</div>
                         </div>
                         <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                          📦 Model size: ~1.5 GB in Chrome cache &nbsp;|&nbsp; 📶 Unmetered Wi-Fi suggested &nbsp;|&nbsp; 🔒 100% On-device
+                          📦 Runtime: {aiCaller.hasNativePromptApi() ? 'Gemini Nano (Chrome Built-in)' : 'WebLLM / WebGPU Neural Pipeline (Safari/Firefox supported)'} &nbsp;|&nbsp; 📶 Offline-cached &nbsp;|&nbsp; 🔒 100% On-device
                         </div>
                         <div style={{ marginTop: '0.5rem', fontSize: '0.78rem' }}>
                           <Link to="/privacy" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>

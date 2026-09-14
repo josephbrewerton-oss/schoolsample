@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
+import MatSlaSection from '../components/MatSlaSection';
 
 export default function LicensingPage(): React.JSX.Element {
+  const [activeTab, setActiveTab] = useState<'covenant' | 'sla'>('covenant');
   const [selectedOrgType, setSelectedOrgType] = useState<string>('catholic');
   const [institutionName, setInstitutionName] = useState<string>('');
   const [covenantGenerated, setCovenantGenerated] = useState<boolean>(false);
@@ -108,7 +110,67 @@ export default function LicensingPage(): React.JSX.Element {
           </p>
         </div>
 
-        {/* The 3 Core Pillars */}
+        {/* Tab Switcher: Covenant vs B2B MAT SLA */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            marginBottom: '2.5rem',
+            borderBottom: '1px solid #e2e8f0',
+            paddingBottom: '1rem',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab('covenant')}
+            style={{
+              padding: '0.65rem 1.25rem',
+              borderRadius: '9999px',
+              border: activeTab === 'covenant' ? '2px solid #15803d' : '1px solid #cbd5e1',
+              background: activeTab === 'covenant' ? '#f0fdf4' : '#ffffff',
+              color: activeTab === 'covenant' ? '#15803d' : '#475569',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>🕊️</span>
+            <span>Universal Covenant &amp; Grants</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('sla')}
+            style={{
+              padding: '0.65rem 1.25rem',
+              borderRadius: '9999px',
+              border: activeTab === 'sla' ? '2px solid #0f172a' : '1px solid #cbd5e1',
+              background: activeTab === 'sla' ? '#0f172a' : '#ffffff',
+              color: activeTab === 'sla' ? '#ffffff' : '#475569',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>🏛️</span>
+            <span>B2B Multi-Academy Trust (MAT) SLA</span>
+          </button>
+        </div>
+
+        {activeTab === 'sla' ? (
+          <MatSlaSection />
+        ) : (
+          <>
+            {/* The 3 Core Pillars */}
         <div
           style={{
             display: 'grid',
@@ -435,6 +497,8 @@ export default function LicensingPage(): React.JSX.Element {
             </div>
           </div>
         </section>
+        </>
+        )}
 
         {/* Legal & Open Source Attributions */}
         <section style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2.5rem' }}>

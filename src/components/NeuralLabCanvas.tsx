@@ -8,6 +8,7 @@ import { dispatch } from '../engine/hypercall';
 import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hypervisor';
 import { hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
+import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 
 interface NeuralLabCanvasProps {
   initialKeyStage?: string;

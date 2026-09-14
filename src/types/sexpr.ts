@@ -6,9 +6,4 @@ export interface SExprNode {
   children: (SExprNode | SExprAtom)[];
 }
 
-export type SExprAST = SExprNode | SExprAtom;
-
-declare module '*.ast' {
-  const content: string;
-  export default content;
-}
+export type SExprAST = SExprNode | SExprAtom | SExprAST[];

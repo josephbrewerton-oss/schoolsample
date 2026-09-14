@@ -10,6 +10,8 @@ import { ASTFlowGovernor, RawASTQuestion } from './astGovernor';
 import { EngineFlow } from './engineflow';
 import { extractQuestionFromAst, healSExprString } from '../utils/astQuestionExtractor';
 import { saveVerifiedAST, saveVfsView } from '../services/dbStore';
+import { MathQuestionGenerator } from './mathQuestionGenerator';
+import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 import type { HyperMessage, HyperNodeResult } from './hypercall';
 import {
   decodeBinaryFrame,
@@ -75,7 +77,7 @@ export interface HypervisorInferenceRequest {
 
 export interface HypervisorInferenceResult {
   ok: boolean;
-  source: 'guest_vm' | 'offline_deterministic' | 'cache';
+  source: 'guest_vm' | 'offline_deterministic' | 'cache' | 'watchdog_fallback';
   rawAST?: string;
   question?: RawASTQuestion;
   error?: string;
