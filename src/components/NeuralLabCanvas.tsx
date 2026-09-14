@@ -1,5 +1,6 @@
 // src/components/NeuralLabCanvas.tsx
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { CurriculumSelector } from './CurriculumSelector';
 import { QuestionCard } from './QuestionCard';
 import NeuralAstCanvasTopology from './NeuralAstCanvasTopology';
@@ -328,6 +329,53 @@ export default function NeuralLabCanvas({
           boxSizing: 'border-box',
         }}
       >
+        {/* Catholic First Communion Masterclass Quick Pill */}
+        {(selectedSubject.toLowerCase().includes('catholic') ||
+          selectedSubject.toLowerCase().includes('religious education') ||
+          selectedUnit.toLowerCase().includes('communion') ||
+          selectedUnit.toLowerCase().includes('eucharist') ||
+          selectedUnit.toLowerCase().includes('mass')) && (
+          <div
+            style={{
+              marginBottom: '1rem',
+              padding: '0.65rem 1rem',
+              background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)',
+              border: '1px solid #facc15',
+              borderRadius: '10px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.2rem' }}>✝️</span>
+              <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#854d0e' }}>
+                First Holy Communion Interactive Masterclass Available
+              </span>
+            </div>
+            <Link
+              to="/learning-zone?tab=first-communion"
+              style={{
+                padding: '4px 12px',
+                borderRadius: '6px',
+                background: '#4338ca',
+                color: '#ffffff',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <span>Explore Mass & Altar Vessels</span>
+              <span>➔</span>
+            </Link>
+          </div>
+        )}
+
         {/* Child-Friendly Difficulty / Challenge Level Selector */}
         <div
           style={{

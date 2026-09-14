@@ -7,6 +7,8 @@ import { CurriculumSelector } from '../components/CurriculumSelector';
 import TuringTutor from '../components/NanoAssistantPanel';
 import SeedInflationStudio from '../components/SeedInflationStudio';
 import { dispatch } from '../engine/hypercall';
+
+const FirstCommunionMasteryLab = React.lazy(() => import('../components/FirstCommunionMasteryLab'));
 import { hypervisor } from '../engine/hypervisor';
 import {
   SUPPORTED_LANGUAGES,
@@ -53,14 +55,19 @@ export default function LearningZonePage() {
     }
   };
 
-  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation'>(() => {
-    return searchParams.get('tab') === 'inflation' ? 'inflation' : 'lesson';
+  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation' | 'first-communion'>(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'inflation') return 'inflation';
+    if (tab === 'first-communion') return 'first-communion';
+    return 'lesson';
   });
 
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'inflation' && activeViewMode !== 'inflation') {
       setActiveViewMode('inflation');
+    } else if (tab === 'first-communion' && activeViewMode !== 'first-communion') {
+      setActiveViewMode('first-communion');
     } else if (!tab && activeViewMode !== 'lesson') {
       setActiveViewMode('lesson');
     }
@@ -511,6 +518,63 @@ export default function LearningZonePage() {
 
         {activeViewMode === 'inflation' && userRole === 'teacher' ? (
           <SeedInflationStudio />
+        ) : activeViewMode === 'first-communion' ? (
+          <>
+            <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveViewMode('lesson');
+                  setSearchParams({});
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                }}
+              >
+                <span>&larr;</span>
+                <span>Back to Standard Lessons</span>
+              </button>
+              <Link
+                to={practiceLabUrl}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  background: '#eff6ff',
+                  color: '#1d4ed8',
+                  border: '1px solid #bfdbfe',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>⚡ Practice Lab Quiz</span>
+                <span>➔</span>
+              </Link>
+            </div>
+            <React.Suspense
+              fallback={
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+                  <span>Loading Catholic First Holy Communion Masterclass...</span>
+                </div>
+              }
+            >
+              <FirstCommunionMasteryLab />
+            </React.Suspense>
+          </>
         ) : (
           <>
             {/* Top Selector Control Bar */}
@@ -539,6 +603,66 @@ export default function LearningZonePage() {
                 onDownloadReport={() => {}}
               />
             </div>
+
+            {/* Catholic First Communion Banner if studying Catholic RE */}
+            {(selectedSubject.toLowerCase().includes('catholic') ||
+              selectedSubject.toLowerCase().includes('religious education') ||
+              selectedUnit.toLowerCase().includes('communion') ||
+              selectedUnit.toLowerCase().includes('eucharist') ||
+              selectedUnit.toLowerCase().includes('baptism') ||
+              selectedUnit.toLowerCase().includes('reconciliation') ||
+              selectedUnit.toLowerCase().includes('mass')) && (
+              <div
+                style={{
+                  marginBottom: '1.25rem',
+                  background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)',
+                  border: '2px solid #facc15',
+                  borderRadius: '12px',
+                  padding: '0.85rem 1.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.6rem' }}>✝️</span>
+                  <div>
+                    <strong style={{ color: '#854d0e', fontSize: '0.95rem' }}>
+                      Catholic First Holy Communion Masterclass Available
+                    </strong>
+                    <span style={{ display: 'block', fontSize: '0.8rem', color: '#713f12' }}>
+                      Interactive Walk Through the Mass, Sacred Altar Vessels, and Prayer Studio.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="open-communion-masterclass-btn"
+                  onClick={() => {
+                    setActiveViewMode('first-communion');
+                    setSearchParams({ tab: 'first-communion' });
+                  }}
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: '8px',
+                    background: '#4338ca',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 4px rgba(67, 56, 202, 0.25)',
+                  }}
+                >
+                  <span>🌟 Open Masterclass Studio</span>
+                </button>
+              </div>
+            )}
 
             {/* Main Lesson Sheet */}
             <div

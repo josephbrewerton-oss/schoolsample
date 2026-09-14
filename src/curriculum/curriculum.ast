@@ -13,5 +13,10 @@
     (topic :id "mat-angles" :title "Angles & Triangles"))
   (subject :title "Computing" :code "comp"
     (topic :id "comp-algorithms" :title "Algorithms & Sequencing"))
-  (subject :title "Religious Education" :code "re"
-    (topic :id "re-eucharist" :title "The Holy Eucharist & Sacraments")))
+  (subject :title "Religious Education (Catholic)" :code "re"
+    (topic :id "sacrament-of-baptism" :title "Baptism: Belonging to the Family of God")
+    (topic :id "first-reconciliation" :title "First Reconciliation: God’s Healing Mercy & Forgiveness")
+    (topic :id "liturgy-of-the-word" :title "The Liturgy of the Word: God Speaks in Scripture")
+    (topic :id "the-last-supper" :title "The Last Supper: Do This in Memory of Me")
+    (topic :id "first-holy-communion" :title "The Sacrament of the Eucharist: The Real Presence")
+    (topic :id "order-of-the-mass" :title "The Order of the Mass & Reverent Reception")))
