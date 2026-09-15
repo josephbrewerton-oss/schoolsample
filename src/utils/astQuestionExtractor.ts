@@ -75,18 +75,54 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
   if (!rawLisp || typeof rawLisp !== 'string') return null;
 
   try {
+    const rawTrimmed = rawLisp.trim();
+
+    // Strategy 1: Attempt JSON extraction (Gemini Nano frequently generates JSON or markdown-fenced JSON)
+    const jsonMatch = rawTrimmed.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const prompt = parsed.prompt || parsed.question || parsed.q || parsed.stem;
+        const rawOptions = parsed.options || parsed.choices || parsed.answers || parsed.opts;
+        if (prompt && Array.isArray(rawOptions) && rawOptions.length >= 2) {
+          const options = rawOptions.map((o: any) => typeof o === 'string' ? o.replace(/^[A-D]\)\s*/i, '').trim() : String(o));
+          let answerKey = 0;
+          if (typeof parsed.answerKey === 'number') answerKey = parsed.answerKey;
+          else if (typeof parsed.answer === 'number') answerKey = parsed.answer;
+          else if (typeof parsed.answerKey === 'string') {
+            const letterIdx = 'abcd'.indexOf(parsed.answerKey.toLowerCase().trim());
+            if (letterIdx >= 0) answerKey = letterIdx;
+            else {
+              const num = parseInt(parsed.answerKey, 10);
+              if (!isNaN(num)) answerKey = num;
+            }
+          }
+          return {
+            prompt: String(prompt).trim(),
+            options,
+            answerKey: Math.min(Math.max(0, answerKey), options.length - 1),
+            scratchpad: parsed.scratchpad || parsed.reasoning,
+            hint: parsed.hint || parsed.clue,
+            misconceptions: Array.isArray(parsed.misconceptions) ? parsed.misconceptions : undefined,
+            socraticFollowUp: parsed.socraticFollowUp || parsed.followUp,
+          };
+        }
+      } catch {}
+    }
+
     const clean = healSExprString(rawLisp);
 
+    // Strategy 2: Lisp S-Expression Parsing (:prompt "..." :options (...) :answer-key ...)
     // 1. Prompt stem extraction (Longhand :prompt or Shorthand :q / :question)
     const promptMatch =
       clean.match(/:(?:prompt|q|question)\s+"([^"]+)"/i) ||
+      clean.match(/:(?:prompt|q|question)\s+([^\s:]+)/i) ||
       clean.match(/\(question\s+(?:\(text\s+)?"([^"]+)"/i);
 
-    // 2. Options list extraction (Longhand :options or Shorthand :opts)
+    // 2. Options list extraction (Longhand :options or Shorthand :opts, with either () or [])
     const optionsMatch =
-      clean.match(/:(?:options|opts|choices)\s+\((?:list\s+)?([^)]*)\)/i);
+      clean.match(/:(?:options|opts|choices)\s+[\(\[](?:list\s+)?([^\]\)]*)[\)\]]/i);
 
-    // 3. Fallback: Parse standalone (option ...) tags if present
     let optionMatches: string[] = [];
     let detectedAnswerKey = -1;
 
@@ -105,7 +141,42 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
       }
     }
 
+    // Strategy 3: Markdown / Plain Text MCQ fallback (Question: ... A) ... B) ... Answer: ...)
     if (!promptMatch || optionMatches.length < 2) {
+      const lines = rawTrimmed.split('\n').map((l) => l.trim()).filter(Boolean);
+      let detectedPrompt = '';
+      const textOptions: string[] = [];
+      let textAnswer = 0;
+
+      for (const line of lines) {
+        const qMatch = line.match(/^(?:question|prompt|q)\s*[:\-]\s*(.+)$/i);
+        if (qMatch && !detectedPrompt) {
+          detectedPrompt = qMatch[1].trim();
+          continue;
+        }
+        const optMatch = line.match(/^(?:[A-D]\)|\d+\.|\-)\s+(.+)$/i);
+        if (optMatch) {
+          textOptions.push(optMatch[1].replace(/^["']|["']$/g, '').trim());
+          continue;
+        }
+        const ansMatch = line.match(/^(?:answer|correct|key)\s*[:\-]\s*([A-D]|\d+)/i);
+        if (ansMatch) {
+          const val = ansMatch[1].toUpperCase();
+          if (['A', 'B', 'C', 'D'].includes(val)) {
+            textAnswer = 'ABCD'.indexOf(val);
+          } else {
+            textAnswer = parseInt(val, 10) || 0;
+          }
+        }
+      }
+
+      if (detectedPrompt && textOptions.length >= 2) {
+        return {
+          prompt: detectedPrompt,
+          options: textOptions,
+          answerKey: Math.min(Math.max(0, textAnswer), textOptions.length - 1),
+        };
+      }
       return null;
     }
 
@@ -133,7 +204,7 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
     const hint = hintMatch ? hintMatch[1].trim() : undefined;
 
     // 7. Misconceptions extraction (:misconceptions or :misc)
-    const miscMatch = clean.match(/:(?:misconceptions|misc)\s+\((?:list\s+)?([^)]*)\)/i);
+    const miscMatch = clean.match(/:(?:misconceptions|misc)\s+[\(\[](?:list\s+)?([^\]\)]*)[\)\]]/i);
     let misconceptions: string[] | undefined = undefined;
     if (miscMatch) {
       const parsedMiscs = [...miscMatch[1].matchAll(/"([^"]+)"/g)].map((m) => m[1].trim());
@@ -149,7 +220,7 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
     return {
       prompt,
       options: optionMatches,
-      answerKey: isNaN(answerKey) ? 0 : answerKey,
+      answerKey: isNaN(answerKey) ? 0 : Math.min(Math.max(0, answerKey), optionMatches.length - 1),
       scratchpad,
       hint,
       misconceptions,

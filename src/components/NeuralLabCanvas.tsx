@@ -217,13 +217,16 @@ export default function NeuralLabCanvas({
       if (requestId === activeRequestIdRef.current) {
         const fallbackOffline = findCurriculumKnowledge(ks, sub, u);
         if (fallbackOffline && fallbackOffline.questions?.length > 0) {
-          const randIdx = Math.floor(Math.random() * fallbackOffline.questions.length);
+          const eligible = fallbackOffline.questions.filter((q) => q.prompt !== activeQuestion?.prompt);
+          const chosen = eligible.length > 0
+            ? eligible[Math.floor(Math.random() * eligible.length)]
+            : fallbackOffline.questions[0];
           handleNewQuestion({
-            question: fallbackOffline.questions[randIdx],
+            question: chosen,
             keyStage: ks,
             subject: sub,
             unit: u,
-            hint: fallbackOffline.questions[randIdx].hint || '',
+            hint: chosen.hint || '',
           });
         }
       }

@@ -1240,15 +1240,5 @@ export function findCurriculumKnowledge(
     }
   }
 
-  // 3. Fallback to first topic in matching subject/stage if available
-  for (const [key, val] of Object.entries(combinedKnowledgeBase)) {
-    const [kStage, kSub] = key.split(':');
-    const stageMatch = normStage.includes(kStage) || (kStage === 'ks1' && normStage.includes('1')) || (kStage === 'ks2' && normStage.includes('2')) || (kStage === 'ks3' && normStage.includes('3')) || (kStage === 'ks4' && (normStage.includes('4') || normStage.includes('gcse')));
-    const subjectMatch = normSubject.includes(kSub) || kSub.includes(normSubject);
-    if (stageMatch && subjectMatch) {
-      return val;
-    }
-  }
-
   return null;
 }

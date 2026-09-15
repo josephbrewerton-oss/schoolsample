@@ -482,6 +482,148 @@ export const CURRICULUM_EXPANSION_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'To get a volcano, you need magma rising through a gap or melting from a subducted plate.',
         explanation: 'Conservative boundaries involve horizontal shearing. Stress builds up as plates stick, then releases as an earthquake. Since no plate subducts or pulls apart, no magma rises.'
+      },
+      {
+        id: 'ks3-geo-tec-2',
+        prompt: 'At a destructive (convergent) plate margin between oceanic and continental crust, why does the oceanic plate subduct beneath the continental plate?',
+        options: [
+          'The oceanic plate is denser and heavier than the buoyant continental crust',
+          'The continental crust is submerged deeper in the mantle',
+          'Ocean water pushes the continental crust upward like a boat',
+          'Tectonic plates always move strictly from east to west due to Earth rotation'
+        ],
+        answerKey: 0,
+        hint: 'Consider the mineral composition and density of basaltic oceanic crust vs granitic continental crust.',
+        explanation: 'Dense, basaltic oceanic crust sinks beneath the lighter, granitic continental crust into the subduction zone, where partial melting generates explosive composite volcanoes.'
+      },
+      {
+        id: 'ks3-geo-tec-3',
+        prompt: 'What geologic feature is characteristically formed along a constructive (divergent) plate boundary such as the Mid-Atlantic Ridge?',
+        options: [
+          'New oceanic lithosphere formed by magma rising to fill the separating rift valley',
+          'Fold mountain ranges created by two continental landmasses crumpling',
+          'Deep ocean trenches where one plate plunges into the asthenosphere',
+          'Completely flat plains with no volcanic or seismic activity whatsoever'
+        ],
+        answerKey: 0,
+        hint: 'Constructive means new crust is being built as plates pull apart.',
+        explanation: 'As plates diverge at constructive margins, basaltic magma wells up from the mantle, cools against seawater, and creates brand-new seafloor along a mid-ocean ridge.'
+      }
+    ]
+  },
+
+  'ks3:geography:urbanisation-mega-cities': {
+    topicId: 'urbanisation-mega-cities',
+    title: 'Urbanisation & Mega Cities',
+    keyStage: 'Key Stage 3',
+    subject: 'Geography',
+    coreAxiom: 'Urbanisation is the increasing proportion of a country\'s population living in towns and cities, driven by rural-to-urban migration (push and pull factors) and high rates of natural increase, resulting in the rapid emergence of megacities (populations over 10 million).',
+    cognitiveTrap: 'Confusing the absolute growth of a city with urbanisation (which is the proportion of total population living in urban areas), or assuming push factors attract migrants.',
+    socraticPivot: 'Why are the fastest-growing megacities today located primarily in Low-Income Countries (LICs) and Newly Emerging Economies (NEEs) rather than High-Income Countries (HICs)?',
+    hook: 'In 1950 there were only two megacities in the entire world (Tokyo and New York); today there are over 30, with cities like Lagos adding thousands of new residents every single day!',
+    guidedStep: 'Distinguish push factors (drought, lack of rural jobs, famine) from pull factors (higher wages, healthcare, education), and examine urban challenges such as squatter settlements (favelas) and traffic congestion.',
+    scaffoldHints: {
+      level1: 'Push factors drive people away from rural countryside; pull factors attract people toward urban cities.',
+      level2: 'Megacities have populations exceeding 10 million people (e.g. Tokyo, Mumbai, São Paulo, Lagos).',
+      level3: 'In HICs, urbanisation rates have slowed down or stabilized, whereas LICs/NEEs experience rapid urban growth due to rural-to-urban migration combined with high birth rates.'
+    },
+    questions: [
+      {
+        id: 'ks3-geo-urb-1',
+        prompt: 'What is the standard geographical definition of a "Megacity"?',
+        options: [
+          'A continuous urban metropolitan area with a total population exceeding 10 million people',
+          'Any capital city that contains more than 1 million residents',
+          'A city that covers a geographic area larger than 5,000 square kilometers',
+          'A financial district that generates at least 50% of a nation\'s gross domestic product'
+        ],
+        answerKey: 0,
+        hint: 'The threshold is based on population size, in the tens of millions.',
+        explanation: 'By international demographic convention (UN Habitat), a megacity is an urban agglomeration with a population of over 10 million residents (e.g. Tokyo, Delhi, Shanghai, São Paulo).'
+      },
+      {
+        id: 'ks3-geo-urb-2',
+        prompt: 'Which of the following represents an authentic "push factor" driving rural-to-urban migration in Low-Income Countries (LICs)?',
+        options: [
+          'Prolonged agricultural drought, desertification, and crop failure in rural farming communities',
+          'Better tertiary education opportunities and specialized university hospitals in the capital city',
+          'Higher formal wages and reliable electricity grids in central commercial districts',
+          'Exciting cultural entertainment and modern public transport systems'
+        ],
+        answerKey: 0,
+        hint: 'Push factors are negative pressures that force people away from their rural origin.',
+        explanation: 'Push factors are negative conditions (drought, conflict, poverty, lack of rural services) that compel people to leave rural areas. Better services and jobs in the city are pull factors.'
+      },
+      {
+        id: 'ks3-geo-urb-3',
+        prompt: 'Why do squatter settlements (such as favelas in Brazil or slums in Mumbai) frequently form on steep hillsides or flood-prone marshes on the urban periphery?',
+        options: [
+          'Migrants lack capital and build on marginal, hazardous land that developers and government cannot commercially use',
+          'Municipal governments officially zone steep hillsides specifically for luxury residential developments',
+          'Steep terrain provides natural cooling that prevents tropical diseases from spreading',
+          'Building on steep slopes eliminates the legal need to install foundations or structural supports'
+        ],
+        answerKey: 0,
+        hint: 'Consider land value, affordability, and the vulnerability of un-regulated terrain.',
+        explanation: 'New rural migrants arriving with little or no money are forced onto marginal land unsuitable for formal construction—such as unstable steep slopes prone to deadly landslides or contaminated marshes.'
+      },
+      {
+        id: 'ks3-geo-urb-4',
+        prompt: 'Which sustainable urban management strategy was pioneered in Curitiba (Brazil) to curb vehicle congestion and reduce air emissions?',
+        options: [
+          'A high-capacity Bus Rapid Transit (BRT) network with dedicated bus lanes and pre-boarding tube stations',
+          'Banning all motorized vehicles across the entire city and requiring residents to walk',
+          'Paving over city parks to construct twelve-lane elevated motorways through every neighborhood',
+          'Relocating the entire municipal population to rural agricultural communes'
+        ],
+        answerKey: 0,
+        hint: 'Curitiba designed an innovative, low-cost public transport system using dedicated bus corridors.',
+        explanation: 'Curitiba\'s Bus Rapid Transit (BRT) system introduced dedicated arterial bus corridors and raised cylindrical boarding tubes, moving millions of passengers daily at a fraction of the cost of a subway.'
+      }
+    ]
+  },
+
+  'ks3:geography:glacial-landscapes': {
+    topicId: 'glacial-landscapes',
+    title: 'Glacial Landscapes',
+    keyStage: 'Key Stage 3',
+    subject: 'Geography',
+    coreAxiom: 'Glaciers shape upland landscapes through freeze-thaw weathering, plucking, and abrasion, carving distinctive erosional landforms (corries, arêtes, pyramidal peaks, and U-shaped glacial troughs) and depositing unsorted till to form moraines.',
+    cognitiveTrap: 'Confusing V-shaped river valleys (carved by vertical river erosion) with U-shaped glacial troughs (carved by valley glaciers with steep sides and wide flat floors).',
+    socraticPivot: 'How does the cross-profile of a glacial trough (U-shaped valley) visually reveal that ice eroded both the valley sides and floor simultaneously?',
+    hook: 'During the last Ice Age, an ice sheet over a kilometer thick completely covered Scotland and Northern England, grinding solid mountain granite into powder!',
+    guidedStep: 'Identify processes: freeze-thaw weathering, plucking (meltwater freezes around rock and tears it away), abrasion (sandpapering bedrock with embedded stones).',
+    scaffoldHints: {
+      level1: 'Plucking tears rocks from the valley floor; abrasion scratches and polishes the rock like sandpaper.',
+      level2: 'A corrie (or cirque) is an armchair-shaped hollow on a mountainside where glacial snow accumulates.',
+      level3: 'A U-shaped valley (glacial trough) has steep, sheer cliff sides and a wide, flat valley floor.'
+    },
+    questions: [
+      {
+        id: 'ks3-geo-gla-1',
+        prompt: 'How does glacial "plucking" operate to detach bedrock from an upland mountain slope?',
+        options: [
+          'Subglacial meltwater freezes into bedrock cracks and tears blocks away as the glacier slides downhill',
+          'Rocks carried on the glacier surface melt the mountain through chemical friction',
+          'Winds blowing off the glacier blast loose sand grains against exposed cliffs',
+          'Gravity alone causes mountains to instantly collapse whenever ice melts'
+        ],
+        answerKey: 0,
+        hint: 'Think about meltwater freezing in cracks and adhering to the moving glacier.',
+        explanation: 'As a glacier moves, basal meltwater penetrates bedrock fractures, freezes, and bonds rock to the base of the ice. As the glacier continues downhill, it plucks the shattered blocks away.'
+      },
+      {
+        id: 'ks3-geo-gla-2',
+        prompt: 'What knife-edge mountain ridge is formed when two adjacent corries (cirques) erode backwards into each other on opposite sides of a mountain?',
+        options: [
+          'An arête (e.g. Striding Edge in the Lake District)',
+          'A drumlin',
+          'A kettle lake',
+          'A terminal moraine'
+        ],
+        answerKey: 0,
+        hint: 'French for "fishbone" or edge; a sharp, steep-sided ridge between two hollows.',
+        explanation: 'An arête is a narrow, steep-sided, knife-like ridge formed when two neighbouring corries erode back-to-back through plucking and freeze-thaw weathering.'
       }
     ]
   },

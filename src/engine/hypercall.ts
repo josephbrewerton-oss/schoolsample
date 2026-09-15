@@ -381,10 +381,10 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
             const lastId = recentTopicQuestionMap.get(topicCacheKey);
-            const eligible = offlineKnowledge.questions.length > 1
-              ? offlineKnowledge.questions.filter((q) => q.id !== lastId)
-              : offlineKnowledge.questions;
-            const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+            const eligible = offlineKnowledge.questions.filter((q) => q.id !== lastId);
+            const chosen = eligible.length > 0
+              ? eligible[Math.floor(Math.random() * eligible.length)]
+              : offlineKnowledge.questions[0];
             offlineQuestion = chosen;
             if (chosen?.id) {
               recentTopicQuestionMap.set(topicCacheKey, chosen.id);
@@ -399,6 +399,12 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             : null;
 
           let basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
+          
+          // If only 1 offline question exists and it was just shown, rotate to socratic perspective so questions never repeat back-to-back
+          if (offlineKnowledge && offlineKnowledge.questions.length === 1 && currentVariant % 2 === 1 && offlineKnowledge.socraticPivot) {
+            basePrompt = `🤔 [Diagnostic Inquiry] ${offlineKnowledge.socraticPivot}`;
+          }
+
           if (payload?.forceVariation && offlineQuestion) {
             const masteryVariations = [
               `🔄 [Parallel Mastery] ${offlineQuestion.prompt}`,
@@ -483,7 +489,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
                 lang,
                 angle: chosenAngle,
                 seed: randomSeed,
-                timeoutMs: 4000,
+                timeoutMs: 12000,
               });
 
               if (vmResult.ok && vmResult.question) {
