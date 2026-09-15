@@ -130,4 +130,36 @@ export const VFS_CURRICULUM_SEEDS: Record<string, string> = {
     (option "A documentary produced in 2014")
     (explanation "A wartime diary is direct, contemporaneous evidence written at the time of the event."))
   (ai-tutor :persona "Herodotus" :engine "Gemini Nano" :greeting "Greetings, scholar. What historical artifacts or eras shall we scrutinize?"))`,
+
+  // Primary Languages: Spanish Greetings & Introductions
+  '/sys/views/spa_greetings.lisp': `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "Primary Spanish: Saludos y Presentaciones")
+  (callout :variant "info" "Spanish greetings change depending on the time of day: Buenos días (morning), Buenas tardes (afternoon), Buenas noches (night).")
+  (stepper
+    (step (text "Step 1: Morning greeting — 'Buenos días' is used until lunchtime."))
+    (step (text "Step 2: Afternoon greeting — 'Buenas tardes' is used from lunch until sunset."))
+    (step (text "Step 3: Evening greeting — 'Buenas noches' is used after dark and before sleeping.")))
+  (quiz :id "spa-greet-101"
+    (question "¿Cómo se dice 'Good afternoon' en español?")
+    (option :correct true "Buenas tardes")
+    (option "Buenos días")
+    (option "Buenas noches")
+    (explanation "Buenas tardes is used in the afternoon until sunset."))
+  (ai-tutor :persona "Prof. Cervantes" :engine "Gemini Nano" :greeting "¡Hola! ¿Cómo estás? Let's practice Spanish greetings together."))`,
+
+  // Secondary Languages: Spanish Present Tense Regular Verbs
+  '/sys/views/spa_verbs.lisp': `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "GCSE Spanish: Present Tense Regular Verbs (-ar, -er, -ir)")
+  (callout :variant "info" "Regular Spanish verbs remove the infinitive ending (-ar, -er, -ir) and attach person-specific endings (-o, -as/-es, -a/-e, -amos/-emos/-imos, -áis/-éis/-ís, -an/-en).")
+  (stepper
+    (step (text "Step 1: Find the stem by dropping -ar, -er, or -ir (e.g. hablar -> habl-)."))
+    (step (text "Step 2: Identify the subject person (yo, tú, él/ella, nosotros, vosotros, ellos/ellas)."))
+    (step (text "Step 3: Add the matching ending (habl- + -amos = hablamos).")))
+  (quiz :id "spa-verb-201"
+    (question "Which is the correct form of 'hablar' for 'we speak' (nosotros)?")
+    (option :correct true "Hablamos")
+    (option "Hablan")
+    (option "Hablas")
+    (explanation "The first-person plural ending for -ar verbs is -amos."))
+  (ai-tutor :persona "Prof. García" :engine "Gemini Nano" :greeting "¡Bienvenidos! What Spanish grammar or conjugations would you like to review?"))`,
 };

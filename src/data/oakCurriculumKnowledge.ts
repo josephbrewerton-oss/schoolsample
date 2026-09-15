@@ -1011,6 +1011,78 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
     ]
   },
 
+  // --- KS2 Modern Foreign Languages (Spanish) ---
+  'ks2:spanish:greetings-introductions': {
+    topicId: 'greetings-introductions',
+    title: 'Spanish Greetings & Introductions',
+    keyStage: 'Key Stage 2',
+    subject: 'Spanish',
+    coreAxiom: 'In Spanish, greeting conventions and question forms change depending on formality and time of day (Buenos días, Buenas tardes, Buenas noches). Inverted punctuation (¿?) is used at the beginning of question clauses.',
+    cognitiveTrap: 'Using "Buenos días" in the evening or forgetting that Spanish adjectives and gender agreements reflect the speaker or noun.',
+    socraticPivot: 'How does Spanish signal that a sentence is a question before you even finish reading it?',
+    hook: 'If you arrive in Madrid at 8:00 PM, which greeting should you use to say hello politely?',
+    guidedStep: 'Practice matching time of day with the correct greeting (días = morning, tardes = afternoon, noches = evening/night).',
+    scaffoldHints: {
+      level1: 'Días is like daytime/morning. Tardes is afternoon. Noches is night.',
+      level2: 'Buenos días (until midday); Buenas tardes (afternoon until sunset); Buenas noches (evening/night).',
+      level3: 'Notice how "días" is masculine (buenos), while "tardes" and "noches" are feminine (buenas).'
+    },
+    questions: [
+      {
+        id: 'ks2-spa-greet-1',
+        prompt: '¿Cómo se dice "Good afternoon" en español?',
+        options: ['Buenas tardes', 'Buenos días', 'Buenas noches', 'Hasta luego'],
+        answerKey: 0,
+        hint: 'Used between lunch and the evening sunset.',
+        explanation: '"Buenas tardes" is used in the afternoon. "Buenos días" is morning and "Buenas noches" is evening/night.'
+      },
+      {
+        id: 'ks2-spa-greet-2',
+        prompt: 'Which phrase means "My name is" when introducing yourself in Spanish?',
+        options: ['Me llamo', '¿Cómo te llamas?', 'Mucho gusto', 'Por favor'],
+        answerKey: 0,
+        hint: 'Literally means "I call myself".',
+        explanation: '"Me llamo" followed by your name translates to "My name is" (literally "I call myself").'
+      }
+    ]
+  },
+
+  // --- KS3 Modern Foreign Languages (Spanish) ---
+  'ks3:spanish:present-tense-regular-verbs': {
+    topicId: 'present-tense-regular-verbs',
+    title: 'Spanish Present Tense: Regular Verbs (-ar, -er, -ir)',
+    keyStage: 'Key Stage 3',
+    subject: 'Spanish',
+    coreAxiom: 'Spanish verbs are grouped into three conjugation paradigms (-ar, -er, -ir). To conjugate in the present tense, remove the infinitive ending and append person-specific endings (e.g., -o, -as/-es, -a/-e, -amos/-emos/-imos, -áis/-éis/-ís, -an/-en). Subject pronouns (yo, tú) are frequently omitted because the verb ending indicates the subject.',
+    cognitiveTrap: 'Always writing subject pronouns (e.g., "Yo hablo" every time) or applying -ar verb endings to -er/-ir verbs (e.g., writing "yo comas" instead of "tú comes").',
+    socraticPivot: 'Why is "Hablo español" completely understood without needing to say "Yo"?',
+    hook: 'Why do Spanish verbs look like secret codes that tell you WHO is doing the action in just the last two letters?',
+    guidedStep: '1. Identify the stem (habl-). 2. Check the verb ending class (-ar). 3. Append the correct personal ending (-o, -as, -a, -amos, -áis, -an).',
+    scaffoldHints: {
+      level1: 'The ending changes depending on who does it: -o is always "I" (yo).',
+      level2: 'For -ar verbs (hablar): hablo (I speak), hablas (you speak), habla (he/she speaks), hablamos (we speak), hablan (they speak).',
+      level3: 'For -er (comer): como, comes, come, comemos, coméis, comen. For -ir (vivir): vivo, vives, vive, vivimos, vivís, viven.'
+    },
+    questions: [
+      {
+        id: 'ks3-spa-verb-1',
+        prompt: 'Which is the correct form of the verb "hablar" for "We speak" (nosotros)?',
+        options: ['Hablamos', 'Hablan', 'Hablas', 'Hablo'],
+        answerKey: 0,
+        hint: '-amos is the first-person plural ending for regular -ar verbs.',
+        explanation: 'For regular -ar verbs, the "nosotros" (we) ending is -amos: hablar -> nosotros hablamos.'
+      },
+      {
+        id: 'ks3-spa-verb-2',
+        prompt: 'How do you say "They eat" using the regular verb "comer"?',
+        options: ['Comen', 'Comemos', 'Comes', 'Coman'],
+        answerKey: 0,
+        hint: 'For -er verbs, the third-person plural ("ellos/ellas") ending is -en.',
+        explanation: 'For regular -er verbs in the present indicative, the "ellos/ellas" ending is -en: comer -> comen.'
+      }
+    ]
+  },
+
   // ==========================================
   // KEY STAGE 4 (GCSE / Ages 14-16)
   // ==========================================
