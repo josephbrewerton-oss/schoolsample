@@ -304,8 +304,8 @@
           outputLanguage: 'en',
           expectedOutputLanguages: ['en'],
           expectedInputLanguages: ['en'],
-          temperature: 0.2,
-          topK: 3,
+          temperature: 0.5,
+          topK: 20,
         });
         currentSystemInstruction = systemInstruction;
         return cachedSession;
@@ -436,7 +436,11 @@
           return;
         }
 
+        const pedagogicalAngle = payload.angle || 'Authentic Application & Misconception Analysis';
+        const seedValue = payload.seed || Math.floor(Math.random() * 10000);
+
         const prompt = payload.prompt || `Topic: "${topic}" (${keyStage} ${subject}).
+Focus Angle: ${pedagogicalAngle} (Variation Seed: #${seedValue})
 ${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}${exemplarAST ? `Exemplar AST:\n${exemplarAST}\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
 First, evaluate your reasoning inside :scratchpad (explaining the exact conceptual rule for the correct answer, and the specific diagnostic misconception behind each distractor).
 Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). The :answer-key must be the 0-indexed integer of the correct answer. Hint under 15 words.
