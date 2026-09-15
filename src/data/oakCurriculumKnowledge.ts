@@ -13,6 +13,7 @@ export interface CurriculumQuestion {
 
 import { findCustomTopicKnowledge } from '../services/curriculumPackStore';
 import { CURRICULUM_EXPANSION_BASE } from './curriculumKnowledgeExpansion';
+import { CURRICULUM_COMPLETE_BASE } from './curriculumKnowledgeComplete';
 
 export interface CurriculumTopicKnowledge {
 
@@ -1216,6 +1217,7 @@ export function findCurriculumKnowledge(
   const combinedKnowledgeBase: Record<string, CurriculumTopicKnowledge> = {
     ...CURRICULUM_KNOWLEDGE_BASE,
     ...CURRICULUM_EXPANSION_BASE,
+    ...CURRICULUM_COMPLETE_BASE,
   };
 
   // 1. Direct key match (e.g. "ks2:science:states-of-matter")

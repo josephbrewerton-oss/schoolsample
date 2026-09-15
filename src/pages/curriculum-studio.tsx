@@ -8,6 +8,8 @@ import {
   getInstalledCurriculumPacks,
   saveCurriculumPack,
   removeCurriculumPack,
+  saveAxiomAnchorTopic,
+  deleteAxiomAnchorTopic,
   generateSampleCsvTemplate,
   generateSampleJsonTemplate,
   parseCsvToCurriculumPack,
@@ -15,7 +17,7 @@ import {
 } from '../services/curriculumPackStore';
 
 export default function CurriculumStudioPage() {
-  const [activeTab, setActiveTab] = useState<'presets' | 'import' | 'installed'>('presets');
+  const [activeTab, setActiveTab] = useState<'presets' | 'author' | 'import' | 'installed'>('author');
   const [installedPacks, setInstalledPacks] = useState<CustomCurriculumPack[]>([]);
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -25,6 +27,17 @@ export default function CurriculumStudioPage() {
   const [testQuestionIndex, setTestQuestionIndex] = useState<number>(0);
   const [testSelectedOption, setTestSelectedOption] = useState<string | null>(null);
   const [testAnswerFeedback, setTestAnswerFeedback] = useState<string | null>(null);
+
+  // Axiom + Trap Authoring State (Backward Design Engine)
+  const [authorStage, setAuthorStage] = useState<string>('Key Stage 3');
+  const [authorSubject, setAuthorSubject] = useState<string>('Religious Education (Catholic)');
+  const [authorTopic, setAuthorTopic] = useState<string>('The Beatitudes & Kingdom of God');
+  const [authorAxiom, setAuthorAxiom] = useState<string>('The Beatitudes (Matthew 5) present the spiritual blueprint of Jesus Christ, teaching that blessedness comes from humility, mercy, justice, and purity of heart rather than worldly power.');
+  const [authorTrap, setAuthorTrap] = useState<string>('Confusing the Beatitudes with legalistic rule-keeping or passive weakness, rather than radical divine virtues inaugurated by the Kingdom of God.');
+  const [authorHook, setAuthorHook] = useState<string>('Why did Jesus tell the crowd on the Mount that the poor in spirit and the peacemakers are truly blessed?');
+  const [authorGuidedStep, setAuthorGuidedStep] = useState<string>('Read each Beatitude, examine its promised blessing in the Kingdom, and contrast it with secular ideals of pride and wealth.');
+  const [authorSocraticPivot, setAuthorSocraticPivot] = useState<string>('How do the Beatitudes fulfill the moral law given to Moses on Mount Sinai?');
+  const [previewGeneratedQuestions, setPreviewGeneratedQuestions] = useState<boolean>(true);
 
   // Import file form state
   const [uploadPackTitle, setUploadPackTitle] = useState<string>('');
@@ -164,6 +177,83 @@ export default function CurriculumStudioPage() {
     }
   };
 
+  const handleSaveAuthorAnchor = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!authorTopic.trim() || !authorAxiom.trim() || !authorTrap.trim()) {
+      showNotice('Please provide at least a Topic Name, Core Axiom, and Cognitive Trap!', 'error');
+      return;
+    }
+    saveAxiomAnchorTopic({
+      keyStage: authorStage,
+      subject: authorSubject,
+      topic: authorTopic.trim(),
+      axiom: authorAxiom.trim(),
+      trap: authorTrap.trim(),
+      hook: authorHook.trim(),
+      guidedStep: authorGuidedStep.trim(),
+      socraticPivot: authorSocraticPivot.trim(),
+    });
+    refreshInstalled();
+    showNotice(`✅ Successfully saved "${authorTopic}" to local offline curriculum bank!`, 'success');
+  };
+
+  const handleDeleteAuthorLesson = (lessonId: string, title: string) => {
+    if (window.confirm(`Delete "${title}" from your custom teacher anchor bank?`)) {
+      deleteAxiomAnchorTopic(lessonId);
+      refreshInstalled();
+      showNotice(`🗑️ Deleted "${title}".`, 'info');
+    }
+  };
+
+  const loadPresetTemplate = (type: 're' | 'stem' | 'comp' | 'lang' | 'hist') => {
+    if (type === 're') {
+      setAuthorStage('Key Stage 3');
+      setAuthorSubject('Religious Education (Catholic)');
+      setAuthorTopic('The Beatitudes & Kingdom of God');
+      setAuthorAxiom('The Beatitudes (Matthew 5) present the spiritual blueprint of Jesus Christ, teaching that true blessedness comes from humility, mercy, justice, and purity of heart rather than worldly power.');
+      setAuthorTrap('Confusing the Beatitudes with legalistic rule-keeping or passive weakness, rather than radical divine virtues inaugurated by the Kingdom of God.');
+      setAuthorHook('Why did Jesus tell the crowd on the Mount that the poor in spirit and the peacemakers are truly blessed?');
+      setAuthorGuidedStep('Read each Beatitude, examine its promised blessing in the Kingdom, and contrast it with secular ideals of pride and wealth.');
+      setAuthorSocraticPivot('How do the Beatitudes fulfill the moral law given to Moses on Mount Sinai?');
+    } else if (type === 'stem') {
+      setAuthorStage('Key Stage 3');
+      setAuthorSubject('Science (Physics)');
+      setAuthorTopic("Newton's Third Law of Motion");
+      setAuthorAxiom('Whenever object A exerts a force on object B, object B exerts an equal and opposite force on object A of the identical type.');
+      setAuthorTrap('Believing that equal and opposite forces cancel out on the same body (they act on TWO different bodies).');
+      setAuthorHook('When you push against a wall, why does the wall push back with the exact same force on your hands?');
+      setAuthorGuidedStep('Identify object A and object B, state the force type, and verify that each force acts on the other object.');
+      setAuthorSocraticPivot('If Earth pulls down on an apple, does the apple pull up on the Earth?');
+    } else if (type === 'comp') {
+      setAuthorStage('Key Stage 3');
+      setAuthorSubject('Computing');
+      setAuthorTopic('Binary Search Algorithm');
+      setAuthorAxiom('Binary search divides a sorted collection in half at each step, operating in O(log n) logarithmic time.');
+      setAuthorTrap('Attempting to perform a binary search on an unsorted list without sorting it first.');
+      setAuthorHook('How can you find any word in a dictionary of 1,000,000 words in only 20 checks?');
+      setAuthorGuidedStep('Verify the list is sorted, find the midpoint, compare target value, and discard the inactive half.');
+      setAuthorSocraticPivot('Why will binary search fail completely if the numbers are in random scrambled order?');
+    } else if (type === 'lang') {
+      setAuthorStage('Key Stage 4 (GCSE)');
+      setAuthorSubject('Modern Foreign Languages (Spanish)');
+      setAuthorTopic('Subjunctive Triggers with Emotion & Doubt');
+      setAuthorAxiom('When the main clause expresses emotion, doubt, or subjective will with a change of subject, the subordinate clause requires the subjunctive mood.');
+      setAuthorTrap('Using the indicative present tense simply because the action feels "real" to the speaker.');
+      setAuthorHook('Why does "Espero que vengas" use "vengas" instead of the indicative "vienes"?');
+      setAuthorGuidedStep('Check for (1) WEIRDO trigger verb, (2) the connector "que", and (3) two different grammatical subjects.');
+      setAuthorSocraticPivot('What changes in meaning if a speaker switches from subjunctive to indicative?');
+    } else if (type === 'hist') {
+      setAuthorStage('Key Stage 3');
+      setAuthorSubject('History');
+      setAuthorTopic('Magna Carta & Rule of Law (1215)');
+      setAuthorAxiom('Magna Carta established the constitutional principle that everyone, including the monarch, is subject to the law and entitled to lawful trial.');
+      setAuthorTrap('Believing King John granted democratic rights to ordinary peasants (it was a treaty between the King and rebel Barons).');
+      setAuthorHook('Why is an 800-year-old parchment agreed at Runnymede still cited in courts today?');
+      setAuthorGuidedStep('Examine Clause 39, evaluate the power struggle between John and the Barons, and trace the evolution of habeas corpus.');
+      setAuthorSocraticPivot('How did Magna Carta restrict arbitrary royal power in 13th-century England?');
+    }
+  };
+
   const isPackInstalled = (packId: string) => {
     return installedPacks.some((p) => p.id === packId);
   };
@@ -286,6 +376,34 @@ export default function CurriculumStudioPage() {
           overflowX: 'auto',
         }}>
           <button
+            onClick={() => setActiveTab('author')}
+            style={{
+              padding: '12px 20px',
+              fontWeight: 700,
+              fontSize: '1rem',
+              border: 'none',
+              background: 'transparent',
+              color: activeTab === 'author' ? '#2563eb' : '#64748b',
+              borderBottom: activeTab === 'author' ? '3px solid #2563eb' : '3px solid transparent',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>🧠 Axiom Anchor Studio</span>
+            <span style={{
+              background: activeTab === 'author' ? '#dbeafe' : '#f1f5f9',
+              color: activeTab === 'author' ? '#1d4ed8' : '#475569',
+              padding: '2px 8px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+            }}>
+              Zero Bloat
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('presets')}
             style={{
               padding: '12px 20px',
@@ -360,6 +478,601 @@ export default function CurriculumStudioPage() {
             </span>
           </button>
         </div>
+
+        {/* TAB 0: AXIOM ANCHOR STUDIO (BACKWARD DESIGN) */}
+        {activeTab === 'author' && (
+          <section style={{ marginBottom: '3rem' }}>
+            {/* Mission & Architectural Banner */}
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderLeft: '4px solid #3b82f6',
+              borderRadius: '12px',
+              padding: '1.25rem 1.5rem',
+              marginBottom: '2rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>🧠</span>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Backward Design: Axiomatic Seed Studio
+                </h2>
+                <span style={{
+                  background: '#dbeafe',
+                  color: '#1e40af',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                }}>
+                  Zero Bloat Engine
+                </span>
+              </div>
+              <p style={{ fontSize: '0.92rem', color: '#475569', margin: '0 0 0.75rem 0', lineHeight: 1.55 }}>
+                Instead of storing thousands of static multi-choice questions that bloat storage, you only store the <strong>Core Truth (Axiom)</strong> and the <strong>Pupil Misconception (Trap)</strong>. The offline neural engine inflates endless diagnostic variations, targeted scaffold hints, and socratic dialogues on demand with 100% privacy.
+              </p>
+              
+              {/* Quick load template presets */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
+                  Load Exemplar Seeds:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => loadPresetTemplate('re')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✝️ Catholic RE (The Beatitudes)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadPresetTemplate('stem')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ⚛️ Physics (Newton's 3rd Law)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadPresetTemplate('comp')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                  }}
+                >
+                  💻 Computing (Binary Search)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadPresetTemplate('lang')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🇪🇸 Spanish (Subjunctive)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadPresetTemplate('hist')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    cursor: 'pointer',
+                  }}
+                >
+                  📜 History (Magna Carta)
+                </button>
+              </div>
+            </div>
+
+            {/* Main Form & Live Diagnostic Preview Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+              gap: '1.75rem',
+              alignItems: 'start',
+            }}>
+              {/* Form Card */}
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: '1.75rem',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+              }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 1.25rem 0' }}>
+                  Anchor Seed Definition
+                </h3>
+
+                <form onSubmit={handleSaveAuthorAnchor} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                        Key Stage / Phase *
+                      </label>
+                      <input
+                        type="text"
+                        value={authorStage}
+                        onChange={(e) => setAuthorStage(e.target.value)}
+                        placeholder="e.g. Key Stage 3 or Grade 8"
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.9rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                        Subject Domain *
+                      </label>
+                      <input
+                        type="text"
+                        value={authorSubject}
+                        onChange={(e) => setAuthorSubject(e.target.value)}
+                        placeholder="e.g. Religious Education, Physics"
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.9rem',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      Topic or Inquiry Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={authorTopic}
+                      onChange={(e) => setAuthorTopic(e.target.value)}
+                      placeholder="e.g. The Beatitudes & Sermon on the Mount"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.9rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#166534' }}>
+                        🎯 Core Axiom (The Ground Truth) *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', color: '#15803d', background: '#dcfce7', padding: '1px 6px', borderRadius: '4px' }}>
+                        Verified Fact
+                      </span>
+                    </div>
+                    <textarea
+                      value={authorAxiom}
+                      onChange={(e) => setAuthorAxiom(e.target.value)}
+                      rows={3}
+                      placeholder="State the non-negotiable core curriculum truth..."
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #86efac',
+                        background: '#f0fdf4',
+                        fontSize: '0.88rem',
+                        lineHeight: 1.45,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#991b1b' }}>
+                        🪤 Cognitive Trap (Pupil Misconception) *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', color: '#b91c1c', background: '#fee2e2', padding: '1px 6px', borderRadius: '4px' }}>
+                        Diagnostic Distractor
+                      </span>
+                    </div>
+                    <textarea
+                      value={authorTrap}
+                      onChange={(e) => setAuthorTrap(e.target.value)}
+                      rows={3}
+                      placeholder="State the common intuitive misconception pupils fall into..."
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #fca5a5',
+                        background: '#fef2f2',
+                        fontSize: '0.88rem',
+                        lineHeight: 1.45,
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
+                      Socratic Pivot Question (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={authorSocraticPivot}
+                      onChange={(e) => setAuthorSocraticPivot(e.target.value)}
+                      placeholder="e.g. How does this rule apply to real life?"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.88rem',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                    <button
+                      type="submit"
+                      style={{
+                        flex: 1,
+                        padding: '12px 18px',
+                        borderRadius: '10px',
+                        background: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        fontWeight: 700,
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.2)',
+                      }}
+                    >
+                      💾 Save to Offline Engine
+                    </button>
+                    <Link
+                      to={`/practice-lab?topic=${encodeURIComponent(authorTopic)}`}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      ⚡ Practice
+                    </Link>
+                  </div>
+                </form>
+              </div>
+
+              {/* Live Backward Question Inflation & AST Preview Card */}
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: '1.75rem',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Instant Backward Question Inflation
+                  </h3>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    background: '#f1f5f9',
+                    color: '#475569',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                  }}>
+                    Auto-Derived
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Question 1: Truth Verification */}
+                  <div style={{
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '1rem',
+                    background: '#f8fafc',
+                  }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      Diagnostic Item #1 &bull; Principle Verification
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#0f172a', marginBottom: '8px' }}>
+                      Which statement accurately represents the foundational curriculum truth of &ldquo;{authorTopic || 'Topic'}&rdquo;?
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
+                      <div style={{
+                        padding: '6px 10px',
+                        background: '#dcfce7',
+                        border: '1px solid #86efac',
+                        borderRadius: '6px',
+                        color: '#166534',
+                        fontWeight: 600,
+                      }}>
+                        ✅ {authorAxiom || 'Foundational Axiom here...'}
+                      </div>
+                      <div style={{
+                        padding: '6px 10px',
+                        background: '#fee2e2',
+                        border: '1px solid #fca5a5',
+                        borderRadius: '6px',
+                        color: '#991b1b',
+                      }}>
+                        ❌ {authorTrap || 'Cognitive Trap misconception...'}
+                      </div>
+                      <div style={{
+                        padding: '6px 10px',
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        color: '#64748b',
+                      }}>
+                        ❌ It operates inversely, causing the opposite outcome.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Question 2: Misconception Inversion */}
+                  <div style={{
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '1rem',
+                    background: '#f8fafc',
+                  }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      Diagnostic Item #2 &bull; Misconception Detection
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#0f172a', marginBottom: '8px' }}>
+                      When analyzing &ldquo;{authorTopic || 'Topic'}&rdquo;, which common misconception or error must be identified and avoided?
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
+                      <div style={{
+                        padding: '6px 10px',
+                        background: '#dcfce7',
+                        border: '1px solid #86efac',
+                        borderRadius: '6px',
+                        color: '#166534',
+                        fontWeight: 600,
+                      }}>
+                        ✅ {authorTrap || 'Cognitive Trap misconception...'}
+                      </div>
+                      <div style={{
+                        padding: '6px 10px',
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        color: '#64748b',
+                      }}>
+                        ❌ {authorAxiom || 'The actual core axiom...'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* S-Expression AST Seed Representation */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b' }}>
+                        Nano-Map S-Expression AST Seed
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ast = `(:lesson :stage "${authorStage}" :subject "${authorSubject}" :topic "${authorTopic}" :axiom "${authorAxiom}" :trap "${authorTrap}")`;
+                          navigator.clipboard.writeText(ast);
+                          showNotice('📋 Copied S-Expression seed to clipboard!', 'info');
+                        }}
+                        style={{
+                          fontSize: '0.75rem',
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563eb',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Copy S-Expr
+                      </button>
+                    </div>
+                    <pre style={{
+                      background: '#0f172a',
+                      color: '#38bdf8',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.78rem',
+                      overflowX: 'auto',
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}>
+{`(:lesson
+  :stage "${authorStage}"
+  :subject "${authorSubject}"
+  :topic "${authorTopic}"
+  :axiom "${authorAxiom.slice(0, 50)}..."
+  :trap "${authorTrap.slice(0, 50)}...")`}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Teacher's Authored Anchors List */}
+            {(() => {
+              const teacherPack = installedPacks.find((p) => p.id === 'teacher-custom-anchors');
+              const lessons = teacherPack?.lessons || [];
+              if (lessons.length === 0) return null;
+
+              return (
+                <div style={{
+                  marginTop: '2.5rem',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  padding: '1.75rem',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                        Your Authored Custom Curriculum Anchors ({lessons.length})
+                      </h3>
+                      <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '4px 0 0 0' }}>
+                        These topics are permanently stored in your browser's offline storage and immediately active in Practice Lab.
+                      </p>
+                    </div>
+                    <Link
+                      to="/practice-lab"
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        background: '#2563eb',
+                        color: '#ffffff',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      ⚡ Open Practice Lab
+                    </Link>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                    {lessons.map((lesson) => (
+                      <div
+                        key={lesson.id}
+                        style={{
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '1.25rem',
+                          background: '#f8fafc',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#e2e8f0', color: '#334155', padding: '2px 8px', borderRadius: '4px' }}>
+                              {lesson.stageTitle}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#dbeafe', color: '#1d4ed8', padding: '2px 8px', borderRadius: '4px' }}>
+                              {lesson.subjectTitle}
+                            </span>
+                          </div>
+
+                          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
+                            {lesson.topicTitle}
+                          </h4>
+
+                          <div style={{ fontSize: '0.82rem', color: '#166534', marginBottom: '6px', lineHeight: 1.4 }}>
+                            <strong>Truth:</strong> {lesson.axiom}
+                          </div>
+
+                          {lesson.trap && (
+                            <div style={{ fontSize: '0.82rem', color: '#991b1b', marginBottom: '10px', lineHeight: 1.4 }}>
+                              <strong>Trap:</strong> {lesson.trap}
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #e2e8f0' }}>
+                          <Link
+                            to={`/practice-lab?topic=${encodeURIComponent(lesson.topicTitle)}`}
+                            style={{
+                              flex: 1,
+                              textAlign: 'center',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              background: '#2563eb',
+                              color: '#ffffff',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            ⚡ Practice
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAuthorLesson(lesson.id, lesson.topicTitle)}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              border: '1px solid #fecaca',
+                              background: '#fff1f2',
+                              color: '#e11d48',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </section>
+        )}
 
         {/* TAB 1: PRESET OVERSEAS PACKS */}
         {activeTab === 'presets' && (

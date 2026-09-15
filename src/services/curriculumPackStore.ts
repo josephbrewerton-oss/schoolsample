@@ -182,6 +182,185 @@ export function findCustomTopicKnowledge(
 }
 
 /**
+ * Saves a single teacher-authored axiomatic curriculum anchor (Axiom + Misconception Trap).
+ * Directly inflates diagnostic questions via backward design at 0% cloud bloat.
+ */
+export function saveAxiomAnchorTopic(data: {
+  keyStage: string;
+  subject: string;
+  topic: string;
+  axiom: string;
+  trap: string;
+  hook?: string;
+  guidedStep?: string;
+  socraticPivot?: string;
+  questions?: CustomQuestionItem[];
+}): CustomCurriculumPack {
+  const packs = getInstalledCurriculumPacks();
+  let teacherPack = packs.find((p) => p.id === 'teacher-custom-anchors');
+
+  const cleanId = (s: string) =>
+    (s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+  const stageKey = cleanId(data.keyStage) || 'ks3';
+  const subKey = cleanId(data.subject) || 'general-studies';
+  const topKey = cleanId(data.topic) || 'lesson';
+
+  // Auto-generate high-yield diagnostic questions from Axiom + Trap if none provided
+  const generatedQuestions: CustomQuestionItem[] =
+    data.questions && data.questions.length > 0
+      ? data.questions
+      : [
+          {
+            questionText: `Which statement accurately represents the foundational curriculum truth of "${data.topic}"?`,
+            correctAnswer: [data.axiom],
+            hint: `Focus on the primary truth: ${data.axiom.slice(0, 60)}...`,
+            explanation: `Correct! ${data.axiom}`,
+            distractors: [
+              {
+                answerText: data.trap,
+                feedback: `Common trap: ${data.trap}`,
+              },
+              {
+                answerText: `It operates inversely, causing the opposite outcome for ${data.topic}.`,
+                feedback: 'This inverts the essential cause-and-effect relationship.',
+              },
+              {
+                answerText: `It remains completely static and has no observable effect on surrounding conditions.`,
+                feedback: 'This assumes isolation without interaction.',
+              },
+            ],
+          },
+          {
+            questionText: `When analyzing "${data.topic}", which common misconception or error must be identified and avoided?`,
+            correctAnswer: [data.trap],
+            hint: `Look out for the intuitive misconception that leads students into error.`,
+            explanation: `Correct! A widespread error is: "${data.trap}". The verified curriculum axiom is: "${data.axiom}"`,
+            distractors: [
+              {
+                answerText: data.axiom,
+                feedback: 'This is actually the correct curriculum axiom, not a misconception!',
+              },
+              {
+                answerText: 'Carefully evaluating empirical evidence and logical definitions.',
+                feedback: 'Careful evaluation is the right methodology.',
+              },
+              {
+                answerText: 'Applying standard domain definitions systematically.',
+                feedback: 'Systematic application is standard good practice.',
+              },
+            ],
+          },
+        ];
+
+  const lessonRecord: CustomCurriculumLesson = {
+    id: `${stageKey}-${subKey}-${topKey}`,
+    stageTitle: data.keyStage,
+    subjectTitle: data.subject,
+    topicTitle: data.topic,
+    unitTitle: data.subject,
+    axiom: data.axiom,
+    trap: data.trap,
+    hook: data.hook || `How does ${data.topic} apply in real-world scenarios?`,
+    guidedStep: data.guidedStep || `Examine the core components of ${data.topic} and verify with evidence.`,
+    socraticCheck: data.socraticPivot || `How would you explain the core rule of ${data.topic} in your own words?`,
+    questions: generatedQuestions,
+  };
+
+  if (!teacherPack) {
+    teacherPack = {
+      id: 'teacher-custom-anchors',
+      title: 'Teacher Custom Anchor Bank',
+      countryOrRegion: 'Local School / Custom',
+      authorOrMinistry: 'Classroom Teacher / Department',
+      description: 'Locally authored axiomatic curriculum anchors (Truth + Trap backward design).',
+      version: '1.0.0',
+      installedAt: Date.now(),
+      stages: {
+        [stageKey]: {
+          id: stageKey,
+          title: data.keyStage,
+          subjects: [
+            {
+              id: subKey,
+              title: data.subject,
+              topics: [{ id: topKey, title: data.topic }],
+            },
+          ],
+        },
+      },
+      lessons: [lessonRecord],
+    };
+  } else {
+    // Clone and update existing pack
+    teacherPack = {
+      ...teacherPack,
+      stages: { ...teacherPack.stages },
+      lessons: [...teacherPack.lessons],
+    };
+
+    if (!teacherPack.stages[stageKey]) {
+      teacherPack.stages[stageKey] = {
+        id: stageKey,
+        title: data.keyStage,
+        subjects: [],
+      };
+    } else {
+      teacherPack.stages[stageKey] = {
+        ...teacherPack.stages[stageKey],
+        subjects: [...teacherPack.stages[stageKey].subjects],
+      };
+    }
+
+    let subObj = teacherPack.stages[stageKey].subjects.find((s) => s.id === subKey);
+    if (!subObj) {
+      subObj = { id: subKey, title: data.subject, topics: [] };
+      teacherPack.stages[stageKey].subjects.push(subObj);
+    } else {
+      const subIdx = teacherPack.stages[stageKey].subjects.findIndex((s) => s.id === subKey);
+      subObj = { ...subObj, topics: [...subObj.topics] };
+      teacherPack.stages[stageKey].subjects[subIdx] = subObj;
+    }
+
+    if (!subObj.topics.find((t) => t.id === topKey)) {
+      subObj.topics.push({ id: topKey, title: data.topic });
+    }
+
+    teacherPack.lessons = teacherPack.lessons.filter((l) => l.id !== lessonRecord.id);
+    teacherPack.lessons.push(lessonRecord);
+    teacherPack.installedAt = Date.now();
+  }
+
+  saveCurriculumPack(teacherPack);
+  return teacherPack;
+}
+
+/**
+ * Deletes a single lesson from the Teacher Custom Anchor Bank.
+ */
+export function deleteAxiomAnchorTopic(lessonId: string): void {
+  const packs = getInstalledCurriculumPacks();
+  const teacherPack = packs.find((p) => p.id === 'teacher-custom-anchors');
+  if (!teacherPack) return;
+
+  const updatedLessons = teacherPack.lessons.filter((l) => l.id !== lessonId);
+  if (updatedLessons.length === 0) {
+    removeCurriculumPack('teacher-custom-anchors');
+    return;
+  }
+
+  const updatedPack: CustomCurriculumPack = {
+    ...teacherPack,
+    lessons: updatedLessons,
+    installedAt: Date.now(),
+  };
+  saveCurriculumPack(updatedPack);
+}
+
+/**
  * Converts all installed custom packs into StandardStage tree format
  * so that they seamlessly appear in stage, subject, and topic dropdowns.
  */

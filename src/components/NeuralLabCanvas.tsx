@@ -172,7 +172,8 @@ export default function NeuralLabCanvas({
     sub = activeSelectionRef.current.subject,
     u = activeSelectionRef.current.unit,
     diff = difficulty,
-    targetLang = activeLang
+    targetLang = activeLang,
+    forceVariation = false
   ) => {
     const requestId = ++activeRequestIdRef.current;
     setIsGenerating(true);
@@ -196,6 +197,8 @@ export default function NeuralLabCanvas({
           curriculum: curriculumSetting,
           difficulty: diff,
           lang: targetLang,
+          forceVariation,
+          nonce: Math.floor(Math.random() * 1000000),
         },
       });
 
@@ -214,12 +217,13 @@ export default function NeuralLabCanvas({
       if (requestId === activeRequestIdRef.current) {
         const fallbackOffline = findCurriculumKnowledge(ks, sub, u);
         if (fallbackOffline && fallbackOffline.questions?.length > 0) {
+          const randIdx = Math.floor(Math.random() * fallbackOffline.questions.length);
           handleNewQuestion({
-            question: fallbackOffline.questions[0],
+            question: fallbackOffline.questions[randIdx],
             keyStage: ks,
             subject: sub,
             unit: u,
-            hint: fallbackOffline.questions[0].hint || '',
+            hint: fallbackOffline.questions[randIdx].hint || '',
           });
         }
       }
@@ -626,7 +630,8 @@ export default function NeuralLabCanvas({
                 requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
               }}
               onSelectOption={handleSelectOption}
-              onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+              onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false)}
+              onParallelVariation={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, true)}
             />
           </>
         ) : (

@@ -366,15 +366,6 @@ export default function LearningZonePage() {
       description="Deterministic concept exploration and misconception diagnostics."
     >
       <main style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-        
-        {/* Hidden WebRTC Neural Worker Daemon Frame */}
-        <iframe
-          ref={(el) => hypervisor.registerWorkerIframe(el)}
-          src={getAssetUrl('worker.html?v=1.2.1')}
-          style={{ display: 'none' }}
-          title="neural-worker-daemon"
-        />
-
         {/* Header Bar: Pupil View vs. Teacher / Master View */}
         <div
           style={{

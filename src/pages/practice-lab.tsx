@@ -54,7 +54,6 @@ class ComponentGuard extends Component<
 
 export default function PracticeLabPage() {
   const [mounted, setMounted] = useState(false);
-  const [bootIframe, setBootIframe] = useState(false);
   const [currentLang, setCurrentLang] = useState(() => {
     return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
   });
@@ -66,21 +65,9 @@ export default function PracticeLabPage() {
   const [activeUnit, setActiveUnit] = useState('Fractions and Decimals');
   const [activeAxiomCheck, setActiveAxiomCheck] = useState<string | undefined>(undefined);
 
-  const workerUrl = getAssetUrl('worker.html?v=1.2.1');
-
-  // 1. Language Bus Listener
-  useEffect(() => {
-    const unsub = listenToLanguageChange((newLang) => {
-      setCurrentLang(newLang);
-    });
-    return unsub;
-  }, []);
-
-  // 2. Mount and Worker Delayed Activation
+  // 2. Mount status
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => setBootIframe(true), 800);
-    return () => clearTimeout(timer);
   }, []);
 
   // 3. Query Param Ingestion
@@ -131,20 +118,6 @@ export default function PracticeLabPage() {
 
   return (
     <PageMeta title="Practice Arena" description="St Joseph's Interactive Curriculum Practice Arena">
-      {/* Background worker iframe with null-safe ref */}
-      {bootIframe && (
-        <iframe
-          ref={(el) => {
-            if (el && hypervisor?.registerWorkerIframe) {
-              hypervisor.registerWorkerIframe(el);
-            }
-          }}
-          src={workerUrl}
-          style={{ display: 'none', width: 0, height: 0, border: 'none' }}
-          title="neural-engine-daemon"
-        />
-      )}
-
       {/* Explicit dark container so content never blends with a white layout */}
       <div
         style={{

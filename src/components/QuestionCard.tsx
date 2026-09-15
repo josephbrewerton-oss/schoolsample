@@ -28,6 +28,7 @@ interface Props {
   socraticFollowUp?: string;
   onSelectOption: (idx: number) => void;
   onNextQuestion: () => void;
+  onParallelVariation?: () => void;
   currentLang?: string;
   onLanguageChange?: (lang: string) => void;
 }
@@ -47,6 +48,7 @@ export const QuestionCard: React.FC<Props> = ({
   socraticFollowUp,
   onSelectOption,
   onNextQuestion,
+  onParallelVariation,
   currentLang,
   onLanguageChange,
 }) => {
@@ -934,7 +936,7 @@ export const QuestionCard: React.FC<Props> = ({
           >
             <button
               type="button"
-              onClick={onNextQuestion}
+              onClick={onParallelVariation || onNextQuestion}
               style={{
                 background: '#f8fafc',
                 color: '#334155',

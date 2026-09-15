@@ -42,53 +42,232 @@ const getStageGuidelines = (stage: string) => {
 
 // Tracks recent question IDs to prevent back-to-back repetitions for the same topic
 const recentTopicQuestionMap = new Map<string, string>();
+const fallbackVariantMap = new Map<string, number>();
 
-function getIntelligentTopicFallback(stage: string, subject: string, topic: string) {
+function getIntelligentTopicFallback(stage: string, subject: string, topic: string, variantIndex: number = 0) {
   const cleanSub = (subject || '').toLowerCase();
+  const v = Math.abs(variantIndex) % 5;
+
   let stem = `Which statement accurately describes the core curriculum principle of "${topic}" (${stage})?`;
   let correct = `It accurately demonstrates the standard foundational rules, processes, or definitions of ${topic}.`;
   let distractor1 = `It inverts the key cause-and-effect relationship, producing the opposite outcome for ${topic}.`;
   let distractor2 = `It confuses ${topic} with a different concept in ${subject} that operates under contradictory rules.`;
   let distractor3 = `It assumes ${topic} remains completely static without interacting with any surrounding environmental or systematic factors.`;
 
-  if (cleanSub.includes('hist')) {
-    stem = `What is historically significant about "${topic}" in British and world history?`;
-    correct = `It marked a transformative historical development that altered societal structures, governance, or daily life.`;
-    distractor1 = `It had no recorded historical impact and was entirely forgotten within the same decade.`;
-    distractor2 = `It occurred thousands of years earlier in prehistory before human records began.`;
-    distractor3 = `It only applied to one isolated individual and had no influence on any broader population.`;
+  if (cleanSub.includes('relig') || cleanSub.includes('catholic') || cleanSub.includes('theology') || cleanSub.includes('faith')) {
+    if (v === 0) {
+      stem = `In Catholic theology and Religious Studies, what is the doctrinal definition of "${topic}" (${stage})?`;
+      correct = `It expresses divine revelation transmitted through Sacred Scripture and Apostolic Tradition, articulated by the Church's Magisterium.`;
+      distractor1 = `It was an ancient civil law code established purely for collecting secular taxes in medieval Europe.`;
+      distractor2 = `It permits individuals to redefine core moral virtues according to personal convenience.`;
+      distractor3 = `It claims that religious truth is entirely separated from worship, prayer, and human dignity.`;
+    } else if (v === 1) {
+      stem = `Which common misconception about "${topic}" is firmly refuted by Catholic Christian teaching?`;
+      correct = `Confusing outward symbolic ritual with the real interior transmission of divine grace and spiritual communion.`;
+      distractor1 = `Recognizing that prayer and the sacraments foster genuine personal holiness.`;
+      distractor2 = `Affirming that Christ's redeeming love calls believers to care for the vulnerable.`;
+      distractor3 = `Acknowledging the Holy Spirit as the Lord and Giver of Life.`;
+    } else if (v === 2) {
+      stem = `How does "${topic}" shape Catholic liturgical practice and sacramental life?`;
+      correct = `It informs prayer, communal celebration, and the faithful response of the Church to God's covenant love.`;
+      distractor1 = `It forbids believers from reciting the Nicene Creed during Sunday Mass.`;
+      distractor2 = `It is only discussed in secular courts and has no place in church liturgies.`;
+      distractor3 = `It requires complete silence and bans all scriptural readings during worship.`;
+    } else if (v === 3) {
+      stem = `In Catholic moral teaching, how does understanding "${topic}" guide Christian ethical decision-making?`;
+      correct = `It grounds human dignity, conscience formation, and the universal call to love and serve God and neighbour.`;
+      distractor1 = `It promotes material wealth and personal ambition as the highest moral goods.`;
+      distractor2 = `It teaches that moral actions carry no consequence for the soul or society.`;
+      distractor3 = `It separates moral virtue from honesty, justice, and compassion.`;
+    } else {
+      stem = `What is the historical and ecclesial significance of "${topic}" within the Catholic Church?`;
+      correct = `It preserves orthodox apostolic faith across generations, defending foundational Christian truth through Ecumenical Councils.`;
+      distractor1 = `It was abolished in the early Church and replaced with secular Roman philosophy.`;
+      distractor2 = `It was created to discourage Christians from studying the Bible.`;
+      distractor3 = `It applies only to cloistered monks and excludes all other believers.`;
+    }
+  } else if (cleanSub.includes('mfl') || cleanSub.includes('french') || cleanSub.includes('spanish') || cleanSub.includes('german') || cleanSub.includes('latin') || cleanSub.includes('lang')) {
+    if (v === 0) {
+      stem = `In modern foreign languages, which grammatical rule is essential when applying "${topic}" (${stage})?`;
+      correct = `Ensuring correct tense selection, verb endings, and gender/number agreement with the subject.`;
+      distractor1 = `Translating every single English word literally in exact word-for-word order regardless of syntax.`;
+      distractor2 = `Using only the infinitive verb form for all tenses and persons.`;
+      distractor3 = `Ignoring adjective agreement with masculine and feminine nouns.`;
+    } else if (v === 1) {
+      stem = `When translating "${topic}", which trap or "false friend" (faux ami) must students avoid?`;
+      correct = `Assuming a word with similar spelling in English shares the exact same meaning in the target language.`;
+      distractor1 = `Using correct accent marks and punctuation conventions.`;
+      distractor2 = `Distinguishing between formal (vous/usted) and informal (tu/tú) address.`;
+      distractor3 = `Pronouncing silent consonants accurately according to phonetic rules.`;
+    } else if (v === 2) {
+      stem = `How does sentence word order change when constructing phrases around "${topic}"?`;
+      correct = `Pronouns, negatives, and qualifying adverbs must follow strict syntax positions relative to the conjugated verb.`;
+      distractor1 = `Verbs must always be placed at the very end of every sentence in all Romance languages.`;
+      distractor2 = `Nouns and adjectives can be placed in completely random positions without altering meaning.`;
+      distractor3 = `Questions can never use inversion or question markers.`;
+    } else if (v === 3) {
+      stem = `Which communicative register is most appropriate when using "${topic}" in speaking or writing?`;
+      correct = `Matching the formal or informal register to the audience and social context.`;
+      distractor1 = `Always using informal slang in official academic essays.`;
+      distractor2 = `Using archaic vocabulary in casual conversation with peers.`;
+      distractor3 = `Refusing to express opinions or justifications.`;
+    } else {
+      stem = `What linguistic feature distinguishes "${topic}" in advanced language examination?`;
+      correct = `Employing complex connectives, modal structures, or subjunctive forms to justify viewpoints.`;
+      distractor1 = `Using simple single-word responses without connectives.`;
+      distractor2 = `Omitting all subject pronouns in languages that require them.`;
+      distractor3 = `Avoiding past or future tense structures altogether.`;
+    }
+  } else if (cleanSub.includes('hist')) {
+    if (v === 0) {
+      stem = `What is historically significant about "${topic}" in British and world history?`;
+      correct = `It marked a transformative development that altered societal structures, governance, or international relations.`;
+      distractor1 = `It had no recorded historical impact and was forgotten within months.`;
+      distractor2 = `It occurred in prehistory thousands of years before human records began.`;
+      distractor3 = `It only affected a single isolated household without wider repercussions.`;
+    } else if (v === 1) {
+      stem = `When evaluating historical sources concerning "${topic}", which factor is most crucial?`;
+      correct = `Analyzing the provenance, purpose, and potential bias or perspective of the author within their historical context.`;
+      distractor1 = `Accepting every written document as an absolute, unquestionable eyewitness truth.`;
+      distractor2 = `Assuming all historical records created before the 20th century are completely fabricated.`;
+      distractor3 = `Judging the source solely by how attractive the handwriting appears.`;
+    } else if (v === 2) {
+      stem = `Which cause-and-effect chain was directly triggered by "${topic}"?`;
+      correct = `Socio-economic pressures or political conflicts prompted systemic institutional reforms or popular movements.`;
+      distractor1 = `It immediately restored absolute peace and dissolved all nation-states overnight.`;
+      distractor2 = `It prevented any technological or agricultural change for centuries.`;
+      distractor3 = `It reversed the global climate back to the last Ice Age.`;
+    } else if (v === 3) {
+      stem = `How did "${topic}" impact daily life for ordinary people in that era?`;
+      correct = `It shifted labor patterns, living conditions, rights, and religious or cultural expectations.`;
+      distractor1 = `Ordinary people were completely unaware that the event had taken place for four centuries.`;
+      distractor2 = `It gave every peasant equal ownership of all royal land immediately.`;
+      distractor3 = `It eradicated all diseases and illnesses in Europe permanently.`;
+    } else {
+      stem = `Which historiographical interpretation of "${topic}" is supported by modern historical consensus?`;
+      correct = `It involved multiple competing social, economic, and political factors rather than a single simple cause.`;
+      distractor1 = `It was planned and executed entirely by a single anonymous soldier.`;
+      distractor2 = `Historians agree that no real events happened during that entire century.`;
+      distractor3 = `It was caused exclusively by a change in fashion styles.`;
+    }
   } else if (cleanSub.includes('geo')) {
-    stem = `Which geographical characteristic correctly explains how "${topic}" operates on Earth?`;
-    correct = `It involves natural or human processes shaping landscapes, environments, and human interactions over time.`;
-    distractor1 = `It occurs exclusively in outer space with zero interaction with Earth's atmosphere or crust.`;
-    distractor2 = `It distributes resources and climate identically across every single latitude on Earth.`;
-    distractor3 = `It prevents any weathering, erosion, or migration from ever occurring.`;
-  } else if (cleanSub.includes('eng')) {
-    stem = `In English language and literature, how is "${topic}" effectively applied?`;
-    correct = `It provides precise grammatical structure or evocative linguistic technique to convey clear meaning and atmosphere.`;
-    distractor1 = `It replaces all punctuation marks with arbitrary capital letters without syntactic rules.`;
-    distractor2 = `It is only used when writing in a completely different foreign language.`;
-    distractor3 = `It strictly forbids the reader from understanding the sequence of events.`;
+    if (v === 0) {
+      stem = `Which geographical characteristic correctly explains how "${topic}" operates on Earth?`;
+      correct = `It involves physical or human processes shaping landscapes, environments, and human settlements over time.`;
+      distractor1 = `It occurs exclusively in outer space with zero interaction with Earth's crust or atmosphere.`;
+      distractor2 = `It distributes resources and climate identically across every latitude on Earth.`;
+      distractor3 = `It prevents any weathering, erosion, or migration from ever occurring.`;
+    } else if (v === 1) {
+      stem = `What is a primary environmental or human consequence associated with "${topic}"?`;
+      correct = `Changes in land use, biodiversity, urban density, or vulnerability to natural hazards.`;
+      distractor1 = `It turns all ocean water into fresh drinking water instantly.`;
+      distractor2 = `It eliminates all atmospheric pressure around the globe.`;
+      distractor3 = `It freezes the tectonic plates in place permanently.`;
+    } else if (v === 2) {
+      stem = `How does spatial distribution influence "${topic}" across different regions?`;
+      correct = `Topography, climate zones, and economic infrastructure create significant regional disparities and patterns.`;
+      distractor1 = `Every country on Earth experiences the identical effects at the exact same hour.`;
+      distractor2 = `Geography plays no role in human population distribution.`;
+      distractor3 = `Only landlocked countries are affected by ocean currents.`;
+    } else if (v === 3) {
+      stem = `What sustainable management strategy is used to mitigate challenges related to "${topic}"?`;
+      correct = `Balancing environmental conservation, economic viability, and social well-being through planned regulation.`;
+      distractor1 = `Exploiting all remaining non-renewable resources as quickly as possible.`;
+      distractor2 = `Relocating the entire population of the planet to the South Pole.`;
+      distractor3 = `Banning all agriculture, transport, and communication worldwide.`;
+    } else {
+      stem = `Which field-work or data-gathering methodology is best suited to investigate "${topic}"?`;
+      correct = `Collecting quantitative and qualitative data through GIS mapping, sampling, and environmental surveys.`;
+      distractor1 = `Guessing numbers without recording any observations or measurements.`;
+      distractor2 = `Only measuring temperature inside a sealed domestic refrigerator.`;
+      distractor3 = `Ignoring geographic coordinates when plotting spatial trends.`;
+    }
   } else if (cleanSub.includes('sci')) {
-    stem = `In science, which statement accurately reflects the observable properties of "${topic}"?`;
-    correct = `Empirical observations and physical properties confirm its behavior under tested experimental conditions.`;
-    distractor1 = `It violates the conservation of energy and mass without any measurable interaction.`;
-    distractor2 = `It changes randomly depending on who is observing the experiment.`;
-    distractor3 = `It requires zero energy transfer or molecular interaction to take place.`;
+    if (v === 0) {
+      stem = `In science, which statement accurately reflects the fundamental mechanism of "${topic}"?`;
+      correct = `Empirical evidence and physical laws confirm its behavior under tested experimental conditions.`;
+      distractor1 = `It violates the conservation of energy and mass without any physical interaction.`;
+      distractor2 = `It changes randomly depending on who happens to be observing the experiment.`;
+      distractor3 = `It requires zero energy transfer or molecular interaction to take place.`;
+    } else if (v === 1) {
+      stem = `Which common scientific misconception regarding "${topic}" should be avoided?`;
+      correct = `Confusing heat with temperature, or failing to recognize conservation of mass during chemical changes.`;
+      distractor1 = `Observing that matter is made of discrete atoms and molecules.`;
+      distractor2 = `Using a control variable to ensure fair test conditions.`;
+      distractor3 = `Measuring dependent variables with calibrated laboratory instruments.`;
+    } else if (v === 2) {
+      stem = `When investigating "${topic}" experimentally, what is the purpose of the control variable?`;
+      correct = `To keep all other conditions constant so that only the independent variable affects the dependent variable.`;
+      distractor1 = `To change multiple variables simultaneously so the experiment finishes faster.`;
+      distractor2 = `To alter the results to match pre-conceived predictions without data.`;
+      distractor3 = `To eliminate the need for taking any measurements.`;
+    } else if (v === 3) {
+      stem = `How does "${topic}" apply at the microscopic or sub-atomic scale?`;
+      correct = `Forces, bonds, and particle collisions dictate macroscopic properties and reaction rates.`;
+      distractor1 = `Particles expand to the size of marbles and stop vibrating entirely.`;
+      distractor2 = `Atoms cease to have mass when they join together in molecules.`;
+      distractor3 = `Chemical reactions destroy electrons permanently.`;
+    } else {
+      stem = `What real-world technology or biological process depends directly on "${topic}"?`;
+      correct = `It enables energy generation, medical diagnostics, or cellular metabolic functions in living organisms.`;
+      distractor1 = `Perpetual motion machines that generate unlimited energy from nothing.`;
+      distractor2 = `Teleportation devices that operate outside the laws of thermodynamics.`;
+      distractor3 = `Substances that possess negative absolute temperatures and zero mass.`;
+    }
+  } else if (cleanSub.includes('eng')) {
+    if (v === 0) {
+      stem = `In English language and literature, how is "${topic}" effectively applied?`;
+      correct = `It provides precise grammatical structure or evocative linguistic technique to convey clear meaning and atmosphere.`;
+      distractor1 = `It replaces all punctuation marks with arbitrary capital letters without syntactic rules.`;
+      distractor2 = `It is only used when writing in a completely different foreign language.`;
+      distractor3 = `It strictly forbids the reader from understanding the sequence of events.`;
+    } else if (v === 1) {
+      stem = `What effect does "${topic}" create on the reader when used in descriptive or persuasive writing?`;
+      correct = `It evokes sensory engagement, emotional resonance, or rhetorical impact to persuade or immerse the audience.`;
+      distractor1 = `It confuses the reader so thoroughly that the book cannot be read.`;
+      distractor2 = `It guarantees that every character in the story must die on page one.`;
+      distractor3 = `It removes all vowels from every word in the paragraph.`;
+    } else if (v === 2) {
+      stem = `How does an author use structural positioning in "${topic}" to build tension?`;
+      correct = `Through pacing, deliberate sentence length variation, and dramatic foreshadowing or contrast.`;
+      distractor1 = `By printing every sentence in reverse alphabetical order.`;
+      distractor2 = `By omitting all paragraphs, full stops, and capital letters.`;
+      distractor3 = `By revealing the ending on the front cover in giant red lettering.`;
+    } else if (v === 3) {
+      stem = `Which punctuation or syntactic rule governs "${topic}" in standard written English?`;
+      correct = `Clauses, commas, and coordinate conjunctions must maintain grammatical cohesion and clarify relationships.`;
+      distractor1 = `Every sentence must contain exactly seven apostrophes regardless of possession.`;
+      distractor2 = `Commas must be inserted between every word in a sentence.`;
+      distractor3 = `Capital letters can only be used at the very end of sentences.`;
+    } else {
+      stem = `When analyzing poetic meter and sound in relation to "${topic}", what should be examined?`;
+      correct = `Rhythm, alliteration, assonance, and cadence that reinforce the emotional meaning of the text.`;
+      distractor1 = `The weight of the paper upon which the poem is printed.`;
+      distractor2 = `Counting the total number of syllables without considering stress patterns.`;
+      distractor3 = `Ignoring rhythm completely because poetry is identical to technical manuals.`;
+    }
   }
+
+  // Deterministically shuffle options so correct answer isn't always at index 0
+  const allOptions = [
+    { text: correct, isCorrect: true, reason: 'Correct! Accurately applies foundational curriculum rules.' },
+    { text: distractor1, isCorrect: false, reason: 'Common misconception: Inverts key mechanisms or relationships.' },
+    { text: distractor2, isCorrect: false, reason: 'Common trap: Confuses this concept with unrelated conditions or rules.' },
+    { text: distractor3, isCorrect: false, reason: 'Common error: Over-generalizes or assumes an impossible extreme condition.' },
+  ];
+
+  // Rotate options based on variant index
+  const shift = v % allOptions.length;
+  const rotated = [...allOptions.slice(shift), ...allOptions.slice(0, shift)];
+  const correctIdx = rotated.findIndex(item => item.isCorrect);
 
   return {
     prompt: stem,
-    options: [correct, distractor1, distractor2, distractor3],
-    answerKey: 0,
-    hint: `Think carefully about the defining characteristics and functions of ${topic}.`,
+    options: rotated.map(item => item.text),
+    answerKey: correctIdx >= 0 ? correctIdx : 0,
+    hint: `Focus on the foundational principles and defining characteristics of ${topic}.`,
     explanation: `This option correctly represents the core curriculum standard for ${topic} in ${subject}.`,
-    misconceptions: [
-      'Correct! Accurately applies the principle.',
-      'Misconception: Inverting key mechanisms or cause-and-effect.',
-      'Misconception: Confusing terminology with unrelated processes.',
-      'Misconception: Assuming absolute isolation without interaction.'
-    ]
+    misconceptions: rotated.map(item => item.reason)
   };
 }
 
@@ -197,9 +376,10 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           // 2. Query verified offline curriculum knowledge base
           const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
+          const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase();
           let offlineQuestion = null;
+
           if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
-            const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase();
             const lastId = recentTopicQuestionMap.get(topicCacheKey);
             const eligible = offlineKnowledge.questions.length > 1
               ? offlineKnowledge.questions.filter((q) => q.id !== lastId)
@@ -211,9 +391,23 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             }
           }
 
-          const fallbackData = (!offlineQuestion && !offlineKnowledge) ? getIntelligentTopicFallback(stage, subject, topic) : null;
+          const currentVariant = fallbackVariantMap.get(topicCacheKey) || 0;
+          fallbackVariantMap.set(topicCacheKey, currentVariant + 1);
 
-          const basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
+          const fallbackData = (!offlineQuestion && !offlineKnowledge)
+            ? getIntelligentTopicFallback(stage, subject, topic, currentVariant)
+            : null;
+
+          let basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
+          if (payload?.forceVariation && offlineQuestion) {
+            const masteryVariations = [
+              `🔄 [Parallel Mastery] ${offlineQuestion.prompt}`,
+              `🎯 [Concept Clone] ${offlineQuestion.prompt}`,
+              `💡 [Parallel Scenario] ${offlineQuestion.prompt}`,
+            ];
+            basePrompt = masteryVariations[Math.floor(Math.random() * masteryVariations.length)];
+          }
+
           const displayPrompt = difficulty === 'brainbuster' 
             ? `🧠 [Brain Buster] ${basePrompt}` 
             : difficulty === 'warmup' 

@@ -288,6 +288,18 @@
 
       if (!target?.create) return null;
 
+      // Check if Chrome has actually completed downloading the ~1.5GB Gemini Nano binary
+      if (typeof target.availability === 'function') {
+        try {
+          const avail = await target.availability();
+          if (avail === 'no') return null;
+          if (avail === 'after-download' || avail === 'downloadable') {
+            console.warn('[Guest VM] Gemini Nano is enabled in Chrome flags, but the 1.5GB model is still downloading in chrome://components. Falling back to offline curriculum rules.');
+            return null;
+          }
+        } catch {}
+      }
+
       if (cachedSession && currentSystemInstruction === systemInstruction) {
         return cachedSession;
       }
@@ -457,28 +469,36 @@ Format strictly as:
         // Stream tokens using zero-copy transferable ArrayBuffers to minimize GC spikes on host
         let response = '';
         let timerHandle;
+        let isTimedOut = false;
         const timeoutPromise = new Promise((_, reject) => {
           timerHandle = setTimeout(() => {
+            isTimedOut = true;
             reject(new Error('Prompt execution timeout (30s)'));
           }, 30000);
         });
+        // Prevent unhandled promise rejection in DevTools
+        timeoutPromise.catch(() => {});
 
         try {
           try {
             if (typeof session.promptStreaming === 'function') {
               const stream = session.promptStreaming(prompt);
-              let prevLen = 0;
-              for await (const chunk of stream) {
-                const newChunk = chunk.slice(prevLen);
-                prevLen = chunk.length;
-                response += newChunk;
-                if (newChunk) {
-                  sendTokenChunk(newChunk, requestId, false);
-                  // Microtask yield keeps the Guest VM event loop smooth
-                  await new Promise((r) => setTimeout(r, 0));
+              const readStreamPromise = (async () => {
+                let prevLen = 0;
+                for await (const chunk of stream) {
+                  if (isTimedOut) break;
+                  const newChunk = chunk.slice(prevLen);
+                  prevLen = chunk.length;
+                  response += newChunk;
+                  if (newChunk) {
+                    sendTokenChunk(newChunk, requestId, false);
+                    await new Promise((r) => setTimeout(r, 0));
+                  }
                 }
-              }
-              sendTokenChunk('', requestId, true);
+                sendTokenChunk('', requestId, true);
+                return response;
+              })();
+              response = await Promise.race([readStreamPromise, timeoutPromise]);
             } else {
               response = await Promise.race([session.prompt(prompt), timeoutPromise]);
             }
@@ -496,16 +516,21 @@ Format strictly as:
                   const stream = session.promptStreaming(prompt);
                   let prevLen = 0;
                   response = '';
-                  for await (const chunk of stream) {
-                    const newChunk = chunk.slice(prevLen);
-                    prevLen = chunk.length;
-                    response += newChunk;
-                    if (newChunk) {
-                      sendTokenChunk(newChunk, requestId, false);
-                      await new Promise((r) => setTimeout(r, 0));
+                  const retryStreamPromise = (async () => {
+                    for await (const chunk of stream) {
+                      if (isTimedOut) break;
+                      const newChunk = chunk.slice(prevLen);
+                      prevLen = chunk.length;
+                      response += newChunk;
+                      if (newChunk) {
+                        sendTokenChunk(newChunk, requestId, false);
+                        await new Promise((r) => setTimeout(r, 0));
+                      }
                     }
-                  }
-                  sendTokenChunk('', requestId, true);
+                    sendTokenChunk('', requestId, true);
+                    return response;
+                  })();
+                  response = await Promise.race([retryStreamPromise, timeoutPromise]);
                 } else {
                   response = await Promise.race([session.prompt(prompt), timeoutPromise]);
                 }
