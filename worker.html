@@ -389,6 +389,8 @@
         // 1. Hypercall to Host for Ground Truth Curriculum Axioms & Misconceptions
         let curriculumAxiom = '';
         let cognitiveTrap = '';
+        let exemplarAST = '';
+        let guardrails = '';
         try {
           const hcRes = await makeHypercall('curriculumnode', {
             intent: 'get:package',
@@ -398,6 +400,10 @@
           if (hcRes.ok && hcRes.data) {
             curriculumAxiom = hcRes.data.coreAxiom || hcRes.data.axiom || '';
             cognitiveTrap = hcRes.data.cognitiveTrap || hcRes.data.trap || '';
+            exemplarAST = hcRes.data.exemplarAST || '';
+            if (Array.isArray(hcRes.data.curriculumGuardrails) && hcRes.data.curriculumGuardrails.length > 0) {
+              guardrails = hcRes.data.curriculumGuardrails.join('; ');
+            }
           }
         } catch {}
 
@@ -431,12 +437,13 @@
         }
 
         const prompt = payload.prompt || `Topic: "${topic}" (${keyStage} ${subject}).
-${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
+${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}${exemplarAST ? `Exemplar AST:\n${exemplarAST}\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
+First, evaluate your reasoning inside :scratchpad (explaining the exact conceptual rule for the correct answer, and the specific diagnostic misconception behind each distractor).
 Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). The :answer-key must be the 0-indexed integer of the correct answer. Hint under 15 words.
 
 Format strictly as:
 (:route "quiz:mcq"
- :scratchpad "Pedagogical rule for correct answer"
+ :scratchpad "Step-by-step reasoning explaining why the correct answer is valid and what authentic student traps justify the distractors"
  :prompt "Clear question prompt?"
  :options ("Option 1" "Option 2" "Option 3" "Option 4")
  :answer-key 0
