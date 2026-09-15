@@ -4,6 +4,25 @@ export function registerServiceWorker(): void {
     return;
   }
 
+  // In development environments (Vite dev server / preview container), proactively unregister
+  // all service workers and flush caches so Chrome never serves stale HMR modules or gets stuck.
+  if (import.meta.env.DEV) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister().catch(() => {});
+      }
+    }).catch(() => {});
+
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        for (const key of keys) {
+          caches.delete(key).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+    return;
+  }
+
   window.addEventListener('load', () => {
     const swUrl = `${import.meta.env.BASE_URL}sw.js`;
     navigator.serviceWorker

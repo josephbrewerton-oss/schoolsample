@@ -2,18 +2,29 @@ import React, { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PersistentAppShell from './components/PersistentAppShell';
 import HomePage from './pages/index';
+import ErrorBoundary from './components/ErrorBoundary';
 
-// Helper: If a deployed chunk 404s after a new build, reload the window to fetch the new manifest
+// Helper: If a deployed chunk 404s after a new build, reload the window once to fetch the new manifest
 function lazyRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
   return lazy(async () => {
     try {
-      return await factory();
+      const component = await factory();
+      // On success, clear any previous retry flags
+      try {
+        sessionStorage.removeItem('chunk_retry_attempt');
+      } catch {}
+      return component;
     } catch (error) {
-      console.warn('Chunk load error, refreshing page...', error);
-      // Force reload once to grab new asset hashes
-      window.location.reload();
+      console.warn('Chunk load error, verifying retry attempt...', error);
+      try {
+        const hasRetried = sessionStorage.getItem('chunk_retry_attempt');
+        if (!hasRetried) {
+          sessionStorage.setItem('chunk_retry_attempt', 'true');
+          window.location.reload();
+        }
+      } catch {}
       throw error;
     }
   });
@@ -32,23 +43,25 @@ const NotFoundPage = lazyRetry(() => import('./pages/not-found'));
 
 export default function App(): React.JSX.Element {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL || '/'}>
-      <Routes>
-        <Route path="/" element={<PersistentAppShell />}>
-          <Route index element={<HomePage />} />
-          <Route path="practice-lab" element={<PracticeLabPage />} />
-          <Route path="learning-zone" element={<LearningZonePage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="curriculum-studio" element={<CurriculumStudioPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="licensing" element={<LicensingPage />} />
-          <Route path="teacher-beacon" element={<TeacherBeaconPage />} />
-          <Route path="privacy" element={<PrivacyPage />} />
-          <Route path="blog" element={<BlogPage />} />
-          <Route path="blog/*" element={<BlogPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter basename={import.meta.env.BASE_URL || '/'}>
+        <Routes>
+          <Route path="/" element={<PersistentAppShell />}>
+            <Route index element={<HomePage />} />
+            <Route path="practice-lab" element={<PracticeLabPage />} />
+            <Route path="learning-zone" element={<LearningZonePage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="curriculum-studio" element={<CurriculumStudioPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="licensing" element={<LicensingPage />} />
+            <Route path="teacher-beacon" element={<TeacherBeaconPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="blog" element={<BlogPage />} />
+            <Route path="blog/*" element={<BlogPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

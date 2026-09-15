@@ -179,6 +179,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             socraticFollowUp: offlineKnowledge?.socraticPivot || `Can you identify the defining feature of ${topic}?`,
             scaffoldHints: offlineKnowledge?.scaffoldHints,
             difficulty,
+            scratchpad: '',
           };
 
           // 3. Supervised Inference (Only if Prompt API is natively present & consented to)
