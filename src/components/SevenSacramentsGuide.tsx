@@ -181,6 +181,18 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
       correct: 'The Sacrament of Holy Orders',
       options: ['The Sacrament of Matrimony', 'The Sacrament of Holy Orders', 'The Sacrament of Reconciliation'],
       hint: 'A Bishop lays his hands upon a man to ordain him as a priest.'
+    },
+    {
+      question: 'Which sacrament brings Christ’s healing touch, comfort, and peace to those suffering from grave illness or frailty?',
+      correct: 'The Anointing of the Sick',
+      options: ['The Anointing of the Sick', 'The Sacrament of Baptism', 'The Sacrament of Holy Orders'],
+      hint: 'The priest anoints the forehead and hands of the sick with holy oil (Oleum Infirmorum).'
+    },
+    {
+      question: 'Which sacrament unites a baptized man and woman in a lifelong holy covenant to form a Catholic family (Domestic Church)?',
+      correct: 'The Sacrament of Holy Matrimony',
+      options: ['The Sacrament of Holy Orders', 'The Sacrament of Confirmation', 'The Sacrament of Holy Matrimony'],
+      hint: 'The bride and groom exchange solemn vows before God, the priest, and the Church.'
     }
   ];
 
@@ -252,14 +264,17 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
           The Seven Holy Sacraments of the Church
         </h3>
 
-        <p style={{ margin: 0, fontSize: '0.95rem', color: '#e0e7ff', maxWidth: '780px', lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: '0.95rem', color: '#e0e7ff', maxWidth: '820px', lineHeight: 1.6 }}>
           A sacrament is an outward sign instituted by Jesus Christ to give us inward sanctifying grace. 
-          Discover all seven sacraments and see how each one prepares, surrounds, and enriches your encounter with Jesus in the <strong>Holy Eucharist</strong>!
+          The Catholic Church celebrates seven holy sacraments in three groups: 
+          <strong> Christian Initiation</strong> (Baptism, Confirmation, Holy Eucharist), 
+          <strong> Healing</strong> (Penance &amp; Reconciliation, Anointing of the Sick), and 
+          <strong> Service of Communion</strong> (Holy Orders, Holy Matrimony).
         </p>
 
         <button
           type="button"
-          onClick={() => handleListen('A sacrament is an outward sign instituted by Jesus Christ to give inward sanctifying grace. The Catholic Church celebrates seven sacraments.')}
+          onClick={() => handleListen('A sacrament is an outward sign instituted by Jesus Christ to give inward sanctifying grace. The Catholic Church celebrates seven sacraments: Baptism, Confirmation, Holy Eucharist, Penance and Reconciliation, Anointing of the Sick, Holy Orders, and Holy Matrimony.')}
           style={{
             marginTop: '1rem',
             background: 'rgba(255, 255, 255, 0.2)',
@@ -313,7 +328,7 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
             cursor: 'pointer',
           }}
         >
-          🕊️ Christian Initiation (3)
+          🕊️ Initiation (Baptism, Confirmation, Eucharist)
         </button>
 
         <button
@@ -330,7 +345,7 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
             cursor: 'pointer',
           }}
         >
-          🌿 Sacraments of Healing (2)
+          🌿 Healing (Reconciliation &amp; Anointing of the Sick)
         </button>
 
         <button
@@ -347,7 +362,7 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
             cursor: 'pointer',
           }}
         >
-          💍 Service &amp; Mission (2)
+          💍 Service of Communion (Holy Orders &amp; Matrimony)
         </button>
       </div>
 
@@ -451,6 +466,34 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
               >
                 ⭐ <strong>Connection to First Communion:</strong> {sacrament.connectionToFirstCommunion}
               </div>
+
+              {/* Expanded Biblical Anchor, Minister, & Effects when Selected */}
+              {isSelected && (
+                <div
+                  style={{
+                    background: '#f0f4ff',
+                    border: '1px solid #c7d2fe',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '0.8rem',
+                    color: '#1e1b4b',
+                    lineHeight: 1.45,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <div>
+                    📖 <strong>Sacred Scripture Anchor:</strong> <em>{sacrament.biblicalAnchor}</em>
+                  </div>
+                  <div>
+                    👤 <strong>Ordinary Minister:</strong> {sacrament.minister}
+                  </div>
+                  <div>
+                    ✨ <strong>Sacramental Grace / Effect:</strong> {sacrament.effect}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '4px' }}>
                 <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>

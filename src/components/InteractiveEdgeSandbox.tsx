@@ -7,7 +7,8 @@ interface SandboxProps {
   onSaveToVfs?: (path: string, content: string) => Promise<void> | void;
 }
 
-const DEFAULT_TEMPLATE = `(lesson
+const TEMPLATES: Record<string, string> = {
+  science: `(lesson
   :title "Primary Science: Plant Parts"
   (card :type "starter"
     (text "Plants have roots, stems, leaves, and flowers."))
@@ -19,10 +20,47 @@ const DEFAULT_TEMPLATE = `(lesson
     (quiz :id "sci-1" :prompt "Which part absorbs water from soil?"
       (opt "Roots" :correct #t)
       (opt "Leaves" :correct #f)
-      (opt "Flowers" :correct #f))))`;
+      (opt "Flowers" :correct #f))))`,
+
+  cssAst: `(view
+  :style (:rule (:bg "#0f172a") (:padding "20px") (:radius "12px") (:gap "14px"))
+  (header :level 2 
+    :style (:rule (:color "#f8fafc") (:fontSize "20px") (:fontWeight "700"))
+    "🎨 Liturgical & CSS AST Engine Showcase")
+  (callout :variant "info" 
+    :style (:rule (:liturgical :violet) (:padding "14px") (:radius "8px"))
+    "✝️ Liturgical Violet Token applied directly via S-Expression AST (:liturgical :violet). Perfect for Lent and Advent lessons.")
+  (box 
+    :style (:rule (:liturgical :gold) (:padding "16px") (:radius "10px") (:border "2px solid #facc15"))
+    (header :level 3 :style (:rule (:color "#854d0e")) "✨ Easter & Eucharistic Gold Token")
+    (text :style (:rule (:color "#713f12") (:fontSize "15px")) 
+      "CSS AST properties (:bg, :radius, :padding, :color, :gap) compile cleanly into verified, zero-CLS DOM element styles without raw CSS string hazards."))
+  (box 
+    :style (:rule (:bg "#1e293b") (:color "#38bdf8") (:padding "12px") (:radius "8px") (:fontSize "13px"))
+    (text "⚡ Zero Runtime Bloat: Styles are evaluated in-memory during AST evaluation.")))`,
+
+  virtualized: `(view
+  :virtualize #t
+  :style (:rule (:gap "10px"))
+  (header :level 3 :style (:rule (:color "#38bdf8")) "🚀 Virtualized AST Node Stream (12 Subtrees)")
+  (callout :variant "success" "This list contains 12 heavy AST nodes. Off-screen subtrees are kept lightweight and only mounted as they scroll into view.")
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 1: Baptism - Gateway of the Sacraments"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 2: Confirmation - The Seal of the Holy Spirit"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 3: Holy Eucharist - Source and Summit"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 4: Penance & Reconciliation - God's Merciful Pardon"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 5: Anointing of the Sick - Spiritual and Bodily Healing"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 6: Holy Orders - Priesthood in persona Christi"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 7: Holy Matrimony - Covenant of Love & Life"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 8: The Nicene Creed - Symbolum Fidei"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 9: Liturgy of the Word - Proclamation of Scripture"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 10: Liturgy of the Eucharist - Transubstantiation"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 11: Communion Rite - Lamb of God & Receiving"))
+  (box :style (:rule (:bg "#1e293b") (:padding "12px") (:radius "8px")) (text "Item 12: Concluding Rites - 'Ite, missa est'"))
+)`,
+};
 
 function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
-  const [lispCode, setLispCode] = useState(DEFAULT_TEMPLATE);
+  const [lispCode, setLispCode] = useState(TEMPLATES.science);
   const [topicPrompt, setTopicPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
@@ -119,6 +157,31 @@ function TeacherSandboxInner({ onSaveToVfs }: SandboxProps) {
             style={{ padding: '10px 16px', background: '#38a169', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
           >
             Save to VFS
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>Templates:</span>
+          <button
+            type="button"
+            onClick={() => setLispCode(TEMPLATES.science)}
+            style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '4px', background: '#1e293b', color: '#93c5fd', border: '1px solid #334155', cursor: 'pointer' }}
+          >
+            🌱 Science
+          </button>
+          <button
+            type="button"
+            onClick={() => setLispCode(TEMPLATES.cssAst)}
+            style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '4px', background: '#1e293b', color: '#c084fc', border: '1px solid #334155', cursor: 'pointer' }}
+          >
+            🎨 CSS AST &amp; Liturgical
+          </button>
+          <button
+            type="button"
+            onClick={() => setLispCode(TEMPLATES.virtualized)}
+            style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '4px', background: '#1e293b', color: '#6ee7b7', border: '1px solid #334155', cursor: 'pointer' }}
+          >
+            🚀 Virtualized DOM (12 Nodes)
           </button>
         </div>
 

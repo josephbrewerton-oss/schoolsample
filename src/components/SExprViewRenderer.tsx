@@ -3,14 +3,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { SExprAST, SExprNode } from '../types/sexpr';
 import { parseSExpr } from '../utils/sexprParser';
 import { aiCaller } from '../engine/aicaller';
+import { compileAstStyle } from '../utils/astStyleCompiler';
+import VirtualAstNodeList from './VirtualAstNodeList';
 
 interface Props {
   ast?: SExprAST;
   source?: string;
   onAction?: (action: string, payload?: any) => void;
+  virtualizeThreshold?: number;
 }
 
-export default function SExprViewRenderer({ ast, source, onAction }: Props): React.JSX.Element | null {
+export default function SExprViewRenderer({ 
+  ast, 
+  source, 
+  onAction,
+  virtualizeThreshold = 10,
+}: Props): React.JSX.Element | null {
   const resolvedAst = useMemo(() => {
     if (ast !== undefined) return ast;
     if (source) return parseSExpr(source);
@@ -25,6 +33,36 @@ export default function SExprViewRenderer({ ast, source, onAction }: Props): Rea
     );
   }
 
+  // 1. Array of AST nodes: Virtualize if length exceeds threshold
+  if (Array.isArray(resolvedAst)) {
+    return (
+      <div
+        className="ast-root-container space-y-4 w-full"
+        style={{
+          contentVisibility: 'auto',
+          containIntrinsicSize: '0 200px',
+        }}
+      >
+        {resolvedAst.length > virtualizeThreshold ? (
+          <VirtualAstNodeList
+            nodes={resolvedAst}
+            onAction={onAction}
+            virtualizeThreshold={virtualizeThreshold}
+          />
+        ) : (
+          resolvedAst.map((child, index) => (
+            <SExprViewRenderer 
+              key={index} 
+              ast={child} 
+              onAction={onAction} 
+              virtualizeThreshold={virtualizeThreshold} 
+            />
+          ))
+        )}
+      </div>
+    );
+  }
+
   if (typeof resolvedAst !== 'object') {
     return <span>{String(resolvedAst)}</span>;
   }
@@ -35,16 +73,41 @@ export default function SExprViewRenderer({ ast, source, onAction }: Props): Rea
     typeof window !== 'undefined' &&
     localStorage.getItem('app_teacher_mode') === 'true';
 
-  const renderChildren = () =>
-    children.map((child, index) => (
-      <SExprViewRenderer key={index} ast={child} onAction={onAction} />
+  // Compile CSS AST rules and props into a validated React CSSProperties object
+  const computedStyle = compileAstStyle(props.style, props);
+
+  const renderChildren = () => {
+    if (children.length > virtualizeThreshold) {
+      return (
+        <VirtualAstNodeList
+          nodes={children}
+          onAction={onAction}
+          virtualizeThreshold={virtualizeThreshold}
+        />
+      );
+    }
+    return children.map((child, index) => (
+      <SExprViewRenderer 
+        key={index} 
+        ast={child} 
+        onAction={onAction} 
+        virtualizeThreshold={virtualizeThreshold} 
+      />
     ));
+  };
 
   switch (tag) {
     case 'view':
     case 'box':
       return (
-        <div style={props.style} className={props.className}>
+        <div 
+          style={{
+            contentVisibility: props.virtualize ? 'auto' : undefined,
+            containIntrinsicSize: props.virtualize ? '0 120px' : undefined,
+            ...computedStyle,
+          }} 
+          className={props.className}
+        >
           {renderChildren()}
         </div>
       );
@@ -52,28 +115,53 @@ export default function SExprViewRenderer({ ast, source, onAction }: Props): Rea
     case 'header': {
       const headingLevel = props.level === 1 ? 'h1' : props.level === 3 ? 'h3' : props.level === 4 ? 'h4' : 'h2';
       const HeadingTag = headingLevel as 'h1' | 'h2' | 'h3' | 'h4';
-      return <HeadingTag className={props.className}>{renderChildren()}</HeadingTag>;
+      return (
+        <HeadingTag style={computedStyle} className={props.className}>
+          {renderChildren()}
+        </HeadingTag>
+      );
     }
 
     case 'text':
-      return <p className={props.className}>{renderChildren()}</p>;
+      return (
+        <p style={computedStyle} className={props.className}>
+          {renderChildren()}
+        </p>
+      );
 
     case 'step':
-      return <div className="stepper__step">{renderChildren()}</div>;
+      return (
+        <div style={computedStyle} className="stepper__step">
+          {renderChildren()}
+        </div>
+      );
 
     case 'question':
-      return <div className="quiz__question">{renderChildren()}</div>;
+      return (
+        <div style={computedStyle} className="quiz__question">
+          {renderChildren()}
+        </div>
+      );
 
     case 'option':
-      return <span className="quiz__option-label">{renderChildren()}</span>;
+      return (
+        <span style={computedStyle} className="quiz__option-label">
+          {renderChildren()}
+        </span>
+      );
 
     case 'explanation':
-      return <div className="quiz__explanation">{renderChildren()}</div>;
+      return (
+        <div style={computedStyle} className="quiz__explanation">
+          {renderChildren()}
+        </div>
+      );
 
     case 'button':
       return (
         <button
           type="button"
+          style={computedStyle}
           className={props.className || 'button button--primary'}
           onClick={() => props.action && onAction?.(props.action, props.payload)}
         >
@@ -83,7 +171,10 @@ export default function SExprViewRenderer({ ast, source, onAction }: Props): Rea
 
     case 'badge':
       return (
-        <span className={`badge badge--${props.variant || 'info'} margin-right--xs`}>
+        <span 
+          style={computedStyle}
+          className={`badge badge--${props.variant || 'info'} margin-right--xs`}
+        >
           {renderChildren()}
         </span>
       );
@@ -92,7 +183,7 @@ export default function SExprViewRenderer({ ast, source, onAction }: Props): Rea
       return (
         <div
           className={`alert alert--${props.variant || 'info'} margin-vert--sm`}
-          style={{ borderRadius: '6px' }}
+          style={{ borderRadius: '6px', ...computedStyle }}
         >
           {renderChildren()}
         </div>
