@@ -1,5 +1,5 @@
 // Service Worker for St Joseph's Learning Portal (PWA Offline Engine)
-const CACHE_NAME = 'st-josephs-pwa-v1';
+const CACHE_NAME = 'st-josephs-pwa-v2';
 
 // Critical core assets to pre-cache on install
 const PRECACHE_ASSETS = [
@@ -47,6 +47,15 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'UNREGISTER') {
+    self.registration.unregister().catch(() => {});
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
@@ -54,6 +63,22 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  // Never intercept non-http protocols or Vite dev server internals & HMR endpoints
+  if (
+    url.protocol !== 'http:' && url.protocol !== 'https:' ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.search.includes('v=') ||
+    url.search.includes('t=') ||
+    url.search.includes('import') ||
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1' ||
+    url.hostname.includes('run.app')
+  ) {
+    return;
+  }
 
   // For app navigation requests (HTML pages), try network first, fall back to cached index.html
   if (request.mode === 'navigate') {
@@ -91,14 +116,20 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
 
-      // Network fallback
-      return fetch(request).then((networkResponse) => {
-        if (networkResponse && networkResponse.ok) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return networkResponse;
-      });
+      // Network fallback with graceful error catch
+      return fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          const fallback = await caches.match(request);
+          if (fallback) return fallback;
+          return new Response('Offline resource not available', { status: 503, statusText: 'Service Unavailable' });
+        });
     })
   );
 });
