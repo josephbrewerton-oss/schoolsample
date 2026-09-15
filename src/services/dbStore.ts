@@ -362,6 +362,21 @@ export const DEFAULT_TOPIC_ADAPTERS: TopicAdapterRecord[] = [
     commonMisconceptions: ['Assuming force is required to maintain motion'],
     updatedAt: Date.now(),
   },
+  {
+    topicKey: 'spanish_regular_verbs',
+    exemplarAST:
+      '(:route "quiz:mcq" :scratchpad "In Spanish, the regular -ar verb stem in present tense takes -o for \'yo\', -as for \'tú\', -a for \'él/ella\', and -amos for \'nosotros\'. For \'hablar\' with \'nosotros\', stem \'habl-\' + \'-amos\' = \'hablamos\'." :prompt "Which is the correct present tense form of \'hablar\' for \'nosotros\'?" :options (list "hablamos" "hablan" "habláis" "hablas") :hint "Identify the first person plural (-amos) ending for regular -ar verbs." :answer-key 0)',
+    curriculumGuardrails: [
+      '-ar verbs: -o, -as, -a, -amos, -áis, -an',
+      '-er verbs: -o, -es, -e, -emos, -éis, -en',
+      '-ir verbs: -o, -es, -e, -imos, -ís, -en',
+    ],
+    commonMisconceptions: [
+      'Confusing -ar ending (-amos) with -er ending (-emos)',
+      'Mixing third person plural (-an) with first person plural (-amos)',
+    ],
+    updatedAt: Date.now(),
+  },
 ];
 
 export async function bootstrapTopicAdapters(): Promise<void> {

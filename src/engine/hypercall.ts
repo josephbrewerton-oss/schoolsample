@@ -3,7 +3,7 @@ import { dispatchAstIntent, CurriculumPackage } from '../curriculum';
 import { EngineFlow } from './engineflow';
 import { ComponentsFlow } from '../components/componentsFlow';
 import { generateSessionReport, downloadReportAsHtml } from '../utils/sessionReporter';
-import { getBufferedLesson, putBufferedLesson, CachedLessonRecord } from '../services/dbStore';
+import { getBufferedLesson, putBufferedLesson, CachedLessonRecord, getTopicAdapter, getBufferedQuestion } from '../services/dbStore';
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 import { aiCaller } from './aicaller';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
@@ -12,6 +12,7 @@ import { SUPPORTED_LANGUAGES } from './operational-language';
 import { MathQuestionGenerator } from './mathQuestionGenerator';
 import { ASTFlowGovernor } from './astGovernor';
 import { hypervisor, setHypercallDispatcher } from './hypervisor';
+import { extractQuestionFromAst } from '../utils/astQuestionExtractor';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -51,6 +52,21 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           return getActiveCurriculumTree(standard);
         }
         if (intent === 'get:package') {
+          // If stage, subject, and topic are provided, check IndexedDB dynamic adapters and oak knowledge
+          if (payload?.topic && payload?.subject) {
+            const topicKey = `${payload.subject}_${payload.topic}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+            const adapter = await getTopicAdapter(topicKey).catch(() => null);
+            const knowledge = findCurriculumKnowledge(payload.stage || 'KS2', payload.subject, payload.topic);
+            return {
+              coreAxiom: knowledge?.coreAxiom || adapter?.curriculumGuardrails?.[0] || '',
+              cognitiveTrap: knowledge?.cognitiveTrap || adapter?.commonMisconceptions?.[0] || '',
+              exemplarAST: adapter?.exemplarAST || '',
+              curriculumGuardrails: adapter?.curriculumGuardrails || [],
+              commonMisconceptions: adapter?.commonMisconceptions || [],
+              questions: knowledge?.questions || [],
+              socraticPivot: knowledge?.socraticPivot || '',
+            };
+          }
           const standard = (payload?.curriculum || 'uk_oak') as CurriculumProviderKey;
           const tree = getActiveCurriculumTree(standard);
           return payload?.stage ? tree[payload.stage] : tree;
@@ -167,7 +183,29 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           // 3. Supervised Inference (Only if Prompt API is natively present & consented to)
           let synthesized = false;
-          if (aiCaller.isPromptApiAvailableSync()) {
+
+          // 3a. First check IndexedDB AST Bank for a pre-buffered, verified question for this topic
+          try {
+            const topicKey = `${stage}_${subject}_${topic}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+            const bufferedAST = await getBufferedQuestion(topicKey);
+            if (bufferedAST) {
+              const extracted = extractQuestionFromAst(bufferedAST);
+              if (extracted && extracted.options.length >= 2) {
+                resultCandidate = {
+                  ...resultCandidate,
+                  prompt: extracted.prompt,
+                  options: extracted.options,
+                  answerKey: extracted.answerKey >= 0 ? extracted.answerKey : 0,
+                  hint: extracted.hint || resultCandidate.hint,
+                  misconceptions: extracted.misconceptions || resultCandidate.misconceptions,
+                  socraticFollowUp: extracted.socraticFollowUp || resultCandidate.socraticFollowUp,
+                };
+                synthesized = true;
+              }
+            }
+          } catch {}
+
+          if (!synthesized && aiCaller.isPromptApiAvailableSync()) {
             try {
               const vmResult = await hypervisor.executeInference({
                 keyStage: stage,
@@ -195,16 +233,24 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
             if (!synthesized) {
               try {
+                // Fetch dynamic topic adapter from IndexedDB if present for few-shot guidance
+                const topicKey = `${subject}_${topic}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                const adapter = await getTopicAdapter(topicKey).catch(() => null);
+                const guardrails = adapter?.curriculumGuardrails?.join('; ') || '';
+                const exemplarAST = adapter?.exemplarAST ? `\nReference AST Pattern: ${adapter.exemplarAST}` : '';
+
                 const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
 Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
-${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}
+${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}${exemplarAST}
 
-Generate an interactive diagnostic multiple-choice question and pedagogical feedback.
+First, formulate your scratchpad reasoning (CoT step) analyzing why the correct answer is valid and what authentic student misconceptions make each distractor plausible.
+Then generate an interactive diagnostic multiple-choice question and pedagogical feedback.
 Rule: Every distractor MUST target an authentic student misconception.
 Return strictly a single JSON object with no Markdown:
 {
+  "scratchpad": "Step-by-step reasoning on correct answer and diagnostic trap explanations",
   "axiom": "Stage-appropriate core rule",
   "trap": "Accurate pupil misconception",
   "hook": "Relatable real-world inquiry scenario",
@@ -251,6 +297,7 @@ Return strictly a single JSON object with no Markdown:
               prompt: resultCandidate.prompt,
               options: resultCandidate.options,
               answerKey: resultCandidate.answerKey,
+              scratchpad: (resultCandidate as any).scratchpad,
               hint: resultCandidate.hint,
               explanation: resultCandidate.explanation,
               misconceptions: resultCandidate.misconceptions,
@@ -266,6 +313,7 @@ Return strictly a single JSON object with no Markdown:
               prompt: governed.sanitizedQuestion.prompt,
               options: governed.sanitizedQuestion.options,
               answerKey: governed.sanitizedQuestion.answerKey,
+              scratchpad: governed.sanitizedQuestion.scratchpad || (resultCandidate as any).scratchpad,
               hint: governed.sanitizedQuestion.hint || resultCandidate.hint,
               explanation: governed.sanitizedQuestion.explanation || resultCandidate.explanation,
               misconceptions: governed.sanitizedQuestion.misconceptions || resultCandidate.misconceptions,
