@@ -56,6 +56,15 @@ export const QuestionCard: React.FC<Props> = ({
   const [hintStage, setHintStage] = useState<number>(0); // 0 = hidden, 1 = conceptual nudge, 2 = step method
   const [showMentalMirror, setShowMentalMirror] = useState<boolean>(false);
 
+  const isLanguageSubject = useMemo(() => {
+    const subLower = (subject || '').toLowerCase();
+    const unitLower = (unit || '').toLowerCase();
+    return subLower.includes('foreign') || subLower.includes('mfl') || subLower.includes('french') || subLower.includes('spanish') || subLower.includes('latin') || unitLower.includes('french') || unitLower.includes('spanish') || unitLower.includes('latin');
+  }, [subject, unit]);
+
+  const [bilingualMode, setBilingualMode] = useState<boolean>(() => isLanguageSubject);
+  const [teacherMode, setTeacherMode] = useState<boolean>(false);
+
   const inferredCpaType = useMemo<ASTKnowledgeSeed['cpaType'] | null>(() => {
     const combined = `${subject} ${unit} ${prompt}`.toLowerCase();
     if (combined.includes('fraction')) return 'fractions';
@@ -216,9 +225,9 @@ export const QuestionCard: React.FC<Props> = ({
     onLanguageChange?.(newLang);
   };
 
-  const handleSpeak = () => {
-    const text = effectivePrompt;
-    const langToSpeak = isNonEnglish && !showOriginal ? activeLang : 'en';
+  const handleSpeak = (customText?: string, customLang?: string) => {
+    const text = customText || effectivePrompt;
+    const langToSpeak = customLang || (isNonEnglish && !showOriginal ? activeLang : 'en');
     speakInLanguage(text, langToSpeak);
   };
 
@@ -241,6 +250,21 @@ export const QuestionCard: React.FC<Props> = ({
           <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1e3a8a', margin: 0 }}>
             {subject}: {unit}
           </h2>
+          {isLanguageSubject && (
+            <span
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: '#7c3aed',
+                background: '#f5f3ff',
+                border: '1px solid #ddd6fe',
+                borderRadius: '9999px',
+                padding: '2px 8px',
+              }}
+            >
+              🗣️ Modern Foreign Languages
+            </span>
+          )}
         </div>
 
         {/* Translation Controls Toolbar */}
@@ -293,7 +317,55 @@ export const QuestionCard: React.FC<Props> = ({
             </select>
           </div>
 
-          {isNonEnglish && (
+          {/* Bilingual Dual-Language Toggle */}
+          <button
+            type="button"
+            onClick={() => setBilingualMode(!bilingualMode)}
+            style={{
+              background: bilingualMode ? '#ecfdf5' : '#ffffff',
+              color: bilingualMode ? '#047857' : '#475569',
+              border: `1px solid ${bilingualMode ? '#a7f3d0' : '#cbd5e1'}`,
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Show both English and Target Language simultaneously for bilingual grammar and vocabulary learning"
+          >
+            <span>🔤</span>
+            <span>{bilingualMode ? 'Dual-Language: ON' : 'Dual-Language'}</span>
+          </button>
+
+          {/* Teacher Mode Diagnostic Error Challenge Toggle */}
+          <button
+            type="button"
+            onClick={() => setTeacherMode(!teacherMode)}
+            style={{
+              background: teacherMode ? '#faf5ff' : '#ffffff',
+              color: teacherMode ? '#7e22ce' : '#475569',
+              border: `1px solid ${teacherMode ? '#d8b4fe' : '#cbd5e1'}`,
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Diagnose student Jamie's error and common cognitive misconceptions"
+          >
+            <span>🎓</span>
+            <span>{teacherMode ? 'Teacher Mode: ON' : 'Teacher Mode'}</span>
+          </button>
+
+          {isNonEnglish && !bilingualMode && (
             <button
               type="button"
               onClick={() => setShowOriginal(!showOriginal)}
@@ -316,7 +388,7 @@ export const QuestionCard: React.FC<Props> = ({
 
           <button
             type="button"
-            onClick={handleSpeak}
+            onClick={() => handleSpeak()}
             style={{
               background: '#ffffff',
               color: '#334155',
@@ -341,6 +413,95 @@ export const QuestionCard: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* MFL Immersion Hint if active language is English */}
+      {isLanguageSubject && activeLang === 'en' && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            marginBottom: '1rem',
+            padding: '6px 12px',
+            background: '#faf5ff',
+            border: '1px solid #e9d5ff',
+            borderRadius: '8px',
+            fontSize: '0.82rem',
+            color: '#6b21a8',
+          }}
+        >
+          <span>💡 <strong>MFL Immersion:</strong> Switch Translate to 🇪🇸 Spanish or 🇫🇷 French in 🔤 Dual-Language mode to compare grammar and false cognates side-by-side!</span>
+          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveLang('es');
+                setSavedLanguage('es');
+                setBilingualMode(true);
+                onLanguageChange?.('es');
+              }}
+              style={{
+                background: '#ffffff',
+                border: '1px solid #d8b4fe',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                color: '#7e22ce',
+                cursor: 'pointer',
+              }}
+            >
+              🇪🇸 Spanish
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveLang('fr');
+                setSavedLanguage('fr');
+                setBilingualMode(true);
+                onLanguageChange?.('fr');
+              }}
+              style={{
+                background: '#ffffff',
+                border: '1px solid #d8b4fe',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                color: '#7e22ce',
+                cursor: 'pointer',
+              }}
+            >
+              🇫🇷 French
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Mode Diagnostic Challenge Banner */}
+      {teacherMode && (
+        <div
+          style={{
+            background: '#fdf4ff',
+            border: '1px solid #f0abfc',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
+        >
+          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#86198f', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🎓</span>
+            <span>Teacher Diagnostic Challenge: Spot Jamie's Misconception</span>
+          </div>
+          <div style={{ fontSize: '0.84rem', color: '#701a75', lineHeight: 1.4 }}>
+            A pupil named <strong>Jamie</strong> submitted an answer with a common cognitive trap. Select an option below to diagnose Jamie's reasoning error and reveal the axiomatic pitfall!
+          </div>
+        </div>
+      )}
+
       {/* Translation active pill */}
       {isNonEnglish && (
         <div
@@ -360,6 +521,8 @@ export const QuestionCard: React.FC<Props> = ({
         >
           {isTranslating ? (
             <span>⚡ Translating into {currentLangMeta.label} ({currentLangMeta.nativeLabel})...</span>
+          ) : bilingualMode ? (
+            <span>🔤 Dual-Language Active: English + {currentLangMeta.label} ({currentLangMeta.nativeLabel})</span>
           ) : showOriginal ? (
             <span>🇬🇧 Viewing English Original (Translation to {currentLangMeta.label} available)</span>
           ) : (
@@ -369,17 +532,106 @@ export const QuestionCard: React.FC<Props> = ({
       )}
 
       {/* Question Prompt Stem */}
-      <div
-        style={{
-          fontSize: '1.35rem',
-          fontWeight: 700,
-          color: '#0f172a',
-          marginBottom: '1rem',
-          lineHeight: 1.5,
-        }}
-      >
-        {effectivePrompt}
-      </div>
+      {bilingualMode && isNonEnglish ? (
+        <div style={{ marginBottom: '1.25rem' }}>
+          {/* Primary English Prompt */}
+          <div
+            style={{
+              fontSize: '1.3rem',
+              fontWeight: 700,
+              color: '#0f172a',
+              marginBottom: '0.5rem',
+              lineHeight: 1.5,
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: '8px',
+            }}
+          >
+            <span>{prompt}</span>
+            <button
+              type="button"
+              onClick={() => handleSpeak(prompt, 'en')}
+              style={{
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#475569',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+              title="Listen in English"
+            >
+              🔊 EN
+            </button>
+          </div>
+
+          {/* Bilingual Target Language Prompt Immersion Card */}
+          <div
+            style={{
+              background: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  color: '#0369a1',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  marginBottom: '2px',
+                }}
+              >
+                🌐 {currentLangMeta.label} ({currentLangMeta.nativeLabel}) • Bilingual Bridge
+              </div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#0c4a6e', lineHeight: 1.4 }}>
+                {translatedData.prompt}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSpeak(translatedData.prompt, activeLang)}
+              style={{
+                background: '#ffffff',
+                border: '1px solid #7dd3fc',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#0284c7',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+              title={`Listen in ${currentLangMeta.label}`}
+            >
+              🔊 {currentLangMeta.code.toUpperCase()}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            fontSize: '1.35rem',
+            fontWeight: 700,
+            color: '#0f172a',
+            marginBottom: '1rem',
+            lineHeight: 1.5,
+          }}
+        >
+          {effectivePrompt}
+        </div>
+      )}
 
       {/* Stepped Pedagogical Scaffolding Bar (Stage 1 Conceptual Nudge & Stage 2 Method Step) */}
       {(effectiveHint || effectiveSocratic) && selectedAnswer === null && (
@@ -516,7 +768,23 @@ export const QuestionCard: React.FC<Props> = ({
               </span>
 
               {/* Option Text */}
-              <span style={{ flex: 1, lineHeight: 1.4 }}>{opt}</span>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ lineHeight: 1.4 }}>
+                  {bilingualMode && isNonEnglish ? (displayOptions[idx] || opt) : opt}
+                </span>
+                {bilingualMode && isNonEnglish && translatedData.displayOptions[idx] && (
+                  <span
+                    style={{
+                      fontSize: '0.86rem',
+                      color: isSelected ? textColor : '#0369a1',
+                      fontWeight: 500,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    🌐 {translatedData.displayOptions[idx]}
+                  </span>
+                )}
+              </div>
             </button>
           );
         })}
@@ -532,6 +800,35 @@ export const QuestionCard: React.FC<Props> = ({
             gap: '1rem',
           }}
         >
+          {teacherMode && (
+            <div
+              style={{
+                padding: '0.85rem 1.15rem',
+                background: isResolvedCorrect ? '#faf5ff' : '#fdf4ff',
+                border: '1px solid #d8b4fe',
+                borderRadius: '8px',
+                color: '#6b21a8',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+              }}
+            >
+              <div style={{ fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🎯</span>
+                <span>
+                  {isResolvedCorrect
+                    ? "Teacher Diagnostic Note: You picked the correct answer!"
+                    : `Teacher Diagnostic Note: Jamie's Trap Identified on Choice ${String.fromCharCode(65 + selectedAnswer)}`}
+                </span>
+              </div>
+              <div style={{ fontSize: '0.86rem', color: '#581c87', lineHeight: 1.4 }}>
+                {isResolvedCorrect
+                  ? "Option " + String.fromCharCode(65 + selectedAnswer) + " is correct. Jamie made a misconception mistake by picking one of the distractors below."
+                  : "Jamie's error analysis: " + (effectiveMisconceptions[selectedAnswer] || "This distractor captures a common cognitive misconception in this topic.")}
+              </div>
+            </div>
+          )}
+
           {isResolvedCorrect ? (
             <div
               style={{
@@ -632,9 +929,32 @@ export const QuestionCard: React.FC<Props> = ({
               alignItems: 'center',
               justifyContent: 'flex-end',
               flexWrap: 'wrap',
-              gap: '1rem',
+              gap: '0.75rem',
             }}
           >
+            <button
+              type="button"
+              onClick={onNextQuestion}
+              style={{
+                background: '#f8fafc',
+                color: '#334155',
+                fontWeight: 700,
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '0.75rem 1.25rem',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Practice another parallel variation of this concept to cement mastery"
+            >
+              <span>🔄</span>
+              <span>Parallel Variation (Mastery)</span>
+            </button>
+
             <button
               type="button"
               onClick={onNextQuestion}
@@ -647,9 +967,13 @@ export const QuestionCard: React.FC<Props> = ({
                 padding: '0.75rem 1.5rem',
                 cursor: 'pointer',
                 fontSize: '1rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              {translatedFeedback.nextQuestion}
+              <span>{translatedFeedback.nextQuestion}</span>
+              <span>➔</span>
             </button>
           </div>
         </div>

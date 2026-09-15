@@ -72,6 +72,8 @@ export interface HypervisorInferenceRequest {
   curriculum?: string;
   difficulty?: 'warmup' | 'challenger' | 'brainbuster';
   lang?: string;
+  angle?: string;
+  seed?: number;
   timeoutMs?: number;
 }
 

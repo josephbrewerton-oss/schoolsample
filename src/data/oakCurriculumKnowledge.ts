@@ -12,6 +12,7 @@ export interface CurriculumQuestion {
 }
 
 import { findCustomTopicKnowledge } from '../services/curriculumPackStore';
+import { CURRICULUM_EXPANSION_BASE } from './curriculumKnowledgeExpansion';
 
 export interface CurriculumTopicKnowledge {
 
@@ -1212,11 +1213,16 @@ export function findCurriculumKnowledge(
   const normSubject = norm(subject);
   const normTopic = norm(topic);
 
+  const combinedKnowledgeBase: Record<string, CurriculumTopicKnowledge> = {
+    ...CURRICULUM_KNOWLEDGE_BASE,
+    ...CURRICULUM_EXPANSION_BASE,
+  };
+
   // 1. Direct key match (e.g. "ks2:science:states-of-matter")
-  for (const [key, val] of Object.entries(CURRICULUM_KNOWLEDGE_BASE)) {
+  for (const [key, val] of Object.entries(combinedKnowledgeBase)) {
     const [kStage, kSub, kTop] = key.split(':');
     const stageMatch = normStage.includes(kStage) || (kStage === 'ks1' && normStage.includes('1')) || (kStage === 'ks2' && normStage.includes('2')) || (kStage === 'ks3' && normStage.includes('3')) || (kStage === 'ks4' && (normStage.includes('4') || normStage.includes('gcse')));
-    const subjectMatch = normSubject.includes(kSub) || kSub.includes(normSubject) || (kSub === 'maths' && normSubject.includes('mat')) || (kSub === 'science' && (normSubject.includes('sci') || normSubject.includes('phys') || normSubject.includes('chem') || normSubject.includes('bio')));
+    const subjectMatch = normSubject.includes(kSub) || kSub.includes(normSubject) || (kSub === 'maths' && normSubject.includes('mat')) || (kSub === 'science' && (normSubject.includes('sci') || normSubject.includes('phys') || normSubject.includes('chem') || normSubject.includes('bio'))) || (kSub === 'history' && normSubject.includes('hist')) || (kSub === 'geography' && normSubject.includes('geo')) || (kSub === 'english' && normSubject.includes('eng')) || (kSub === 'computing' && normSubject.includes('comp')) || (kSub === 'mfl' && (normSubject.includes('mfl') || normSubject.includes('lang') || normSubject.includes('french') || normSubject.includes('spanish') || normSubject.includes('latin')));
     const topicMatch = normTopic.includes(kTop) || kTop.includes(normTopic) || norm(val.title).includes(normTopic) || normTopic.includes(norm(val.title));
 
     if (stageMatch && subjectMatch && topicMatch) {
@@ -1225,7 +1231,7 @@ export function findCurriculumKnowledge(
   }
 
   // 2. Fuzzy topic match across knowledge base if exact stage/subject slightly differs
-  for (const val of Object.values(CURRICULUM_KNOWLEDGE_BASE)) {
+  for (const val of Object.values(combinedKnowledgeBase)) {
     const valTitleNorm = norm(val.title);
     if (valTitleNorm.includes(normTopic) || normTopic.includes(valTitleNorm) || val.topicId === normTopic) {
       return val;
@@ -1233,7 +1239,7 @@ export function findCurriculumKnowledge(
   }
 
   // 3. Fallback to first topic in matching subject/stage if available
-  for (const [key, val] of Object.entries(CURRICULUM_KNOWLEDGE_BASE)) {
+  for (const [key, val] of Object.entries(combinedKnowledgeBase)) {
     const [kStage, kSub] = key.split(':');
     const stageMatch = normStage.includes(kStage) || (kStage === 'ks1' && normStage.includes('1')) || (kStage === 'ks2' && normStage.includes('2')) || (kStage === 'ks3' && normStage.includes('3')) || (kStage === 'ks4' && (normStage.includes('4') || normStage.includes('gcse')));
     const subjectMatch = normSubject.includes(kSub) || kSub.includes(normSubject);

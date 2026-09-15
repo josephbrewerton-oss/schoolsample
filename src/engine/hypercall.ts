@@ -40,6 +40,58 @@ const getStageGuidelines = (stage: string) => {
   return 'Target: KS4 / GCSE (Ages 14-16). Formal GCSE syllabus depth: quantitative relationships (e.g., F=ma, momentum, resultant forces), precise terminology, vector analysis, and Free Body Diagrams. Misconception: Aristotelian impetus (belief that motion requires continuous forward force).';
 };
 
+// Tracks recent question IDs to prevent back-to-back repetitions for the same topic
+const recentTopicQuestionMap = new Map<string, string>();
+
+function getIntelligentTopicFallback(stage: string, subject: string, topic: string) {
+  const cleanSub = (subject || '').toLowerCase();
+  let stem = `Which statement accurately describes the core curriculum principle of "${topic}" (${stage})?`;
+  let correct = `It accurately demonstrates the standard foundational rules, processes, or definitions of ${topic}.`;
+  let distractor1 = `It inverts the key cause-and-effect relationship, producing the opposite outcome for ${topic}.`;
+  let distractor2 = `It confuses ${topic} with a different concept in ${subject} that operates under contradictory rules.`;
+  let distractor3 = `It assumes ${topic} remains completely static without interacting with any surrounding environmental or systematic factors.`;
+
+  if (cleanSub.includes('hist')) {
+    stem = `What is historically significant about "${topic}" in British and world history?`;
+    correct = `It marked a transformative historical development that altered societal structures, governance, or daily life.`;
+    distractor1 = `It had no recorded historical impact and was entirely forgotten within the same decade.`;
+    distractor2 = `It occurred thousands of years earlier in prehistory before human records began.`;
+    distractor3 = `It only applied to one isolated individual and had no influence on any broader population.`;
+  } else if (cleanSub.includes('geo')) {
+    stem = `Which geographical characteristic correctly explains how "${topic}" operates on Earth?`;
+    correct = `It involves natural or human processes shaping landscapes, environments, and human interactions over time.`;
+    distractor1 = `It occurs exclusively in outer space with zero interaction with Earth's atmosphere or crust.`;
+    distractor2 = `It distributes resources and climate identically across every single latitude on Earth.`;
+    distractor3 = `It prevents any weathering, erosion, or migration from ever occurring.`;
+  } else if (cleanSub.includes('eng')) {
+    stem = `In English language and literature, how is "${topic}" effectively applied?`;
+    correct = `It provides precise grammatical structure or evocative linguistic technique to convey clear meaning and atmosphere.`;
+    distractor1 = `It replaces all punctuation marks with arbitrary capital letters without syntactic rules.`;
+    distractor2 = `It is only used when writing in a completely different foreign language.`;
+    distractor3 = `It strictly forbids the reader from understanding the sequence of events.`;
+  } else if (cleanSub.includes('sci')) {
+    stem = `In science, which statement accurately reflects the observable properties of "${topic}"?`;
+    correct = `Empirical observations and physical properties confirm its behavior under tested experimental conditions.`;
+    distractor1 = `It violates the conservation of energy and mass without any measurable interaction.`;
+    distractor2 = `It changes randomly depending on who is observing the experiment.`;
+    distractor3 = `It requires zero energy transfer or molecular interaction to take place.`;
+  }
+
+  return {
+    prompt: stem,
+    options: [correct, distractor1, distractor2, distractor3],
+    answerKey: 0,
+    hint: `Think carefully about the defining characteristics and functions of ${topic}.`,
+    explanation: `This option correctly represents the core curriculum standard for ${topic} in ${subject}.`,
+    misconceptions: [
+      'Correct! Accurately applies the principle.',
+      'Misconception: Inverting key mechanisms or cause-and-effect.',
+      'Misconception: Confusing terminology with unrelated processes.',
+      'Misconception: Assuming absolute isolation without interaction.'
+    ]
+  };
+}
+
 // 1. Concrete Node Execution Registry
 const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) => Promise<any> }>([
   // Curriculum Graph Node
@@ -147,20 +199,30 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
           let offlineQuestion = null;
           if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
-            const qIdx = Math.floor(Math.random() * offlineKnowledge.questions.length);
-            offlineQuestion = offlineKnowledge.questions[qIdx];
+            const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase();
+            const lastId = recentTopicQuestionMap.get(topicCacheKey);
+            const eligible = offlineKnowledge.questions.length > 1
+              ? offlineKnowledge.questions.filter((q) => q.id !== lastId)
+              : offlineKnowledge.questions;
+            const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+            offlineQuestion = chosen;
+            if (chosen?.id) {
+              recentTopicQuestionMap.set(topicCacheKey, chosen.id);
+            }
           }
 
-          const basePrompt = offlineQuestion?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
+          const fallbackData = (!offlineQuestion && !offlineKnowledge) ? getIntelligentTopicFallback(stage, subject, topic) : null;
+
+          const basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
           const displayPrompt = difficulty === 'brainbuster' 
             ? `🧠 [Brain Buster] ${basePrompt}` 
             : difficulty === 'warmup' 
             ? `🌱 [Warm-Up] ${basePrompt}` 
             : basePrompt;
 
-          let rawOptions = offlineQuestion ? [...offlineQuestion.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property'];
-          let rawAnswerKey = offlineQuestion !== null ? offlineQuestion.answerKey : 0;
-          let rawMisconceptions: string[] = rawOptions.map((opt, idx) => {
+          let rawOptions = offlineQuestion ? [...offlineQuestion.options] : (fallbackData ? [...fallbackData.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property']);
+          let rawAnswerKey = offlineQuestion !== null ? offlineQuestion.answerKey : (fallbackData ? fallbackData.answerKey : 0);
+          let rawMisconceptions: string[] = fallbackData ? fallbackData.misconceptions : rawOptions.map((opt, idx) => {
             if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
             return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
           });
@@ -173,8 +235,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             prompt: displayPrompt,
             options: rawOptions,
             answerKey: rawAnswerKey,
-            hint: offlineQuestion?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
-            explanation: offlineQuestion?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
+            hint: offlineQuestion?.hint || fallbackData?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
+            explanation: offlineQuestion?.explanation || fallbackData?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
             misconceptions: rawMisconceptions,
             socraticFollowUp: offlineKnowledge?.socraticPivot || `Can you identify the defining feature of ${topic}?`,
             scaffoldHints: offlineKnowledge?.scaffoldHints,
@@ -207,6 +269,16 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           } catch {}
 
           if (!synthesized && aiCaller.isPromptApiAvailableSync()) {
+            const pedagogicalAngles = [
+              'Real-World Scenario / Practical Application',
+              'Diagnostic Misconception Trap (tests why plausible incorrect reasoning fails)',
+              'Cause-and-Effect Relationship (investigating what happens when a variable or condition changes)',
+              'Comparative Evaluation / Distinguishing Between Closely Related Concepts',
+              'Step-by-Step Analytical Deduction'
+            ];
+            const chosenAngle = pedagogicalAngles[Math.floor(Math.random() * pedagogicalAngles.length)];
+            const randomSeed = Math.floor(Math.random() * 100000);
+
             try {
               const vmResult = await hypervisor.executeInference({
                 keyStage: stage,
@@ -215,6 +287,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
                 curriculum,
                 difficulty,
                 lang,
+                angle: chosenAngle,
+                seed: randomSeed,
                 timeoutMs: 4000,
               });
 
@@ -241,13 +315,14 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
                 const exemplarAST = adapter?.exemplarAST ? `\nReference AST Pattern: ${adapter.exemplarAST}` : '';
 
                 const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
+Focus Angle: ${chosenAngle} (Randomization Seed: #${randomSeed})
 Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
 ${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}${exemplarAST}
 
 First, formulate your scratchpad reasoning (CoT step) analyzing why the correct answer is valid and what authentic student misconceptions make each distractor plausible.
-Then generate an interactive diagnostic multiple-choice question and pedagogical feedback.
+Then generate an interactive diagnostic multiple-choice question and pedagogical feedback exploring the chosen focus angle.
 Rule: Every distractor MUST target an authentic student misconception.
 Return strictly a single JSON object with no Markdown:
 {

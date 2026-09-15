@@ -139,6 +139,15 @@ export const OAK_CURRICULUM_CATALOGUE: Record<string, OakStage> = {
           { id: 'order-of-the-mass', title: 'The Order of the Mass & Reverent Reception' },
         ],
       },
+      {
+        id: 'mfl',
+        title: 'Modern Foreign Languages & Latin',
+        topics: [
+          { id: 'french-basics', title: 'French: Greetings, Family & Gender of Nouns' },
+          { id: 'spanish-basics', title: 'Spanish: Phonics, Numbers & Animals' },
+          { id: 'latin-roots', title: 'Latin Roots & English Derivatives' },
+        ],
+      },
     ],
   },
   'ks3': {
@@ -196,7 +205,9 @@ export const OAK_CURRICULUM_CATALOGUE: Record<string, OakStage> = {
         title: 'Modern Foreign Languages',
         topics: [
           { id: 'french-present-routine', title: 'French: Present Tense & Daily Routine' },
+          { id: 'french-passe-compose', title: 'French: Passé Composé with Avoir & Être' },
           { id: 'spanish-free-time', title: 'Spanish: Free Time & Hobbies' },
+          { id: 'spanish-ser-estar', title: 'Spanish: Ser vs Estar & Adjective Agreement' },
         ],
       },
       {
@@ -268,6 +279,14 @@ export const OAK_CURRICULUM_CATALOGUE: Record<string, OakStage> = {
           { id: 'catholic-social-teaching', title: 'Catholic Social Teaching & Human Dignity' },
           { id: 'catholic-sources-of-authority', title: 'Sources of Authority: Scripture, Tradition & Magisterium' },
           { id: 'catholic-eschatology', title: 'Eschatology: Death, Judgment, Purgatory, Heaven & Hell' },
+        ],
+      },
+      {
+        id: 'mfl',
+        title: 'Modern Foreign Languages (GCSE)',
+        topics: [
+          { id: 'spanish-past-future', title: 'Spanish: Preterite vs Imperfect & Future' },
+          { id: 'french-complex-opinions', title: 'French: Complex Opinions & Subjunctive' },
         ],
       },
     ],
