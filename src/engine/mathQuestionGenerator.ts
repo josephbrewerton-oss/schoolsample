@@ -1,7 +1,9 @@
 // src/engine/mathQuestionGenerator.ts
+import { PRNG } from './prng';
 
 export interface GeneratedMathQuestion {
   id: string;
+  seedToken: string;
   prompt: string;
   options: string[];
   answerKey: number;
@@ -14,6 +16,7 @@ export interface GeneratedMathQuestion {
 /**
  * High-performance, zero-latency deterministic math generator.
  * Produces 100% mathematically correct problems with authentic student misconception distractors.
+ * Seed-driven: identical seed produces identical question for perfect teacher auditability & anti-repetition.
  */
 export class MathQuestionGenerator {
   private static gcd(a: number, b: number): number {
@@ -40,43 +43,47 @@ export class MathQuestionGenerator {
     );
   }
 
-  public static generate(keyStage: string, topic: string): GeneratedMathQuestion {
+  public static generate(keyStage: string, topic: string, rawSeed?: string | number): GeneratedMathQuestion {
+    const seedVal = rawSeed !== undefined && rawSeed !== '' ? rawSeed : PRNG.generateSeedToken();
+    const rng = new PRNG(seedVal);
+    const seedToken = typeof seedVal === 'string' ? seedVal : `M-${seedVal.toString(16).toUpperCase()}`;
+
     const ks = (keyStage || '').toLowerCase().replace(/key\s*stage\s*/g, 'ks');
     const t = (topic || '').toLowerCase();
 
     // Route based on topic or Key Stage
     if (t.includes('percentage') || t.includes('percent')) {
-      return this.generatePercentageQuestion();
+      return this.generatePercentageQuestion(rng, seedToken);
     }
     if (t.includes('ratio') || t.includes('proportion')) {
-      return this.generateRatioQuestion();
+      return this.generateRatioQuestion(rng, seedToken);
     }
     if (t.includes('perimeter') || t.includes('area')) {
-      return this.generatePerimeterAreaQuestion();
+      return this.generatePerimeterAreaQuestion(rng, seedToken);
     }
-    if (t.includes('fraction') || ks.includes('ks3') && Math.random() > 0.5) {
-      return this.generateFractionQuestion();
+    if (t.includes('fraction') || (ks.includes('ks3') && rng.next() > 0.5)) {
+      return this.generateFractionQuestion(rng, seedToken);
     }
-    if (t.includes('bidmas') || t.includes('order of operation') || ks.includes('ks3') && Math.random() > 0.5) {
-      return this.generateBidmasQuestion();
+    if (t.includes('bidmas') || t.includes('order of operation') || (ks.includes('ks3') && rng.next() > 0.5)) {
+      return this.generateBidmasQuestion(rng, seedToken);
     }
     if (ks.includes('ks1') || t.includes('addition') || t.includes('within 20')) {
-      return this.generateKS1Arithmetic();
+      return this.generateKS1Arithmetic(rng, seedToken);
     }
     if (ks.includes('ks4') || t.includes('algebra') || t.includes('powers') || t.includes('index')) {
-      return this.generateIndexLawsQuestion();
+      return this.generateIndexLawsQuestion(rng, seedToken);
     }
 
     // Default to KS2 Times Tables / Mixed Operations
-    return this.generateTimesTableQuestion();
+    return this.generateTimesTableQuestion(rng, seedToken);
   }
 
   /**
    * KS1: Addition / Subtraction with counting-on and off-by-one misconceptions
    */
-  private static generateKS1Arithmetic(): GeneratedMathQuestion {
-    const a = Math.floor(Math.random() * 8) + 6; // 6 to 13
-    const b = Math.floor(Math.random() * 6) + 3; // 3 to 8
+  private static generateKS1Arithmetic(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const a = rng.nextInt(6, 13);
+    const b = rng.nextInt(3, 8);
     const correct = a + b;
 
     const trapSub = Math.abs(a - b);
@@ -90,12 +97,12 @@ export class MathQuestionGenerator {
       { text: `${trapSub}`, misc: `Operation confusion: Subtracted ${b} from ${a} instead of adding.` }
     ];
 
-    // Shuffle options
-    const shuffled = rawOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(rawOptions);
     const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
 
     return {
-      id: `math_ks1_${Date.now()}`,
+      id: `math_ks1_${seedToken}`,
+      seedToken,
       prompt: `What is ${a} + ${b}?`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -109,9 +116,9 @@ export class MathQuestionGenerator {
   /**
    * KS2: Multiplication / Times Tables with additive and factor confusion
    */
-  private static generateTimesTableQuestion(): GeneratedMathQuestion {
-    const table = Math.floor(Math.random() * 8) + 3; // 3 to 10
-    const factor = Math.floor(Math.random() * 8) + 3; // 3 to 10
+  private static generateTimesTableQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const table = rng.nextInt(3, 10);
+    const factor = rng.nextInt(3, 10);
     const correct = table * factor;
 
     const trapAdd = table + factor;
@@ -125,11 +132,12 @@ export class MathQuestionGenerator {
       { text: `${trapOffOne}`, misc: `Calculation slip: Off-by-one counting error in the times table pattern.` }
     ];
 
-    const shuffled = rawOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(rawOptions);
     const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
 
     return {
-      id: `math_ks2_${Date.now()}`,
+      id: `math_ks2_${seedToken}`,
+      seedToken,
       prompt: `What is ${table} × ${factor}?`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -139,11 +147,10 @@ export class MathQuestionGenerator {
       socraticFollowUp: `What is ${table} × 5? Can you use that benchmark to reach ${table} × ${factor}?`
     };
   }
-
   /**
    * KS2/KS3: Fraction Addition with the classic "add numerators and denominators" trap
    */
-  private static generateFractionQuestion(): GeneratedMathQuestion {
+  private static generateFractionQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
     // Pick simple distinct denominators
     const pairs = [
       { n1: 1, d1: 2, n2: 1, d2: 3 }, // 1/2 + 1/3 = 5/6
@@ -153,7 +160,7 @@ export class MathQuestionGenerator {
       { n1: 1, d1: 5, n2: 2, d2: 3 }, // 1/5 + 2/3 = 13/15
     ];
 
-    const pick = pairs[Math.floor(Math.random() * pairs.length)];
+    const pick = rng.pick(pairs);
     const commDenom = (pick.d1 * pick.d2) / this.gcd(pick.d1, pick.d2);
     const adjNum = pick.n1 * (commDenom / pick.d1) + pick.n2 * (commDenom / pick.d2);
     const simpDiv = this.gcd(adjNum, commDenom);
@@ -185,11 +192,12 @@ export class MathQuestionGenerator {
       return true;
     });
 
-    const shuffled = cleanOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(cleanOptions);
     const answerKey = shuffled.findIndex(o => o.text === correctStr);
 
     return {
-      id: `math_frac_${Date.now()}`,
+      id: `math_frac_${seedToken}`,
+      seedToken,
       prompt: `What is ${pick.n1}/${pick.d1} + ${pick.n2}/${pick.d2}?`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -203,10 +211,10 @@ export class MathQuestionGenerator {
   /**
    * KS3: Order of Operations (BIDMAS / PEMDAS) with left-to-right calculation trap
    */
-  private static generateBidmasQuestion(): GeneratedMathQuestion {
-    const a = Math.floor(Math.random() * 5) + 2; // 2 to 6
-    const b = Math.floor(Math.random() * 4) + 2; // 2 to 5
-    const c = Math.floor(Math.random() * 5) + 3; // 3 to 7
+  private static generateBidmasQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const a = rng.nextInt(2, 6);
+    const b = rng.nextInt(2, 5);
+    const c = rng.nextInt(3, 7);
 
     // Expression: a + b × c
     const correct = a + (b * c);
@@ -221,11 +229,12 @@ export class MathQuestionGenerator {
       { text: `${trapMulFirstThenSub}`, misc: `Sign error: Multiplied first but subtracted ${a} instead of adding.` }
     ];
 
-    const shuffled = rawOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(rawOptions);
     const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
 
     return {
-      id: `math_bidmas_${Date.now()}`,
+      id: `math_bidmas_${seedToken}`,
+      seedToken,
       prompt: `Calculate: ${a} + ${b} × ${c}`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -239,9 +248,9 @@ export class MathQuestionGenerator {
   /**
    * KS4: Index Laws / Exponents with power multiplication trap
    */
-  private static generateIndexLawsQuestion(): GeneratedMathQuestion {
-    const p1 = Math.floor(Math.random() * 4) + 2; // 2 to 5
-    const p2 = Math.floor(Math.random() * 4) + 2; // 2 to 5
+  private static generateIndexLawsQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const p1 = rng.nextInt(2, 5);
+    const p2 = rng.nextInt(2, 5);
     const correctPower = p1 + p2;
     const trapMulPower = p1 * p2;
     const trapSubPower = Math.abs(p1 - p2);
@@ -258,11 +267,12 @@ export class MathQuestionGenerator {
       { text: trapCoeffStr, misc: `Algebraic confusion: Turned the power into a front coefficient.` }
     ];
 
-    const shuffled = rawOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(rawOptions);
     const answerKey = shuffled.findIndex(o => o.text === correctStr);
 
     return {
-      id: `math_ks4_${Date.now()}`,
+      id: `math_ks4_${seedToken}`,
+      seedToken,
       prompt: `Simplify: x^${p1} × x^${p2}`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -276,11 +286,11 @@ export class MathQuestionGenerator {
   /**
    * KS2/KS3: Percentage of an amount with 10% benchmark and decimal traps
    */
-  private static generatePercentageQuestion(): GeneratedMathQuestion {
+  private static generatePercentageQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
     const percentages = [10, 20, 25, 50, 15, 75];
     const amounts = [40, 60, 80, 120, 200, 240, 300];
-    const pct = percentages[Math.floor(Math.random() * percentages.length)];
-    const total = amounts[Math.floor(Math.random() * amounts.length)];
+    const pct = rng.pick(percentages);
+    const total = rng.pick(amounts);
 
     const correct = (pct / 100) * total;
     // Trap 1: Subtracted percentage number from total instead of finding fraction (e.g. 60 - 20 = 40)
@@ -304,11 +314,12 @@ export class MathQuestionGenerator {
       return true;
     });
 
-    const shuffled = cleanOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(cleanOptions);
     const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
 
     return {
-      id: `math_pct_${Date.now()}`,
+      id: `math_pct_${seedToken}`,
+      seedToken,
       prompt: `What is ${pct}% of ${total}?`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -322,11 +333,11 @@ export class MathQuestionGenerator {
   /**
    * KS2/KS3: Ratio Division with parts vs total confusion
    */
-  private static generateRatioQuestion(): GeneratedMathQuestion {
-    const part1 = Math.floor(Math.random() * 3) + 1; // 1 to 3
-    const part2 = Math.floor(Math.random() * 3) + 2; // 2 to 4
+  private static generateRatioQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const part1 = rng.nextInt(1, 3);
+    const part2 = rng.nextInt(2, 4);
     const totalParts = part1 + part2;
-    const multiplier = Math.floor(Math.random() * 8) + 4; // 4 to 11
+    const multiplier = rng.nextInt(4, 11);
     const totalAmount = totalParts * multiplier;
     const share1 = part1 * multiplier;
     const share2 = part2 * multiplier;
@@ -353,11 +364,12 @@ export class MathQuestionGenerator {
       return true;
     });
 
-    const shuffled = cleanOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(cleanOptions);
     const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
 
     return {
-      id: `math_ratio_${Date.now()}`,
+      id: `math_ratio_${seedToken}`,
+      seedToken,
       prompt: `Share £${totalAmount} in the ratio ${part1}:${part2}. What is the value of the first share?`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,
@@ -371,11 +383,11 @@ export class MathQuestionGenerator {
   /**
    * KS2: Area vs Perimeter - The single most common geometry misconception in primary schools
    */
-  private static generatePerimeterAreaQuestion(): GeneratedMathQuestion {
-    const length = Math.floor(Math.random() * 6) + 4; // 4 to 9 cm
-    const width = Math.floor(Math.random() * 4) + 2;  // 2 to 5 cm
+  private static generatePerimeterAreaQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const length = rng.nextInt(4, 9);
+    const width = rng.nextInt(2, 5);
 
-    const isAskingArea = Math.random() > 0.5;
+    const isAskingArea = rng.next() > 0.5;
     const area = length * width;
     const perimeter = 2 * (length + width);
 
@@ -397,11 +409,12 @@ export class MathQuestionGenerator {
       { text: `${correct} ${trapUnit}`, misc: `Unit confusion: Calculated the correct numerical value but selected the wrong units (${trapUnit} instead of ${correctUnit}).` }
     ];
 
-    const shuffled = rawOptions.sort(() => Math.random() - 0.5);
+    const shuffled = rng.shuffle(rawOptions);
     const answerKey = shuffled.findIndex(o => o.text === `${correct} ${correctUnit}`);
 
     return {
-      id: `math_geom_${Date.now()}`,
+      id: `math_geom_${seedToken}`,
+      seedToken,
       prompt: `A rectangle has a length of ${length} cm and a width of ${width} cm. What is its ${isAskingArea ? 'AREA' : 'PERIMETER'}?`,
       options: shuffled.map(o => o.text),
       answerKey: answerKey !== -1 ? answerKey : 0,

@@ -77,6 +77,10 @@ export class ComponentsFlow {
     topicId: string;
     isCorrect: boolean;
     userAnswer: string;
+    seedToken?: string;
+    selectedCoordinate?: number;
+    correctCoordinate?: number;
+    misconceptionTag?: string;
   }) {
     await logProgress({
       cohortCode: params.cohortCode || 'default_cohort',
@@ -85,7 +89,10 @@ export class ComponentsFlow {
       answeredAt: Date.now(),
       isCorrect: params.isCorrect,
       userAnswer: params.userAnswer,
-      errorTag: params.isCorrect ? undefined : 'concept_misconception',
+      errorTag: params.isCorrect ? undefined : (params.misconceptionTag || 'concept_misconception'),
+      seedToken: params.seedToken,
+      selectedCoordinate: params.selectedCoordinate,
+      correctCoordinate: params.correctCoordinate,
     });
   }
 

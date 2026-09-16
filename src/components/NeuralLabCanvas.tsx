@@ -9,6 +9,8 @@ import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hyperviso
 import { hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
+import { PRNG } from '../engine/prng';
+import { TrajectoryEngine, CognitiveTrajectoryState } from '../engine/trajectoryEngine';
 
 interface NeuralLabCanvasProps {
   initialKeyStage?: string;
@@ -72,11 +74,18 @@ export default function NeuralLabCanvas({
     window.addEventListener('storage', () => setHasConsent(hasUserGrantedAiConsent()));
     return () => window.removeEventListener('ai_consent_changed', onConsentChanged);
   }, []);
+  const [trajectoryState, setTrajectoryState] = useState<CognitiveTrajectoryState | null>(null);
+  const [streamTransition, setStreamTransition] = useState<{
+    nextSeedToken: string;
+    pedagogicalIntent: string;
+    adaptationLabel: string;
+  } | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [correctIndex, setCorrectIndex] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeQuestion, setActiveQuestion] = useState<{
     id?: string;
+    seedToken?: string;
     prompt: string;
     displayOptions: string[];
     rawOptions: string[];
@@ -176,6 +185,7 @@ export default function NeuralLabCanvas({
 
     setActiveQuestion({
       id: question.id || `q_${Date.now()}`,
+      seedToken: question.seedToken || payload.seedToken || '',
       prompt: question.prompt,
       displayOptions: shuffled.map((s) => s.text),
       misconceptions: shuffled.map((s) => s.misconception),
@@ -196,7 +206,8 @@ export default function NeuralLabCanvas({
     u = activeSelectionRef.current.unit,
     diff = difficulty,
     targetLang = activeLang,
-    forceVariation = false
+    forceVariation = false,
+    customSeed?: string
   ) => {
     const requestId = ++activeRequestIdRef.current;
     setIsGenerating(true);
@@ -210,8 +221,11 @@ export default function NeuralLabCanvas({
       }
     }, 15000);
 
+    setStreamTransition(null);
+
     try {
       const currentPrompt = activeQuestionRef.current?.prompt || '';
+      const seedToUse = customSeed !== undefined && customSeed !== '' ? customSeed : undefined;
       const res = await dispatch('QuestionEngine', {
         intent: 'synthesize:governed',
         payload: {
@@ -222,7 +236,8 @@ export default function NeuralLabCanvas({
           difficulty: diff,
           lang: targetLang,
           forceVariation,
-          excludePrompt: currentPrompt,
+          excludePrompt: customSeed ? '' : currentPrompt,
+          seed: seedToUse,
           nonce: Math.floor(Math.random() * 1000000),
         },
       });
@@ -232,7 +247,7 @@ export default function NeuralLabCanvas({
       if (res.ok && res.data) {
         let questionData = res.data;
         // Strict guard: If the returned question stem matches the current active question stem, rotate to an alternate question
-        if (currentPrompt && questionData.prompt && questionData.prompt.trim() === currentPrompt.trim()) {
+        if (!customSeed && currentPrompt && questionData.prompt && questionData.prompt.trim() === currentPrompt.trim()) {
           const offline = findCurriculumKnowledge(ks, sub, u);
           const alt = offline?.questions?.find((q) => q.prompt.trim() !== currentPrompt.trim());
           if (alt) {
@@ -263,6 +278,7 @@ export default function NeuralLabCanvas({
           subject: sub,
           unit: u,
           hint: questionData.hint || '',
+          seedToken: questionData.seedToken,
         });
       }
     } catch {
@@ -335,7 +351,28 @@ export default function NeuralLabCanvas({
       }
     }
 
-    // Record Metrics
+    // Update in-memory cognitive trajectory lattice
+    const updatedTrajectory = TrajectoryEngine.recordAttempt({
+      seedToken: activeQuestion.seedToken || 'unknown_seed',
+      topicId: `${slugify(activeQuestion.subject)}_${slugify(activeQuestion.unit)}`,
+      selectedCoordinate: idx,
+      correctCoordinate: correctIndex,
+      isCorrect,
+      misconceptionTag: !isCorrect ? activeQuestion.misconceptions?.[idx] : undefined,
+      timestamp: Date.now(),
+    });
+    setTrajectoryState(updatedTrajectory);
+
+    // Compute deterministic next coordinate stream transition
+    const nextTransition = TrajectoryEngine.deriveNextSeedStream({
+      currentSeedToken: activeQuestion.seedToken || 'unknown_seed',
+      previousCoordinate: idx,
+      isCorrect,
+      misconceptionTag: !isCorrect ? activeQuestion.misconceptions?.[idx] : undefined,
+    });
+    setStreamTransition(nextTransition);
+
+    // Record Metrics with Coordinate Telemetry
     dispatch('TelemetryNode', {
       intent: 'record:answer',
       payload: {
@@ -344,6 +381,10 @@ export default function NeuralLabCanvas({
         topicId: `${slugify(activeQuestion.subject)}_${slugify(activeQuestion.unit)}`,
         isCorrect,
         userAnswer: activeQuestion.displayOptions[idx],
+        seedToken: activeQuestion.seedToken,
+        selectedCoordinate: idx,
+        correctCoordinate: correctIndex,
+        misconceptionTag: !isCorrect ? activeQuestion.misconceptions?.[idx] : undefined,
       },
     });
   };
@@ -685,6 +726,20 @@ export default function NeuralLabCanvas({
               correctIndex={correctIndex}
               score={score}
               streak={streak}
+              seedToken={activeQuestion.seedToken}
+              trajectoryState={trajectoryState}
+              streamTransition={streamTransition}
+              onSeedJump={(customSeed) => {
+                requestQuestion(
+                  selectedKeyStage,
+                  selectedSubject,
+                  selectedUnit,
+                  difficulty,
+                  activeLang,
+                  false,
+                  customSeed
+                );
+              }}
               hint={activeQuestion.hint}
               explanation={activeQuestion.explanation}
               misconceptions={activeQuestion.misconceptions}
@@ -695,7 +750,18 @@ export default function NeuralLabCanvas({
                 requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
               }}
               onSelectOption={handleSelectOption}
-              onNextQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false)}
+              onNextQuestion={() => {
+                const targetSeed = streamTransition?.nextSeedToken;
+                requestQuestion(
+                  selectedKeyStage,
+                  selectedSubject,
+                  selectedUnit,
+                  difficulty,
+                  activeLang,
+                  false,
+                  targetSeed
+                );
+              }}
               onParallelVariation={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, true)}
             />
           </>

@@ -19,6 +19,9 @@ export interface StudentRecord {
   isCorrect: boolean;
   userAnswer: string;
   errorTag?: string;
+  seedToken?: string;
+  selectedCoordinate?: number;
+  correctCoordinate?: number;
 }
 
 export interface VfsViewRecord {

@@ -12,6 +12,7 @@ import {
 } from '../engine/translationService';
 import { ProceduralManipulative } from './ProceduralManipulative';
 import { ASTKnowledgeSeed } from '../engine/seedInflationEngine';
+import { CognitiveTrajectoryState } from '../engine/trajectoryEngine';
 
 interface Props {
   subject: string;
@@ -22,6 +23,14 @@ interface Props {
   correctIndex: number | null;
   score: number;
   streak: number;
+  seedToken?: string;
+  onSeedJump?: (seed: string) => void;
+  trajectoryState?: CognitiveTrajectoryState | null;
+  streamTransition?: {
+    nextSeedToken: string;
+    pedagogicalIntent: string;
+    adaptationLabel: string;
+  } | null;
   hint?: string;
   explanation?: string;
   misconceptions?: string[];
@@ -42,6 +51,10 @@ export const QuestionCard: React.FC<Props> = ({
   correctIndex,
   score,
   streak,
+  seedToken,
+  onSeedJump,
+  trajectoryState,
+  streamTransition,
   hint,
   explanation,
   misconceptions,
@@ -57,6 +70,9 @@ export const QuestionCard: React.FC<Props> = ({
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [hintStage, setHintStage] = useState<number>(0); // 0 = hidden, 1 = conceptual nudge, 2 = step method
   const [showMentalMirror, setShowMentalMirror] = useState<boolean>(false);
+  const [seedCopied, setSeedCopied] = useState<boolean>(false);
+  const [isEditingSeed, setIsEditingSeed] = useState<boolean>(false);
+  const [customSeedInput, setCustomSeedInput] = useState<string>('');
 
   const isLanguageSubject = useMemo(() => {
     const subLower = (subject || '').toLowerCase();
@@ -412,6 +428,136 @@ export const QuestionCard: React.FC<Props> = ({
           <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#d97706', marginLeft: '8px' }}>
             ⭐ {translatedFeedback.stars}: {score} &nbsp;&nbsp; 🔥 {translatedFeedback.streak}: {streak}
           </div>
+
+          {/* Seed Token & Deterministic Audit Pill */}
+          {seedToken && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                padding: '3px 8px',
+                fontSize: '0.78rem',
+              }}
+            >
+              <span style={{ fontWeight: 700, color: '#64748b' }}>🌱 Seed:</span>
+              <code
+                style={{
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  background: '#e2e8f0',
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                }}
+              >
+                {seedToken}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(seedToken);
+                  setSeedCopied(true);
+                  setTimeout(() => setSeedCopied(false), 2000);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: seedCopied ? '#16a34a' : '#64748b',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                }}
+                title="Copy seed to clipboard for reproducibility audit"
+              >
+                {seedCopied ? '✓ Copied' : '📋 Copy'}
+              </button>
+              {onSeedJump && (
+                isEditingSeed ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (customSeedInput.trim()) {
+                        onSeedJump(customSeedInput.trim());
+                        setIsEditingSeed(false);
+                        setCustomSeedInput('');
+                      }
+                    }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <input
+                      type="text"
+                      value={customSeedInput}
+                      onChange={(e) => setCustomSeedInput(e.target.value)}
+                      placeholder="e.g. 48291"
+                      autoFocus
+                      style={{
+                        width: '70px',
+                        padding: '1px 4px',
+                        fontSize: '0.75rem',
+                        border: '1px solid #3b82f6',
+                        borderRadius: '4px',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        background: '#2563eb',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '1px 5px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Go
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSeed(false)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#94a3b8',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomSeedInput(seedToken);
+                      setIsEditingSeed(true);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                      textDecoration: 'underline',
+                    }}
+                    title="Enter custom seed to replay an exact question"
+                  >
+                    Jump ➔
+                  </button>
+                )
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -500,6 +646,60 @@ export const QuestionCard: React.FC<Props> = ({
           </div>
           <div style={{ fontSize: '0.84rem', color: '#701a75', lineHeight: 1.4 }}>
             A pupil named <strong>Jamie</strong> submitted an answer with a common cognitive trap. Select an option below to diagnose Jamie's reasoning error and reveal the axiomatic pitfall!
+          </div>
+        </div>
+      )}
+
+      {/* Predictive Cognitive Trajectory Radar */}
+      {trajectoryState && trajectoryState.totalAttempts > 0 && (
+        <div
+          style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '10px',
+            padding: '8px 14px',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '8px',
+            fontSize: '0.82rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1rem' }}>🧭</span>
+            <span style={{ fontWeight: 700, color: '#334155' }}>
+              Cognitive Trajectory:
+            </span>
+            {trajectoryState.activeTrapVector ? (
+              <span
+                style={{
+                  background: '#fee2e2',
+                  color: '#991b1b',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                }}
+              >
+                ⚠️ {trajectoryState.activeTrapVector} ({Math.round(trajectoryState.trapConfidence * 100)}% convergence)
+              </span>
+            ) : (
+              <span
+                style={{
+                  background: '#dcfce7',
+                  color: '#166534',
+                  fontWeight: 700,
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                }}
+              >
+                ✅ Axiomatic Alignment
+              </span>
+            )}
+          </div>
+          <div style={{ color: '#64748b', fontSize: '0.78rem' }}>
+            Entropy: <strong>{trajectoryState.coordinateEntropy}</strong> (0=Systematic, 1=Guessing)
           </div>
         </div>
       )}
@@ -922,6 +1122,33 @@ export const QuestionCard: React.FC<Props> = ({
                 cpaType={inferredCpaType}
                 seedTopic={unit}
               />
+            </div>
+          )}
+
+          {/* Dynamic Coordinate Stream Transition Vector */}
+          {streamTransition && (
+            <div
+              style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '0.82rem',
+                color: '#166534',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>⚡</span>
+                <span>
+                  <strong>Coordinate Stream Transition:</strong> {streamTransition.adaptationLabel}
+                </span>
+              </div>
+              <code style={{ background: '#dcfce7', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, fontSize: '0.78rem' }}>
+                {streamTransition.nextSeedToken}
+              </code>
             </div>
           )}
 

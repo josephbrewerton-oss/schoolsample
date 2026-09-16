@@ -13,6 +13,7 @@ import { MathQuestionGenerator } from './mathQuestionGenerator';
 import { ASTFlowGovernor } from './astGovernor';
 import { hypervisor, setHypercallDispatcher } from './hypervisor';
 import { extractQuestionFromAst } from '../utils/astQuestionExtractor';
+import { PRNG } from './prng';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -320,6 +321,10 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const difficulty = (payload?.difficulty || 'challenger') as 'warmup' | 'challenger' | 'brainbuster';
           const lang = payload?.lang || 'en';
           const excludePrompt = (payload?.excludePrompt || '').trim();
+          const providedSeed = payload?.seed !== undefined && payload?.seed !== '' ? String(payload.seed) : undefined;
+          const activeSeedToken = providedSeed || PRNG.generateSeedToken();
+          const prng = new PRNG(activeSeedToken);
+
           const stageGuidelines = getStageGuidelines(stage);
           const langMeta = SUPPORTED_LANGUAGES[lang];
           const langInstruction = lang !== 'en' && langMeta
@@ -335,9 +340,10 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           // 1. Deterministic Fast-Path for Mathematics & Calculations (< 1ms, 0% hallucination)
           if (MathQuestionGenerator.isMathSubject(subject, topic)) {
-            const mathQ = MathQuestionGenerator.generate(stage, topic);
+            const mathQ = MathQuestionGenerator.generate(stage, topic, activeSeedToken);
             let mathCandidate = {
               id: mathQ.id,
+              seedToken: mathQ.seedToken || activeSeedToken,
               axiom: `Standard mathematical operations and principles for ${stage}.`,
               trap: `Common procedural or conceptual calculation slips.`,
               hook: `How do numbers and mathematical rules structure real-world quantities?`,
@@ -384,7 +390,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             const lastPrompt = recentTopicQuestionMap.get(topicCacheKey);
             const eligible = offlineKnowledge.questions.filter((q) => q.prompt.trim() !== lastPrompt && q.prompt.trim() !== excludePrompt);
             const chosen = eligible.length > 0
-              ? eligible[Math.floor(Math.random() * eligible.length)]
+              ? prng.pick(eligible)
               : offlineKnowledge.questions.find((q) => q.prompt.trim() !== excludePrompt) || offlineKnowledge.questions[0];
             offlineQuestion = chosen;
           }
@@ -398,8 +404,13 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           let basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
           
-          // If only 1 offline question exists or base prompt matches excludePrompt, rotate to socratic/hook perspective so questions never repeat back-to-back
-          if ((basePrompt.trim() === excludePrompt || (offlineKnowledge && offlineKnowledge.questions.length === 1 && currentVariant % 2 === 1)) && offlineKnowledge?.socraticPivot) {
+          // Coordinate Stream Handling:
+          // If the seed was generated as a SOCRATIC counter-example, pivot immediately to the counter-example/diagnostic probe
+          if (activeSeedToken.startsWith('SOCRATIC-') && offlineKnowledge?.socraticPivot) {
+            basePrompt = `⚖️ [Cognitive Counter-Proof] ${offlineKnowledge.socraticPivot}`;
+          } else if (activeSeedToken.startsWith('AXIOM-') && offlineKnowledge?.hook) {
+            basePrompt = `🚀 [Mastery Application] ${offlineKnowledge.hook}`;
+          } else if ((basePrompt.trim() === excludePrompt || (offlineKnowledge && offlineKnowledge.questions.length === 1 && currentVariant % 2 === 1)) && offlineKnowledge?.socraticPivot) {
             basePrompt = `🤔 [Diagnostic Inquiry] ${offlineKnowledge.socraticPivot}`;
           } else if (basePrompt.trim() === excludePrompt && offlineKnowledge?.hook) {
             basePrompt = `🌍 [Real-World Application] ${offlineKnowledge.hook}`;
@@ -411,7 +422,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
               `🎯 [Concept Clone] ${offlineQuestion.prompt}`,
               `💡 [Parallel Scenario] ${offlineQuestion.prompt}`,
             ];
-            basePrompt = masteryVariations[Math.floor(Math.random() * masteryVariations.length)];
+            basePrompt = prng.pick(masteryVariations);
           }
 
           const displayPrompt = difficulty === 'brainbuster' 
@@ -428,6 +439,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           });
 
           let resultCandidate = {
+            id: `q_${activeSeedToken}`,
+            seedToken: activeSeedToken,
             axiom: offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
             trap: offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
             hook: offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
@@ -837,6 +850,10 @@ One reflective question to verify understanding.`;
             topicId: payload.topicId,
             isCorrect: payload.isCorrect,
             userAnswer: payload.userAnswer,
+            seedToken: payload.seedToken,
+            selectedCoordinate: payload.selectedCoordinate,
+            correctCoordinate: payload.correctCoordinate,
+            misconceptionTag: payload.misconceptionTag,
           });
           return true;
         }
