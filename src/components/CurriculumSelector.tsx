@@ -36,8 +36,62 @@ export const CurriculumSelector: React.FC<Props> = ({
   onDownloadReport,
 }) => {
   const catalogue = curriculumTree && Object.keys(curriculumTree).length > 0 ? curriculumTree : DEFAULT_OAK_CATALOGUE;
-  const availableStages = Object.keys(catalogue);
-  const safeStage = availableStages.includes(keyStage) ? keyStage : (availableStages[0] || keyStage);
+
+  // Helper to format stage display label cleanly
+  const getStageLabel = (stageKey: string): string => {
+    const rawStage = catalogue[stageKey];
+    if (rawStage && typeof rawStage === 'object' && rawStage.title) {
+      return rawStage.title;
+    }
+    const idMap: Record<string, string> = {
+      ks1: 'Key Stage 1',
+      ks2: 'Key Stage 2',
+      ks3: 'Key Stage 3',
+      ks4: 'Key Stage 4 (GCSE)',
+      gcse: 'Key Stage 4 (GCSE)',
+    };
+    return idMap[stageKey.toLowerCase()] || stageKey;
+  };
+
+  const allStageKeys = Object.keys(catalogue);
+  // Deduplicate stages so that both aliases (e.g. 'ks1' and 'Key Stage 1') don't create duplicate options
+  const availableStages = allStageKeys.filter((k, idx) => {
+    const label = getStageLabel(k);
+    return allStageKeys.findIndex((otherKey) => getStageLabel(otherKey) === label) === idx;
+  });
+
+  // Resolve safe stage key matching either key directly, stage.title, or alias
+  const resolveStageKey = (inputStage: string): string => {
+    if (!inputStage) return availableStages[0] || '';
+    if (availableStages.includes(inputStage)) return inputStage;
+
+    const matched = availableStages.find((k) => {
+      const obj = catalogue[k];
+      if (obj && typeof obj === 'object') {
+        if (obj.title && obj.title.toLowerCase() === inputStage.toLowerCase()) return true;
+        if (obj.id && obj.id.toLowerCase() === inputStage.toLowerCase()) return true;
+      }
+      return getStageLabel(k).toLowerCase() === inputStage.toLowerCase();
+    });
+
+    if (matched) return matched;
+
+    const norm = inputStage.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const aliasMatched = availableStages.find((k) => {
+      const kNorm = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return (
+        kNorm === norm ||
+        (norm.includes('2') && kNorm.includes('2')) ||
+        (norm.includes('1') && kNorm.includes('1')) ||
+        (norm.includes('3') && kNorm.includes('3')) ||
+        (norm.includes('4') && kNorm.includes('4'))
+      );
+    });
+
+    return aliasMatched || availableStages[0] || inputStage;
+  };
+
+  const safeStage = resolveStageKey(keyStage);
 
   // 1. Safely extract subject list as [{ id, title, raw }]
   const getSubjectItems = (stageKey: string): { label: string; raw: any }[] => {
@@ -69,12 +123,39 @@ export const CurriculumSelector: React.FC<Props> = ({
 
   const subjectItems = getSubjectItems(safeStage);
   const availableSubjectLabels = subjectItems.map((s) => s.label);
-  const safeSubject = availableSubjectLabels.includes(subject) ? subject : (availableSubjectLabels[0] || '');
+  const matchedSubjectLabel =
+    availableSubjectLabels.find((lbl) => lbl === subject) ||
+    availableSubjectLabels.find((lbl) => {
+      const l1 = lbl.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const s1 = (subject || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return (
+        l1 === s1 ||
+        (l1.includes('math') && s1.includes('math')) ||
+        (l1.includes('sci') && s1.includes('sci')) ||
+        (l1.includes('eng') && s1.includes('eng'))
+      );
+    }) ||
+    availableSubjectLabels[0] ||
+    '';
+  const safeSubject = matchedSubjectLabel;
 
   // 2. Safely extract unit strings
   const getUnitItems = (stageKey: string, targetSubLabel: string): string[] => {
     const sItems = getSubjectItems(stageKey);
-    const matchedSubject = sItems.find((s) => s.label === targetSubLabel);
+    const matchedSubject =
+      sItems.find((s) => s.label === targetSubLabel) ||
+      sItems.find((s) => {
+        const l = s.label.toLowerCase();
+        const t = (targetSubLabel || '').toLowerCase();
+        return (
+          l.includes(t) ||
+          t.includes(l) ||
+          (l.includes('math') && t.includes('math')) ||
+          (l.includes('sci') && t.includes('sci')) ||
+          (l.includes('eng') && t.includes('eng')) ||
+          (l.includes('mfl') && (t.includes('french') || t.includes('spanish') || t.includes('mfl')))
+        );
+      });
     if (!matchedSubject) return [];
 
     const subData = matchedSubject.raw;
@@ -95,14 +176,25 @@ export const CurriculumSelector: React.FC<Props> = ({
   };
 
   const availableUnits = getUnitItems(safeStage, safeSubject);
-  const safeUnit = availableUnits.includes(unit) ? unit : (availableUnits[0] || '');
+  const matchedUnit =
+    availableUnits.find((u) => u === unit) ||
+    availableUnits.find((u) => {
+      const u1 = u.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const target = (unit || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      return u1 === target || u1.includes(target) || target.includes(u1);
+    }) ||
+    availableUnits[0] ||
+    '';
+  const safeUnit = matchedUnit;
 
   const handleStageSelect = (newKs: string) => {
+    const stageObj = catalogue[newKs];
+    const emittedStage = (stageObj && typeof stageObj === 'object' && stageObj.title) ? stageObj.title : getStageLabel(newKs);
     const newSubItems = getSubjectItems(newKs);
     const firstSub = newSubItems[0]?.label || '';
     const units = getUnitItems(newKs, firstSub);
     const firstUnit = units[0] || '';
-    onKeyStageChange(newKs, firstSub, firstUnit);
+    onKeyStageChange(emittedStage, firstSub, firstUnit);
   };
 
   const handleSubjectSelect = (newSub: string) => {
@@ -147,7 +239,7 @@ export const CurriculumSelector: React.FC<Props> = ({
         >
           {availableStages.map((ks) => (
             <option key={ks} value={ks}>
-              {ks}
+              {getStageLabel(ks)}
             </option>
           ))}
         </select>

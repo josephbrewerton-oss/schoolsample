@@ -41,7 +41,7 @@ export class MathQuestionGenerator {
   }
 
   public static generate(keyStage: string, topic: string): GeneratedMathQuestion {
-    const ks = (keyStage || '').toLowerCase();
+    const ks = (keyStage || '').toLowerCase().replace(/key\s*stage\s*/g, 'ks');
     const t = (topic || '').toLowerCase();
 
     // Route based on topic or Key Stage

@@ -75,6 +75,7 @@ export interface HypervisorInferenceRequest {
   angle?: string;
   seed?: number;
   timeoutMs?: number;
+  excludePrompt?: string;
 }
 
 export interface HypervisorInferenceResult {
@@ -94,6 +95,7 @@ export class HypervisorHost {
   private signalingBus: BroadcastChannel | null = null;
   private hypervisorBus: BroadcastChannel | null = null;
   private workerIframe: HTMLIFrameElement | null = null;
+  private recentPromptsByTopic = new Map<string, string[]>();
 
   // WebRTC RTCDataChannel Loopback Management
   private pc: RTCPeerConnection | null = null;
@@ -245,7 +247,7 @@ export class HypervisorHost {
     if (!el) {
       el = document.createElement('iframe');
       el.id = 'neural-worker-guest-vm';
-      el.src = `${(import.meta as any).env?.BASE_URL || '/'}worker.html?v=1.2.2`;
+      el.src = `${(import.meta as any).env?.BASE_URL || '/'}worker.html?v=1.3.0`;
       el.style.display = 'none';
       el.style.width = '0px';
       el.style.height = '0px';
@@ -834,6 +836,7 @@ export class HypervisorHost {
         const topicKey = `${data.keyStage || 'KS1'}_${data.subject || 'General'}_${data.unit || 'Topic'}`
           .toLowerCase()
           .replace(/[^a-z0-9_]/g, '_');
+        this.recordTopicPrompt(topicKey, audit.governedQuestion.prompt);
         await saveVerifiedAST(topicKey, audit.sanitizedLisp);
         await saveVfsView(`/vfs/ast/${topicKey}.lisp`, audit.sanitizedLisp);
       } catch (persistErr) {
@@ -870,13 +873,29 @@ export class HypervisorHost {
     }
   }
 
+  private recordTopicPrompt(topicKey: string, prompt: string) {
+    if (!prompt) return;
+    const history = this.recentPromptsByTopic.get(topicKey) || [];
+    const trimmed = prompt.trim();
+    const updated = [trimmed, ...history.filter((p) => p !== trimmed)].slice(0, 10);
+    this.recentPromptsByTopic.set(topicKey, updated);
+  }
+
   private synthesizeEmergencyQuestion(req: HypervisorInferenceRequest): { governedQuestion: any; sanitizedLisp: string } {
     const stage = req.keyStage || 'Key Stage 2';
     const subject = req.subject || 'Science';
     const topic = req.unit || 'Curriculum';
+    const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    const history = this.recentPromptsByTopic.get(topicCacheKey) || [];
+    const exclude = (req.excludePrompt || '').trim();
 
     if (MathQuestionGenerator.isMathSubject(subject, topic)) {
-      const mathQ = MathQuestionGenerator.generate(stage, topic);
+      let mathQ = MathQuestionGenerator.generate(stage, topic);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (mathQ.prompt.trim() !== exclude && !history.includes(mathQ.prompt.trim())) break;
+        mathQ = MathQuestionGenerator.generate(stage, topic);
+      }
+      this.recordTopicPrompt(topicCacheKey, mathQ.prompt);
       const optionsLisp = mathQ.options.map((opt) => JSON.stringify(opt)).join(' ');
       const canonicalLisp = `(:route "quiz:mcq"\n :scratchpad ${JSON.stringify(mathQ.hint || topic)}\n :prompt ${JSON.stringify(mathQ.prompt)}\n :options (${optionsLisp})\n :answer-key ${mathQ.answerKey}\n :hint ${JSON.stringify(mathQ.hint)}\n :governed true\n :rules-target "worker.html")`;
       return {
@@ -886,23 +905,94 @@ export class HypervisorHost {
     }
 
     const offline = findCurriculumKnowledge(stage, subject, topic);
-    const offlineQ = offline?.questions?.[0];
-    const axiom = offline?.coreAxiom || `Fundamental curriculum principle of ${topic} (${stage} ${subject}).`;
-    const trap = offline?.cognitiveTrap || `Common pupil misconception regarding ${topic}.`;
-    const prompt = offlineQ?.prompt || `Which statement accurately describes ${topic}?`;
-    const options = offlineQ?.options || [axiom, trap, `Opposite condition of ${topic}.`, `Unrelated property of ${topic}.`];
-    const answerKey = offlineQ ? offlineQ.answerKey : 0;
+    const questions = offline?.questions || [];
+
+    // Filter out both the explicit excluded prompt and recently presented questions
+    const eligible = questions.filter(
+      (q) => q.prompt.trim() !== exclude && !history.includes(q.prompt.trim())
+    );
+
+    let dynamicPrompt = '';
+    let dynamicOptions: string[] = [];
+    let dynamicAnswerKey = 0;
+    let dynamicHint = '';
+    let dynamicExplanation = '';
+
+    if (eligible.length > 0) {
+      const chosenQ = eligible[Math.floor(Math.random() * eligible.length)];
+      dynamicPrompt = chosenQ.prompt;
+      dynamicOptions = [...chosenQ.options];
+      dynamicAnswerKey = chosenQ.answerKey;
+      dynamicHint = chosenQ.hint || 'Focus on foundational concepts.';
+      dynamicExplanation = chosenQ.explanation || 'Review the core definition.';
+    } else {
+      // Rotate to distinct pedagogical inquiry perspectives so identical questions are never repeated back-to-back
+      const axiom = offline?.coreAxiom || `Fundamental curriculum principle of ${topic} (${stage} ${subject}).`;
+      const trap = offline?.cognitiveTrap || `Common pupil misconception regarding ${topic}.`;
+      const hook = offline?.hook;
+      const socratic = offline?.socraticPivot;
+      const step = offline?.guidedStep;
+      const level3 = offline?.scaffoldHints?.level3;
+
+      const perspectives: Array<() => { prompt: string; options: string[]; answerKey: number; hint: string; explanation: string }> = [
+        () => ({
+          prompt: `🤔 [Diagnostic Inquiry] ${socratic || `In ${topic}, which condition is essential for the primary process to occur?`}`,
+          options: [axiom, trap, `Opposite condition of ${topic}.`, `Unrelated property of ${topic}.`],
+          answerKey: 0,
+          hint: offline?.scaffoldHints?.level1 || 'Think carefully about the root cause.',
+          explanation: `Curriculum principle: ${axiom}`,
+        }),
+        () => ({
+          prompt: `🌍 [Real-World Application] ${hook || `How does ${topic} directly impact everyday physical systems?`}`,
+          options: [axiom, trap, `It remains completely inert under all conditions.`, `It only applies to theoretical laboratory vacuums.`],
+          answerKey: 0,
+          hint: 'Connect the classroom concept to observable reality.',
+          explanation: `Application principle: ${axiom}`,
+        }),
+        () => ({
+          prompt: `🔬 [Mechanism Analysis] During ${topic}, which step represents the correct cause-and-effect relationship?`,
+          options: [step || axiom, trap, `Reactions cease spontaneously without any external change.`, `Energy is destroyed rather than transferred.`],
+          answerKey: 0,
+          hint: level3 || 'Trace each stage in sequence.',
+          explanation: `Scientific mechanism: ${step || axiom}`,
+        }),
+        () => ({
+          prompt: `⚠️ [Misconception Challenge] Which of the following is a widespread misconception regarding ${topic}?`,
+          options: [trap, axiom, `Scientists universally verify empirical evidence.`, `Physical laws remain constant in standard conditions.`],
+          answerKey: 0,
+          hint: 'Look for an idea that sounds intuitively believable but is scientifically flawed.',
+          explanation: `Misconception trap: ${trap}`,
+        }),
+      ];
+
+      // Find first perspective not in history and not matching exclude
+      let chosenPerspective = perspectives[0]();
+      for (const p of perspectives) {
+        const test = p();
+        if (test.prompt.trim() !== exclude && !history.includes(test.prompt.trim())) {
+          chosenPerspective = test;
+          break;
+        }
+      }
+      dynamicPrompt = chosenPerspective.prompt;
+      dynamicOptions = chosenPerspective.options;
+      dynamicAnswerKey = chosenPerspective.answerKey;
+      dynamicHint = chosenPerspective.hint;
+      dynamicExplanation = chosenPerspective.explanation;
+    }
+
+    this.recordTopicPrompt(topicCacheKey, dynamicPrompt);
 
     const governed = ASTFlowGovernor.govern(
       {
-        prompt,
-        options,
-        answerKey,
-        hint: offlineQ?.hint || offline?.scaffoldHints.level1 || 'Focus on foundational concepts.',
-        explanation: offlineQ?.explanation || offline?.scaffoldHints.level2,
+        prompt: dynamicPrompt,
+        options: dynamicOptions,
+        answerKey: dynamicAnswerKey,
+        hint: dynamicHint,
+        explanation: dynamicExplanation,
         misconceptions: [
           'Correct! Accurately applies foundational rules.',
-          `Trap: ${trap}`,
+          `Trap: ${offline?.cognitiveTrap || 'Common conceptual error.'}`,
           'Opposite condition.',
           'Unrelated property.',
         ],
@@ -913,14 +1003,14 @@ export class HypervisorHost {
     );
 
     const finalQ = governed.sanitizedQuestion || {
-      prompt,
-      options,
-      answerKey,
-      hint: 'Focus on core concepts.',
+      prompt: dynamicPrompt,
+      options: dynamicOptions,
+      answerKey: dynamicAnswerKey,
+      hint: dynamicHint,
     };
 
     const optionsLisp = finalQ.options.map((opt) => JSON.stringify(opt)).join(' ');
-    const canonicalLisp = `(:route "quiz:mcq"\n :scratchpad ${JSON.stringify(axiom)}\n :prompt ${JSON.stringify(finalQ.prompt)}\n :options (${optionsLisp})\n :answer-key ${finalQ.answerKey}\n :hint ${JSON.stringify(finalQ.hint || 'Focus on core concepts.')}\n :governed true\n :rules-target "worker.html")`;
+    const canonicalLisp = `(:route "quiz:mcq"\n :scratchpad ${JSON.stringify(offline?.coreAxiom || topic)}\n :prompt ${JSON.stringify(finalQ.prompt)}\n :options (${optionsLisp})\n :answer-key ${finalQ.answerKey}\n :hint ${JSON.stringify(finalQ.hint || 'Focus on core concepts.')}\n :governed true\n :rules-target "worker.html")`;
 
     return {
       governedQuestion: finalQ,
@@ -961,13 +1051,15 @@ export class HypervisorHost {
     const violations: string[] = [];
     const repairs: string[] = [];
 
-    // 1. Rule :enforce-lisp-sexpr
+    // 1. Universal question extraction across S-Expressions, JSON, and structured text
     let clean = (rawString || '').trim();
     if (clean.includes('```')) {
       violations.push(':enforce-lisp-sexpr (markdown fences detected in output)');
-      clean = clean.replace(/```(?:lisp|scheme)?/gi, '').replace(/```/g, '').trim();
+      clean = clean.replace(/```(?:lisp|scheme|json)?/gi, '').replace(/```/g, '').trim();
       repairs.push('Stripped markdown fence formatting');
     }
+
+    let questionCandidate = extractQuestionFromAst(clean);
 
     const healed = healSExprString(clean);
     if (healed !== clean) {
@@ -977,8 +1069,17 @@ export class HypervisorHost {
 
     const firstParen = clean.indexOf('(');
     const lastParen = clean.lastIndexOf(')');
-    if (firstParen === -1 || lastParen === -1 || lastParen <= firstParen) {
-      violations.push(':enforce-lisp-sexpr (missing enclosing parentheses)');
+    if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+      clean = clean.substring(firstParen, lastParen + 1);
+      const parsedNode = EngineFlow.parse(clean);
+      const astCandidate = EngineFlow.normalizeASTToQuestion(parsedNode);
+      if (astCandidate) {
+        questionCandidate = astCandidate;
+      }
+    } else if (questionCandidate && questionCandidate.prompt && Array.isArray(questionCandidate.options)) {
+      repairs.push('Compiled raw structured data into canonical AST S-Expression');
+    } else {
+      violations.push(':enforce-lisp-sexpr (missing enclosing parentheses and unparsed structure)');
       return {
         passed: false,
         ruleViolations: violations,
@@ -988,14 +1089,20 @@ export class HypervisorHost {
       };
     }
 
-    clean = clean.substring(firstParen, lastParen + 1);
-
-    // 2. Parse into AST Node tree
-    const parsedNode = EngineFlow.parse(clean);
-    let questionCandidate = EngineFlow.normalizeASTToQuestion(parsedNode) || extractQuestionFromAst(clean);
-
-    if (!questionCandidate) {
+    if (!questionCandidate || !questionCandidate.prompt || !Array.isArray(questionCandidate.options)) {
       violations.push(':required-fields (failed to extract question structure)');
+      return {
+        passed: false,
+        ruleViolations: violations,
+        autoRepairs: repairs,
+        governedQuestion: null,
+        sanitizedLisp: rawString,
+      };
+    }
+
+    // Check anti-duplication rule: Prompt must not match req.excludePrompt
+    if (req.excludePrompt && questionCandidate.prompt.trim().toLowerCase() === req.excludePrompt.trim().toLowerCase()) {
+      violations.push(':anti-duplication (model repeated current question prompt)');
       return {
         passed: false,
         ruleViolations: violations,

@@ -319,6 +319,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const curriculum = payload?.curriculum || 'uk_oak';
           const difficulty = (payload?.difficulty || 'challenger') as 'warmup' | 'challenger' | 'brainbuster';
           const lang = payload?.lang || 'en';
+          const excludePrompt = (payload?.excludePrompt || '').trim();
           const stageGuidelines = getStageGuidelines(stage);
           const langMeta = SUPPORTED_LANGUAGES[lang];
           const langInstruction = lang !== 'en' && langMeta
@@ -380,15 +381,12 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           let offlineQuestion = null;
 
           if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
-            const lastId = recentTopicQuestionMap.get(topicCacheKey);
-            const eligible = offlineKnowledge.questions.filter((q) => q.id !== lastId);
+            const lastPrompt = recentTopicQuestionMap.get(topicCacheKey);
+            const eligible = offlineKnowledge.questions.filter((q) => q.prompt.trim() !== lastPrompt && q.prompt.trim() !== excludePrompt);
             const chosen = eligible.length > 0
               ? eligible[Math.floor(Math.random() * eligible.length)]
-              : offlineKnowledge.questions[0];
+              : offlineKnowledge.questions.find((q) => q.prompt.trim() !== excludePrompt) || offlineKnowledge.questions[0];
             offlineQuestion = chosen;
-            if (chosen?.id) {
-              recentTopicQuestionMap.set(topicCacheKey, chosen.id);
-            }
           }
 
           const currentVariant = fallbackVariantMap.get(topicCacheKey) || 0;
@@ -400,9 +398,11 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           let basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
           
-          // If only 1 offline question exists and it was just shown, rotate to socratic perspective so questions never repeat back-to-back
-          if (offlineKnowledge && offlineKnowledge.questions.length === 1 && currentVariant % 2 === 1 && offlineKnowledge.socraticPivot) {
+          // If only 1 offline question exists or base prompt matches excludePrompt, rotate to socratic/hook perspective so questions never repeat back-to-back
+          if ((basePrompt.trim() === excludePrompt || (offlineKnowledge && offlineKnowledge.questions.length === 1 && currentVariant % 2 === 1)) && offlineKnowledge?.socraticPivot) {
             basePrompt = `🤔 [Diagnostic Inquiry] ${offlineKnowledge.socraticPivot}`;
+          } else if (basePrompt.trim() === excludePrompt && offlineKnowledge?.hook) {
+            basePrompt = `🌍 [Real-World Application] ${offlineKnowledge.hook}`;
           }
 
           if (payload?.forceVariation && offlineQuestion) {
@@ -489,10 +489,11 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
                 lang,
                 angle: chosenAngle,
                 seed: randomSeed,
-                timeoutMs: 12000,
+                timeoutMs: 15000,
+                excludePrompt,
               });
 
-              if (vmResult.ok && vmResult.question) {
+              if (vmResult.ok && vmResult.question && vmResult.question.prompt.trim() !== excludePrompt) {
                 resultCandidate = {
                   ...resultCandidate,
                   ...vmResult.question,
@@ -620,6 +621,20 @@ Return strictly a single JSON object with no Markdown:
             } catch (err) {
               // Gracefully keep resultCandidate in default English
             }
+          }
+
+          if (excludePrompt && resultCandidate.prompt.trim() === excludePrompt) {
+            if (offlineKnowledge?.socraticPivot) {
+              resultCandidate.prompt = `🤔 [Diagnostic Inquiry] ${offlineKnowledge.socraticPivot}`;
+            } else if (offlineKnowledge?.hook) {
+              resultCandidate.prompt = `🌍 [Real-World Application] ${offlineKnowledge.hook}`;
+            } else {
+              resultCandidate.prompt = `🔄 [Parallel Concept] ${resultCandidate.prompt}`;
+            }
+          }
+
+          if (resultCandidate?.prompt) {
+            recentTopicQuestionMap.set(topicCacheKey, resultCandidate.prompt.trim());
           }
 
           return resultCandidate;

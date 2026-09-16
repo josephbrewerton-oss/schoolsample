@@ -174,7 +174,7 @@ export default function PersistentAppShell(): React.JSX.Element {
             hypervisor.registerWorkerIframe(el);
           }
         }}
-        src={`${import.meta.env.BASE_URL}worker.html?v=1.2.2`}
+        src={`${import.meta.env.BASE_URL}worker.html?v=1.3.0`}
         style={{ display: 'none', width: 0, height: 0, border: 'none' }}
         title="neural-worker-guest-vm"
       />

@@ -9,7 +9,10 @@ export const CURRICULUM_PROVIDERS: Record<CurriculumProviderKey, () => Record<st
   uk_oak: () => {
     const res: Record<string, StandardStage> = {};
     for (const [key, stage] of Object.entries(OAK_CURRICULUM_CATALOGUE)) {
-      res[key] = adaptOakStage(stage);
+      const adapted = adaptOakStage(stage);
+      res[stage.title] = adapted;
+      res[key] = adapted;
+      res[stage.id] = adapted;
     }
     // Also append any custom installed overseas/school stages so they are always accessible
     const customStages = getCustomStandardStages();
@@ -19,7 +22,7 @@ export const CURRICULUM_PROVIDERS: Record<CurriculumProviderKey, () => Record<st
     const res: Record<string, StandardStage> = {};
     for (const [key, stage] of Object.entries(OAK_CURRICULUM_CATALOGUE)) {
       const adapted = adaptOakStage(stage);
-      res[key] = {
+      const filtered: StandardStage = {
         ...adapted,
         subjects: adapted.subjects
           .map(sub => ({
@@ -28,6 +31,9 @@ export const CURRICULUM_PROVIDERS: Record<CurriculumProviderKey, () => Record<st
           }))
           .filter(sub => sub.topics.length > 0)
       };
+      res[stage.title] = filtered;
+      res[key] = filtered;
+      res[stage.id] = filtered;
     }
     const customStages = getCustomStandardStages();
     return { ...res, ...customStages };
@@ -40,7 +46,10 @@ export const CURRICULUM_PROVIDERS: Record<CurriculumProviderKey, () => Record<st
     // Fallback to UK Oak if no custom stages installed yet
     const res: Record<string, StandardStage> = {};
     for (const [key, stage] of Object.entries(OAK_CURRICULUM_CATALOGUE)) {
-      res[key] = adaptOakStage(stage);
+      const adapted = adaptOakStage(stage);
+      res[stage.title] = adapted;
+      res[key] = adapted;
+      res[stage.id] = adapted;
     }
     return res;
   },

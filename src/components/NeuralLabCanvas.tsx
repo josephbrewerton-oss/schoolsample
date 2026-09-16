@@ -90,11 +90,16 @@ export default function NeuralLabCanvas({
   } | null>(null);
 
   const activeRequestIdRef = useRef(0);
+  const activeQuestionRef = useRef(activeQuestion);
   const activeSelectionRef = useRef({
     keyStage: selectedKeyStage,
     subject: selectedSubject,
     unit: selectedUnit,
   });
+
+  useEffect(() => {
+    activeQuestionRef.current = activeQuestion;
+  }, [activeQuestion]);
 
   useEffect(() => {
     activeSelectionRef.current = {
@@ -103,6 +108,24 @@ export default function NeuralLabCanvas({
       unit: selectedUnit,
     };
   }, [selectedKeyStage, selectedSubject, selectedUnit]);
+
+  useEffect(() => {
+    if (initialKeyStage && initialKeyStage !== selectedKeyStage) {
+      setSelectedKeyStage(initialKeyStage);
+    }
+  }, [initialKeyStage]);
+
+  useEffect(() => {
+    if (initialSubject && initialSubject !== selectedSubject) {
+      setSelectedSubject(initialSubject);
+    }
+  }, [initialSubject]);
+
+  useEffect(() => {
+    if (initialUnit && initialUnit !== selectedUnit) {
+      setSelectedUnit(initialUnit);
+    }
+  }, [initialUnit]);
 
   // 1. Resolve Curriculum via Unified Node Dispatch
   const [curriculumTree, setCurriculumTree] = useState<any>(null);
@@ -188,6 +211,7 @@ export default function NeuralLabCanvas({
     }, 15000);
 
     try {
+      const currentPrompt = activeQuestionRef.current?.prompt || '';
       const res = await dispatch('QuestionEngine', {
         intent: 'synthesize:governed',
         payload: {
@@ -198,6 +222,7 @@ export default function NeuralLabCanvas({
           difficulty: diff,
           lang: targetLang,
           forceVariation,
+          excludePrompt: currentPrompt,
           nonce: Math.floor(Math.random() * 1000000),
         },
       });
@@ -205,24 +230,56 @@ export default function NeuralLabCanvas({
       if (requestId !== activeRequestIdRef.current) return;
 
       if (res.ok && res.data) {
+        let questionData = res.data;
+        // Strict guard: If the returned question stem matches the current active question stem, rotate to an alternate question
+        if (currentPrompt && questionData.prompt && questionData.prompt.trim() === currentPrompt.trim()) {
+          const offline = findCurriculumKnowledge(ks, sub, u);
+          const alt = offline?.questions?.find((q) => q.prompt.trim() !== currentPrompt.trim());
+          if (alt) {
+            questionData = {
+              ...questionData,
+              prompt: alt.prompt,
+              options: alt.options,
+              answerKey: alt.answerKey,
+              hint: alt.hint || questionData.hint,
+              explanation: alt.explanation || questionData.explanation,
+            };
+          } else if (offline?.socraticPivot) {
+            questionData = {
+              ...questionData,
+              prompt: `🤔 [Diagnostic Inquiry] ${offline.socraticPivot}`,
+            };
+          } else if (offline?.hook) {
+            questionData = {
+              ...questionData,
+              prompt: `🌍 [Real-World Application] ${offline.hook}`,
+            };
+          }
+        }
+
         handleNewQuestion({
-          question: res.data,
+          question: questionData,
           keyStage: ks,
           subject: sub,
           unit: u,
-          hint: res.data.hint || '',
+          hint: questionData.hint || '',
         });
       }
     } catch {
       if (requestId === activeRequestIdRef.current) {
         const fallbackOffline = findCurriculumKnowledge(ks, sub, u);
+        const currentPrompt = activeQuestionRef.current?.prompt || '';
         if (fallbackOffline && fallbackOffline.questions?.length > 0) {
-          const eligible = fallbackOffline.questions.filter((q) => q.prompt !== activeQuestion?.prompt);
+          const eligible = fallbackOffline.questions.filter((q) => q.prompt.trim() !== currentPrompt.trim());
           const chosen = eligible.length > 0
             ? eligible[Math.floor(Math.random() * eligible.length)]
             : fallbackOffline.questions[0];
+          let chosenPrompt = chosen.prompt;
+          if (chosenPrompt.trim() === currentPrompt.trim() && fallbackOffline.socraticPivot) {
+            chosenPrompt = `🤔 [Diagnostic Inquiry] ${fallbackOffline.socraticPivot}`;
+          }
           handleNewQuestion({
-            question: chosen,
+            question: { ...chosen, prompt: chosenPrompt },
             keyStage: ks,
             subject: sub,
             unit: u,
@@ -314,12 +371,17 @@ export default function NeuralLabCanvas({
           setSelectedKeyStage(newKs);
           if (firstSub) setSelectedSubject(firstSub);
           if (firstUnit) setSelectedUnit(firstUnit);
+          onTopicChange?.(newKs, firstSub || selectedSubject, firstUnit || selectedUnit);
         }}
         onSubjectChange={(newSub, firstUnit) => {
           setSelectedSubject(newSub);
           if (firstUnit) setSelectedUnit(firstUnit);
+          onTopicChange?.(selectedKeyStage, newSub, firstUnit || selectedUnit);
         }}
-        onUnitChange={(newUnit) => setSelectedUnit(newUnit)}
+        onUnitChange={(newUnit) => {
+          setSelectedUnit(newUnit);
+          onTopicChange?.(selectedKeyStage, selectedSubject, newUnit);
+        }}
         onSessionIdChange={setSessionId}
         onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
         onDownloadReport={handleExportReport}

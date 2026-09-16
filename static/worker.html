@@ -291,7 +291,22 @@
       // Check if Chrome has actually completed downloading the ~1.5GB Gemini Nano binary
       if (typeof target.availability === 'function') {
         try {
-          const avail = await target.availability();
+          let avail = 'no';
+          try {
+            avail = await target.availability({
+              expectedInputs: [{ type: 'text', languages: ['en'] }],
+              expectedOutputs: [{ type: 'text', languages: ['en'] }],
+              outputLanguage: 'en',
+              expectedInputLanguages: ['en'],
+              expectedOutputLanguages: ['en'],
+            });
+          } catch {
+            try {
+              avail = await target.availability({ outputLanguage: 'en' });
+            } catch {
+              avail = await target.availability();
+            }
+          }
           if (avail === 'no') return null;
           if (avail === 'after-download' || avail === 'downloadable') {
             console.warn('[Guest VM] Gemini Nano is enabled in Chrome flags, but the 1.5GB model is still downloading in chrome://components. Falling back to offline curriculum rules.');
@@ -450,10 +465,11 @@
 
         const pedagogicalAngle = payload.angle || 'Authentic Application & Misconception Analysis';
         const seedValue = payload.seed || Math.floor(Math.random() * 10000);
+        const excludeConstraint = payload.excludePrompt ? `Anti-repetition requirement: Do NOT repeat this previous question stem: "${payload.excludePrompt}"\n` : '';
 
         const prompt = payload.prompt || `Topic: "${topic}" (${keyStage} ${subject}).
 Focus: ${pedagogicalAngle} (Seed #${seedValue})
-${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
+${excludeConstraint}${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
 Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). The :answer-key must be 0, 1, 2, or 3.
 
 Format as:

@@ -1185,6 +1185,22 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Phloem flows food (ph sounds like f). Xylem carries water.',
         explanation: 'Phloem transports dissolved sugars and amino acids throughout the plant via translocation.'
+      },
+      {
+        id: 'ks4-bio-photo-3',
+        prompt: 'Which environmental factor, when increased beyond its optimum level, causes the rate of photosynthesis to plummet due to enzyme denaturation?',
+        options: ['Temperature', 'Light intensity', 'Carbon dioxide concentration', 'Soil mineral levels'],
+        answerKey: 0,
+        hint: 'Enzymes like rubisco are proteins that lose their tertiary active-site shape at high heat.',
+        explanation: 'Above approximately 45°C, photosynthetic enzymes denature, destroying their active sites and causing the reaction rate to drop to zero.'
+      },
+      {
+        id: 'ks4-bio-photo-4',
+        prompt: 'By what physical mechanism does water move continuously from plant roots through xylem vessels up to the leaves?',
+        options: ['Transpiration stream driven by water evaporation at stomata', 'Active pumping by heart-like vascular valves', 'Gravitational hydrostatic pressure from root parenchyma', 'Phloem osmotic reverse siphonage'],
+        answerKey: 0,
+        hint: 'Water evaporates from spongy mesophyll and diffuses out through open stomata, pulling more water up via cohesion.',
+        explanation: 'Evaporation of water vapor from leaf surfaces creates negative pressure tension, pulling a continuous column of water up xylem tubes via cohesive hydrogen bonds.'
       }
     ]
   }
