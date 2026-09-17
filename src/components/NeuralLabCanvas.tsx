@@ -11,6 +11,7 @@ import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 import { PRNG } from '../engine/prng';
 import { TrajectoryEngine, CognitiveTrajectoryState } from '../engine/trajectoryEngine';
+import { LessonSequencer, PedagogicalStage } from '../engine/lessonSequencer';
 
 interface NeuralLabCanvasProps {
   initialKeyStage?: string;
@@ -86,6 +87,10 @@ export default function NeuralLabCanvas({
   const [activeQuestion, setActiveQuestion] = useState<{
     id?: string;
     seedToken?: string;
+    pedagogicalStage?: PedagogicalStage;
+    stageBadge?: string;
+    stepLabel?: string;
+    pedagogicalIntent?: string;
     prompt: string;
     displayOptions: string[];
     rawOptions: string[];
@@ -186,6 +191,10 @@ export default function NeuralLabCanvas({
     setActiveQuestion({
       id: question.id || `q_${Date.now()}`,
       seedToken: question.seedToken || payload.seedToken || '',
+      pedagogicalStage: question.pedagogicalStage,
+      stageBadge: question.stageBadge,
+      stepLabel: question.stepLabel,
+      pedagogicalIntent: question.pedagogicalIntent,
       prompt: question.prompt,
       displayOptions: shuffled.map((s) => s.text),
       misconceptions: shuffled.map((s) => s.misconception),
@@ -362,6 +371,15 @@ export default function NeuralLabCanvas({
       timestamp: Date.now(),
     });
     setTrajectoryState(updatedTrajectory);
+
+    // Update Oak Pedagogical Sequence State (Hook -> Axiom -> Practice -> Pivot -> Mastery)
+    const updatedLessonState = LessonSequencer.recordAttempt({
+      keyStage: activeQuestion.keyStage || selectedKeyStage,
+      subject: activeQuestion.subject,
+      unit: activeQuestion.unit,
+      isCorrect,
+      misconceptionTag: !isCorrect ? activeQuestion.misconceptions?.[idx] : undefined,
+    });
 
     // Compute deterministic next coordinate stream transition
     const nextTransition = TrajectoryEngine.deriveNextSeedStream({
@@ -728,6 +746,10 @@ export default function NeuralLabCanvas({
               score={score}
               streak={streak}
               seedToken={activeQuestion.seedToken}
+              pedagogicalStage={activeQuestion.pedagogicalStage}
+              stageBadge={activeQuestion.stageBadge}
+              stepLabel={activeQuestion.stepLabel}
+              pedagogicalIntent={activeQuestion.pedagogicalIntent}
               trajectoryState={trajectoryState}
               streamTransition={streamTransition}
               onSeedJump={(customSeed) => {

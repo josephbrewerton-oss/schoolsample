@@ -14,6 +14,8 @@ import { ProceduralManipulative } from './ProceduralManipulative';
 import { ASTKnowledgeSeed } from '../engine/seedInflationEngine';
 import { CognitiveTrajectoryState } from '../engine/trajectoryEngine';
 import { MindSpaceEngine, QuestionMindSpace } from '../engine/mindSpaceEngine';
+import { PedagogicalStage } from '../engine/lessonSequencer';
+import { aiCaller } from '../engine/aicaller';
 
 interface Props {
   keyStage?: string;
@@ -37,6 +39,10 @@ interface Props {
   explanation?: string;
   misconceptions?: string[];
   socraticFollowUp?: string;
+  pedagogicalStage?: PedagogicalStage;
+  stageBadge?: string;
+  stepLabel?: string;
+  pedagogicalIntent?: string;
   onSelectOption: (idx: number) => void;
   onNextQuestion: () => void;
   onParallelVariation?: () => void;
@@ -62,6 +68,10 @@ export const QuestionCard: React.FC<Props> = ({
   explanation,
   misconceptions,
   socraticFollowUp,
+  pedagogicalStage,
+  stageBadge,
+  stepLabel,
+  pedagogicalIntent,
   onSelectOption,
   onNextQuestion,
   onParallelVariation,
@@ -77,6 +87,14 @@ export const QuestionCard: React.FC<Props> = ({
   const [seedCopied, setSeedCopied] = useState<boolean>(false);
   const [isEditingSeed, setIsEditingSeed] = useState<boolean>(false);
   const [customSeedInput, setCustomSeedInput] = useState<string>('');
+  
+  // Staged deliberate commitment: tap to select/preview, then commit to check
+  const [stagedChoice, setStagedChoice] = useState<number | null>(null);
+
+  // On-Device AI Socratic Unpacker state
+  const [aiUnpackText, setAiUnpackText] = useState<string>('');
+  const [isAiUnpacking, setIsAiUnpacking] = useState<boolean>(false);
+  const [aiUnpackError, setAiUnpackError] = useState<string | null>(null);
 
   // Project question onto the Mind Space cognitive frame
   const mindSpace: QuestionMindSpace = useMemo(() => {
@@ -116,10 +134,13 @@ export const QuestionCard: React.FC<Props> = ({
     return null;
   }, [subject, unit, prompt]);
 
-  // Reset hint stage & mirror when prompt changes
+  // Reset hint stage, mirror, staged choice & AI unpacker when prompt changes
   useEffect(() => {
     setHintStage(0);
     setShowMentalMirror(false);
+    setStagedChoice(null);
+    setAiUnpackText('');
+    setAiUnpackError(null);
   }, [prompt]);
 
   const [translatedData, setTranslatedData] = useState<{
@@ -253,6 +274,37 @@ export const QuestionCard: React.FC<Props> = ({
   const currentLangMeta = SUPPORTED_LANGUAGES[activeLang] || SUPPORTED_LANGUAGES.en;
   const isResolvedCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
 
+  // Keyboard shortcut listener: 1-4 / A-D to stage or choose, Enter to confirm
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Do not trigger if typing in an input or textarea
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+
+      const key = e.key.toUpperCase();
+      let index = -1;
+      if (['1', 'A'].includes(key)) index = 0;
+      else if (['2', 'B'].includes(key)) index = 1;
+      else if (['3', 'C'].includes(key)) index = 2;
+      else if (['4', 'D'].includes(key)) index = 3;
+
+      if (index >= 0 && index < effectiveOptions.length && selectedAnswer === null) {
+        e.preventDefault();
+        setStagedChoice(index);
+      } else if (e.key === 'Enter') {
+        if (selectedAnswer === null && stagedChoice !== null) {
+          e.preventDefault();
+          onSelectOption(stagedChoice);
+        } else if (selectedAnswer !== null) {
+          e.preventDefault();
+          onNextQuestion();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedAnswer, stagedChoice, effectiveOptions.length, onSelectOption, onNextQuestion]);
+
   const handleLangSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
     setActiveLang(newLang);
@@ -265,6 +317,44 @@ export const QuestionCard: React.FC<Props> = ({
     const text = customText || effectivePrompt;
     const langToSpeak = customLang || (isNonEnglish && !showOriginal ? activeLang : 'en');
     speakInLanguage(text, langToSpeak);
+  };
+
+  // Local AI Socratic Explainer: Unpacks the authentic misconception using on-device Gemini Nano/WebLLM
+  const handleRequestAiUnpack = async () => {
+    if (selectedAnswer === null) return;
+    setIsAiUnpacking(true);
+    setAiUnpackError(null);
+
+    const chosenOptionText = effectiveOptions[selectedAnswer] || '';
+    const misconceptionNote = effectiveMisconceptions[selectedAnswer] || 'Conceptual confusion';
+
+    const systemPrompt = `You are St Joseph's Socratic On-Device Tutor.
+Your job is to explain WHY a student's chosen option is a tempting cognitive trap, without giving away future answers.
+Speak directly to a UK student in an encouraging, friendly, and precise voice. Keep your explanation to 2-3 short, clear sentences.`;
+
+    const userPrompt = `Subject: ${subject}
+Topic: ${unit}
+Key Stage: ${keyStage}
+Question: "${effectivePrompt}"
+The student chose: "${chosenOptionText}"
+Curriculum Misconception Trap: "${misconceptionNote}"
+
+Explain in 2 friendly sentences why this answer is such an intuitive mistake and what key rule or physical/mathematical reality helps avoid this trap.`;
+
+    try {
+      const response = await aiCaller.promptText({
+        prompt: userPrompt,
+        systemPrompt,
+        timeoutMs: 14000,
+      });
+      setAiUnpackText(response.trim());
+    } catch (err: any) {
+      console.warn('[QuestionCard AI Unpack fallback]:', err);
+      // Deterministic fallback if model download not consented or unavailable
+      setAiUnpackText(`Here is why this choice is tempting: "${misconceptionNote}". Look closely at how ${unit} behaves when you test the fundamental rule.`);
+    } finally {
+      setIsAiUnpacking(false);
+    }
   };
 
   return (
@@ -669,6 +759,123 @@ export const QuestionCard: React.FC<Props> = ({
         </div>
       )}
 
+      {/* Oak Pedagogical Learning Arc Progression Banner */}
+      {stageBadge && (
+        <div
+          style={{
+            background: pedagogicalStage === 'HOOK'
+              ? '#eff6ff'
+              : pedagogicalStage === 'AXIOM'
+              ? '#f0fdf4'
+              : pedagogicalStage === 'SOCRATIC_PIVOT'
+              ? '#fffbeb'
+              : pedagogicalStage === 'MASTERY'
+              ? '#faf5ff'
+              : '#f8fafc',
+            border: pedagogicalStage === 'HOOK'
+              ? '1px solid #bfdbfe'
+              : pedagogicalStage === 'AXIOM'
+              ? '1px solid #bbf7d0'
+              : pedagogicalStage === 'SOCRATIC_PIVOT'
+              ? '1px solid #fde68a'
+              : pedagogicalStage === 'MASTERY'
+              ? '1px solid #e9d5ff'
+              : '1px solid #e2e8f0',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1rem' }}>
+                {pedagogicalStage === 'HOOK'
+                  ? '🌍'
+                  : pedagogicalStage === 'AXIOM'
+                  ? '🏛️'
+                  : pedagogicalStage === 'SOCRATIC_PIVOT'
+                  ? '⚖️'
+                  : pedagogicalStage === 'MASTERY'
+                  ? '👑'
+                  : '🎯'}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.86rem',
+                  fontWeight: 800,
+                  color: pedagogicalStage === 'HOOK'
+                    ? '#1e40af'
+                    : pedagogicalStage === 'AXIOM'
+                    ? '#166534'
+                    : pedagogicalStage === 'SOCRATIC_PIVOT'
+                    ? '#92400e'
+                    : pedagogicalStage === 'MASTERY'
+                    ? '#6b21a8'
+                    : '#1e293b',
+                }}
+              >
+                {stageBadge}
+              </span>
+              {stepLabel && (
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    background: '#ffffff',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
+                  }}
+                >
+                  {stepLabel}
+                </span>
+              )}
+            </div>
+            {/* Visual Arc Mini-Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {(['HOOK', 'AXIOM', 'PRACTICE', 'MASTERY'] as const).map((st, i) => {
+                const isActive = (pedagogicalStage === st) || (pedagogicalStage === 'SOCRATIC_PIVOT' && st === 'PRACTICE');
+                const isCompleted =
+                  (pedagogicalStage === 'AXIOM' && i === 0) ||
+                  ((pedagogicalStage === 'PRACTICE' || pedagogicalStage === 'SOCRATIC_PIVOT') && i < 2) ||
+                  (pedagogicalStage === 'MASTERY' && i < 3);
+                return (
+                  <span
+                    key={st}
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      background: isActive ? '#1e293b' : isCompleted ? '#dcfce7' : '#ffffff',
+                      color: isActive ? '#ffffff' : isCompleted ? '#166534' : '#94a3b8',
+                      border: `1px solid ${isActive ? '#1e293b' : isCompleted ? '#86efac' : '#e2e8f0'}`,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+          {pedagogicalIntent && (
+            <div
+              style={{
+                fontSize: '0.8rem',
+                color: '#475569',
+                lineHeight: 1.4,
+              }}
+            >
+              <strong>Pedagogical Purpose:</strong> {pedagogicalIntent}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Teacher Mode Diagnostic Challenge Banner */}
       {teacherMode && (
         <div
@@ -1060,6 +1267,8 @@ export const QuestionCard: React.FC<Props> = ({
       {/* Option Stack */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {effectiveOptions.map((opt, idx) => {
+          const isSubmitted = selectedAnswer !== null;
+          const isStaged = !isSubmitted && stagedChoice === idx;
           const isSelected = selectedAnswer === idx;
           const isCorrect = idx === correctIndex;
 
@@ -1067,7 +1276,11 @@ export const QuestionCard: React.FC<Props> = ({
           let border = '#e2e8f0';
           let textColor = '#1e293b';
 
-          if (isSelected) {
+          if (isStaged) {
+            bg = '#eff6ff';
+            border = '#3b82f6';
+            textColor = '#1d4ed8';
+          } else if (isSelected) {
             if (isCorrect) {
               bg = '#ecfdf5';
               border = '#10b981';
@@ -1084,7 +1297,11 @@ export const QuestionCard: React.FC<Props> = ({
               key={idx}
               type="button"
               disabled={isResolvedCorrect}
-              onClick={() => onSelectOption(idx)}
+              onClick={() => {
+                if (selectedAnswer !== null) return;
+                // If student clicks an option, stage it for confirmation
+                setStagedChoice(idx);
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1099,7 +1316,7 @@ export const QuestionCard: React.FC<Props> = ({
                 fontSize: '1.05rem',
                 fontWeight: 600,
                 color: textColor,
-                boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : '0 1px 2px rgba(0,0,0,0.03)',
+                boxShadow: (isSelected || isStaged) ? '0 2px 8px rgba(0,0,0,0.06)' : '0 1px 2px rgba(0,0,0,0.03)',
                 transition: 'all 0.15s ease',
                 opacity: isResolvedCorrect && !isSelected ? 0.6 : 1,
               }}
@@ -1113,8 +1330,8 @@ export const QuestionCard: React.FC<Props> = ({
                   width: '36px',
                   height: '36px',
                   borderRadius: '8px',
-                  background: isSelected ? border : '#e2e8f0',
-                  color: isSelected ? '#ffffff' : '#475569',
+                  background: (isSelected || isStaged) ? border : '#e2e8f0',
+                  color: (isSelected || isStaged) ? '#ffffff' : '#475569',
                   fontWeight: 800,
                   fontSize: '0.95rem',
                   flexShrink: 0,
@@ -1141,10 +1358,84 @@ export const QuestionCard: React.FC<Props> = ({
                   </span>
                 )}
               </div>
+
+              {/* Shortcut Key Label */}
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: isStaged ? '#2563eb' : '#94a3b8',
+                  padding: '2px 6px',
+                  background: isStaged ? '#dbeafe' : '#f1f5f9',
+                  borderRadius: '4px',
+                  flexShrink: 0,
+                }}
+              >
+                Key {idx + 1}
+              </span>
             </button>
           );
         })}
       </div>
+
+      {/* Deliberate "Check Answer" Confirmation Bar */}
+      {selectedAnswer === null && (
+        <div
+          style={{
+            marginTop: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px',
+            padding: '10px 14px',
+            background: stagedChoice !== null ? '#f0fdf4' : '#f8fafc',
+            border: stagedChoice !== null ? '1px solid #86efac' : '1px solid #e2e8f0',
+            borderRadius: '10px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <div style={{ fontSize: '0.85rem', color: stagedChoice !== null ? '#166534' : '#64748b' }}>
+            {stagedChoice !== null ? (
+              <span>
+                🎯 Selected <strong>Option {String.fromCharCode(65 + stagedChoice)}</strong>. Ready to verify against curriculum axioms?
+              </span>
+            ) : (
+              <span>
+                👉 Select an option above (or press <strong>1–{effectiveOptions.length}</strong> on your keyboard) to commit.
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            disabled={stagedChoice === null}
+            onClick={() => {
+              if (stagedChoice !== null) {
+                onSelectOption(stagedChoice);
+              }
+            }}
+            style={{
+              padding: '0.65rem 1.4rem',
+              borderRadius: '8px',
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              background: stagedChoice !== null ? '#16a34a' : '#cbd5e1',
+              color: '#ffffff',
+              border: 'none',
+              cursor: stagedChoice !== null ? 'pointer' : 'not-allowed',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: stagedChoice !== null ? '0 2px 6px rgba(22, 163, 74, 0.25)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>Check Answer</span>
+            <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>[Enter ↵]</span>
+          </button>
+        </div>
+      )}
 
       {/* Bottom Feedback Action Strip & Diagnostic Misconception Panel */}
       {selectedAnswer !== null && (
@@ -1241,6 +1532,53 @@ export const QuestionCard: React.FC<Props> = ({
                   <strong>🌱 Helpful Clue:</strong> {effectiveSocratic}
                 </div>
               )}
+
+              {/* On-Device AI Socratic Decoupler: Dynamic Trap Investigation */}
+              <div style={{ paddingTop: '6px' }}>
+                {!aiUnpackText ? (
+                  <button
+                    type="button"
+                    disabled={isAiUnpacking}
+                    onClick={handleRequestAiUnpack}
+                    style={{
+                      background: '#fffbeb',
+                      color: '#b45309',
+                      border: '1px solid #fcd34d',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      cursor: isAiUnpacking ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.15s ease',
+                    }}
+                    title="Ask the on-device AI tutor why this cognitive trap is tempting without giving away answers"
+                  >
+                    <span>🤖</span>
+                    <span>{isAiUnpacking ? 'Decoupling Trap via Local Nano...' : 'Ask Local AI: "Why did I fall for this trap?"'}</span>
+                  </button>
+                ) : (
+                  <div
+                    style={{
+                      background: '#fefce8',
+                      border: '1px solid #fef08a',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      fontSize: '0.88rem',
+                      color: '#713f12',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, marginBottom: '4px', fontSize: '0.82rem', color: '#854d0e', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <span>🤖</span>
+                      <span>On-Device Socratic Unpacker</span>
+                    </div>
+                    <div>{aiUnpackText}</div>
+                  </div>
+                )}
+              </div>
 
               {inferredCpaType && (
                 <div style={{ paddingTop: '8px' }}>
@@ -1342,7 +1680,7 @@ export const QuestionCard: React.FC<Props> = ({
               type="button"
               onClick={onNextQuestion}
               style={{
-                background: '#2563eb',
+                background: isResolvedCorrect ? '#16a34a' : '#2563eb',
                 color: '#ffffff',
                 fontWeight: 700,
                 border: 'none',
@@ -1352,11 +1690,32 @@ export const QuestionCard: React.FC<Props> = ({
                 fontSize: '1rem',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                transition: 'all 0.15s ease',
               }}
+              title={
+                !isResolvedCorrect
+                  ? "Step into the Socratic counter-proof to decouple this misconception"
+                  : pedagogicalStage === 'HOOK'
+                  ? "Advance to verify the invariant core axiom"
+                  : pedagogicalStage === 'AXIOM'
+                  ? "Advance to applied curriculum practice"
+                  : "Proceed along learning arc"
+              }
             >
-              <span>{translatedFeedback.nextQuestion}</span>
-              <span>➔</span>
+              <span>
+                {!isResolvedCorrect
+                  ? '⚖️ Investigate Socratic Probe'
+                  : pedagogicalStage === 'HOOK'
+                  ? '🏛️ Advance to Core Axiom'
+                  : pedagogicalStage === 'AXIOM'
+                  ? '🎯 Enter Applied Practice'
+                  : pedagogicalStage === 'PRACTICE'
+                  ? '👑 Level Up to Mastery'
+                  : translatedFeedback.nextQuestion}
+              </span>
+              <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>[Enter ↵]</span>
             </button>
           </div>
         </div>

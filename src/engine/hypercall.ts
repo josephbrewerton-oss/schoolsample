@@ -15,6 +15,7 @@ import { hypervisor, setHypercallDispatcher } from './hypervisor';
 import { extractQuestionFromAst } from '../utils/astQuestionExtractor';
 import { PRNG } from './prng';
 import { MindSpaceEngine } from './mindSpaceEngine';
+import { LessonSequencer, PedagogicalStage } from './lessonSequencer';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -382,11 +383,39 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             return mathCandidate;
           }
 
-          // 2. Query verified offline curriculum knowledge base
+          // 2. Query verified offline curriculum knowledge base & Lesson Sequencer
           const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
           const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase();
-          let offlineQuestion = null;
+          
+          // Determine current pedagogical stage (Hook -> Axiom -> Practice -> Pivot -> Mastery)
+          let targetPedagogicalStage: PedagogicalStage = payload?.pedagogicalStage;
+          if (!targetPedagogicalStage) {
+            if (activeSeedToken.startsWith('SOCRATIC-')) {
+              targetPedagogicalStage = 'SOCRATIC_PIVOT';
+            } else if (activeSeedToken.startsWith('AXIOM-')) {
+              targetPedagogicalStage = 'MASTERY';
+            } else if (difficulty === 'brainbuster') {
+              targetPedagogicalStage = 'MASTERY';
+            } else if (difficulty === 'warmup') {
+              targetPedagogicalStage = 'HOOK';
+            } else {
+              const currentProgress = LessonSequencer.getProgress(stage, subject, topic);
+              targetPedagogicalStage = currentProgress.stage;
+            }
+          }
 
+          // Build pedagogy-sequenced question template anchored in Oak curriculum
+          const sequencedTemplate = LessonSequencer.buildStageQuestion({
+            keyStage: stage,
+            subject,
+            unit: topic,
+            stage: targetPedagogicalStage,
+            seedToken: activeSeedToken,
+            knowledge: offlineKnowledge,
+            excludePrompt,
+          });
+
+          let offlineQuestion = null;
           if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
             const lastPrompt = recentTopicQuestionMap.get(topicCacheKey);
             const eligible = offlineKnowledge.questions.filter((q) => q.prompt.trim() !== lastPrompt && q.prompt.trim() !== excludePrompt);
@@ -403,10 +432,9 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             ? getIntelligentTopicFallback(stage, subject, topic, currentVariant)
             : null;
 
-          let basePrompt = offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
+          let basePrompt = sequencedTemplate.prompt || offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
           
           // Coordinate Stream Handling:
-          // If the seed was generated as a SOCRATIC counter-example, pivot immediately to the counter-example/diagnostic probe
           if (activeSeedToken.startsWith('SOCRATIC-') && offlineKnowledge?.socraticPivot) {
             basePrompt = `⚖️ [Cognitive Counter-Proof] ${offlineKnowledge.socraticPivot}`;
           } else if (activeSeedToken.startsWith('AXIOM-') && offlineKnowledge?.hook) {
@@ -426,33 +454,39 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             basePrompt = prng.pick(masteryVariations);
           }
 
-          const displayPrompt = difficulty === 'brainbuster' 
-            ? `🧠 [Brain Buster] ${basePrompt}` 
-            : difficulty === 'warmup' 
-            ? `🌱 [Warm-Up] ${basePrompt}` 
-            : basePrompt;
+          const displayPrompt = basePrompt;
 
-          let rawOptions = offlineQuestion ? [...offlineQuestion.options] : (fallbackData ? [...fallbackData.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property']);
-          let rawAnswerKey = offlineQuestion !== null ? offlineQuestion.answerKey : (fallbackData ? fallbackData.answerKey : 0);
-          let rawMisconceptions: string[] = fallbackData ? fallbackData.misconceptions : rawOptions.map((opt, idx) => {
-            if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
-            return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
-          });
+          let rawOptions = sequencedTemplate.options.length >= 2 
+            ? [...sequencedTemplate.options]
+            : (offlineQuestion ? [...offlineQuestion.options] : (fallbackData ? [...fallbackData.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property']));
+          let rawAnswerKey = sequencedTemplate.options.length >= 2
+            ? sequencedTemplate.answerKey
+            : (offlineQuestion !== null ? offlineQuestion.answerKey : (fallbackData ? fallbackData.answerKey : 0));
+          let rawMisconceptions: string[] = sequencedTemplate.misconceptions && sequencedTemplate.misconceptions.length === rawOptions.length
+            ? sequencedTemplate.misconceptions
+            : (fallbackData ? fallbackData.misconceptions : rawOptions.map((opt, idx) => {
+                if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
+                return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
+              }));
 
           let resultCandidate = {
             id: `q_${activeSeedToken}`,
             seedToken: activeSeedToken,
-            axiom: offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
-            trap: offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
-            hook: offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
-            guidedStep: offlineKnowledge?.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
+            pedagogicalStage: targetPedagogicalStage,
+            stageBadge: sequencedTemplate.stageBadge,
+            stepLabel: sequencedTemplate.stepLabel,
+            pedagogicalIntent: sequencedTemplate.pedagogicalIntent,
+            axiom: sequencedTemplate.axiom || offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
+            trap: sequencedTemplate.trap || offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
+            hook: sequencedTemplate.hook || offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
+            guidedStep: sequencedTemplate.guidedStep || offlineKnowledge?.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
             prompt: displayPrompt,
             options: rawOptions,
             answerKey: rawAnswerKey,
-            hint: offlineQuestion?.hint || fallbackData?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
-            explanation: offlineQuestion?.explanation || fallbackData?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
+            hint: sequencedTemplate.hint || offlineQuestion?.hint || fallbackData?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
+            explanation: sequencedTemplate.explanation || offlineQuestion?.explanation || fallbackData?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
             misconceptions: rawMisconceptions,
-            socraticFollowUp: offlineKnowledge?.socraticPivot || `Can you identify the defining feature of ${topic}?`,
+            socraticFollowUp: sequencedTemplate.socraticFollowUp || offlineKnowledge?.socraticPivot || `Can you identify the defining feature of ${topic}?`,
             scaffoldHints: offlineKnowledge?.scaffoldHints,
             difficulty,
             scratchpad: '',
