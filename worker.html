@@ -468,12 +468,19 @@
         const excludeConstraint = payload.excludePrompt ? `Anti-repetition requirement: Do NOT repeat this previous question stem: "${payload.excludePrompt}"\n` : '';
 
         const prompt = payload.prompt || `Topic: "${topic}" (${keyStage} ${subject}).
+Mind Space Context:
+(:mind-space
+  :domain "${keyStage} > ${subject} > ${topic}"
+  :core-axiom ${JSON.stringify(curriculumAxiom || 'Foundational curriculum standard')}
+  :cognitive-trap ${JSON.stringify(cognitiveTrap || 'Known pupil misconception')}
+)
 Focus: ${pedagogicalAngle} (Seed #${seedValue})
-${excludeConstraint}${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${curriculumAxiom ? `Curriculum Axiom: "${curriculumAxiom}"\n` : ''}${cognitiveTrap ? `Pupil Misconception: "${cognitiveTrap}"\n` : ''}Task: Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
-Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). The :answer-key must be 0, 1, 2, or 3.
+${excludeConstraint}${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}Task: Anchor your reasoning in this Mind Space. Generate 1 diagnostic multiple-choice question testing understanding of "${topic}".
+Requirements: Exactly 4 distinct options (no 'A)' or 'Option 1' prefixes). Every distractor must target an authentic misconception. The :answer-key must be 0, 1, 2, or 3.
 
 Format as:
 (:route "quiz:mcq"
+ :scratchpad "Step-by-step reasoning in question Mind Space"
  :prompt "Clear, rigorous question prompt testing understanding of ${topic}?"
  :options ("Option 1" "Option 2" "Option 3" "Option 4")
  :answer-key 0
