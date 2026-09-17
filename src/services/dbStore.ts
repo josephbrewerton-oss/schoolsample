@@ -415,11 +415,11 @@ export async function saveVerifiedAST(topicKey: string, rawAST: string): Promise
   });
 }
 
-export async function getBufferedQuestion(topicKey: string): Promise<string | null> {
+export async function getBufferedQuestion(topicKey: string, excludePrompt?: string): Promise<string | null> {
   try {
     const db = await openLocalDB();
     return new Promise((resolve) => {
-      // 1. Open readwrite transaction so we can consume the record
+      // 1. Open readwrite transaction so we can safely check and consume
       const tx = db.transaction(STORE_AST_BANK, 'readwrite');
       const store = tx.objectStore(STORE_AST_BANK);
       const index = store.index('topicKey');
@@ -429,10 +429,20 @@ export async function getBufferedQuestion(topicKey: string): Promise<string | nu
         const results = (req.result as CachedASTRecord[]) || [];
         if (results.length === 0) return resolve(null);
 
-        // 2. Take the first question
-        const chosen = results[0];
+        // Find a candidate that does not match excludePrompt (if supplied)
+        let chosen = results[0];
+        if (excludePrompt && excludePrompt.trim()) {
+          const normExclude = excludePrompt.trim().toLowerCase();
+          const match = results.find((r) => !r.rawAST.toLowerCase().includes(normExclude));
+          if (match) {
+            chosen = match;
+          } else {
+            // All buffered items match the active question stem; don't delete them, allow fresh AI generation
+            return resolve(null);
+          }
+        }
 
-        // 3. Delete it so it is never served twice
+        // Consume chosen candidate so it's not served repeatedly back-to-back
         if (chosen.id !== undefined) {
           store.delete(chosen.id);
         }

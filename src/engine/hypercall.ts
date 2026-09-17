@@ -14,6 +14,7 @@ import { ASTFlowGovernor } from './astGovernor';
 import { hypervisor, setHypercallDispatcher } from './hypervisor';
 import { extractQuestionFromAst } from '../utils/astQuestionExtractor';
 import { PRNG } from './prng';
+import { MindSpaceEngine } from './mindSpaceEngine';
 
 export interface HyperMessage<T = any> {
   intent: string;
@@ -463,10 +464,10 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           // 3a. First check IndexedDB AST Bank for a pre-buffered, verified question for this topic
           try {
             const topicKey = `${stage}_${subject}_${topic}`.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-            const bufferedAST = await getBufferedQuestion(topicKey);
+            const bufferedAST = await getBufferedQuestion(topicKey, excludePrompt);
             if (bufferedAST) {
               const extracted = extractQuestionFromAst(bufferedAST);
-              if (extracted && extracted.options.length >= 2) {
+              if (extracted && extracted.options.length >= 2 && (!excludePrompt || extracted.prompt.trim() !== excludePrompt.trim())) {
                 resultCandidate = {
                   ...resultCandidate,
                   prompt: extracted.prompt,
@@ -528,17 +529,30 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
                 const guardrails = adapter?.curriculumGuardrails?.join('; ') || '';
                 const exemplarAST = adapter?.exemplarAST ? `\nReference AST Pattern: ${adapter.exemplarAST}` : '';
 
+                // Project question into the Mind Space cognitive frame
+                const projectedMindSpace = MindSpaceEngine.projectMindSpace({
+                  keyStage: stage,
+                  subject,
+                  unit: topic,
+                  prompt: offlineKnowledge?.questions?.[0]?.prompt || `Question regarding ${topic}`,
+                  options: offlineKnowledge?.questions?.[0]?.options || ['Axiom', 'Trap', 'Opposite', 'Other'],
+                  answerKey: 0,
+                });
+                const mindSpaceDescriptor = MindSpaceEngine.formatMindSpaceContext(projectedMindSpace);
+
                 const prompt = `Topic: "${topic}" (${stage} ${subject}, Framework: ${curriculum}).
+Mind Space Cognitive Frame:
+${mindSpaceDescriptor}
 Focus Angle: ${chosenAngle} (Randomization Seed: #${randomSeed})
 Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
-${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${offlineKnowledge ? `Ground Truth Axiom: "${offlineKnowledge.coreAxiom}"\nKnown Pupil Misconception: "${offlineKnowledge.cognitiveTrap}"` : ''}${exemplarAST}
+${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${exemplarAST}
 
-First, formulate your scratchpad reasoning (CoT step) analyzing why the correct answer is valid and what authentic student misconceptions make each distractor plausible.
-Then generate an interactive diagnostic multiple-choice question and pedagogical feedback exploring the chosen focus angle.
-Rule: Every distractor MUST target an authentic student misconception.
-Return strictly a single JSON object with no Markdown:
+First, anchor your reasoning in this question's Mind Space: analyze why the core axiom holds and which authentic pupil misconception pulls students toward each distractor.
+Then generate an interactive diagnostic multiple-choice question testing understanding of this exact cognitive frame.
+Rule: Every distractor MUST target an authentic student misconception defined in the Mind Space.
+${excludePrompt ? `Anti-Repetition Rule: Do NOT reuse or mirror this prior question stem: "${excludePrompt}"\n` : ''}Return strictly a single JSON object with no Markdown:
 {
   "scratchpad": "Step-by-step reasoning on correct answer and diagnostic trap explanations",
   "axiom": "Stage-appropriate core rule",
@@ -560,19 +574,22 @@ Return strictly a single JSON object with no Markdown:
 
                 const rawResponse = await aiCaller.promptText({
                   prompt,
-                  systemPrompt: `You are an expert UK National Curriculum Educator specializing in ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
+                  systemPrompt: `You are an expert UK National Curriculum Educator anchored in the Mind Space of ${stage} ${subject}. ${stageGuidelines}. ${difficultyInstruction}. ${langInstruction}. Output strictly valid JSON with no markdown formatting or commentary.`,
                   preserveContext: false,
-                  timeoutMs: 4000,
+                  timeoutMs: 12000,
                 });
 
                 const match = rawResponse.match(/\{[\s\S]*?\}/);
                 if (match) {
                   const parsed = JSON.parse(match[0]);
                   if (parsed.options && Array.isArray(parsed.options) && parsed.options.length >= 2) {
-                    resultCandidate = {
-                      ...resultCandidate,
-                      ...parsed,
-                    };
+                    if (!excludePrompt || (parsed.prompt && parsed.prompt.trim() !== excludePrompt.trim())) {
+                      resultCandidate = {
+                        ...resultCandidate,
+                        ...parsed,
+                      };
+                      synthesized = true;
+                    }
                   }
                 }
               } catch {

@@ -214,12 +214,12 @@ export default function NeuralLabCanvas({
     setSelectedAnswer(null);
     setCorrectIndex(null);
 
-    // Hard fallback timer ensuring the UI never gets stuck in a generating state
+    // Hard fallback timer ensuring the UI never gets stuck in a generating state (aligned with hypervisor watchdog)
     const safetyTimer = setTimeout(() => {
       if (requestId === activeRequestIdRef.current) {
         setIsGenerating(false);
       }
-    }, 15000);
+    }, 32000);
 
     setStreamTransition(null);
 
@@ -718,6 +718,7 @@ export default function NeuralLabCanvas({
             )}
 
             <QuestionCard
+              keyStage={activeQuestion.keyStage || selectedKeyStage}
               subject={activeQuestion.subject}
               unit={activeQuestion.unit}
               prompt={activeQuestion.prompt}

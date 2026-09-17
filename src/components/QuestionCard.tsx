@@ -13,8 +13,10 @@ import {
 import { ProceduralManipulative } from './ProceduralManipulative';
 import { ASTKnowledgeSeed } from '../engine/seedInflationEngine';
 import { CognitiveTrajectoryState } from '../engine/trajectoryEngine';
+import { MindSpaceEngine, QuestionMindSpace } from '../engine/mindSpaceEngine';
 
 interface Props {
+  keyStage?: string;
   subject: string;
   unit: string;
   prompt: string;
@@ -43,6 +45,7 @@ interface Props {
 }
 
 export const QuestionCard: React.FC<Props> = ({
+  keyStage = 'Key Stage 2',
   subject,
   unit,
   prompt,
@@ -70,9 +73,24 @@ export const QuestionCard: React.FC<Props> = ({
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [hintStage, setHintStage] = useState<number>(0); // 0 = hidden, 1 = conceptual nudge, 2 = step method
   const [showMentalMirror, setShowMentalMirror] = useState<boolean>(false);
+  const [showMindSpace, setShowMindSpace] = useState<boolean>(false);
   const [seedCopied, setSeedCopied] = useState<boolean>(false);
   const [isEditingSeed, setIsEditingSeed] = useState<boolean>(false);
   const [customSeedInput, setCustomSeedInput] = useState<string>('');
+
+  // Project question onto the Mind Space cognitive frame
+  const mindSpace: QuestionMindSpace = useMemo(() => {
+    return MindSpaceEngine.projectMindSpace({
+      keyStage,
+      subject,
+      unit,
+      prompt,
+      options: displayOptions,
+      answerKey: correctIndex ?? 0,
+      misconceptions,
+      selectedCoordinate: selectedAnswer,
+    });
+  }, [keyStage, subject, unit, prompt, displayOptions, correctIndex, misconceptions, selectedAnswer]);
 
   const isLanguageSubject = useMemo(() => {
     const subLower = (subject || '').toLowerCase();
@@ -357,6 +375,31 @@ export const QuestionCard: React.FC<Props> = ({
           >
             <span>🔤</span>
             <span>{bilingualMode ? 'Dual-Language: ON' : 'Dual-Language'}</span>
+          </button>
+
+          {/* Mind Space Cognitive HUD Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowMindSpace(!showMindSpace)}
+            style={{
+              background: showMindSpace ? '#0f172a' : '#f8fafc',
+              color: showMindSpace ? '#38bdf8' : '#334155',
+              border: `1px solid ${showMindSpace ? '#0284c7' : '#cbd5e1'}`,
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: showMindSpace ? '0 0 10px rgba(56, 189, 248, 0.25)' : 'none',
+            }}
+            title="Inspect the Question Mind Space: Axiom, Trap, and Cognitive Geometries"
+          >
+            <span>🌌</span>
+            <span>{showMindSpace ? 'Mind Space: Active' : 'Mind Space'}</span>
           </button>
 
           {/* Teacher Mode Diagnostic Error Challenge Toggle */}
@@ -701,6 +744,117 @@ export const QuestionCard: React.FC<Props> = ({
           <div style={{ color: '#64748b', fontSize: '0.78rem' }}>
             Entropy: <strong>{trajectoryState.coordinateEntropy}</strong> (0=Systematic, 1=Guessing)
           </div>
+        </div>
+      )}
+
+      {/* Mind Space Cognitive Frame HUD */}
+      {showMindSpace && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #090d16 0%, #0f172a 100%)',
+            border: '1px solid #1e293b',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '1.25rem',
+            color: '#f1f5f9',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.2rem' }}>🌌</span>
+              <span style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.02em', color: '#38bdf8' }}>
+                Instance "Mind Space" Geometry: {mindSpace.title}
+              </span>
+            </div>
+            <span style={{ fontSize: '0.75rem', background: '#1e293b', color: '#94a3b8', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+              DIM: 4-Vector ({keyStage})
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+            {/* Core Invariant Axiom */}
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '10px 12px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8', marginBottom: '4px', textTransform: 'uppercase' }}>
+                ⭐ Core Invariant Axiom (Ground Truth)
+              </div>
+              <div style={{ fontSize: '0.84rem', color: '#e2e8f0', lineHeight: 1.4 }}>
+                {mindSpace.coreAxiom}
+              </div>
+            </div>
+
+            {/* Systematic Cognitive Trap */}
+            <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(244, 63, 94, 0.25)', borderRadius: '8px', padding: '10px 12px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#fb7185', marginBottom: '4px', textTransform: 'uppercase' }}>
+                🧲 Dominant Cognitive Trap
+              </div>
+              <div style={{ fontSize: '0.84rem', color: '#fecdd3', lineHeight: 1.4 }}>
+                {mindSpace.cognitiveTrap}
+              </div>
+            </div>
+          </div>
+
+          {/* 4-Vector Coordinate Geometry */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase' }}>
+              Coordinate Lattice Vectors [C₀, C₁, C₂, C₃]
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+              {mindSpace.distractorVectors.map((vec) => {
+                const isSelected = selectedAnswer === vec.coordinate;
+                const isGroundTruth = vec.isCorrect;
+                return (
+                  <div
+                    key={vec.coordinate}
+                    style={{
+                      background: isSelected 
+                        ? (isGroundTruth ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)')
+                        : '#0b1324',
+                      border: `1px solid ${
+                        isSelected 
+                          ? (isGroundTruth ? '#22c55e' : '#ef4444')
+                          : (isGroundTruth ? '#10b981' : '#334155')
+                      }`,
+                      borderRadius: '8px',
+                      padding: '8px 10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <code style={{ fontSize: '0.76rem', fontWeight: 800, color: isGroundTruth ? '#4ade80' : '#f87171' }}>
+                        Vector C{vec.coordinate} {isGroundTruth ? '✓ (Axiom)' : '✗ (Distractor)'}
+                      </code>
+                      <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                        x:{vec.mindCoordinate.x.toFixed(1)} y:{vec.mindCoordinate.y.toFixed(1)}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600, marginBottom: '4px' }}>
+                      "{vec.text.slice(0, 40)}{vec.text.length > 40 ? '...' : ''}"
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: isGroundTruth ? '#86efac' : '#fca5a5' }}>
+                      {vec.misconceptionArchetype}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Resonance State */}
+          {mindSpace.currentMentalState ? (
+            <div style={{ background: '#09152a', border: '1px solid #1d4ed8', borderRadius: '8px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <span style={{ fontSize: '0.74rem', color: '#60a5fa', fontWeight: 700, textTransform: 'uppercase' }}>Resonance Diagnosis: </span>
+                <span style={{ fontSize: '0.82rem', color: '#e0f2fe' }}>{mindSpace.currentMentalState.diagnosis}</span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: 600 }}>
+                ➔ Vector: {mindSpace.currentMentalState.recommendedNextVector}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: '0.76rem', color: '#64748b', fontStyle: 'italic' }}>
+              Awaiting learner coordinate choice to evaluate resonance in question mind space.
+            </div>
+          )}
         </div>
       )}
 
