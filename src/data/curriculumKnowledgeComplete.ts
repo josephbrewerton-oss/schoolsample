@@ -750,5 +750,99 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         explanation: 'During vasodilation, arterioles dilate so more warm blood flows through skin capillaries, radiating excess thermal energy away from the body to cool down.'
       }
     ]
+  },
+
+  // =========================================================================
+  // KEY STAGE 4 (GCSE): Mathematics (Circle Theorems & Simultaneous Equations)
+  // =========================================================================
+  'ks4:maths:circle-theorems': {
+    topicId: 'circle-theorems',
+    title: 'Circle Theorems',
+    keyStage: 'Key Stage 4 (GCSE)',
+    subject: 'Mathematics',
+    coreAxiom: 'Circle theorems state invariant geometric angle properties: 1. Angle at the centre is twice the angle at the circumference subtended by the same arc. 2. Angle in a semicircle is 90°. 3. Angles in the same segment subtended by the same arc are equal. 4. Opposite angles of a cyclic quadrilateral sum to 180°. 5. Tangent meets radius at 90°. 6. Alternate Segment Theorem.',
+    cognitiveTrap: 'Assuming opposite angles in any four-sided shape in a circle sum to 180° even when all four vertices do NOT lie on the circumference (cyclic quadrilateral condition).',
+    socraticPivot: 'Why does an angle inscribed in a semicircle always equal 90°, regardless of where along the circumference you place the vertex?',
+    hook: 'Why are circular gears, radar rings, and camera lenses governed by exact invariant angle relationships discovered over 2,000 years ago?',
+    guidedStep: '1. Check if all vertices touch the circumference. 2. Look for diameter (creates 90° angle). 3. Look for arrowhead (centre angle = 2 × circumference angle). 4. Look for cyclic quadrilateral (opposite angles add to 180°).',
+    scaffoldHints: {
+      level1: 'Angle at centre is 2 × angle at circumference (the "arrowhead" theorem).',
+      level2: 'A diameter subtends a 90° right angle at the circumference (the semicircle theorem).',
+      level3: 'Cyclic quadrilateral: all 4 corners must touch the circle. Opposite angles add up to 180°.'
+    },
+    questions: [
+      {
+        id: 'ks4-mat-circ-1',
+        prompt: 'An arc subtends an angle of 84° at the centre of a circle. What angle does the same arc subtend at the circumference?',
+        options: [
+          '42° (The angle at the circumference is half the angle at the centre)',
+          '168° (Double the angle at the centre)',
+          '84° (Equal angles)',
+          '96° (Angles sum to 180°)'
+        ],
+        answerKey: 0,
+        hint: 'The angle subtended at the centre is TWICE the angle subtended at the circumference.',
+        explanation: 'By the circle theorem "the angle at the centre is twice the angle at the circumference", angle at circumference = 84° / 2 = 42°.'
+      },
+      {
+        id: 'ks4-mat-circ-2',
+        prompt: 'In a cyclic quadrilateral ABCD, angle A = 75°. What is the size of the opposite angle C?',
+        options: [
+          '105° (Opposite angles in a cyclic quadrilateral sum to 180°)',
+          '75° (Opposite angles are equal)',
+          '150° (Double angle A)',
+          '285° (Sum to 360°)'
+        ],
+        answerKey: 0,
+        hint: 'Opposite angles of a cyclic quadrilateral always sum to 180°: Angle C = 180° - 75°.',
+        explanation: 'Opposite angles in a cyclic quadrilateral sum to 180°. Therefore, angle C = 180° - 75° = 105°.'
+      }
+    ]
+  },
+
+  'ks4:maths:simultaneous-equations': {
+    topicId: 'simultaneous-equations',
+    title: 'Simultaneous Equations',
+    keyStage: 'Key Stage 4 (GCSE)',
+    subject: 'Mathematics',
+    coreAxiom: 'Simultaneous linear equations represent two or more conditions that must be satisfied by the same set of variables at the same time. Graphically, the solution corresponds to the exact coordinate point (x, y) where the lines intersect. Analytically, they are solved via elimination (making coefficients equal and adding/subtracting) or substitution.',
+    cognitiveTrap: 'Adding the equations when the coefficients have the same sign (e.g. adding +2y and +2y makes 4y instead of eliminating y), or forgetting to multiply EVERY term including the right-hand constant.',
+    socraticPivot: 'If two lines are parallel and never cross, how many simultaneous solutions do they have?',
+    hook: 'If 2 coffees and 3 croissants cost £12, but 3 coffees and 2 croissants cost £13, how can you determine the exact individual price of each item?',
+    guidedStep: '1. Label equations (1) and (2). 2. Multiply to match coefficients of x or y. 3. Signs same -> Subtract; Signs opposite -> Add. 4. Solve for 1st variable, then substitute back to find 2nd.',
+    scaffoldHints: {
+      level1: 'Elimination rule: Same signs subtract; opposite signs add.',
+      level2: 'When multiplying an equation by 3, remember to multiply the number after the equals sign too!',
+      level3: 'Always check your answers by substituting both x and y into the OTHER original equation.'
+    },
+    questions: [
+      {
+        id: 'ks4-mat-sim-1',
+        prompt: 'Solve the simultaneous equations: \n2x + y = 11 \nx - y = 1',
+        options: [
+          'x = 4, y = 3',
+          'x = 5, y = 1',
+          'x = 3, y = 5',
+          'x = 6, y = -1'
+        ],
+        answerKey: 0,
+        hint: 'The y coefficients have opposite signs (+y and -y): add the two equations together: (2x + x) = 11 + 1.',
+        explanation: 'Adding the two equations: (2x + x) + (y - y) = 11 + 1 -> 3x = 12 -> x = 4. Substitute x = 4 into x - y = 1 -> 4 - y = 1 -> y = 3.'
+      },
+      {
+        id: 'ks4-mat-sim-2',
+        prompt: 'On a graph, what does the algebraic solution to a pair of simultaneous linear equations represent?',
+        options: [
+          'The exact coordinate point (x, y) where the two straight lines intersect',
+          'The point where both lines cross the x-axis',
+          'The distance between the y-intercepts of both lines',
+          'The gradient of the steeper line'
+        ],
+        answerKey: 0,
+        hint: 'At what point do both equations have the same x and y values at the same time?',
+        explanation: 'The solution (x, y) to a pair of simultaneous equations is the single geometric point where the two lines intersect on a Cartesian plane.'
+      }
+    ]
   }
 };
+

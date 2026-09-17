@@ -23,24 +23,52 @@ export class MathQuestionGenerator {
     return !b ? a : this.gcd(b, a % b);
   }
 
-  public static isMathSubject(subject?: string, topic?: string): boolean {
+  /**
+   * Checks if this generator can procedurally generate unique math problems for this topic.
+   * If false, hypercall will use the verified curriculum knowledge base (e.g. Pythagoras, Circle Theorems, Shapes).
+   */
+  public static canGenerate(keyStage?: string, subject?: string, topic?: string): boolean {
     const s = (subject || '').toLowerCase();
     const t = (topic || '').toLowerCase();
-    return (
-      s.includes('math') ||
-      s.includes('calc') ||
-      s.includes('arithmetic') ||
-      t.includes('addition') ||
-      t.includes('subtraction') ||
-      t.includes('multiplication') ||
-      t.includes('division') ||
+    const ks = (keyStage || '').toLowerCase().replace(/key\s*stage\s*/g, 'ks');
+
+    // Explicitly check for topics with dedicated procedural algorithmic generators
+    if (
+      t.includes('probability') ||
+      t.includes('venn') ||
+      t.includes('chance') ||
+      t.includes('percentage') ||
+      t.includes('percent') ||
+      t.includes('ratio') ||
+      t.includes('proportion') ||
+      t.includes('perimeter') ||
+      t.includes('area') ||
       t.includes('fraction') ||
       t.includes('decimal') ||
-      t.includes('percentage') ||
-      t.includes('algebra') ||
       t.includes('bidmas') ||
-      t.includes('ratio')
-    );
+      t.includes('order of operation') ||
+      t.includes('addition') ||
+      t.includes('subtraction') ||
+      t.includes('within 20') ||
+      t.includes('times table') ||
+      t.includes('multiplication') ||
+      t.includes('division') ||
+      t.includes('powers') ||
+      t.includes('index law')
+    ) {
+      return true;
+    }
+
+    // If subject is math and it's a general times-table / calculation request
+    if ((s.includes('math') || s.includes('arithmetic')) && (t.includes('multipl') || t.includes('table') || t.includes('divis'))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public static isMathSubject(subject?: string, topic?: string): boolean {
+    return this.canGenerate(undefined, subject, topic);
   }
 
   public static generate(keyStage: string, topic: string, rawSeed?: string | number): GeneratedMathQuestion {
@@ -52,6 +80,9 @@ export class MathQuestionGenerator {
     const t = (topic || '').toLowerCase();
 
     // Route based on topic or Key Stage
+    if (t.includes('probability') || t.includes('venn') || t.includes('chance') || t.includes('likelihood')) {
+      return this.generateProbabilityVennQuestion(rng, seedToken);
+    }
     if (t.includes('percentage') || t.includes('percent')) {
       return this.generatePercentageQuestion(rng, seedToken);
     }
@@ -61,20 +92,20 @@ export class MathQuestionGenerator {
     if (t.includes('perimeter') || t.includes('area')) {
       return this.generatePerimeterAreaQuestion(rng, seedToken);
     }
-    if (t.includes('fraction') || (ks.includes('ks3') && rng.next() > 0.5)) {
+    if (t.includes('fraction') || t.includes('decimal')) {
       return this.generateFractionQuestion(rng, seedToken);
     }
-    if (t.includes('bidmas') || t.includes('order of operation') || (ks.includes('ks3') && rng.next() > 0.5)) {
+    if (t.includes('bidmas') || t.includes('order of operation')) {
       return this.generateBidmasQuestion(rng, seedToken);
     }
     if (ks.includes('ks1') || t.includes('addition') || t.includes('within 20')) {
       return this.generateKS1Arithmetic(rng, seedToken);
     }
-    if (ks.includes('ks4') || t.includes('algebra') || t.includes('powers') || t.includes('index')) {
+    if (t.includes('powers') || t.includes('index')) {
       return this.generateIndexLawsQuestion(rng, seedToken);
     }
 
-    // Default to KS2 Times Tables / Mixed Operations
+    // Default to Times Tables / Mixed Operations only if clearly arithmetic
     return this.generateTimesTableQuestion(rng, seedToken);
   }
 
@@ -428,4 +459,176 @@ export class MathQuestionGenerator {
         : `How many sides does a rectangle have in total? Did you count all of them?`
     };
   }
+
+  /**
+   * KS3: Probability & Venn Diagrams - Calculations, set notation, and classic misconceptions
+   */
+  private static generateProbabilityVennQuestion(rng: PRNG, seedToken: string): GeneratedMathQuestion {
+    const subType = rng.nextInt(0, 3); // 0: Single-event dice/counters, 1: Complement rule P(not A), 2: Venn Diagram sets
+
+    if (subType === 0) {
+      // Counters in a bag / fair selection
+      const red = rng.nextInt(3, 7);
+      const blue = rng.nextInt(2, 6);
+      const green = rng.nextInt(1, 5);
+      const total = red + blue + green;
+
+      const targetColors = ['red', 'blue', 'green'] as const;
+      const chosenColor = prngPick(rng, targetColors);
+      const countMap = { red, blue, green };
+      const favorable = countMap[chosenColor];
+
+      const divisor = this.gcd(favorable, total);
+      const simpNum = favorable / divisor;
+      const simpDen = total / divisor;
+      const simpFraction = divisor > 1 ? `${simpNum}/${simpDen}` : `${favorable}/${total}`;
+      const unsimplified = `${favorable}/${total}`;
+
+      // Distractors
+      const trapOddsRatio = `${favorable}/${total - favorable}`; // ratio of fav : unfav (odds) instead of fav/total
+      const trapInverted = `${total}/${favorable}`; // inverted fraction
+      const trapRandomCounter = `${total - favorable}/${total}`; // P(not chosen)
+
+      const rawOptions = [
+        { text: `${simpFraction}`, misc: `Correct! Probability = (Favourable outcomes) / (Total possible outcomes) = ${favorable}/${total}${divisor > 1 ? ` = ${simpFraction}` : ''}.` },
+        { text: `${trapOddsRatio}`, misc: `Ratio misconception: Used the number of non-${chosenColor} counters (${total - favorable}) as denominator instead of the TOTAL count (${total}).` },
+        { text: `${trapRandomCounter}`, misc: `Complement confusion: Calculated the probability of NOT picking ${chosenColor} (${total - favorable}/${total}) instead of picking ${chosenColor}.` },
+        { text: `${trapInverted}`, misc: `Inversion error: Placed total outcomes on top instead of favorable outcomes.` }
+      ];
+
+      // If simplified was already unsimplified, tweak option so all 4 are unique
+      const uniqueOptionsMap = new Map<string, string>();
+      rawOptions.forEach(opt => {
+        if (!uniqueOptionsMap.has(opt.text)) {
+          uniqueOptionsMap.set(opt.text, opt.misc);
+        }
+      });
+      if (uniqueOptionsMap.size < 4) {
+        uniqueOptionsMap.set(`1/${total}`, `Assumed each individual outcome has equal probability 1/${total} ignoring the ${favorable} ${chosenColor} counters.`);
+      }
+
+      const finalOptionsList = Array.from(uniqueOptionsMap.entries()).slice(0, 4).map(([text, misc]) => ({ text, misc }));
+      const shuffled = rng.shuffle(finalOptionsList);
+      const answerKey = shuffled.findIndex(o => o.text === `${simpFraction}`);
+
+      return {
+        id: `math_prob_${seedToken}`,
+        seedToken,
+        prompt: `A bag contains ${red} red, ${blue} blue, and ${green} green counters. A counter is chosen at random. What is the probability of picking a ${chosenColor} counter?`,
+        options: shuffled.map(o => o.text),
+        answerKey: answerKey !== -1 ? answerKey : 0,
+        misconceptions: shuffled.map(o => o.misc),
+        hint: `First find the total number of counters in the bag (${red} + ${blue} + ${green}). Then write favourable outcomes over total outcomes.`,
+        explanation: `Total counters = ${red} + ${blue} + ${green} = ${total}. Favourable ${chosenColor} counters = ${favorable}. Probability = ${favorable}/${total}${divisor > 1 ? ` = ${simpFraction}` : ''}.`,
+        socraticFollowUp: `Can the probability of an event ever be greater than 1 or negative? What is the maximum possible value for a probability?`
+      };
+    } else if (subType === 1) {
+      // Complement Rule: P(A') = 1 - P(A)
+      const den = prngPick(rng, [5, 8, 10, 20]);
+      const num = rng.nextInt(1, den - 1);
+      const complementNum = den - num;
+
+      const pWin = `${num}/${den}`;
+      const pNotWin = `${complementNum}/${den}`;
+      const trapInvert = `${num}/${complementNum}`;
+      const trapSame = `${num}/${den}`;
+      const trapOverTotal = `${num + 1}/${den}`;
+
+      const rawOptions = [
+        { text: `${pNotWin}`, misc: `Correct! P(event does not happen) = 1 - P(event happens) = 1 - ${num}/${den} = ${complementNum}/${den}.` },
+        { text: `${trapSame}`, misc: `Forgot to subtract from 1: Selected the probability that the event DOES happen (${pWin}).` },
+        { text: `${trapInvert}`, misc: `Ratio confusion: Expressed as odds ${num} : ${complementNum} rather than a valid probability fraction.` },
+        { text: `${trapOverTotal}`, misc: `Calculation error: Did not subtract accurately from the total unit 1 (${den}/${den}).` }
+      ];
+
+      const shuffled = rng.shuffle(rawOptions);
+      const answerKey = shuffled.findIndex(o => o.text === `${pNotWin}`);
+
+      return {
+        id: `math_prob_comp_${seedToken}`,
+        seedToken,
+        prompt: `The probability that a school football team wins a match is ${pWin}. Assuming there are no draws, what is the probability that they do NOT win?`,
+        options: shuffled.map(o => o.text),
+        answerKey: answerKey !== -1 ? answerKey : 0,
+        misconceptions: shuffled.map(o => o.misc),
+        hint: `The sum of probabilities of all mutually exclusive outcomes always equals 1: P(not A) = 1 - P(A).`,
+        explanation: `P(not win) = 1 - P(win) = 1 - ${num}/${den} = ${den}/${den} - ${num}/${den} = ${complementNum}/${den}.`,
+        socraticFollowUp: `If an event is guaranteed to happen, its probability is 1. If it cannot happen, it is 0. What must the probabilities of all possible outcomes add up to?`
+      };
+    } else {
+      // Venn Diagram & Set Notation (A ∩ B, A ∪ B)
+      const totalStudents = rng.nextInt(28, 35);
+      const setAOnly = rng.nextInt(8, 12);
+      const setBOnly = rng.nextInt(6, 10);
+      const intersection = rng.nextInt(4, 7);
+      const outside = totalStudents - (setAOnly + setBOnly + intersection);
+
+      const sportA = 'Football';
+      const sportB = 'Tennis';
+
+      // Ask for intersection or union
+      const isIntersection = rng.next() > 0.5;
+
+      if (isIntersection) {
+        const correctVal = intersection;
+        const trapUnion = setAOnly + setBOnly + intersection;
+        const trapOnlyA = setAOnly;
+        const trapTotalA = setAOnly + intersection;
+
+        const rawOptions = [
+          { text: `${correctVal} students`, misc: `Correct! The intersection (A ∩ B) represents students who play BOTH ${sportA} and ${sportB}.` },
+          { text: `${trapTotalA} students`, misc: `Included students who only play ${sportA} as well as both, rather than solely the overlapping intersection.` },
+          { text: `${trapOnlyA} students`, misc: `Selected students who play ONLY ${sportA}, excluding the intersection.` },
+          { text: `${trapUnion} students`, misc: `Calculated the UNION (A ∪ B) - all students playing either sport - instead of the intersection (both).` }
+        ];
+
+        const shuffled = rng.shuffle(rawOptions);
+        const answerKey = shuffled.findIndex(o => o.text === `${correctVal} students`);
+
+        return {
+          id: `math_venn_${seedToken}`,
+          seedToken,
+          prompt: `In a class of ${totalStudents} students: ${setAOnly + intersection} play ${sportA}, ${setBOnly + intersection} play ${sportB}, and ${outside} play neither. How many students play BOTH sports (the intersection, A ∩ B)?`,
+          options: shuffled.map(o => o.text),
+          answerKey: answerKey !== -1 ? answerKey : 0,
+          misconceptions: shuffled.map(o => o.misc),
+          hint: `Sum of students in at least one sport = ${totalStudents} - ${outside} = ${setAOnly + setBOnly + intersection}. Compare with (${setAOnly + intersection}) + (${setBOnly + intersection}).`,
+          explanation: `Number playing either sport = ${totalStudents} - ${outside} = ${totalStudents - outside}. Since (${setAOnly + intersection}) + (${setBOnly + intersection}) = ${(setAOnly + intersection) + (setBOnly + intersection)}, the overlap counted twice is ${(setAOnly + intersection) + (setBOnly + intersection)} - ${totalStudents - outside} = ${intersection} students.`,
+          socraticFollowUp: `In Venn diagram set notation, what does the symbol ∩ (intersection) mean compared to ∪ (union)?`
+        };
+      } else {
+        const correctVal = setAOnly + setBOnly + intersection;
+        const trapSumNoSubtract = (setAOnly + intersection) + (setBOnly + intersection);
+        const trapIntersection = intersection;
+        const trapNeither = outside;
+
+        const rawOptions = [
+          { text: `${correctVal} students`, misc: `Correct! The union (A ∪ B) is the total number of distinct students who play ${sportA} or ${sportB} or both.` },
+          { text: `${trapSumNoSubtract} students`, misc: `Double-counting trap: Added the two sets together without subtracting the intersection (${intersection}) who were counted twice!` },
+          { text: `${trapIntersection} students`, misc: `Intersection confusion: Identified students who play BOTH (A ∩ B) rather than EITHER sport (A ∪ B).` },
+          { text: `${trapNeither} students`, misc: `Identified students who play NEITHER sport outside the circles.` }
+        ];
+
+        const shuffled = rng.shuffle(rawOptions);
+        const answerKey = shuffled.findIndex(o => o.text === `${correctVal} students`);
+
+        return {
+          id: `math_venn_union_${seedToken}`,
+          seedToken,
+          prompt: `In a group of ${totalStudents} students, ${setAOnly} play ONLY ${sportA}, ${setBOnly} play ONLY ${sportB}, and ${intersection} play BOTH. How many students play ${sportA} OR ${sportB} (the union, A ∪ B)?`,
+          options: shuffled.map(o => o.text),
+          answerKey: answerKey !== -1 ? answerKey : 0,
+          misconceptions: shuffled.map(o => o.misc),
+          hint: `Union means in A, in B, or in both: add the disjoint parts (${setAOnly} + ${setBOnly} + ${intersection}).`,
+          explanation: `Union (A ∪ B) = (Only ${sportA}) + (Only ${sportB}) + (Both) = ${setAOnly} + ${setBOnly} + ${intersection} = ${correctVal} students.`,
+          socraticFollowUp: `Why must we be careful not to count the overlapping students twice when adding two sets together?`
+        };
+      }
+    }
+  }
+}
+
+function prngPick<T>(rng: PRNG, arr: readonly T[]): T {
+  const idx = rng.nextInt(0, arr.length - 1);
+  return arr[idx];
 }

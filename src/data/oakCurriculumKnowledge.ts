@@ -216,6 +216,41 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
     ]
   },
 
+  'ks1:maths:place-value-50': {
+    topicId: 'place-value-50',
+    title: 'Place Value to 50',
+    keyStage: 'Key Stage 1',
+    subject: 'Mathematics',
+    coreAxiom: 'Two-digit numbers up to 50 are composed of tens and ones (e.g. 43 is 4 tens and 3 ones, which equals 40 + 3). The position of each digit determines its value.',
+    cognitiveTrap: 'Reversing digits (writing 34 for 43) or thinking the 4 in 43 just means 4 counters instead of 4 bundles of 10.',
+    socraticPivot: 'If you have 4 packs of 10 pencils and 3 single pencils, how many pencils do you have in total?',
+    hook: 'If you swap the digits in 14, you get 41! How does changing the place change the whole amount?',
+    guidedStep: '1. Count the tens (groups of 10). 2. Count the leftover ones. 3. Combine: Tens + Ones.',
+    scaffoldHints: {
+      level1: 'In a 2-digit number, the left digit tells you how many TENS (10, 20, 30, 40) and the right digit tells you how many ONES.',
+      level2: 'Dienes blocks: 1 tall stick = 1 ten (10). 1 little cube = 1 one.',
+      level3: '3 tens and 7 ones = 30 + 7 = 37.'
+    },
+    questions: [
+      {
+        id: 'ks1-mat-pv-1',
+        prompt: 'What is the value of the digit 4 in the number 47?',
+        options: ['4 tens (40)', '4 ones (4)', '7 tens (70)', '400'],
+        answerKey: 0,
+        hint: 'The 4 is in the tens column: 4 tens = 40.',
+        explanation: 'In 47, the 4 is in the tens place, representing 4 tens (40), and 7 is in the ones place.'
+      },
+      {
+        id: 'ks1-mat-pv-2',
+        prompt: 'Which number is partitioned into 3 tens and 6 ones?',
+        options: ['36', '63', '306', '9'],
+        answerKey: 0,
+        hint: '3 tens = 30. 30 + 6 = 36.',
+        explanation: '3 tens (30) plus 6 ones (6) equals 36.'
+      }
+    ]
+  },
+
   // --- KS1 English ---
   'ks1:english:capital-letters-stops': {
     topicId: 'capital-letters-stops',
@@ -252,6 +287,147 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
   // ==========================================
   // KEY STAGE 2 (Ages 7-11 / Junior Primary)
   // ==========================================
+
+  // --- KS2 Mathematics ---
+  'ks2:maths:fractions-decimals': {
+    topicId: 'fractions-decimals',
+    title: 'Fractions and Decimals',
+    keyStage: 'Key Stage 2',
+    subject: 'Mathematics',
+    coreAxiom: 'Fractions and decimals represent parts of a whole. A fraction a/b denotes "a parts out of b equal parts". To add or subtract fractions with different denominators, you must convert them to equivalent fractions with a common denominator. Decimals express fractions with powers of ten (tenths, hundredths, thousandths).',
+    cognitiveTrap: 'Adding both numerators and denominators straight across (e.g. 1/3 + 1/4 = 2/7), or assuming a longer decimal is always larger (e.g. thinking 0.125 > 0.5).',
+    socraticPivot: 'If you have half a pizza and another quarter of a pizza, why do you have 3/4 of a pizza and NOT 2/6?',
+    hook: 'If you split a chocolate bar into 4 pieces and eat 1 piece, what fraction did you eat, and how is that written on a price tag as a decimal?',
+    guidedStep: '1. Find the Lowest Common Multiple (LCM) of denominators. 2. Scale numerators. 3. Add or subtract numerators only; keep the common denominator.',
+    scaffoldHints: {
+      level1: 'Never add denominators together! 1/5 + 2/5 = 3/5, not 3/10.',
+      level2: 'To add 1/2 + 1/4: convert 1/2 to 2/4. Now 2/4 + 1/4 = 3/4.',
+      level3: 'Common decimal equivalents: 1/2 = 0.5, 1/4 = 0.25, 3/4 = 0.75, 1/10 = 0.1.'
+    },
+    questions: [
+      {
+        id: 'ks2-mat-frac-1',
+        prompt: 'Calculate: 1/4 + 2/4 = ?',
+        options: ['3/4', '3/8', '2/4', '1/2'],
+        answerKey: 0,
+        hint: 'Denominators are already identical (4): add the numerators 1 + 2.',
+        explanation: 'When denominators are equal, add the numerators: 1/4 + 2/4 = 3/4.'
+      },
+      {
+        id: 'ks2-mat-frac-2',
+        prompt: 'Which decimal is exactly equivalent to the fraction 3/4?',
+        options: ['0.75', '0.34', '0.43', '0.3'],
+        answerKey: 0,
+        hint: '1/4 is 0.25. Multiply 0.25 by 3.',
+        explanation: '3/4 = 3 ÷ 4 = 0.75.'
+      }
+    ]
+  },
+
+  'ks2:maths:place-value-rounding': {
+    topicId: 'place-value-rounding',
+    title: 'Place Value and Rounding',
+    keyStage: 'Key Stage 2',
+    subject: 'Mathematics',
+    coreAxiom: 'In the base-10 positional number system, each column represents a power of 10 (Thousands, Hundreds, Tens, Ones, Tenths, Hundredths). When rounding to the nearest 10, 100, or 1000, inspect the decisive digit immediately to the right: 0-4 rounds down, 5-9 rounds up.',
+    cognitiveTrap: 'Rounding 45 to the nearest 10 as 40 instead of 50, or changing the decisive digit without replacing following digits with placeholder zeros.',
+    socraticPivot: 'Why is 350 rounded to the nearest hundred 400, but 349 rounded to the nearest hundred 300?',
+    hook: 'Supermarkets round prices and crowd sizes are estimated to the nearest thousand. How do estimates give us fast clarity without losing our bearings?',
+    guidedStep: '1. Underline the target place value column. 2. Circle the digit to its immediate right. 3. If 5 or more, round up (+1); if 4 or less, round down. 4. Fill remaining columns with 0.',
+    scaffoldHints: {
+      level1: 'Rounding rhyme: "5 to 9, climb the vine! 0 to 4, slide to the floor!"',
+      level2: 'Round 348 to the nearest 100: look at the tens digit (4). Since 4 < 5, round down to 300.',
+      level3: 'Decisive digit: When rounding to the nearest 1000, inspect the hundreds digit.'
+    },
+    questions: [
+      {
+        id: 'ks2-mat-pvr-1',
+        prompt: 'What is 4,782 rounded to the nearest thousand?',
+        options: ['5,000', '4,000', '4,800', '4,700'],
+        answerKey: 0,
+        hint: 'Look at the hundreds digit (7). Is 7 five or more? Round up!',
+        explanation: 'The hundreds digit is 7 (≥ 5), so the thousands digit rounds up from 4 to 5, giving 5,000.'
+      },
+      {
+        id: 'ks2-mat-pvr-2',
+        prompt: 'In the number 52,836, what is the value of the digit 2?',
+        options: ['2,000 (Two thousand)', '200', '20,000', '20'],
+        answerKey: 0,
+        hint: 'Read the place value columns: Ten-thousands (5), Thousands (2), Hundreds (8), Tens (3), Ones (6).',
+        explanation: 'The digit 2 is in the thousands column, representing 2,000.'
+      }
+    ]
+  },
+
+  'ks2:maths:long-division-multiplication': {
+    topicId: 'long-division-multiplication',
+    title: 'Long Division & Multiplication',
+    keyStage: 'Key Stage 2',
+    subject: 'Mathematics',
+    coreAxiom: 'Formal written methods partition multi-digit calculations into place value steps. Long multiplication calculates partial products by distributing tens and ones, including placeholder zeros. Long division repeatedly groups and subtracts multiples of the divisor (Divide, Multiply, Subtract, Bring Down).',
+    cognitiveTrap: 'Forgetting the placeholder 0 when multiplying by the tens digit in long multiplication, or misaligning place-value columns in long division.',
+    socraticPivot: 'Why MUST you write a 0 in the ones place when multiplying by the 2 in 24?',
+    hook: 'If a concert hall has 24 rows of 36 seats, how can you calculate the total capacity quickly and accurately without counting one seat at a time?',
+    guidedStep: 'Long Multiplication: 1. Multiply by ones digit. 2. Write placeholder 0. 3. Multiply by tens digit. 4. Add the two partial products.',
+    scaffoldHints: {
+      level1: 'Always write the placeholder 0 on the second multiplication row before multiplying by tens!',
+      level2: 'Long division chant: Divide, Multiply, Subtract, Bring down (Does McDonalds Sell Burgers?).',
+      level3: 'To check your division: Multiply your answer by the divisor and add any remainder.'
+    },
+    questions: [
+      {
+        id: 'ks2-mat-ldm-1',
+        prompt: 'Calculate: 34 × 20 = ?',
+        options: ['680', '68', '340', '640'],
+        answerKey: 0,
+        hint: 'Multiply 34 × 2 = 68, then multiply by 10 (add a zero).',
+        explanation: '34 × 2 = 68. Since we are multiplying by 20 (2 tens), 68 × 10 = 680.'
+      },
+      {
+        id: 'ks2-mat-ldm-2',
+        prompt: 'Calculate: 144 ÷ 12 = ?',
+        options: ['12', '14', '10', '16'],
+        answerKey: 0,
+        hint: 'What number multiplied by 12 gives 144?',
+        explanation: '144 ÷ 12 = 12 (since 12 × 12 = 144).'
+      }
+    ]
+  },
+
+  'ks2:maths:perimeter-area': {
+    topicId: 'perimeter-area',
+    title: 'Perimeter and Area',
+    keyStage: 'Key Stage 2',
+    subject: 'Mathematics',
+    coreAxiom: 'Perimeter is the continuous boundary distance around the outside of a 2D shape (measured in linear units: cm, m). Area is the total surface space enclosed inside the shape (measured in square units: cm², m²). For a rectangle: Perimeter = 2(length + width); Area = length × width.',
+    cognitiveTrap: 'Confusing perimeter and area (multiplying sides when asked for perimeter, or adding all four sides when asked for area).',
+    socraticPivot: 'If you want to build a wooden fence around a garden vs planting grass inside it, which one needs perimeter and which needs area?',
+    hook: 'A ribbon around a parcel measures perimeter; the wrapping paper covering the box measures area!',
+    guidedStep: 'Perimeter: Walk around the shape and add all external sides together. Area of rectangle: Count the unit squares or multiply length × width.',
+    scaffoldHints: {
+      level1: 'Perimeter = Rim = Fence around outside (add sides). Area = Area code = Grass on the lawn (multiply length × width).',
+      level2: 'Units check: Perimeter is cm or m. Area is always square units: cm² or m².',
+      level3: 'For a rectangle with length 8 cm and width 3 cm: Perimeter = 8 + 3 + 8 + 3 = 22 cm. Area = 8 × 3 = 24 cm².'
+    },
+    questions: [
+      {
+        id: 'ks2-mat-pa-1',
+        prompt: 'A rectangular playground has a length of 9 metres and a width of 4 metres. What is its AREA?',
+        options: ['36 m²', '26 m', '13 m²', '36 m'],
+        answerKey: 0,
+        hint: 'Area = length × width. 9 × 4 = ?',
+        explanation: 'Area of a rectangle = length × width = 9 m × 4 m = 36 m².'
+      },
+      {
+        id: 'ks2-mat-pa-2',
+        prompt: 'A rectangle has a length of 7 cm and a width of 3 cm. What is its PERIMETER?',
+        options: ['20 cm', '21 cm²', '10 cm', '20 cm²'],
+        answerKey: 0,
+        hint: 'Perimeter is the distance all the way around: 7 + 3 + 7 + 3.',
+        explanation: 'Perimeter = 2 × (7 + 3) = 2 × 10 = 20 cm.'
+      }
+    ]
+  },
 
   // --- KS2 Science ---
   'ks2:science:states-of-matter': {
@@ -392,85 +568,6 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'An "open" switch creates a gap in the loop.',
         explanation: 'An open switch breaks the continuous conductive pathway, preventing current from flowing, so the bulb turns off.'
-      }
-    ]
-  },
-
-  // --- KS2 Mathematics ---
-  'ks2:maths:fractions-decimals': {
-    topicId: 'fractions-decimals',
-    title: 'Fractions and Decimals',
-    keyStage: 'Key Stage 2',
-    subject: 'Mathematics',
-    coreAxiom: 'A fraction represents part of a whole; the denominator denotes total equal divisions, the numerator denotes how many parts are taken. Decimals represent fractions with powers of 10.',
-    cognitiveTrap: 'Assuming that 1/8 is bigger than 1/4 because 8 is larger than 4.',
-    socraticPivot: 'If a chocolate cake is divided equally among 8 children versus 4 children, who gets a bigger slice?',
-    hook: 'Would you rather have 1/2 of a pizza or 1/10 of the same pizza?',
-    guidedStep: 'Find equivalent fractions by multiplying or dividing numerator and denominator by the same non-zero number.',
-    scaffoldHints: {
-      level1: 'Denominator = how many slices the pizza was cut into. The more slices you cut, the smaller each slice must be!',
-      level2: '1/2 = 0.5 = 50%. 1/4 = 0.25 = 25%. 3/4 = 0.75 = 75%.',
-      level3: 'To compare fractions with different denominators, find a common denominator: 1/4 = 2/8. Since 2/8 < 3/8, 3/8 is larger than 1/4.'
-    },
-    questions: [
-      {
-        id: 'ks2-mat-frac-1',
-        prompt: 'Which fraction is the largest?',
-        options: ['1/2', '1/4', '1/8', '1/10'],
-        answerKey: 0,
-        hint: 'If you share a pie with fewer people, each person gets a larger share.',
-        explanation: '1/2 represents one out of two equal parts (50%), which is larger than 1/4 (25%), 1/8 (12.5%), or 1/10 (10%).'
-      },
-      {
-        id: 'ks2-mat-frac-2',
-        prompt: 'What is 3/4 written as a decimal?',
-        options: ['0.75', '0.34', '0.43', '0.3'],
-        answerKey: 0,
-        hint: 'Think of 3 quarters of 100 pence.',
-        explanation: '3/4 = 75/100 = 0.75.'
-      },
-      {
-        id: 'ks2-mat-frac-3',
-        prompt: 'What is 2/5 + 1/5?',
-        options: ['3/5', '3/10', '2/10', '3/25'],
-        answerKey: 0,
-        hint: 'When denominators are identical, add only the top numerators.',
-        explanation: 'When adding fractions with identical denominators, add the numerators: 2 + 1 = 3, so 3/5.'
-      }
-    ]
-  },
-
-  'ks2:maths:perimeter-area': {
-    topicId: 'perimeter-area',
-    title: 'Perimeter and Area',
-    keyStage: 'Key Stage 2',
-    subject: 'Mathematics',
-    coreAxiom: 'Perimeter is the continuous distance around the outer boundary (measured in length units like cm/m). Area is the 2D surface enclosed within the boundary (measured in square units like cm²/m²).',
-    cognitiveTrap: 'Confusing perimeter with area, or adding length and width without multiplying for area.',
-    socraticPivot: 'If you want to build a fence around a sheep field, do you measure perimeter or area?',
-    hook: 'If you are buying carpet to cover a classroom floor, what mathematical calculation do you need?',
-    guidedStep: 'Perimeter of rectangle = 2 × (length + width). Area of rectangle = length × width.',
-    scaffoldHints: {
-      level1: 'Perimeter: walking along the fence all the way around the outside. Area: painting the entire grass lawn inside.',
-      level2: 'Rectangle with length 6m and width 4m: Perimeter = 6 + 4 + 6 + 4 = 20m. Area = 6 × 4 = 24m².',
-      level3: 'Units matter: Perimeter uses regular meters (m). Area uses square meters (m²).'
-    },
-    questions: [
-      {
-        id: 'ks2-mat-perim-1',
-        prompt: 'A rectangular garden has a length of 8 meters and a width of 5 meters. What is its AREA?',
-        options: ['40 m²', '26 m', '40 m', '13 m²'],
-        answerKey: 0,
-        hint: 'Area of rectangle = length × width (in square meters).',
-        explanation: 'Area = length × width = 8m × 5m = 40 m².'
-      },
-      {
-        id: 'ks2-mat-perim-2',
-        prompt: 'What is the PERIMETER of the same 8m by 5m rectangular garden?',
-        options: ['26 m', '40 m²', '13 m', '26 m²'],
-        answerKey: 0,
-        hint: 'Add all four sides: 8 + 5 + 8 + 5.',
-        explanation: 'Perimeter is the distance all the way around: 8m + 5m + 8m + 5m = 26 m.'
       }
     ]
   },
@@ -1009,6 +1106,41 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: '6² + 8² = 36 + 64 = 100. Now take the square root of 100.',
         explanation: 'a² + b² = c² -> 6² + 8² = 36 + 64 = 100 -> c = √100 = 10 cm.'
+      }
+    ]
+  },
+
+  'ks3:maths:probability-venn': {
+    topicId: 'probability-venn',
+    title: 'Probability & Venn Diagrams',
+    keyStage: 'Key Stage 3',
+    subject: 'Mathematics',
+    coreAxiom: 'Probability of a single event is P(E) = (number of favourable outcomes) / (total number of possible outcomes), always bounded between 0 and 1. For complementary events, P(not E) = 1 - P(E). In Venn diagrams, the intersection (A ∩ B) represents elements in BOTH sets, and the union (A ∪ B) represents elements in EITHER or BOTH sets.',
+    cognitiveTrap: 'Expressing probability as a ratio of favourable to unfavourable outcomes (odds) rather than over the total, or double-counting the intersection in Venn diagram unions.',
+    socraticPivot: 'If there are 3 red balls and 7 blue balls in a bag, why is the probability of picking red 3/10 and NOT 3/7?',
+    hook: 'Why do weather forecasters say there is a "30% chance of rain", and what is the exact probability that it will NOT rain?',
+    guidedStep: '1. Count total elements in the sample space. 2. Count favourable outcomes. 3. Form fraction favourable/total. 4. In Venn diagrams, fill the intersection first to prevent double-counting.',
+    scaffoldHints: {
+      level1: 'Probabilities are always fractions between 0 (impossible) and 1 (certain). The denominator must ALWAYS be the TOTAL count.',
+      level2: 'P(not happening) = 1 - P(happening). If P(win) = 2/5, then P(lose) = 1 - 2/5 = 3/5.',
+      level3: 'Intersection (∩) = overlap of both circles. Union (∪) = everything inside either circle: n(A ∪ B) = n(A) + n(B) - n(A ∩ B).'
+    },
+    questions: [
+      {
+        id: 'ks3-mat-prob-1',
+        prompt: 'A standard fair 6-sided die is rolled once. What is the probability of rolling a prime number (2, 3, or 5)?',
+        options: ['1/2 (or 3/6)', '1/3', '3/3', '2/6'],
+        answerKey: 0,
+        hint: 'There are 3 prime numbers (2, 3, 5) out of 6 possible numbers on the die.',
+        explanation: 'Favourable outcomes = 3 (numbers 2, 3, 5). Total outcomes = 6. Probability = 3/6 = 1/2.'
+      },
+      {
+        id: 'ks3-mat-prob-2',
+        prompt: 'In a class of 30 students, 18 play football and 12 play rugby, while 5 play both sports. How many students play football OR rugby (the union)?',
+        options: ['25 students', '30 students', '5 students', '15 students'],
+        answerKey: 0,
+        hint: 'Remember to subtract the 5 students who play both so they are not counted twice: 18 + 12 - 5.',
+        explanation: 'Union = Football + Rugby - Both = 18 + 12 - 5 = 25 students.'
       }
     ]
   },

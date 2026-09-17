@@ -1100,6 +1100,496 @@ export const CURRICULUM_EXPANSION_BASE: Record<string, CurriculumTopicEntry> = {
         explanation: 'In French, the conjunction "bien que" must always be followed by the subjunctive mood. The 3rd person singular subjunctive of "être" is "soit" (Bien que ce soit cher).'
       }
     ]
+  },
+
+  // ==========================================
+  // OAK CATALOGUE MISSING TOPIC SEEDS (100% COVERAGE)
+  // ==========================================
+
+  // --- KS1 English: Story Sequencing ---
+  'ks1:english:story-sequencing': {
+    topicId: 'story-sequencing',
+    title: 'Story Sequencing',
+    keyStage: 'Key Stage 1',
+    subject: 'English',
+    coreAxiom: 'Stories have a beginning, a middle, and an end, ordered logically using chronological time connectives (First, Next, Then, After that, Finally).',
+    cognitiveTrap: 'Telling events out of chronological order or jumping straight to the resolution without explaining the problem.',
+    socraticPivot: 'Why would a fairy tale make no sense if the prince and princess married before they even met each other?',
+    hook: 'Can you eat a banana before you peel it? Stories have a natural recipe order too!',
+    guidedStep: '1. Beginning (Introduce characters and setting). 2. Middle (A problem or exciting event happens). 3. End (The problem is solved).',
+    scaffoldHints: {
+      level1: 'Chronological words: First..., Next..., Then..., Finally...',
+      level2: 'Every good story has 3 parts: Beginning, Middle (the problem), and End (the solution).',
+      level3: 'Look for sequence clues: "Once upon a time" is at the start; "Happily ever after" is at the end.'
+    },
+    questions: [
+      {
+        id: 'ks1-eng-seq-1',
+        prompt: 'Which time connective word should you use at the very START of retelling a story?',
+        options: ['First', 'Finally', 'Suddenly', 'After that'],
+        answerKey: 0,
+        hint: 'Which word means event number 1?',
+        explanation: '"First" introduces the opening event in a sequence. "Finally" is saved for the end.'
+      }
+    ]
+  },
+
+  // --- KS1 Geography: The Four Seasons & Weather Patterns ---
+  'ks1:geography:weather-patterns': {
+    topicId: 'weather-patterns',
+    title: 'The Four Seasons & Weather Patterns',
+    keyStage: 'Key Stage 1',
+    subject: 'Geography',
+    coreAxiom: 'In the UK, weather patterns cycle through four seasons. Temperature, precipitation (rain, snow), wind speed, and daylight change predictably across Autumn, Winter, Spring, and Summer.',
+    cognitiveTrap: 'Confusing "weather" (what is happening outside today) with "climate" or thinking hot weather only happens because of the Sun being closer.',
+    socraticPivot: 'Why do we see frost and snow in December and January, but warm sunshine and long daylight hours in June and July?',
+    hook: 'Why do swallows migrate south for the winter, and why do trees shed their leaves before the frost?',
+    guidedStep: 'Record daily weather using symbols (sun, rain clouds, snowflakes) and track how day length changes across the year.',
+    scaffoldHints: {
+      level1: 'Winter is cold and dark with short days. Summer is warm and bright with long days.',
+      level2: 'Spring brings new buds, blooming flowers, and baby animals. Autumn brings falling leaves and cooler winds.',
+      level3: 'A thermometer measures temperature in degrees Celsius (°C); a rain gauge measures rainfall.'
+    },
+    questions: [
+      {
+        id: 'ks1-geo-weath-1',
+        prompt: 'In the United Kingdom, during which season do days have the FEWEST hours of daylight and the coldest temperatures?',
+        options: ['Winter', 'Summer', 'Spring', 'Autumn'],
+        answerKey: 0,
+        hint: 'Think of the season with Christmas, frost, and dark afternoons by 4:00 PM.',
+        explanation: 'Winter has the shortest daylight hours and the coldest temperatures in the UK.'
+      }
+    ]
+  },
+
+  // --- KS2 English: Direct Speech Punctuation ---
+  'ks2:english:direct-speech-punctuation': {
+    topicId: 'direct-speech-punctuation',
+    title: 'Direct Speech Punctuation',
+    keyStage: 'Key Stage 2',
+    subject: 'English',
+    coreAxiom: 'Direct speech quotes the exact words spoken, enclosed within inverted commas ("..."). Punctuation (comma, full stop, question mark, or exclamation mark) MUST sit INSIDE the closing quotation mark. Each new speaker begins on a new line.',
+    cognitiveTrap: 'Placing the comma or question mark outside the quotation marks (e.g. "Wait for me", shouted Tom), or forgetting to start a new paragraph for a new speaker.',
+    socraticPivot: 'Why does the comma in "Hurry up," said Mum have to go INSIDE the inverted commas?',
+    hook: 'Without speech marks, how can a reader tell whether a character is speaking out loud or just thinking in silence?',
+    guidedStep: '1. Open inverted commas ("). 2. Capital letter for spoken words. 3. End speech with punctuation (! ? , .). 4. Close inverted commas ("). 5. Reporting clause (said Jack). 6. New speaker = new line.',
+    scaffoldHints: {
+      level1: 'Rule: "Punctuation before closing inverted commas!" (e.g. "Stop!" cried the policeman).',
+      level2: 'Always start what the speaker says with a capital letter inside the quotes: "We are ready," announced Mia.',
+      level3: 'New speaker, new line: Whenever someone else begins speaking, hit Enter to start a fresh line.'
+    },
+    questions: [
+      {
+        id: 'ks2-eng-speech-1',
+        prompt: 'Which sentence is punctuated with correct inverted commas for direct speech?',
+        options: [
+          '"Can we explore the cave today?" whispered Leo.',
+          '"Can we explore the cave today"? whispered Leo.',
+          '"can we explore the cave today?" whispered Leo.',
+          'Can we explore the cave today? "whispered Leo."'
+        ],
+        answerKey: 0,
+        hint: 'The question mark MUST be inside the quotation marks, and the spoken sentence must begin with a capital letter.',
+        explanation: 'The spoken words begin with a capital letter ("Can...") and the question mark sits strictly inside the closing speech mark: "Can we explore the cave today?" whispered Leo.'
+      }
+    ]
+  },
+
+  // --- KS2 English: Reading Comprehension: Inference ---
+  'ks2:english:reading-comprehension-inference': {
+    topicId: 'reading-comprehension-inference',
+    title: 'Reading Comprehension: Inference',
+    keyStage: 'Key Stage 2',
+    subject: 'English',
+    coreAxiom: 'Inference is reading between the lines—combining textual clues with background knowledge to deduce meanings, emotions, or motives that the author has not explicitly stated.',
+    cognitiveTrap: 'Guessing wild ideas not supported by evidence in the text, or confusing retrieval (finding literal words) with inference (deducing implied meaning).',
+    socraticPivot: 'If a text says "James slammed the door, kicked his bag across the room, and refused to speak," how do we know he is angry if the word "angry" never appears?',
+    hook: 'Detectives solve mysteries using footprints and clues. Reading comprehension inference turns you into a textual detective!',
+    guidedStep: '1. Read the text clue. 2. Ask: What does this action or detail suggest? 3. Support your deduction with "because the text says...".',
+    scaffoldHints: {
+      level1: 'Inference = Clues from text + What you already know about human behavior.',
+      level2: '"Show, don\'t tell": authors describe trembling hands to show fear rather than writing "she was afraid".',
+      level3: 'PEE rule: Point (your inference), Evidence (quote from text), Explanation (how the quote proves your point).'
+    },
+    questions: [
+      {
+        id: 'ks2-eng-inf-1',
+        prompt: 'Read the excerpt: "Sarah pulled her woollen scarf tighter around her neck, tucked her shivering hands into her coat pockets, and hurried towards the glowing porch light." What can we infer about the weather?',
+        options: [
+          'It is cold and chilly outside',
+          'It is a sweltering hot summer afternoon',
+          'It is completely pitch black with no light anywhere',
+          'Sarah has forgotten where she lives'
+        ],
+        answerKey: 0,
+        hint: 'Look at Sarah\'s actions: woollen scarf, shivering hands, thick coat.',
+        explanation: 'The details of shivering, a woollen scarf, and hands tucked in pockets allow the reader to infer that the weather is cold, even though the text never uses the word "cold".'
+      }
+    ]
+  },
+
+  // --- KS2 Science: Earth and Space ---
+  'ks2:science:earth-space': {
+    topicId: 'earth-space',
+    title: 'Earth and Space',
+    keyStage: 'Key Stage 2',
+    subject: 'Science',
+    coreAxiom: 'The Earth is a roughly spherical body that rotates on its axis once every 24 hours (causing day and night) and orbits the Sun once every 365.25 days (causing the year and seasons). The Moon is a natural satellite that orbits the Earth roughly every 28 days.',
+    cognitiveTrap: 'Believing that the Sun physically moves across the sky around the Earth, or that the Moon produces its own light like a lightbulb.',
+    socraticPivot: 'Why does the Sun appear to rise in the east and set in the west if the Sun is actually stationed at the centre of our Solar System?',
+    hook: 'If you stand in London at midday, people on the opposite side of the planet in New Zealand are fast asleep in the dark of night! Why?',
+    guidedStep: '1. Identify the Sun as a star at the centre. 2. Recognise Earth\'s rotation causes day/night. 3. Moon reflects sunlight and orbits Earth.',
+    scaffoldHints: {
+      level1: 'The Sun does not move across the sky; Earth spins like a spinning top (rotation) once every 24 hours.',
+      level2: 'Day happens when your side of the Earth faces towards the Sun; Night happens when it faces away.',
+      level3: 'Orbit vs Rotation: Rotation = spinning on its axis (24 hours = 1 day). Orbit = travelling around the Sun (365 days = 1 year).'
+    },
+    questions: [
+      {
+        id: 'ks2-sci-space-1',
+        prompt: 'What causes day and night on Planet Earth?',
+        options: [
+          'The Earth spinning (rotating) on its own axis every 24 hours',
+          'The Sun travelling in a circle around the Earth',
+          'The Moon blocking the Sun\'s light every evening',
+          'Clouds covering the sky as the temperature drops'
+        ],
+        answerKey: 0,
+        hint: 'Think about the Earth rotating like a spinning globe.',
+        explanation: 'Day and night are caused by Earth\'s rotation on its axis once every 24 hours. As it turns, half faces the Sun (day) and half faces away into space (night).'
+      }
+    ]
+  },
+
+  // --- KS2 History: The Vikings & Anglo-Saxons ---
+  'ks2:history:vikings-anglo-saxons': {
+    topicId: 'vikings-anglo-saxons',
+    title: 'The Vikings & Anglo-Saxons',
+    keyStage: 'Key Stage 2',
+    subject: 'History',
+    coreAxiom: 'Following the fall of Roman Britain, Anglo-Saxon kingdoms established settlements across England. From 793 AD (raid on Lindisfarne monastery), Scandinavian Norse Vikings raided and later settled, culminating in King Alfred the Great dividing England under Danelaw before ultimate unification.',
+    cognitiveTrap: 'Believing Vikings were purely horned-helmeted bloodthirsty raiders rather than skilled farmers, traders, craftspeople, and navigators.',
+    socraticPivot: 'Why did Vikings target wealthy Christian monasteries like Lindisfarne rather than defended stone fortresses?',
+    hook: 'Many English days of the week are named after Norse gods: Thursday is "Thor\'s Day", and Friday is "Freya\'s Day"!',
+    guidedStep: '1. Map the routes of Anglo-Saxon and Viking settlers across the North Sea. 2. Understand Danelaw and Alfred the Great. 3. Examine Viking everyday village life.',
+    scaffoldHints: {
+      level1: 'Vikings came across the North Sea from Scandinavia (Norway, Sweden, Denmark) in fast longships.',
+      level2: 'Monasteries held valuable gold chalices and manuscripts and had no armed guards, making them easy targets for early raids.',
+      level3: 'King Alfred of Wessex defeated the Great Heathen Army and agreed a treaty establishing Danelaw in the north and east of England.'
+    },
+    questions: [
+      {
+        id: 'ks2-hist-vik-1',
+        prompt: 'Why were early Christian monasteries (such as Lindisfarne in 793 AD) prime targets for Viking raids?',
+        options: [
+          'Monasteries held great wealth in gold and jewels and were undefended by soldiers',
+          'Monasteries were large military castles guarding the coast',
+          'The Vikings wanted to translate Anglo-Saxon religious books into Old Norse',
+          'The monks invited the Vikings to trade with them peacefully'
+        ],
+        answerKey: 0,
+        hint: 'Monks were peaceful and prayed, but churches held valuable treasures.',
+        explanation: 'Monasteries were vulnerable, coastal, and packed with valuable treasures (silver, gold, relics) with no armed soldiers to protect them.'
+      }
+    ]
+  },
+
+  // --- KS2 Geography: World Biomes & Climate Zones ---
+  'ks2:geography:world-biomes': {
+    topicId: 'world-biomes',
+    title: 'World Biomes & Climate Zones',
+    keyStage: 'Key Stage 2',
+    subject: 'Geography',
+    coreAxiom: 'A biome is a large ecological community of plants and animals adapted to a specific regional climate. Major world biomes include Tropical Rainforests, Deserts, Savannas, Temperate Forests, Taiga (boreal), and Tundra.',
+    cognitiveTrap: 'Assuming all deserts are blistering hot sand dunes (Antarctica is technically the world\'s largest desert because of extremely low precipitation).',
+    socraticPivot: 'Why do tropical rainforests grow near the Equator while tundra and polar ice sheets exist at the high latitudes near the poles?',
+    hook: 'In a tropical rainforest, it rains almost every single afternoon like clockwork! Why?',
+    guidedStep: '1. Identify latitude (Equator receives most direct solar rays). 2. Correlate temperature and rainfall to biome characteristics. 3. Observe plant/animal adaptations.',
+    scaffoldHints: {
+      level1: 'Equator = hot and wet (Tropical Rainforest). Tropics of Cancer & Capricorn = dry and arid (Hot Deserts). Poles = freezing cold (Tundra).',
+      level2: 'Definition of a desert: Any area receiving less than 250mm of precipitation per year.',
+      level3: 'Rainforest layers: Emergent, Canopy (where most animals live), Understorey, Forest Floor.'
+    },
+    questions: [
+      {
+        id: 'ks2-geo-biome-1',
+        prompt: 'Which global biome is characterised by warm temperatures year-round, extremely high rainfall, and the greatest biodiversity on Earth?',
+        options: [
+          'Tropical Rainforest',
+          'Hot Desert',
+          'Arctic Tundra',
+          'Temperate Deciduous Forest'
+        ],
+        answerKey: 0,
+        hint: 'Located along the Equator with lush green canopies and species like toucans and jaguars.',
+        explanation: 'Tropical rainforests receive direct solar radiation at the Equator and abundant rainfall year-round, supporting over 50% of the world\'s plant and animal species.'
+      }
+    ]
+  },
+
+  // --- KS2 Computing: Scratch Block Programming ---
+  'ks2:computing:scratch-block-programming': {
+    topicId: 'scratch-block-programming',
+    title: 'Scratch Block Programming',
+    keyStage: 'Key Stage 2',
+    subject: 'Computing',
+    coreAxiom: 'Block-based programming environments (like Scratch) execute algorithms using visual syntax blocks. Key constructs include Sequence (order of blocks), Selection (if/then conditional decisions), and Iteration (repeat/forever loops). Sprites respond to events (e.g. "when green flag clicked").',
+    cognitiveTrap: 'Putting blocks inside a loop when they only need to run once, or omitting the "when green flag clicked" hat block so the script never triggers.',
+    socraticPivot: 'What would happen in a game if you put a character movement block inside a "repeat 10" loop versus a "forever" loop?',
+    hook: 'Every video game you love—from Minecraft to Mario—is constructed out of the exact same computational building blocks: sequences, loops, and conditional choices!',
+    guidedStep: '1. Start with an Event block (Hat block). 2. Add Motion or Looks blocks in sequence. 3. Use Control blocks (Loops and If/Then) for repeated or conditional behavior.',
+    scaffoldHints: {
+      level1: 'Green flag block = Start button for your code.',
+      level2: 'Loop (repeat/forever) = runs the code inside over and over without having to rewrite it.',
+      level3: 'Condition (if <touching edge?> then <bounce>) = checks if something is true before making a decision.'
+    },
+    questions: [
+      {
+        id: 'ks2-comp-scratch-1',
+        prompt: 'In Scratch, which block is required to make a sprite continuously check forever if it is touching an obstacle throughout the entire game?',
+        options: [
+          'A "forever" loop containing an "if... then" block',
+          'A single "move 10 steps" block',
+          'A "wait 1 seconds" block',
+          'A "say Hello! for 2 secs" block'
+        ],
+        answerKey: 0,
+        hint: 'It needs to check without ever stopping while the game is running.',
+        explanation: 'A "forever" loop combined with an "if... then" block ensures the condition is continuously evaluated for the duration of the program.'
+      }
+    ]
+  },
+
+  // --- KS3 Science: Energy Transfers & Conservation ---
+  'ks3:science:energy-transfers': {
+    topicId: 'energy-transfers',
+    title: 'Energy Transfers & Conservation',
+    keyStage: 'Key Stage 3',
+    subject: 'Science',
+    coreAxiom: 'The Law of Conservation of Energy states that energy cannot be created or destroyed, only transferred between stores (Kinetic, Gravitational Potential, Chemical, Thermal, Elastic, Nuclear). Transfers occur via mechanical work, electrical work, heating, or radiation (light/sound). In any non-ideal transfer, some energy is dissipated (wasted) into thermal stores.',
+    cognitiveTrap: 'Believing energy is "used up" or disappears when a battery runs out, rather than being dissipated into thermal energy in the surroundings.',
+    socraticPivot: 'When a roller coaster car rolls to a stop at the end of the track, where did its huge kinetic and gravitational potential energy go?',
+    hook: 'A bouncing ball never bounces back as high as where you dropped it from. Has physics broken, or where did the missing height go?',
+    guidedStep: '1. Identify the initial energy store. 2. Identify the transfer mechanism. 3. Identify the final useful and wasted (dissipated) energy stores. Initial Energy = Total Final Energy.',
+    scaffoldHints: {
+      level1: 'Conservation rule: Total Energy In = Total Energy Out (always!).',
+      level2: 'Dissipated energy: When friction acts, kinetic energy transfers to thermal energy, heating the air and surfaces.',
+      level3: 'Efficiency = (Useful energy output / Total energy input) × 100%.'
+    },
+    questions: [
+      {
+        id: 'ks3-sci-energy-1',
+        prompt: 'When an archer pulls back a bowstring and releases an arrow, what is the primary energy transfer taking place?',
+        options: [
+          'Elastic potential energy stored in the bow transfers to kinetic energy of the flying arrow',
+          'Gravitational potential energy transfers into nuclear energy',
+          'Chemical energy in the arrow transfers into magnetic energy',
+          'Thermal energy in the air creates new kinetic energy from nothing'
+        ],
+        answerKey: 0,
+        hint: 'The stretched bowstring stores elastic energy; the moving arrow has kinetic energy.',
+        explanation: 'Stretching the bow stores elastic potential energy. Upon release, mechanical work transfers this into the kinetic energy store of the moving arrow.'
+      }
+    ]
+  },
+
+  // --- KS3 English: Shakespeare: Key Themes ---
+  'ks3:english:shakespeare-themes': {
+    topicId: 'shakespeare-themes',
+    title: 'Shakespeare: Key Themes',
+    keyStage: 'Key Stage 3',
+    subject: 'English',
+    coreAxiom: 'Shakespearean drama explores enduring universal human conflicts: Ambition vs Morality (Macbeth), Love vs Family Feud (Romeo and Juliet), Appearance vs Reality (Much Ado / Hamlet), and Power and Order vs Chaos (The Tempest / Julius Caesar). Dramatic irony, soliloquies, and iambic pentameter reveal characters\' hidden psychology.',
+    cognitiveTrap: 'Reading Shakespearean soliloquies as dialogue spoken to other characters rather than an unfiltered private window into a character\'s psychological conscience.',
+    socraticPivot: 'In Macbeth, why does Shakespeare have Macbeth hallucinate a bloody dagger floating in the air right before he murders King Duncan?',
+    hook: 'Why are stories written over 400 years ago still remade today into modern films like The Lion King (Hamlet) and West Side Story (Romeo & Juliet)?',
+    guidedStep: '1. Identify character desires and fatal flaws (hamartia). 2. Track motif imagery (light/dark, blood, disease). 3. Connect the speech to the central universal theme.',
+    scaffoldHints: {
+      level1: 'Soliloquy: A speech where a character is alone on stage speaking their private thoughts to the audience.',
+      level2: 'Dramatic Irony: When the audience knows a crucial secret that the characters on stage do not know yet.',
+      level3: 'Theme of Ambition in Macbeth: Unchecked ambition causes moral downfall and destroys the natural order.'
+    },
+    questions: [
+      {
+        id: 'ks3-eng-shak-1',
+        prompt: 'In Shakespearean drama, what is a "soliloquy"?',
+        options: [
+          'A speech delivered by a character alone on stage that reveals their inner thoughts and motives to the audience',
+          'A rhyming argument between two rival characters on stage',
+          'The musical song played at the start of every Shakespeare play',
+          'A comedy scene performed by the lower-class characters'
+        ],
+        answerKey: 0,
+        hint: 'The root "soli-" means alone (like solo).',
+        explanation: 'A soliloquy is a dramatic device where a character speaks their private inner thoughts directly to the audience while alone on stage.'
+      }
+    ]
+  },
+
+  // --- KS3 English: Persuasive Writing & Rhetoric ---
+  'ks3:english:persuasive-writing': {
+    topicId: 'persuasive-writing',
+    title: 'Persuasive Writing & Rhetoric',
+    keyStage: 'Key Stage 3',
+    subject: 'English',
+    coreAxiom: 'Rhetorical persuasion crafts arguments to influence an audience using Aristotle\'s classical modes: Ethos (credibility/authority), Pathos (emotional appeal), and Logos (logic/evidence). Linguistic techniques are remembered via DAFOREST (Direct address, Alliteration, Facts, Opinions, Rhetorical questions, Emotive language, Statistics, Triples).',
+    cognitiveTrap: 'Using only emotive exclamation marks without providing logical evidence (Logos) or addressing counter-arguments.',
+    socraticPivot: 'Why is a speech that uses the "Rule of Three" (e.g. "blood, sweat, and tears") significantly more memorable to the human brain than a list of two or four items?',
+    hook: 'From Martin Luther King Jr\'s "I Have a Dream" to modern climate activists, what makes certain speeches spark global revolutions?',
+    guidedStep: '1. Hook the audience with a bold assertion. 2. Establish credibility. 3. Provide statistical evidence and real-world example. 4. Anticipate and refute the opposing view. 5. Call to action.',
+    scaffoldHints: {
+      level1: 'Rule of Three (Tricolon): Grouping 3 words or phrases creates musical rhythm and emphasis.',
+      level2: 'Rhetorical question: A question asked for dramatic effect where the answer is already implied.',
+      level3: 'Ethos = credibility; Pathos = empathy/emotion; Logos = facts and statistics.'
+    },
+    questions: [
+      {
+        id: 'ks3-eng-rhet-1',
+        prompt: 'Which sentence demonstrates the rhetorical technique of "Direct Address"?',
+        options: [
+          '"You have the power in your hands to change this school today."',
+          '"Many people around the country think uniform is traditional."',
+          '"Statistics show that 75% of students prefer reading books."',
+          '"The wind wailed and whispered through the cold trees."'
+        ],
+        answerKey: 0,
+        hint: 'Direct address speaks straight to the reader or listener using second-person pronouns.',
+        explanation: 'Direct address uses the pronouns "you" and "your" to speak directly to the audience, creating an immediate personal connection and responsibility.'
+      }
+    ]
+  },
+
+  // --- KS3 History: The Norman Conquest (1066) ---
+  'ks3:history:norman-conquest': {
+    topicId: 'norman-conquest',
+    title: 'The Norman Conquest (1066)',
+    keyStage: 'Key Stage 3',
+    subject: 'History',
+    coreAxiom: 'In 1066, the death of Edward the Confessor triggered a succession crisis between Harold Godwinson, Harald Hardrada, and William Duke of Normandy. Following the Battle of Stamford Bridge, William defeated Harold at the Battle of Hastings on 14 October 1066, fundamentally transforming England through the Feudal System, motte-and-bailey castles, and the Domesday Book.',
+    cognitiveTrap: 'Believing the Norman Conquest was simply a military battle rather than a complete social, linguistic, and land-ownership revolution that replaced the Anglo-Saxon elite.',
+    socraticPivot: 'Why did William order the creation of the Domesday Book in 1086, recording every cow, acre, and mill across England?',
+    hook: 'Why do English speakers use Germanic words for living farm animals (cow, pig, sheep) but French words for the meat on the dinner plate (beef, pork, mutton)?',
+    guidedStep: '1. Succession crisis of 1066. 2. Tactical advantages at Hastings (feigned retreat, cavalry vs shield wall). 3. Instruments of Norman control: Motte-and-Bailey castles, Harrying of the North, Feudal System, Domesday Book.',
+    scaffoldHints: {
+      level1: 'Battle of Hastings: 14 October 1066. William of Normandy defeated Harold Godwinson.',
+      level2: 'Feigned retreat: Norman cavalry pretended to run away, tricking the Saxon shield wall into breaking ranks down Senlac Hill.',
+      level3: 'The Domesday Book was a comprehensive census to ensure William could tax every manor and know who owned what land.'
+    },
+    questions: [
+      {
+        id: 'ks3-hist-norm-1',
+        prompt: 'What was the primary purpose of William the Conqueror commissioning the Domesday Book in 1086?',
+        options: [
+          'To record every piece of land, wealth, and livestock in England to calculate exact feudal taxes and military service',
+          'To write a religious prayer book for all English churches',
+          'To teach the Anglo-Saxon population how to speak French',
+          'To list names of soldiers who died at the Battle of Hastings'
+        ],
+        answerKey: 0,
+        hint: 'William needed money to pay his knights and secure his kingdom.',
+        explanation: 'The Domesday Book was an exhaustive kingdom-wide survey detailing landholders, resources, and livestock so William could accurately assess taxation and feudal obligations.'
+      }
+    ]
+  },
+
+  // --- KS3 History: The Transatlantic Slave Trade ---
+  'ks3:history:transatlantic-slave-trade': {
+    topicId: 'transatlantic-slave-trade',
+    title: 'The Transatlantic Slave Trade',
+    keyStage: 'Key Stage 3',
+    subject: 'History',
+    coreAxiom: 'Between the 16th and 19th centuries, European colonial powers operated the "Triangular Trade": manufactured goods from Europe to West Africa; enslaved African human beings transported across the catastrophic "Middle Passage" to the Americas; and slave-produced commodities (sugar, tobacco, cotton) transported back to Europe. Resistance, rebellion, and abolitionist campaigning eventually brought legal abolition.',
+    cognitiveTrap: 'Viewing enslaved Africans as passive victims rather than recognising active everyday resistance, maritime rebellions, Maroon communities, and the Haitian Revolution.',
+    socraticPivot: 'Why was the abolition of the British slave trade in 1807 achieved through a combination of enslaved rebellions in the Caribbean and grassroots public boycotts in Britain?',
+    hook: 'Every spoonful of sugar in 18th-century British tea was tied directly to the brutality of Caribbean plantation labor and the Triangular Trade.',
+    guidedStep: '1. Map the 3 legs of the Triangular Trade. 2. Understand the conditions of the Middle Passage. 3. Analyze plantation economy and resistance. 4. Study the abolition movement (Olaudah Equiano, Thomas Clarkson).',
+    scaffoldHints: {
+      level1: 'Triangular Trade: 1. Europe -> Africa (guns/cloth). 2. Africa -> Americas (enslaved people / Middle Passage). 3. Americas -> Europe (sugar/tobacco).',
+      level2: 'The Middle Passage was the horrific transatlantic journey where millions endured malnutrition, disease, and brutality in ship holds.',
+      level3: 'Abolitionists like Olaudah Equiano published first-hand autobiographies exposing the true brutality of enslavement to the British public.'
+    },
+    questions: [
+      {
+        id: 'ks3-hist-slave-1',
+        prompt: 'In the 18th-century "Triangular Trade", what was transported along the second leg (the "Middle Passage") from West Africa to the Americas?',
+        options: [
+          'Enslaved African men, women, and children forced onto merchant slave ships',
+          'Manufactured guns, metal pots, and textiles from British factories',
+          'Refined white sugar and tobacco shipped to London markets',
+          'Spices, silk, and tea from the East India Company'
+        ],
+        answerKey: 0,
+        hint: 'The Middle Passage refers to the horrific voyage of human beings across the Atlantic Ocean.',
+        explanation: 'The Middle Passage was the transatlantic voyage of the Triangular Trade in which millions of enslaved Africans were forcibly transported to plantation colonies in the Americas.'
+      }
+    ]
+  },
+
+  // --- KS4 Physics: Radioactivity & Half-Life ---
+  'ks4:physics:radioactivity': {
+    topicId: 'radioactivity',
+    title: 'Radioactivity & Half-Life',
+    keyStage: 'Key Stage 4 (GCSE)',
+    subject: 'Physics',
+    coreAxiom: 'Unstable atomic nuclei undergo spontaneous, random radioactive decay to achieve stability, emitting ionising radiation: Alpha (α, helium nucleus, highly ionising, stopped by paper), Beta (β⁻, fast electron, moderately ionising, stopped by aluminium), or Gamma (γ, high-frequency EM wave, weakly ionising, reduced by thick lead). Half-life is the time taken for half the radioactive nuclei in a sample to decay, or for its activity (Bq) to halve.',
+    cognitiveTrap: 'Thinking that after two half-lives a substance has completely decayed to zero (after 2 half-lives, 1/4 or 25% remains: 100% -> 50% -> 25%).',
+    socraticPivot: 'If radioactive decay is completely random for any single nucleus, why can scientists predict the half-life of a billion nuclei with near-perfect mathematical precision?',
+    hook: 'Carbon-14 dating allows archaeologists to determine the exact age of ancient Egyptian mummies and woolly mammoth bones thousands of years after death!',
+    guidedStep: '1. Identify radiation types and penetration powers. 2. Half-life calculations: halve the quantity for each half-life interval elapsed. 3. Assess irradiation vs contamination hazards.',
+    scaffoldHints: {
+      level1: 'Penetration order: Alpha stopped by paper/skin. Beta stopped by 3-5mm aluminium. Gamma stopped by thick lead or metres of concrete.',
+      level2: 'Half-life calculation: Start = 80 Bq. After 1 half-life = 40 Bq. After 2 half-lives = 20 Bq. After 3 half-lives = 10 Bq.',
+      level3: 'Alpha particle = 2 protons + 2 neutrons. When emitted, mass number drops by 4, atomic number drops by 2.'
+    },
+    questions: [
+      {
+        id: 'ks4-phys-rad-1',
+        prompt: 'A radioactive isotope has an initial activity of 240 Bq and a half-life of 6 hours. What will its activity be after 18 hours have passed?',
+        options: [
+          '30 Bq (18 hours is 3 half-lives: 240 -> 120 -> 60 -> 30)',
+          '60 Bq (Only 2 half-lives)',
+          '80 Bq (Divided by 3 instead of halving 3 times)',
+          '0 Bq (Assumed all decayed)'
+        ],
+        answerKey: 0,
+        hint: 'Step 1: Calculate how many half-lives: 18 ÷ 6 = 3 half-lives. Step 2: Halve 240 three times.',
+        explanation: 'Number of half-lives = 18 hours / 6 hours = 3 half-lives. Activity after 1 half-life = 120 Bq; after 2 = 60 Bq; after 3 = 30 Bq.'
+      }
+    ]
+  },
+
+  // --- KS4 Religious Studies: Christian Practices & Sacraments ---
+  'ks4:religious-studies:christian-practices': {
+    topicId: 'christian-practices',
+    title: 'Christian Practices & Sacraments',
+    keyStage: 'Key Stage 4 (GCSE)',
+    subject: 'Religious Studies (General & GCSE)',
+    coreAxiom: 'Christian practice expresses faith through worship (liturgical vs non-liturgical), prayer, pilgrimage (e.g. Lourdes, Iona), celebration of festivals (Christmas, Easter), and Sacraments. Catholic and Orthodox Christians recognize 7 Sacraments as outward signs of inward grace instituted by Christ; Protestant traditions recognize 2 (Baptism and Eucharist) as directly commanded in the Gospels.',
+    cognitiveTrap: 'Assuming all Christian denominations view the Eucharist identically (Catholic Transubstantiation vs Anglican Real Presence vs Baptist symbolic memorialism).',
+    socraticPivot: 'Why do Catholic Christians view Sacraments as imparting actual divine grace ("ex opere operato"), whereas many Protestant traditions view ordinances as symbolic memorials?',
+    hook: 'Millions of sick pilgrims travel to the remote town of Lourdes in France every year to bathe in spring water. What spiritual conviction drives this pilgrimage?',
+    guidedStep: '1. Define Sacrament (outward visible sign of inward invisible grace). 2. Compare Infant Baptism vs Believers\' Baptism. 3. Compare views on Holy Communion. 4. Mission and charity (Tearfund, CAFOD).',
+    scaffoldHints: {
+      level1: 'The two sacraments accepted by almost all Christian traditions are Baptism and the Eucharist (Holy Communion).',
+      level2: 'Believers\' Baptism (Baptist church) requires personal mature confession of faith; Infant Baptism (Catholic/Anglican) welcomes the baby into the Church family.',
+      level3: 'Transubstantiation (Catholic doctrine) teaches that the bread and wine become the actual Body and Blood of Christ in substance.'
+    },
+    questions: [
+      {
+        id: 'ks4-re-prac-1',
+        prompt: 'In Christian theology, what is the classic definition of a "Sacrament"?',
+        options: [
+          'An outward, visible sign of an inward, invisible divine grace instituted by Jesus Christ',
+          'A legal contract signed by church elders before marriage',
+          'Any reading taken from the Old Testament prophets',
+          'A financial donation given during Sunday collection'
+        ],
+        answerKey: 0,
+        hint: 'St Augustine defined it as a visible sign of invisible grace.',
+        explanation: 'A Sacrament is traditionally defined as an outward and visible sign of an inward and spiritual divine grace, established by Jesus Christ.'
+      }
+    ]
   }
 };
+
 

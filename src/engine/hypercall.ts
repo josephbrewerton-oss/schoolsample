@@ -340,8 +340,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             difficultyInstruction = 'Difficulty: Brain Buster (Level 3 - Deep Thinking). Multi-step reasoning problem or scenario that stretches thinking and tests tricky edge cases.';
           }
 
-          // 1. Deterministic Fast-Path for Mathematics & Calculations (< 1ms, 0% hallucination)
-          if (MathQuestionGenerator.isMathSubject(subject, topic)) {
+          // 1. Deterministic Fast-Path for Procedural Mathematics & Calculations (< 1ms, 0% hallucination)
+          if (MathQuestionGenerator.canGenerate(stage, subject, topic)) {
             const mathQ = MathQuestionGenerator.generate(stage, topic, activeSeedToken);
             let mathCandidate = {
               id: mathQ.id,
@@ -582,7 +582,11 @@ Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
 ${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${exemplarAST}
-
+${offlineQuestion ? `Verified Oak Exemplar Template for This Topic:
+- Exemplar Prompt: "${offlineQuestion.prompt}"
+- Exemplar Options: ${JSON.stringify(offlineQuestion.options)}
+- Exemplar Key Misconception / Explanation: "${offlineQuestion.explanation}"
+Instruction: Use this verified Oak exemplar as a grounding pattern. Create an authentic parallel variation with a fresh context or numbers testing the exact same core concept.\n` : ''}
 First, anchor your reasoning in this question's Mind Space: analyze why the core axiom holds and which authentic pupil misconception pulls students toward each distractor.
 Then generate an interactive diagnostic multiple-choice question testing understanding of this exact cognitive frame.
 Rule: Every distractor MUST target an authentic student misconception defined in the Mind Space.
