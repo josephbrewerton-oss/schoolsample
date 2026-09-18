@@ -7,7 +7,7 @@
  * use ZERO network data calls (true air-gapped / airplane mode operation).
  */
 
-const DEFAULT_CACHE_NAME = 'stj-manifest-v-1d2f641009fc';
+const DEFAULT_CACHE_NAME = 'stj-manifest-v-8003ff2a2bff';
 let currentCacheName = DEFAULT_CACHE_NAME;
 
 export async function getActiveManifestCacheName(): Promise<string> {
