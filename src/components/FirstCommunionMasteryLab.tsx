@@ -3,6 +3,17 @@ import { speakInLanguage } from '../engine/translationService';
 import SevenSacramentsGuide from './SevenSacramentsGuide';
 import LiturgicalCalendarGuide from './LiturgicalCalendarGuide';
 import LatinMassPrayersChapel from './LatinMassPrayersChapel';
+import CreedExplorer from './CreedExplorer';
+import CommandmentsMoralGuide from './CommandmentsMoralGuide';
+import RosaryMysteryWalk from './RosaryMysteryWalk';
+import {
+  playSuccessChime,
+  playIncorrectTone,
+  playClickTone,
+  triggerHapticSuccess,
+  triggerHapticError,
+  triggerHapticClick,
+} from '../services/soundHaptics';
 
 export interface LiturgyStep {
   id: string;
@@ -304,7 +315,18 @@ const CATHOLIC_PRAYERS: CatholicPrayer[] = [
 ];
 
 export default function FirstCommunionMasteryLab() {
-  const [activeTab, setActiveTab] = useState<'mass-walk' | 'seven-sacraments' | 'liturgical-seasons' | 'sacred-objects' | 'prayers' | 'latin-prayers' | 'journal'>('mass-walk');
+  const [activeTab, setActiveTab] = useState<
+    | 'mass-walk'
+    | 'seven-sacraments'
+    | 'creed'
+    | 'commandments'
+    | 'rosary'
+    | 'liturgical-seasons'
+    | 'sacred-objects'
+    | 'prayers'
+    | 'latin-prayers'
+    | 'journal'
+  >('mass-walk');
 
   // Liturgy ordering game state
   const [sequenceSelection, setSequenceSelection] = useState<string[]>([]);
@@ -346,6 +368,8 @@ export default function FirstCommunionMasteryLab() {
   ];
 
   const handleToggleSequenceItem = (id: string) => {
+    playClickTone();
+    triggerHapticClick();
     if (sequenceSelection.includes(id)) {
       setSequenceSelection(sequenceSelection.filter((item) => item !== id));
       setSequenceSuccess(null);
@@ -355,6 +379,13 @@ export default function FirstCommunionMasteryLab() {
       if (next.length === correctSequenceIds.length) {
         const isCorrect = next.every((item, idx) => item === correctSequenceIds[idx]);
         setSequenceSuccess(isCorrect);
+        if (isCorrect) {
+          playSuccessChime();
+          triggerHapticSuccess();
+        } else {
+          playIncorrectTone();
+          triggerHapticError();
+        }
       }
     }
   };
@@ -521,6 +552,75 @@ export default function FirstCommunionMasteryLab() {
         >
           <span>✝️</span>
           <span>The Seven Sacraments</span>
+        </button>
+
+        <button
+          type="button"
+          id="fc-tab-creed"
+          onClick={() => setActiveTab('creed')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: activeTab === 'creed' ? '#4338ca' : 'transparent',
+            color: activeTab === 'creed' ? '#ffffff' : '#334155',
+            fontWeight: 700,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>📜</span>
+          <span>Apostles&apos; Creed (RCIA)</span>
+        </button>
+
+        <button
+          type="button"
+          id="fc-tab-commandments"
+          onClick={() => setActiveTab('commandments')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: activeTab === 'commandments' ? '#4338ca' : 'transparent',
+            color: activeTab === 'commandments' ? '#ffffff' : '#334155',
+            fontWeight: 700,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>⚖️</span>
+          <span>10 Commandments &amp; Morality</span>
+        </button>
+
+        <button
+          type="button"
+          id="fc-tab-rosary"
+          onClick={() => setActiveTab('rosary')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: activeTab === 'rosary' ? '#4338ca' : 'transparent',
+            color: activeTab === 'rosary' ? '#ffffff' : '#334155',
+            fontWeight: 700,
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <span>📿</span>
+          <span>The Holy Rosary</span>
         </button>
 
         <button
@@ -1097,7 +1197,14 @@ export default function FirstCommunionMasteryLab() {
                         type="button"
                         onClick={() => {
                           setObjectQuizAnswer(optionName);
-                          if (isCorrect) setObjectQuizScore((s) => s + 1);
+                          if (isCorrect) {
+                            setObjectQuizScore((s) => s + 1);
+                            playSuccessChime();
+                            triggerHapticSuccess();
+                          } else {
+                            playIncorrectTone();
+                            triggerHapticError();
+                          }
                         }}
                         style={{
                           padding: '8px 16px',
@@ -1394,6 +1501,21 @@ export default function FirstCommunionMasteryLab() {
       {/* TAB: SACRED LATIN & ENGLISH MASS PRAYERS CHAPEL */}
       {activeTab === 'latin-prayers' && (
         <LatinMassPrayersChapel />
+      )}
+
+      {/* TAB: RCIA PILLAR 1 — APOSTLES' CREED */}
+      {activeTab === 'creed' && (
+        <CreedExplorer />
+      )}
+
+      {/* TAB: RCIA PILLAR 3 — COMMANDMENTS & MORAL THEOLOGY */}
+      {activeTab === 'commandments' && (
+        <CommandmentsMoralGuide />
+      )}
+
+      {/* TAB: RCIA PILLAR 4 — THE HOLY ROSARY & CONTEMPLATIVE PRAYER */}
+      {activeTab === 'rosary' && (
+        <RosaryMysteryWalk />
       )}
 
       {/* TAB 4: FAMILY & PARISH MASS JOURNAL */}

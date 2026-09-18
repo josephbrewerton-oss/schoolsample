@@ -51,6 +51,8 @@ export interface SequencedQuestionTemplate {
   misconceptions: string[];
   socraticFollowUp: string;
   difficulty: 'warmup' | 'challenger' | 'brainbuster';
+  lessonTitle?: string;
+  lessonId?: string;
   axiom?: string;
   trap?: string;
   hook?: string;
@@ -185,12 +187,14 @@ export class LessonSequencer {
     seedToken: string;
     knowledge?: CurriculumTopicKnowledge | null;
     excludePrompt?: string;
+    lessonTitle?: string;
+    lessonId?: string;
   }): SequencedQuestionTemplate {
-    const { keyStage, subject, unit, stage, seedToken, knowledge, excludePrompt } = params;
+    const { keyStage, subject, unit, stage, seedToken, knowledge, excludePrompt, lessonTitle, lessonId } = params;
     const prng = new PRNG(seedToken);
 
     const safeKnowledge = knowledge || findCurriculumKnowledge(keyStage, subject, unit);
-    const cleanUnit = unit || safeKnowledge?.title || 'Core Topic';
+    const cleanUnit = lessonTitle ? `${unit}: ${lessonTitle}` : (unit || safeKnowledge?.title || 'Core Topic');
 
     const coreAxiom = safeKnowledge?.coreAxiom || `Fundamental invariant principles govern ${cleanUnit}.`;
     const cognitiveTrap = safeKnowledge?.cognitiveTrap || `Confusing surface observations with foundational laws in ${cleanUnit}.`;

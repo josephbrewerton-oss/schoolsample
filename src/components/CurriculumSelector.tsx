@@ -1,11 +1,13 @@
 // src/components/CurriculumSelector.tsx
 import React from 'react';
-import { DEFAULT_OAK_CATALOGUE } from '../curriculum/oakCatalogue';
+import { DEFAULT_OAK_CATALOGUE, findTopicLessons, OakLesson } from '../curriculum/oakCatalogue';
 
 interface Props {
   keyStage: string;
   subject: string;
   unit: string;
+  selectedLesson?: string;
+  onLessonChange?: (lessonTitle: string) => void;
   status: string;
   isReady: boolean;
   sessionId: string;
@@ -23,6 +25,8 @@ export const CurriculumSelector: React.FC<Props> = ({
   keyStage,
   subject,
   unit,
+  selectedLesson,
+  onLessonChange,
   status,
   isReady,
   sessionId,
@@ -187,6 +191,12 @@ export const CurriculumSelector: React.FC<Props> = ({
     '';
   const safeUnit = matchedUnit;
 
+  // 3. Extract Oak National Academy lessons for the selected unit/topic
+  const availableLessons = findTopicLessons(safeStage, safeSubject, safeUnit);
+  const safeLesson = selectedLesson && availableLessons.some((l) => l.title === selectedLesson)
+    ? selectedLesson
+    : availableLessons[0]?.title || '';
+
   const handleStageSelect = (newKs: string) => {
     const stageObj = catalogue[newKs];
     const emittedStage = (stageObj && typeof stageObj === 'object' && stageObj.title) ? stageObj.title : getStageLabel(newKs);
@@ -292,6 +302,34 @@ export const CurriculumSelector: React.FC<Props> = ({
             </option>
           ))}
         </select>
+
+        {/* Oak Lesson Sequence (when available) */}
+        {availableLessons.length > 0 && onLessonChange && (
+          <select
+            aria-label="Select Oak Lesson"
+            value={safeLesson}
+            onChange={(e) => onLessonChange(e.target.value)}
+            style={{
+              minHeight: '42px',
+              padding: '0.5rem 0.85rem',
+              borderRadius: '10px',
+              border: '1.5px solid #a7f3d0',
+              color: '#065f46',
+              background: '#f0fdf4',
+              maxWidth: '300px',
+              fontSize: '0.88rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+            title="Oak National Academy Lesson Sequence"
+          >
+            {availableLessons.map((l) => (
+              <option key={l.id} value={l.title}>
+                📖 {l.title}
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* Action Button */}
         <button

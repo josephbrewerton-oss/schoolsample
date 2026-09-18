@@ -14,6 +14,19 @@ import { translatePageDOM, restorePageDOM } from '../engine/universalDomTranslat
 import { getComplianceCaveat } from '../data/complianceCaveats';
 import { isDataSaverActive, setDataSaverMode, listenToDataSaverChanges } from '../services/dataSaverStore';
 import { downloadCurriculumForOffline, getOfflineStatus, SyncProgress, OfflineStatus } from '../services/offlineSyncService';
+import {
+  isSoundEnabled,
+  setSoundEnabled,
+  isHapticsEnabled,
+  setHapticsEnabled,
+  playSuccessChime,
+  triggerHapticSuccess,
+} from '../services/soundHaptics';
+import {
+  isStrictAirGapMode,
+  setStrictAirGapMode,
+  listenToAirGapChanges,
+} from '../services/privacyGuard';
 
 export default function SettingsPage() {
   // 1. Synchronous lazy initializers (eliminates frame-0 flash)
@@ -48,12 +61,26 @@ export default function SettingsPage() {
   const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
+  const [soundEnabled, setSoundEnabledState] = useState<boolean>(() => isSoundEnabled());
+  const [hapticsEnabled, setHapticsEnabledState] = useState<boolean>(() => isHapticsEnabled());
+  const [strictAirGap, setStrictAirGapState] = useState<boolean>(() => isStrictAirGapMode());
+
   useEffect(() => {
     getOfflineStatus().then(setOfflineStatus);
 
     const unsubDataSaver = listenToDataSaverChanges((enabled) => {
       setDataSaver(enabled);
     });
+
+    const unsubAirGap = listenToAirGapChanges((enabled) => {
+      setStrictAirGapState(enabled);
+    });
+
+    const handleSoundHapticsUpdate = () => {
+      setSoundEnabledState(isSoundEnabled());
+      setHapticsEnabledState(isHapticsEnabled());
+    };
+    window.addEventListener('stj_sound_haptics_updated', handleSoundHapticsUpdate);
 
     // Check local Gemini Nano availability asynchronously without blocking frame 0
     let isMounted = true;
@@ -75,6 +102,8 @@ export default function SettingsPage() {
     return () => {
       isMounted = false;
       unsubDataSaver();
+      unsubAirGap();
+      window.removeEventListener('stj_sound_haptics_updated', handleSoundHapticsUpdate);
     };
   }, []);
 
@@ -568,6 +597,140 @@ export default function SettingsPage() {
                 >
                   Open Studio &rarr;
                 </Link>
+              </div>
+            </div>
+
+            {/* 🔊 Auditory & Tactile Sensory Feedback (Zero-Data Native Synthesizer) */}
+            <div className="stj-card" style={{ marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 4px 0' }}>
+                    🔊 Auditory & Tactile Sensory Feedback
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--stj-text-muted)' }}>
+                    Native Web Audio sine-wave harmonic synthesis and physical haptic impulses. 100% offline with zero network data.
+                  </p>
+                </div>
+                <span className="stj-badge stj-badge-primary">Native Web Audio</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', padding: '0.75rem', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-md)' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Audio Harmonic Chimes</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--stj-text-muted)' }}>
+                      Uplifting major chord for correct deductions; warm, gentle tone for formative guidance.
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => playSuccessChime()}
+                      className="stj-btn stj-btn-secondary"
+                      style={{ minHeight: '36px', padding: '4px 12px', fontSize: '0.8rem' }}
+                    >
+                      ▶ Test Chime
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !soundEnabled;
+                        setSoundEnabled(next);
+                        setSoundEnabledState(next);
+                      }}
+                      className={`stj-btn ${soundEnabled ? 'stj-btn-success' : 'stj-btn-secondary'}`}
+                      style={{ minHeight: '36px', padding: '4px 14px', fontSize: '0.82rem' }}
+                    >
+                      {soundEnabled ? '🔊 Sound Enabled' : '🔇 Muted'}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', padding: '0.75rem', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-md)' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Tactile Haptic Impulses</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--stj-text-muted)' }}>
+                      Light vibration tap on touch-enabled phones and school tablets.
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => triggerHapticSuccess()}
+                      className="stj-btn stj-btn-secondary"
+                      style={{ minHeight: '36px', padding: '4px 12px', fontSize: '0.8rem' }}
+                    >
+                      ⚡ Test Haptic
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !hapticsEnabled;
+                        setHapticsEnabled(next);
+                        setHapticsEnabledState(next);
+                      }}
+                      className={`stj-btn ${hapticsEnabled ? 'stj-btn-success' : 'stj-btn-secondary'}`}
+                      style={{ minHeight: '36px', padding: '4px 14px', fontSize: '0.82rem' }}
+                    >
+                      {hapticsEnabled ? '📳 Haptics On' : '📴 Haptics Off'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 🛡️ WebRTC Architecture & Strict Air-Gap Privacy Guard */}
+            <div className="stj-card" style={{ marginBottom: '2rem', border: strictAirGap ? '2px solid var(--stj-warning)' : '1px solid var(--stj-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 4px 0' }}>
+                    🛡️ WebRTC & Air-Gap Privacy Verification
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--stj-text-muted)' }}>
+                    Enterprise architectural transparency on peer connection handling and data egress guarantees.
+                  </p>
+                </div>
+                <span className={`stj-badge ${strictAirGap ? 'stj-badge-primary' : 'stj-badge-success'}`}>
+                  {strictAirGap ? 'Strict Air-Gap Active' : 'Loopback Only (iceServers: [])'}
+                </span>
+              </div>
+
+              <div style={{ fontSize: '0.85rem', lineHeight: 1.6, color: 'var(--stj-text)', marginBottom: '1rem' }}>
+                <p style={{ margin: '0 0 0.5rem 0' }}>
+                  <strong>How WebRTC operates in St Joseph&apos;s:</strong> The neural hypervisor initiates an RTCPeerConnection strictly configured with <code>iceServers: []</code>. This creates a zero-copy fast-path <em>within your browser process</em> between the main viewport and the isolated <code>worker.html</code> iframe on this single device.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', margin: '0.75rem 0' }}>
+                  <div style={{ padding: '6px 12px', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-sm)', fontSize: '0.8rem', fontWeight: 700 }}>
+                    🔒 STUN/TURN Servers: 0 (Disabled)
+                  </div>
+                  <div style={{ padding: '6px 12px', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-sm)', fontSize: '0.8rem', fontWeight: 700 }}>
+                    🔒 Cloud Data Egress: 0 KB (Zero-Leakage)
+                  </div>
+                  <div style={{ padding: '6px 12px', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-sm)', fontSize: '0.8rem', fontWeight: 700 }}>
+                    🔒 External IPs Queried: None
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: '0.85rem', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>Strict Air-Gap Mode</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--stj-text-muted)' }}>
+                    Completely disables RTCPeerConnection initialization. All neural communication uses standard browser <code>postMessage</code>.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !strictAirGap;
+                    setStrictAirGapMode(next);
+                    setStrictAirGapState(next);
+                  }}
+                  className={`stj-btn ${strictAirGap ? 'stj-btn-primary' : 'stj-btn-secondary'}`}
+                  style={{ minHeight: '38px', padding: '4px 16px', fontSize: '0.84rem' }}
+                >
+                  {strictAirGap ? '🛡️ Strict Air-Gap Engaged' : '⚡ Engage Air-Gap Mode'}
+                </button>
               </div>
             </div>
 

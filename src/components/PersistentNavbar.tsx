@@ -4,6 +4,8 @@ import { hasUserGrantedAiConsent, setUserAiConsent, aiCaller } from '../engine/a
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import { getComplianceCaveat } from '../data/complianceCaveats';
 import { isDataSaverActive, setDataSaverMode, listenToDataSaverChanges } from '../services/dataSaverStore';
+import { isOfflineSyncComplete } from '../services/offlineSync';
+import { OfflineStorageManager } from './OfflineStorageManager';
 
 export default function PersistentNavbar(): React.JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -14,10 +16,24 @@ export default function PersistentNavbar(): React.JSX.Element {
   const [nanoAvailable, setNanoAvailable] = useState<'checking' | 'yes' | 'after-download' | 'no'>('checking');
   const [showNanoPopover, setShowNanoPopover] = useState(false);
   const [dataSaverActive, setDataSaverActive] = useState<boolean>(() => isDataSaverActive());
+  const [showOfflineModal, setShowOfflineModal] = useState(false);
+  const [isOfflineSynced, setIsOfflineSynced] = useState<boolean>(() => isOfflineSyncComplete());
   const [currentLang, setCurrentLang] = useState<string>(() => {
     return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
   });
   const location = useLocation();
+
+  useEffect(() => {
+    const handleSyncUpdate = () => {
+      setIsOfflineSynced(isOfflineSyncComplete());
+    };
+    window.addEventListener('stj_offline_sync_updated', handleSyncUpdate);
+    window.addEventListener('storage', handleSyncUpdate);
+    return () => {
+      window.removeEventListener('stj_offline_sync_updated', handleSyncUpdate);
+      window.removeEventListener('storage', handleSyncUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     const unsub = listenToLanguageChange((lang) => {
@@ -353,6 +369,30 @@ export default function PersistentNavbar(): React.JSX.Element {
             <span>{dataSaverActive ? '📶 Data Saver: ON' : '📶 Data Saver'}</span>
           </button>
 
+          {/* Device Offline Storage Button (Zero Data / Air-gapped) */}
+          <button
+            type="button"
+            id="navbar-offline-store-btn"
+            onClick={() => setShowOfflineModal(true)}
+            title="Store entire curriculum on your device for 100% offline / zero-data learning"
+            style={{
+              background: isOfflineSynced ? (colorMode === 'dark' ? '#064e3b' : '#ecfdf5') : 'transparent',
+              color: isOfflineSynced ? (colorMode === 'dark' ? '#34d399' : '#059669') : (colorMode === 'dark' ? '#94a3b8' : '#475569'),
+              border: `1px solid ${isOfflineSynced ? '#10b981' : (colorMode === 'dark' ? '#334155' : '#cbd5e1')}`,
+              borderRadius: '6px',
+              padding: '0.35rem 0.6rem',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span>{isOfflineSynced ? '💾 On Device (0 Data)' : '💾 Save to Device'}</span>
+          </button>
+
           <NavLink
             to="/settings"
             style={({ isActive }) => ({
@@ -531,8 +571,40 @@ export default function PersistentNavbar(): React.JSX.Element {
             <span>📶 Data Saver (Low Bandwidth)</span>
             <span>{dataSaverActive ? 'ON' : 'OFF'}</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowOfflineModal(true);
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              padding: '0.6rem 0.8rem',
+              borderRadius: '6px',
+              border: `1px solid ${isOfflineSynced ? '#10b981' : '#cbd5e1'}`,
+              background: isOfflineSynced ? (colorMode === 'dark' ? '#064e3b' : '#ecfdf5') : 'transparent',
+              color: isOfflineSynced ? (colorMode === 'dark' ? '#34d399' : '#059669') : (colorMode === 'dark' ? '#f8fafc' : '#1e293b'),
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>💾 Store on Device (0 Data)</span>
+            <span>{isOfflineSynced ? 'SAVED' : 'DOWNLOAD'}</span>
+          </button>
         </div>
       )}
+
+      {/* Zero-Data Offline Storage Manager Modal */}
+      <OfflineStorageManager
+        isOpen={showOfflineModal}
+        onClose={() => setShowOfflineModal(false)}
+        colorMode={colorMode}
+      />
     </nav>
   );
 }

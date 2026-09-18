@@ -183,6 +183,7 @@ try {
     'static/patterns/fill-blank.ast',
     'static/patterns/numeric.ast',
     'static/patterns/pair-sort.ast',
+    'static/patterns/harmony.ast',
     'src/rules/quiz.rules.ast',
     'src/curriculum/curriculumoutput.ast',
     'src/curriculum/curriculum.ast',

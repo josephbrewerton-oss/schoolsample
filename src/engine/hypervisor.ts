@@ -12,6 +12,7 @@ import { extractQuestionFromAst, healSExprString } from '../utils/astQuestionExt
 import { saveVerifiedAST, saveVfsView } from '../services/dbStore';
 import { MathQuestionGenerator } from './mathQuestionGenerator';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
+import { isStrictAirGapMode } from '../services/privacyGuard';
 import type { HyperMessage, HyperNodeResult } from './hypercall';
 import {
   decodeBinaryFrame,
@@ -439,6 +440,13 @@ export class HypervisorHost {
    * or when the student switches back to the tab.
    */
   public async reconnectRTCDataChannel(reason: string = 'manual'): Promise<void> {
+    if (isStrictAirGapMode()) {
+      this.isConnectingRTC = false;
+      this.metrics.rtcDataChannelState = 'closed';
+      this.notifySubscribers();
+      return;
+    }
+
     if (this.isConnectingRTC) {
       if (Date.now() - (this.metrics.lastReconnectionTimestamp || 0) < 2500) {
         return;
@@ -504,6 +512,13 @@ export class HypervisorHost {
    * Handles incoming WebRTC SDP offer from the guest VM daemon
    */
   private async handleOffer(sdp: any) {
+    if (isStrictAirGapMode()) {
+      this.isConnectingRTC = false;
+      this.metrics.rtcDataChannelState = 'closed';
+      this.notifySubscribers();
+      return;
+    }
+
     try {
       if (this.pc && this.pc.signalingState !== 'closed') {
         if (this.dataChannel?.readyState === 'open' && !this.isConnectingRTC) {

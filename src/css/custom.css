@@ -20,6 +20,36 @@
   --ifm-navbar-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
   --ifm-background-color: #f8fafc;
   --ifm-footer-background-color: #0f172a;
+
+  /* --- AST Harmonic Design Tokens (static/patterns/harmony.ast) --- */
+  --stj-primary: #2563eb;
+  --stj-primary-hover: #1d4ed8;
+  --stj-primary-surface: #eff6ff;
+  --stj-success: #059669;
+  --stj-success-hover: #047857;
+  --stj-success-surface: #ecfdf5;
+  --stj-warning: #d97706;
+  --stj-warning-hover: #b45309;
+  --stj-warning-surface: #fffbeb;
+  --stj-danger: #e11d48;
+  --stj-danger-hover: #be123c;
+  --stj-danger-surface: #fff1f2;
+
+  --stj-canvas: #f8fafc;
+  --stj-surface: #ffffff;
+  --stj-surface-raised: #ffffff;
+  --stj-border: #e2e8f0;
+  --stj-text: #0f172a;
+  --stj-text-muted: #64748b;
+
+  --stj-radius-sm: 6px;
+  --stj-radius-md: 10px;
+  --stj-radius-lg: 16px;
+  --stj-radius-full: 9999px;
+
+  --stj-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --stj-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --stj-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme='dark'] {
@@ -27,6 +57,26 @@
   --ifm-color-primary-dark: #0284c7;
   --ifm-background-color: #0b0f19;
   --ifm-card-background-color: #131b2e;
+
+  --stj-primary: #38bdf8;
+  --stj-primary-hover: #0284c7;
+  --stj-primary-surface: #082f49;
+  --stj-success: #10b981;
+  --stj-success-hover: #059669;
+  --stj-success-surface: #064e3b;
+  --stj-warning: #f59e0b;
+  --stj-warning-hover: #d97706;
+  --stj-warning-surface: #451a03;
+  --stj-danger: #f43f5e;
+  --stj-danger-hover: #e11d48;
+  --stj-danger-surface: #4c0519;
+
+  --stj-canvas: #0b0f19;
+  --stj-surface: #131b2e;
+  --stj-surface-raised: #1e293b;
+  --stj-border: #334155;
+  --stj-text: #f8fafc;
+  --stj-text-muted: #94a3b8;
 }
 
 html {
@@ -137,5 +187,145 @@ html[data-data-saver="true"] {
 html[data-data-saver="true"] .ast-viewport-stage {
   animation: none !important;
 }
+
+/* ==========================================================================
+   Harmonious UI Substrates & Components (Governed by theme:harmony)
+   ========================================================================== */
+
+/* 1. Harmonious Card Container */
+.stj-card {
+  background-color: var(--stj-surface);
+  border: 1px solid var(--stj-border);
+  border-radius: var(--stj-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--stj-shadow-sm);
+  color: var(--stj-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stj-card-interactive {
+  cursor: pointer;
+}
+.stj-card-interactive:hover {
+  border-color: var(--stj-primary);
+  box-shadow: var(--stj-shadow-md);
+}
+
+/* 2. Harmonious Buttons (2x horizontal to vertical padding, 44px touch targets) */
+.stj-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--stj-radius-md);
+  font-weight: 700;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.stj-btn-primary {
+  background-color: var(--stj-primary);
+  color: #ffffff;
+  border-color: var(--stj-primary);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+.stj-btn-primary:hover:not(:disabled) {
+  background-color: var(--stj-primary-hover);
+  border-color: var(--stj-primary-hover);
+}
+.stj-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.stj-btn-secondary {
+  background-color: transparent;
+  color: var(--stj-text);
+  border-color: var(--stj-border);
+}
+.stj-btn-secondary:hover:not(:disabled) {
+  background-color: var(--stj-primary-surface);
+  border-color: var(--stj-primary);
+  color: var(--stj-primary);
+}
+
+.stj-btn-success {
+  background-color: var(--stj-success);
+  color: #ffffff;
+  border-color: var(--stj-success);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+.stj-btn-success:hover:not(:disabled) {
+  background-color: var(--stj-success-hover);
+  border-color: var(--stj-success-hover);
+}
+
+.stj-btn-ghost {
+  background-color: transparent;
+  color: var(--stj-text-muted);
+  border-color: transparent;
+}
+.stj-btn-ghost:hover:not(:disabled) {
+  background-color: var(--stj-canvas);
+  color: var(--stj-text);
+}
+
+/* 3. Badges & Pills */
+.stj-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--stj-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.stj-badge-primary {
+  background-color: var(--stj-primary-surface);
+  color: var(--stj-primary);
+  border: 1px solid var(--stj-primary);
+}
+
+.stj-badge-success {
+  background-color: var(--stj-success-surface);
+  color: var(--stj-success);
+  border: 1px solid var(--stj-success);
+}
+
+.stj-pill {
+  border-radius: var(--stj-radius-full);
+}
+
+/* 4. Form Inputs & Selects */
+.stj-input,
+.stj-select {
+  min-height: 44px;
+  padding: 0.5rem 0.85rem;
+  background-color: var(--stj-surface);
+  color: var(--stj-text);
+  border: 1px solid var(--stj-border);
+  border-radius: var(--stj-radius-md);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stj-input:focus,
+.stj-select:focus {
+  border-color: var(--stj-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
 
 

@@ -13,6 +13,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),
+      'react-router-dom': path.resolve(import.meta.dirname, 'src/router/index.tsx'),
     },
   },
   server: {
@@ -35,9 +36,6 @@ export default defineConfig({
           }
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
             return 'vendor-react';
-          }
-          if (id.includes('node_modules/react-router') || id.includes('node_modules/react-router-dom/')) {
-            return 'vendor-router';
           }
         },
       },

@@ -12,6 +12,12 @@ import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
 import { PRNG } from '../engine/prng';
 import { TrajectoryEngine, CognitiveTrajectoryState } from '../engine/trajectoryEngine';
 import { LessonSequencer, PedagogicalStage } from '../engine/lessonSequencer';
+import {
+  playSuccessChime,
+  playIncorrectTone,
+  triggerHapticSuccess,
+  triggerHapticError,
+} from '../services/soundHaptics';
 
 interface NeuralLabCanvasProps {
   initialKeyStage?: string;
@@ -33,6 +39,7 @@ export default function NeuralLabCanvas({
   const [selectedKeyStage, setSelectedKeyStage] = useState(initialKeyStage || 'Key Stage 1');
   const [selectedSubject, setSelectedSubject] = useState(initialSubject || 'Science');
   const [selectedUnit, setSelectedUnit] = useState(initialUnit || 'Seasonal Changes');
+  const [selectedLesson, setSelectedLesson] = useState('');
   const [sessionId, setSessionId] = useState('Lesson 1');
 
   const [activeLang, setActiveLang] = useState<string>(() => {
@@ -101,6 +108,7 @@ export default function NeuralLabCanvas({
     keyStage: string;
     subject: string;
     unit: string;
+    lessonTitle?: string;
   } | null>(null);
 
   const activeRequestIdRef = useRef(0);
@@ -109,6 +117,7 @@ export default function NeuralLabCanvas({
     keyStage: selectedKeyStage,
     subject: selectedSubject,
     unit: selectedUnit,
+    lesson: selectedLesson,
   });
 
   useEffect(() => {
@@ -120,8 +129,9 @@ export default function NeuralLabCanvas({
       keyStage: selectedKeyStage,
       subject: selectedSubject,
       unit: selectedUnit,
+      lesson: selectedLesson,
     };
-  }, [selectedKeyStage, selectedSubject, selectedUnit]);
+  }, [selectedKeyStage, selectedSubject, selectedUnit, selectedLesson]);
 
   useEffect(() => {
     if (initialKeyStage && initialKeyStage !== selectedKeyStage) {
@@ -205,6 +215,7 @@ export default function NeuralLabCanvas({
       keyStage: keyStage || activeSelectionRef.current.keyStage,
       subject: subject || activeSelectionRef.current.subject,
       unit: unit || activeSelectionRef.current.unit,
+      lessonTitle: payload.lessonTitle || activeSelectionRef.current.lesson || undefined,
     });
   }, []);
 
@@ -216,7 +227,8 @@ export default function NeuralLabCanvas({
     diff = difficulty,
     targetLang = activeLang,
     forceVariation = false,
-    customSeed?: string
+    customSeed?: string,
+    lessonTitle = activeSelectionRef.current.lesson
   ) => {
     const requestId = ++activeRequestIdRef.current;
     setIsGenerating(true);
@@ -241,6 +253,7 @@ export default function NeuralLabCanvas({
           keyStage: ks,
           subject: sub,
           topic: u,
+          lessonTitle,
           curriculum: curriculumSetting,
           difficulty: diff,
           lang: targetLang,
@@ -346,6 +359,15 @@ export default function NeuralLabCanvas({
       payload: { text: feedbackText, isCorrect },
     });
 
+    // Native Web Audio & Haptic Feedback
+    if (isCorrect) {
+      playSuccessChime();
+      triggerHapticSuccess();
+    } else {
+      playIncorrectTone();
+      triggerHapticError();
+    }
+
     if (isCorrect) {
       setScore((s) => s + 1);
       setStreak((st) => st + 1);
@@ -421,6 +443,11 @@ export default function NeuralLabCanvas({
         keyStage={selectedKeyStage}
         subject={selectedSubject}
         unit={selectedUnit}
+        selectedLesson={selectedLesson}
+        onLessonChange={(lesson) => {
+          setSelectedLesson(lesson);
+          requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, lesson);
+        }}
         status="online"
         isReady={!isGenerating}
         sessionId={sessionId}
@@ -428,21 +455,24 @@ export default function NeuralLabCanvas({
         buttonLabel={isGenerating ? '⚡ Generating...' : 'New Question'}
         onKeyStageChange={(newKs, firstSub, firstUnit) => {
           setSelectedKeyStage(newKs);
+          setSelectedLesson('');
           if (firstSub) setSelectedSubject(firstSub);
           if (firstUnit) setSelectedUnit(firstUnit);
           onTopicChange?.(newKs, firstSub || selectedSubject, firstUnit || selectedUnit);
         }}
         onSubjectChange={(newSub, firstUnit) => {
           setSelectedSubject(newSub);
+          setSelectedLesson('');
           if (firstUnit) setSelectedUnit(firstUnit);
           onTopicChange?.(selectedKeyStage, newSub, firstUnit || selectedUnit);
         }}
         onUnitChange={(newUnit) => {
           setSelectedUnit(newUnit);
+          setSelectedLesson('');
           onTopicChange?.(selectedKeyStage, selectedSubject, newUnit);
         }}
         onSessionIdChange={setSessionId}
-        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit)}
+        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, selectedLesson)}
         onDownloadReport={handleExportReport}
       />
 
@@ -739,6 +769,7 @@ export default function NeuralLabCanvas({
               keyStage={activeQuestion.keyStage || selectedKeyStage}
               subject={activeQuestion.subject}
               unit={activeQuestion.unit}
+              lessonTitle={activeQuestion.lessonTitle || selectedLesson || undefined}
               prompt={activeQuestion.prompt}
               displayOptions={activeQuestion.displayOptions}
               selectedAnswer={selectedAnswer}

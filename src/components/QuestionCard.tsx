@@ -16,11 +16,13 @@ import { CognitiveTrajectoryState } from '../engine/trajectoryEngine';
 import { MindSpaceEngine, QuestionMindSpace } from '../engine/mindSpaceEngine';
 import { PedagogicalStage } from '../engine/lessonSequencer';
 import { aiCaller } from '../engine/aicaller';
+import { playClickTone, triggerHapticClick } from '../services/soundHaptics';
 
 interface Props {
   keyStage?: string;
   subject: string;
   unit: string;
+  lessonTitle?: string;
   prompt: string;
   displayOptions: string[];
   selectedAnswer: number | null;
@@ -54,6 +56,7 @@ export const QuestionCard: React.FC<Props> = ({
   keyStage = 'Key Stage 2',
   subject,
   unit,
+  lessonTitle,
   prompt,
   displayOptions,
   selectedAnswer,
@@ -290,6 +293,8 @@ export const QuestionCard: React.FC<Props> = ({
       if (index >= 0 && index < effectiveOptions.length && selectedAnswer === null) {
         e.preventDefault();
         setStagedChoice(index);
+        playClickTone();
+        triggerHapticClick();
       } else if (e.key === 'Enter') {
         if (selectedAnswer === null && stagedChoice !== null) {
           e.preventDefault();
@@ -376,6 +381,25 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
           <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1e3a8a', margin: 0 }}>
             {subject}: {unit}
           </h2>
+          {lessonTitle && (
+            <span
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: '#0369a1',
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '6px',
+                padding: '2px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Anchored to Oak National Academy lesson"
+            >
+              📖 {lessonTitle}
+            </span>
+          )}
           {isLanguageSubject && (
             <span
               style={{
@@ -1301,6 +1325,8 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
                 if (selectedAnswer !== null) return;
                 // If student clicks an option, stage it for confirmation
                 setStagedChoice(idx);
+                playClickTone();
+                triggerHapticClick();
               }}
               style={{
                 display: 'flex',

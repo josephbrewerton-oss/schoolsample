@@ -319,6 +319,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const stage = payload?.keyStage || 'Key Stage 1';
           const subject = payload?.subject || 'Science';
           const topic = payload?.topic || 'General Science';
+          const lessonTitle = payload?.lessonTitle || payload?.lesson || '';
+          const lessonId = payload?.lessonId || '';
           const curriculum = payload?.curriculum || 'uk_oak';
           const difficulty = (payload?.difficulty || 'challenger') as 'warmup' | 'challenger' | 'brainbuster';
           const lang = payload?.lang || 'en';
@@ -413,6 +415,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             seedToken: activeSeedToken,
             knowledge: offlineKnowledge,
             excludePrompt,
+            lessonTitle,
+            lessonId,
           });
 
           let offlineQuestion = null;

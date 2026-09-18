@@ -9,7 +9,7 @@
  * Tier 4: Self-correcting Socratic rule-engine AST synthesizer
  */
 
-import * as webllm from '@mlc-ai/web-llm';
+import type { MLCEngineInterface } from '@mlc-ai/web-llm';
 import { 
   openLocalDB, 
   bootstrapTopicAdapters, 
@@ -80,7 +80,7 @@ export interface MemoryGuardStatus {
 }
 
 export class EdgeCognitiveEngine {
-  private webllmEngine: webllm.MLCEngineInterface | null = null;
+  private webllmEngine: MLCEngineInterface | null = null;
   private hasWebGPU: boolean = false;
   private hasChromeAI: boolean = false;
   private isInitializing: boolean = false;
@@ -273,8 +273,9 @@ export class EdgeCognitiveEngine {
 
         onProgress?.({ text: `Initializing WebGPU shader pipeline for ${this.selectedModel}...`, progress: 0.1 });
 
+        const webllm = await import('@mlc-ai/web-llm');
         const engine = await webllm.CreateMLCEngine(this.selectedModel, {
-          initProgressCallback: (report: webllm.InitProgressReport) => {
+          initProgressCallback: (report: any) => {
             onProgress?.({
               text: report.text,
               progress: typeof report.progress === 'number' ? report.progress : 0.5,
