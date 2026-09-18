@@ -343,13 +343,34 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(functio
   }
   currentPath = normalizePath(currentPath);
 
-  const targetPath = normalizePath(to.split('?')[0].split('#')[0]);
+  const [toPathOnly, toQuery] = to.split('#')[0].split('?');
+  const targetPath = normalizePath(toPathOnly);
 
-  const isActive = end
+  const pathMatches = end
     ? currentPath === targetPath
     : targetPath === '/'
     ? currentPath === '/'
     : currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+
+  let isActive = pathMatches;
+  if (isActive) {
+    const targetSearchParams = toQuery ? new URLSearchParams(toQuery) : null;
+    const currentSearchParams = new URLSearchParams(location.search);
+
+    if (targetSearchParams && Array.from(targetSearchParams.keys()).length > 0) {
+      for (const [key, val] of targetSearchParams.entries()) {
+        if (currentSearchParams.get(key) !== val) {
+          isActive = false;
+          break;
+        }
+      }
+    } else {
+      // If link has no search params, avoid collisions when current search has a tab filter
+      if (currentSearchParams.has('tab') && currentSearchParams.get('tab')) {
+        isActive = false;
+      }
+    }
+  }
 
   const computedClassName = typeof className === 'function' ? className({ isActive, isPending: false }) : className;
   const computedStyle = typeof style === 'function' ? style({ isActive, isPending: false }) : style;

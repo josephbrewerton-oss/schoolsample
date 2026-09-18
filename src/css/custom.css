@@ -327,5 +327,111 @@ html[data-data-saver="true"] .ast-viewport-stage {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+/* ==========================================================================
+   Responsive Navigation Menu & Dropdown System
+   ========================================================================== */
+
+/* Desktop Navigation Items */
+.desktop-nav-items {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Dropdown Menu Container & Transitions */
+.nav-dropdown-wrapper {
+  position: relative;
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 270px;
+  border-radius: 10px;
+  padding: 0.4rem;
+  z-index: 1000;
+  animation: navDropdownFade 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top left;
+}
+
+.nav-dropdown-menu.align-right {
+  left: auto;
+  right: 0;
+  transform-origin: top right;
+}
+
+@keyframes navDropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.nav-dropdown-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 7px;
+  text-decoration: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.nav-dropdown-item:hover {
+  text-decoration: none;
+}
+
+/* Mobile Hamburger Toggle */
+.mobile-menu-button {
+  display: none !important;
+}
+
+/* Breakpoint: Switch from Desktop Links to Mobile Hamburger Drawer */
+@media (max-width: 1024px) {
+  .desktop-nav-items {
+    display: none !important;
+  }
+  .mobile-menu-button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Breakpoint: Hide non-critical wide action buttons on small mobile displays */
+@media (max-width: 768px) {
+  .navbar-action-desktop-only {
+    display: none !important;
+  }
+}
+
+/* Mobile Drawer Smooth Slide Down */
+#mobile-nav-drawer {
+  animation: navDrawerFadeIn 0.15s ease-out;
+}
+
+@keyframes navDrawerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Accessible Keyboard Navigation Focus Visible */
+#persistent-site-navbar a:focus-visible,
+#persistent-site-navbar button:focus-visible {
+  outline: 2px solid var(--stj-primary);
+  outline-offset: 2px;
+}
+
 
 
