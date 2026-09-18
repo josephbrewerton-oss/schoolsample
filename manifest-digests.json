@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "compositeHash": "05bcea3848b7",
+  "generatedAt": "2026-09-18T09:47:02.162Z",
+  "files": {
+    "nano-map.ast": "26ef7659bc801940",
+    "manifest.json": "5b581a737ccec74d",
+    "patterns/fill-blank.ast": "cc07d35b31d8718d",
+    "patterns/harmony.ast": "d258cfe4e0be5dcc",
+    "patterns/mcq.ast": "4ed99f5b691d9815",
+    "patterns/numeric.ast": "ae97bf1a5d2591ff",
+    "patterns/pair-sort.ast": "c40900be04c53763",
+    "manifests/catalog.json": "8971bda38cbcbcc1",
+    "manifests/history-ks2.json": "7c550309d1880c07",
+    "manifests/oak-angles-triangles.json": "8d23026f8cb8fc7a",
+    "manifests/oak-states-of-matter.json": "a8d7bc12c80bd1bf",
+    "manifests/rag-index.json": "43868d052ee24d55",
+    "manifests/seasonal-changes.json": "7d5635d852542c40"
+  }
+}

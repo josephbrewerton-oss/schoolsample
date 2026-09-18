@@ -1,0 +1,25 @@
+;; /static/patterns/harmony.ast
+;; Harmonic Design Token Substrate for St Joseph's Curriculum Portal
+(theme:harmony
+  (:meta :version "3.0" :standard "DfE-Accessible-Primary-Secondary")
+  (:palette
+    (:primary "#2563eb" :primary-hover "#1d4ed8" :primary-surface "#eff6ff")
+    (:success "#059669" :success-hover "#047857" :success-surface "#ecfdf5")
+    (:warning "#d97706" :warning-hover "#b45309" :warning-surface "#fffbeb")
+    (:danger  "#e11d48" :danger-hover  "#be123c" :danger-surface  "#fff1f2")
+    (:surface-light "#ffffff" :canvas-light "#f8fafc" :border-light "#e2e8f0" :text-light "#0f172a")
+    (:surface-dark  "#1e293b" :canvas-dark  "#0f172a" :border-dark  "#334155" :text-dark  "#f8fafc"))
+  (:typography
+    (:scale-ratio 1.25)
+    (:font-sans "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif")
+    (:font-mono "'JetBrains Mono', 'Fira Code', monospace")
+    (:line-height 1.6))
+  (:geometry
+    (:radius-sm "6px")
+    (:radius-md "10px")
+    (:radius-lg "16px")
+    (:touch-target "44px"))
+  (:components
+    (:card :padding "1.25rem" :border-width "1px")
+    (:button :padding-y "0.6rem" :padding-x "1.2rem" :font-weight 700)
+    (:badge  :padding-y "0.25rem" :padding-x "0.65rem" :font-size "0.75rem")))
