@@ -365,7 +365,7 @@ export default function LearningZonePage() {
       title="Curriculum Learning Zone"
       description="Deterministic concept exploration and misconception diagnostics."
     >
-      <main style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         {/* Header Bar: Pupil View vs. Teacher / Master View */}
         <div
           style={{
@@ -997,9 +997,9 @@ export default function LearningZonePage() {
 
                   {/* Structured Lesson Delivery Flow */}
                   <div style={{ padding: '1.25rem', borderRadius: '12px', background: '#f0fdf4', border: '1px solid #dcfce7' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#166534', margin: '0 0 0.85rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#166534', margin: '0 0 0.85rem 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span>📋</span> 3-Part Lesson Delivery Flow
-                    </h3>
+                    </h2>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       <div style={{ padding: '0.85rem 1rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
@@ -1030,9 +1030,9 @@ export default function LearningZonePage() {
                         boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
                       }}
                     >
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span>✨</span> Teacher Lesson Outline &amp; Narrative
-                      </h3>
+                      </h2>
                       <div style={{ color: '#334155', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
                         {effectiveFullText}
                       </div>
@@ -1060,7 +1060,7 @@ export default function LearningZonePage() {
             </div>
           </>
         )}
-      </main>
+      </div>
     </PageMeta>
   );
 }

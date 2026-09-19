@@ -11,7 +11,7 @@ export default function Home() {
       title="Home"
       description="St Joseph's Primary & Secondary Interactive Learning Portal"
     >
-      <main style={{ padding: '3.5rem 1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: '3.5rem 1.5rem', maxWidth: '1100px', margin: '0 auto' }}>
         
         {/* Welcome Hero */}
         <section style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
@@ -321,7 +321,7 @@ export default function Home() {
             OGL v3.0 (Oak National Academy)
           </a>.
         </div>
-      </main>
+      </div>
     </PageMeta>
   );
 }

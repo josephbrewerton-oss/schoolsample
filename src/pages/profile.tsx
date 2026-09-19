@@ -77,7 +77,7 @@ export default function StudentProfilePage() {
 
   return (
     <PageMeta title="Learner Profile & Passport" description="100% On-Device, GDPR-Compliant Student Learning Passport">
-      <main style={{ maxWidth: '960px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: '960px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         {/* Top Header & Privacy Guarantee Pill */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
           <div>
@@ -664,7 +664,7 @@ export default function StudentProfilePage() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </PageMeta>
   );
 }

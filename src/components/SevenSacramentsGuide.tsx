@@ -260,9 +260,9 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
           </span>
         </div>
 
-        <h3 style={{ fontSize: '1.65rem', fontWeight: 800, margin: '0 0 0.5rem', color: '#ffffff' }}>
+        <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: '0 0 0.5rem', color: '#ffffff' }}>
           The Seven Holy Sacraments of the Church
-        </h3>
+        </h2>
 
         <p style={{ margin: 0, fontSize: '0.95rem', color: '#e0e7ff', maxWidth: '820px', lineHeight: 1.6 }}>
           A sacrament is an outward sign instituted by Jesus Christ to give us inward sanctifying grace. 
@@ -404,9 +404,9 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '2rem' }}>{sacrament.icon}</span>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
                       {sacrament.name}
-                    </h4>
+                    </h3>
                     <span style={{ fontSize: '0.75rem', fontStyle: 'italic', color: '#64748b' }}>
                       Latin: {sacrament.latinName}
                     </span>
@@ -544,9 +544,9 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
             <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#4338ca' }}>
               First Communion Catechism Check
             </span>
-            <h4 style={{ margin: '2px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
+            <h3 style={{ margin: '2px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
               The Seven Sacraments Mastery Quiz
-            </h4>
+            </h3>
           </div>
 
           <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4338ca' }}>
@@ -637,9 +637,9 @@ export default function SevenSacramentsGuide(): React.JSX.Element {
         ) : (
           <div style={{ textAlign: 'center', padding: '1.5rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🏆</div>
-            <h4 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>
               Quiz Completed!
-            </h4>
+            </h3>
             <p style={{ fontSize: '0.95rem', color: '#475569', marginBottom: '1.25rem' }}>
               You scored <strong>{quizScore} out of {QUIZ_QUESTIONS.length}</strong> on The Seven Sacraments.
               {quizScore === QUIZ_QUESTIONS.length

@@ -67,9 +67,9 @@ export default function PrivacyPage(): React.JSX.Element {
             }}
           >
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🇬🇧</div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
+            <strong style={{ display: 'block', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
               UK GDPR Compliant
-            </h3>
+            </strong>
             <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
               Data Protection Act 2018. Art. 5 Data Minimisation, Art. 17 Right to Erasure, and Art. 20 Portability built-in.
             </p>
@@ -85,9 +85,9 @@ export default function PrivacyPage(): React.JSX.Element {
             }}
           >
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🧒</div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
+            <strong style={{ display: 'block', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
               ICO Children&apos;s Code
-            </h3>
+            </strong>
             <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
               Adheres to all 15 standards of the Age Appropriate Design Code. Maximum privacy default, zero profiling, zero nudges.
             </p>
@@ -103,9 +103,9 @@ export default function PrivacyPage(): React.JSX.Element {
             }}
           >
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🍪</div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
+            <strong style={{ display: 'block', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
               Zero Tracking Cookies
-            </h3>
+            </strong>
             <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
               PECR compliant. Zero third-party cookies, zero tracking beacons, and zero advertising tags.
             </p>
@@ -121,9 +121,9 @@ export default function PrivacyPage(): React.JSX.Element {
             }}
           >
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📜</div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
+            <strong style={{ display: 'block', fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>
               OGL v3.0 Curriculum
-            </h3>
+            </strong>
             <p style={{ fontSize: '0.82rem', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
               Oak National Academy &amp; UK National Curriculum materials delivered under the Open Government Licence v3.0.
             </p>
@@ -187,9 +187,9 @@ export default function PrivacyPage(): React.JSX.Element {
                 This site drops <strong>0 tracking cookies</strong>, <strong>0 third-party marketing beacons</strong>, and <strong>0 web trackers</strong> (no Google Analytics, no Facebook Pixels, no Hotjar).
               </p>
 
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.5rem 0 0.25rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.5rem 0 0.25rem' }}>
                 Essential Local Storage Keys (Strictly Functional):
-              </h4>
+              </h3>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
                   <thead>

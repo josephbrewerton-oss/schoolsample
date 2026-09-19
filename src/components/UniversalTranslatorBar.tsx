@@ -165,9 +165,10 @@ export default function UniversalTranslatorBar() {
   const langMeta = SUPPORTED_LANGUAGES[currentLang] || SUPPORTED_LANGUAGES.en;
 
   return (
-    <aside
+    <div
       id="universal-translator-bar"
       className="notranslate"
+      role="region"
       aria-label="Universal Language Translator"
       style={{
         width: '100%',
@@ -356,6 +357,6 @@ export default function UniversalTranslatorBar() {
           {isCollapsed ? '🌐 Expand Translator' : 'Hide Bar'}
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

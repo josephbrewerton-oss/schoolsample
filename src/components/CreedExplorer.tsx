@@ -212,9 +212,9 @@ export default function CreedExplorer() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <span style={{ fontSize: '1.75rem' }}>📜</span>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
               Pillar 1: The Apostles&apos; Creed Interactive Explorer
-            </h3>
+            </h2>
             <span className="stj-badge stj-badge-primary">RCIA Foundational</span>
           </div>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--stj-text-muted)', maxWidth: '750px', lineHeight: 1.5 }}>
@@ -325,9 +325,9 @@ export default function CreedExplorer() {
               </span>
             </div>
 
-            <h4 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 8px 0', lineHeight: 1.4 }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 8px 0', lineHeight: 1.4 }}>
               &ldquo;{active.article}&rdquo;
-            </h4>
+            </h3>
 
             <div style={{ padding: '8px 12px', background: 'var(--stj-surface)', borderRadius: 'var(--stj-radius-sm)', marginBottom: '1rem', fontStyle: 'italic', fontSize: '0.85rem', color: 'var(--stj-text-muted)' }}>
               Latin: {active.latinExcerpt}
@@ -379,9 +379,9 @@ export default function CreedExplorer() {
       <div className="stj-card" style={{ marginTop: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
           <div>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 2px 0' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 2px 0' }}>
               🎯 RCIA Diagnostic: Testing Core Doctrines of the Creed
-            </h4>
+            </h3>
             <div style={{ fontSize: '0.82rem', color: 'var(--stj-text-muted)' }}>
               Check your doctrinal understanding of the Creed.
             </div>

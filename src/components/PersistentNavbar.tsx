@@ -347,7 +347,6 @@ export default function PersistentNavbar(): React.JSX.Element {
         {/* Desktop Navigation Links & Dropdowns */}
         <div
           className="desktop-nav-items"
-          role="menubar"
           aria-label="Desktop menu"
         >
           {/* 1. Home */}
@@ -390,6 +389,7 @@ export default function PersistentNavbar(): React.JSX.Element {
               onClick={() => toggleDropdown('learning')}
               aria-expanded={openDropdown === 'learning'}
               aria-haspopup="true"
+              aria-controls="nav-learning-dropdown"
               style={{
                 background: isLearningActive
                   ? colorMode === 'dark' ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff'
@@ -430,9 +430,8 @@ export default function PersistentNavbar(): React.JSX.Element {
 
             {openDropdown === 'learning' && (
               <div
+                id="nav-learning-dropdown"
                 className="nav-dropdown-menu"
-                role="menu"
-                aria-label="Learning menu"
                 style={{
                   backgroundColor: colorMode === 'dark' ? '#1e293b' : '#ffffff',
                   border: `1px solid ${colorMode === 'dark' ? '#334155' : '#e2e8f0'}`,
@@ -448,7 +447,6 @@ export default function PersistentNavbar(): React.JSX.Element {
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      role="menuitem"
                       className="nav-dropdown-item"
                       onClick={() => setOpenDropdown(null)}
                       style={{
@@ -503,6 +501,7 @@ export default function PersistentNavbar(): React.JSX.Element {
               onClick={() => toggleDropdown('admin')}
               aria-expanded={openDropdown === 'admin'}
               aria-haspopup="true"
+              aria-controls="nav-admin-dropdown"
               style={{
                 background: isAdminActive
                   ? colorMode === 'dark' ? 'rgba(37, 99, 235, 0.15)' : '#eff6ff'
@@ -543,9 +542,8 @@ export default function PersistentNavbar(): React.JSX.Element {
 
             {openDropdown === 'admin' && (
               <div
+                id="nav-admin-dropdown"
                 className="nav-dropdown-menu"
-                role="menu"
-                aria-label="Educator and Admin menu"
                 style={{
                   backgroundColor: colorMode === 'dark' ? '#1e293b' : '#ffffff',
                   border: `1px solid ${colorMode === 'dark' ? '#334155' : '#e2e8f0'}`,
@@ -559,7 +557,6 @@ export default function PersistentNavbar(): React.JSX.Element {
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      role="menuitem"
                       className="nav-dropdown-item"
                       onClick={() => setOpenDropdown(null)}
                       style={{

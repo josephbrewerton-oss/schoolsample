@@ -263,7 +263,7 @@ export default function CurriculumStudioPage() {
       title="International Curriculum Studio"
       description="Import, customize, and deploy overseas and regional national curricula for offline learning."
     >
-      <main style={{ maxWidth: '1120px', margin: '2rem auto', padding: '0 1.25rem', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: '1120px', margin: '2rem auto', padding: '0 1.25rem', fontFamily: 'system-ui, sans-serif' }}>
         
         {/* Header Hero */}
         <section style={{
@@ -1888,7 +1888,7 @@ export default function CurriculumStudioPage() {
           </section>
         )}
 
-      </main>
+      </div>
     </PageMeta>
   );
 }

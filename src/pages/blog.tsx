@@ -51,9 +51,9 @@ export default function BlogPage(): React.JSX.Element {
             marginBottom: '2rem',
           }}
         >
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e3a8a', marginTop: 0, marginBottom: '0.5rem' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#1e3a8a', marginTop: 0, marginBottom: '0.5rem' }}>
             Inspired by St Joseph's, Fishponds (Bristol)
-          </h3>
+          </h2>
           <p style={{ margin: 0, color: '#475569', fontSize: '0.95rem' }}>
             Due to our inspirational Priests Canon Gregory and our awesome Priest in Charge Father Jerome Ajakaiye, I was
             given a reason to write this website and bring education to any that are in need.

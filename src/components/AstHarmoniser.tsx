@@ -339,7 +339,7 @@ function AstHarmoniserClient(): React.JSX.Element {
   };
 
   return (
-    <main
+    <div
       style={{
         maxWidth: '1000px',
         margin: '0 auto',
@@ -578,16 +578,16 @@ function AstHarmoniserClient(): React.JSX.Element {
 
       {/* Universal Directory Grid */}
       <DirectoryGrid />
-    </main>
+    </div>
   );
 }
 
 function DirectoryGrid(): React.JSX.Element {
   return (
     <section>
-      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>
+      <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>
         National Curriculum Navigation Directory
-      </h3>
+      </h2>
 
       <div
         style={{
@@ -716,7 +716,7 @@ function DirectoryGrid(): React.JSX.Element {
 
 function AstHarmoniserStaticFallback(): React.JSX.Element {
   return (
-    <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1rem 4rem 1rem' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1rem 4rem 1rem' }}>
       <div
         style={{
           background: '#1e293b',
@@ -734,7 +734,7 @@ function AstHarmoniserStaticFallback(): React.JSX.Element {
         </p>
       </div>
       <DirectoryGrid />
-    </main>
+    </div>
   );
 }
 

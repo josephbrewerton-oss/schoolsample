@@ -35,9 +35,9 @@ export default function MatSlaSection(): React.JSX.Element {
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🛡️</div>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
+          <strong style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
             Zero-Telemetry Guarantee
-          </h3>
+          </strong>
           <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
             100% on-device sandbox. Zero pupil PII, keystrokes, or answers ever leave the local hardware.
           </p>
@@ -53,9 +53,9 @@ export default function MatSlaSection(): React.JSX.Element {
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>⚡</div>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
+          <strong style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
             3-Tier Hardware Safety
-          </h3>
+          </strong>
           <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
             Automated execution cascade with WebGPU Memory Guard preventing older 2GB/3GB iPad crashes.
           </p>
@@ -71,9 +71,9 @@ export default function MatSlaSection(): React.JSX.Element {
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>📡</div>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
+          <strong style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
             0 bps Perpetual Offline
-          </h3>
+          </strong>
           <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
             Certified to operate through total school broadband outages with zero cloud dependencies.
           </p>
@@ -89,9 +89,9 @@ export default function MatSlaSection(): React.JSX.Element {
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>📜</div>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
+          <strong style={{ display: 'block', fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
             £0.00 Perpetual Covenant
-          </h3>
+          </strong>
           <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
             Zero per-seat charges, zero token fees, zero cloud compute pass-through for all trust schools.
           </p>
@@ -182,9 +182,9 @@ export default function MatSlaSection(): React.JSX.Element {
               </span>
               <span style={{ fontSize: '0.78rem', color: '#64748b' }}>25–85 ms/tok</span>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.35rem 0' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.35rem 0' }}>
               Chrome Prompt API (Gemini Nano)
-            </h4>
+            </h3>
             <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, margin: 0 }}>
               Hardware-accelerated on-device NPU/GPU runtime for modern managed Chromebooks and Windows/macOS Chrome 131+. Zero memory heap overhead.
             </p>
@@ -197,9 +197,9 @@ export default function MatSlaSection(): React.JSX.Element {
               </span>
               <span style={{ fontSize: '0.78rem', color: '#64748b' }}>40–120 ms/tok</span>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.35rem 0' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.35rem 0' }}>
               WebLLM Neural Pipeline
-            </h4>
+            </h3>
             <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, margin: 0 }}>
               On-device execution via WebGPU shaders (SmolLM2-360M) for Safari 18+ (M-series iPads/Macs), Firefox, and non-Chromium enterprise devices.
             </p>
@@ -212,9 +212,9 @@ export default function MatSlaSection(): React.JSX.Element {
               </span>
               <span style={{ fontSize: '0.78rem', color: '#64748b' }}>&lt; 5 ms (Instant)</span>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.35rem 0' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '0.35rem 0' }}>
               Local Socratic Rule Synthesizer
-            </h4>
+            </h3>
             <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, margin: 0 }}>
               Deterministic AST rulebook engine. Zero GPU footprint (&lt; 15MB RAM). Runs on legacy PCs, locked-down kiosk exam browsers, and baseline iPads.
             </p>
@@ -232,9 +232,9 @@ export default function MatSlaSection(): React.JSX.Element {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
             <span style={{ fontSize: '1.2rem' }}>🛡️</span>
-            <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#1e40af', margin: 0 }}>
+            <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#1e40af', margin: 0 }}>
               WebGPU Memory Guard on Older 2GB/3GB Educational iPads
-            </h4>
+            </h3>
           </div>
           <p style={{ fontSize: '0.87rem', color: '#1e3a8a', lineHeight: 1.55, margin: 0 }}>
             Standard school iPads (iPad 5th–9th Generation, iPad Air 2/3) operate with 2GB or 3GB of unified system RAM. On iPadOS, Safari&apos;s WebKit engine enforces an aggressive kernel watchdog (<strong>Jetsam</strong>) that forcibly kills browser tabs if allocations exceed ~1.2GB.
@@ -271,9 +271,9 @@ export default function MatSlaSection(): React.JSX.Element {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem' }}>
-            <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
+            <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
               Google Admin Console (Chromebooks)
-            </h4>
+            </h3>
             <ol style={{ fontSize: '0.82rem', color: '#475569', paddingLeft: '1.1rem', margin: 0, lineHeight: 1.5 }}>
               <li>Devices &gt; Chrome &gt; Apps &amp; Extensions &gt; Users.</li>
               <li>Select student OU and add PWA URL.</li>
@@ -283,9 +283,9 @@ export default function MatSlaSection(): React.JSX.Element {
           </div>
 
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem' }}>
-            <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
+            <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
               Microsoft Intune (Windows 10/11)
-            </h4>
+            </h3>
             <ol style={{ fontSize: '0.82rem', color: '#475569', paddingLeft: '1.1rem', margin: 0, lineHeight: 1.5 }}>
               <li>Apps &gt; Windows &gt; Add &gt; Web App (PWA).</li>
               <li>Provide curriculum portal URL and icon.</li>
@@ -295,9 +295,9 @@ export default function MatSlaSection(): React.JSX.Element {
           </div>
 
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem' }}>
-            <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
+            <h3 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
               Jamf School / Apple School Manager
-            </h4>
+            </h3>
             <ol style={{ fontSize: '0.82rem', color: '#475569', paddingLeft: '1.1rem', margin: 0, lineHeight: 1.5 }}>
               <li>Profiles &gt; Web Clip / PWA configuration.</li>
               <li>Whitelist origin in Web Content Filters.</li>

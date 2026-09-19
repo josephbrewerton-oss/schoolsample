@@ -414,9 +414,9 @@ export default function LatinMassPrayersChapel() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '1.6rem' }}>📜</span>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fef08a' }}>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fef08a' }}>
               Sacred Latin & English Mass Prayers Chapel
-            </h3>
+            </h2>
             <span
               style={{
                 fontSize: '0.72rem',
@@ -496,9 +496,9 @@ export default function LatinMassPrayersChapel() {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#78350f' }}>
+            <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 800, color: '#78350f' }}>
               🎯 Match the Sacred Latin to English Meaning
-            </h4>
+            </h3>
             <span style={{ fontSize: '0.8rem', color: '#92400e', fontWeight: 600 }}>
               Matched: {matchedPairs.length} / {miniGamePairs.length}
             </span>

@@ -410,9 +410,9 @@ export default function LiturgicalCalendarGuide(): React.JSX.Element {
           </span>
         </div>
 
-        <h3 style={{ fontSize: '1.65rem', fontWeight: 800, margin: '0 0 0.5rem', color: '#ffffff' }}>
+        <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: '0 0 0.5rem', color: '#ffffff' }}>
           Seasonal Liturgical Events &amp; The Church Year
-        </h3>
+        </h2>
 
         <p style={{ margin: 0, fontSize: '0.95rem', color: '#e0e7ff', maxWidth: '800px', lineHeight: 1.6 }}>
           The Catholic Church does not follow an ordinary calendar. Through the sacred rhythm of the{' '}
@@ -536,9 +536,9 @@ export default function LiturgicalCalendarGuide(): React.JSX.Element {
               {activeSeason.icon}
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#0f172a' }}>
                 {activeSeason.name}
-              </h4>
+              </h3>
               <div style={{ fontSize: '0.84rem', color: '#64748b', fontStyle: 'italic', marginTop: '2px' }}>
                 Latin: {activeSeason.latinName} &bull; {activeSeason.duration}
               </div>
@@ -701,9 +701,9 @@ export default function LiturgicalCalendarGuide(): React.JSX.Element {
             <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#4338ca' }}>
               Liturgical Season Knowledge Check
             </span>
-            <h4 style={{ margin: '2px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
+            <h3 style={{ margin: '2px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
               Easter &amp; Liturgical Calendar Mastery Quiz
-            </h4>
+            </h3>
           </div>
 
           <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#4338ca' }}>
@@ -794,9 +794,9 @@ export default function LiturgicalCalendarGuide(): React.JSX.Element {
         ) : (
           <div style={{ textAlign: 'center', padding: '1.5rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🏆</div>
-            <h4 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem' }}>
               Quiz Completed!
-            </h4>
+            </h3>
             <p style={{ fontSize: '0.95rem', color: '#475569', marginBottom: '1.25rem' }}>
               You scored <strong>{score} out of {QUIZ.length}</strong> on the Catholic Liturgical Seasons &amp; Easter!
               {score === QUIZ.length

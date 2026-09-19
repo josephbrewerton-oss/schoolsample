@@ -191,9 +191,9 @@ export default function CommandmentsMoralGuide() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <span style={{ fontSize: '1.75rem' }}>⚖️</span>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
               Pillar 3: Life in Christ — The Ten Commandments & Beatitudes
-            </h3>
+            </h2>
             <span className="stj-badge stj-badge-primary">Moral Theology</span>
           </div>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--stj-text-muted)', maxWidth: '750px', lineHeight: 1.5 }}>
@@ -316,9 +316,9 @@ export default function CommandmentsMoralGuide() {
               </span>
             </div>
 
-            <h4 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 12px 0', lineHeight: 1.4 }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 12px 0', lineHeight: 1.4 }}>
               &ldquo;{activeCmd.traditionalText}&rdquo;
-            </h4>
+            </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.25rem' }}>
               <div style={{ padding: '10px', background: 'var(--stj-surface)', borderRadius: 'var(--stj-radius-md)', borderLeft: '4px solid var(--stj-success)' }}>
@@ -360,9 +360,9 @@ export default function CommandmentsMoralGuide() {
       {activeSubTab === 'beatitudes' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ padding: '1rem', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-md)', marginBottom: '0.5rem' }}>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--stj-primary)' }}>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--stj-primary)' }}>
               The New Law of the Gospel: Christ&apos;s Beatitudes
-            </h4>
+            </h3>
             <p style={{ margin: 0, fontSize: '0.86rem', lineHeight: 1.5, color: 'var(--stj-text-muted)' }}>
               In the Sermon on the Mount (Matthew 5), Jesus fulfills the Law of Moses. The Beatitudes reveal the heart of Christ and depict the face of true discipleship.
             </p>
@@ -404,9 +404,9 @@ export default function CommandmentsMoralGuide() {
         <div className="stj-card" style={{ background: 'var(--stj-canvas)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
             <div>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 800 }}>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 800 }}>
                 🪞 RCIA Examination of Conscience
-              </h4>
+              </h3>
               <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--stj-text-muted)' }}>
                 Preparation for the Sacrament of Reconciliation (Penance). Check each commandment to reflect on areas needing God&apos;s healing mercy.
               </p>

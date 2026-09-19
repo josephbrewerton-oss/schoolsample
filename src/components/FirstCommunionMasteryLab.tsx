@@ -447,9 +447,9 @@ export default function FirstCommunionMasteryLab() {
           <span style={{ fontSize: '2.2rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>✝️</span>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, letterSpacing: '-0.01em', color: '#fef08a' }}>
+              <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, letterSpacing: '-0.01em', color: '#fef08a' }}>
                 First Holy Communion Masterclass
-              </h2>
+              </h1>
               <span
                 style={{
                   fontSize: '0.72rem',
@@ -758,9 +758,9 @@ export default function FirstCommunionMasteryLab() {
             }}
           >
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#854d0e' }}>
+              <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#854d0e' }}>
                 📖 The Holy Mass: The Source and Summit of Our Faith (CCC 1324)
-              </h3>
+              </h2>
               <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#713f12', lineHeight: 1.4 }}>
                 The Mass is divided into four sacred movements. Explore each step below to learn what the priest says, what we answer, and how to hold our bodies in reverence.
               </p>
@@ -823,9 +823,9 @@ export default function FirstCommunionMasteryLab() {
                     >
                       Step {idx + 1} &bull; {step.part}
                     </span>
-                    <h4 style={{ margin: '3px 0 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                    <h3 style={{ margin: '3px 0 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
                       {step.title}
-                    </h4>
+                    </h3>
                   </div>
                   {step.audioPrompt && (
                     <button
@@ -1047,9 +1047,9 @@ export default function FirstCommunionMasteryLab() {
             }}
           >
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#166534' }}>
+              <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#166534' }}>
                 🏺 Sacred Vessels & Sanctuary Explorer
-              </h3>
+              </h2>
               <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#15803d', lineHeight: 1.4 }}>
                 Every object on the Catholic altar has a special holy purpose to protect and honour the Body and Blood of Jesus Christ.
               </p>
@@ -1099,9 +1099,9 @@ export default function FirstCommunionMasteryLab() {
                     >
                       {obj.category} &bull; {obj.catechismRef}
                     </span>
-                    <h4 style={{ margin: '2px 0 0', fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                    <h3 style={{ margin: '2px 0 0', fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
                       {obj.name}
-                    </h4>
+                    </h3>
                   </div>
                 </div>
 
@@ -1283,9 +1283,9 @@ export default function FirstCommunionMasteryLab() {
               marginBottom: '1.5rem',
             }}
           >
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#92400e' }}>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#92400e' }}>
               👑 The 3 Golden Rules for Receiving Holy Communion Reverently
-            </h3>
+            </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
               <div style={{ background: '#ffffff', padding: '0.85rem', borderRadius: '8px', border: '1px solid #fef08a' }}>
                 <strong style={{ color: '#b45309', display: 'block', marginBottom: '4px' }}>1. Fast & State of Grace</strong>
@@ -1352,9 +1352,9 @@ export default function FirstCommunionMasteryLab() {
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase' }}>
                   {activePrayer.occasion}
                 </span>
-                <h4 style={{ margin: '2px 0 0', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+                <h3 style={{ margin: '2px 0 0', fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
                   {activePrayer.title}
-                </h4>
+                </h3>
               </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -1536,9 +1536,9 @@ export default function FirstCommunionMasteryLab() {
             }}
           >
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0369a1' }}>
+              <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0369a1' }}>
                 📜 Sunday Mass Family Conversation & Journal
-              </h3>
+              </h2>
               <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#0284c7', lineHeight: 1.4 }}>
                 Parents are the primary educators of their children's faith. Use this guided journal every Sunday to reflect together on what you saw, heard, and prayed during the Mass.
               </p>

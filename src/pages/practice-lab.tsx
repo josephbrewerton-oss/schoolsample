@@ -128,7 +128,16 @@ export default function PracticeLabPage() {
         }}
       >
         {mounted ? (
-          <main style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#f8fafc', margin: '0 0 0.35rem 0', letterSpacing: '-0.02em' }}>
+                Practice Arena &amp; Neural Lab
+              </h1>
+              <p style={{ color: '#94a3b8', fontSize: '0.92rem', margin: 0 }}>
+                Interactive curriculum drills, adaptive question mastery, and on-device Socratic guidance.
+              </p>
+            </div>
+
             <ComponentGuard label="NeuralLabCanvas">
               <NeuralLabCanvas
                 initialKeyStage={activeStage}
@@ -152,7 +161,7 @@ export default function PracticeLabPage() {
                 activePrompt={activeAxiomCheck}
               />
             </ComponentGuard>
-          </main>
+          </div>
         ) : (
           <div style={{ maxWidth: '1100px', margin: '3rem auto', textAlign: 'center', color: '#94a3b8' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>Loading St Joseph&apos;s Practice Arena...</p>

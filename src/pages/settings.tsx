@@ -199,7 +199,7 @@ export default function SettingsPage() {
 
   return (
     <PageMeta title="Settings" description="Manage local neural engine and curriculum preferences.">
-      <main style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         <div
           style={{
             background: '#ffffff',
@@ -755,7 +755,7 @@ export default function SettingsPage() {
             </div>
           </form>
         </div>
-      </main>
+      </div>
     </PageMeta>
   );
 }

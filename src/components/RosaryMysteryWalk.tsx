@@ -233,9 +233,9 @@ export default function RosaryMysteryWalk() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <span style={{ fontSize: '1.75rem' }}>📿</span>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
               Pillar 4: The Holy Rosary & Marian Mysteries
-            </h3>
+            </h2>
             <span className="stj-badge stj-badge-primary">Contemplative Prayer</span>
           </div>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--stj-text-muted)', maxWidth: '750px', lineHeight: 1.5 }}>
@@ -314,9 +314,9 @@ export default function RosaryMysteryWalk() {
             </span>
           </div>
 
-          <h4 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 10px 0', color: 'var(--stj-text)' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 10px 0', color: 'var(--stj-text)' }}>
             {currentMystery.title}
-          </h4>
+          </h3>
 
           <div style={{ padding: '8px 12px', background: 'var(--stj-primary-surface)', borderRadius: 'var(--stj-radius-sm)', marginBottom: '1rem', borderLeft: '4px solid var(--stj-primary)' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--stj-primary)' }}>
@@ -362,9 +362,9 @@ export default function RosaryMysteryWalk() {
         <div className="stj-card" style={{ background: 'var(--stj-canvas)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h5 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800 }}>
                 Interactive Decade Stepper
-              </h5>
+              </h3>
               <span className="stj-badge stj-badge-success">
                 {currentBead === 0 ? 'Our Father' : `Hail Mary ${currentBead} / 10`}
               </span>
@@ -501,9 +501,9 @@ export default function RosaryMysteryWalk() {
 
       {/* Anatomy of the Rosary Guide */}
       <div className="stj-card" style={{ background: 'var(--stj-canvas)' }}>
-        <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 8px 0' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 8px 0' }}>
           🌿 How to Pray the Catholic Rosary (Step-by-Step for RCIA)
-        </h4>
+        </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', fontSize: '0.82rem', color: 'var(--stj-text-muted)' }}>
           <div style={{ padding: '8px', background: 'var(--stj-surface)', borderRadius: '6px' }}>
             <strong>1. Sign of the Cross &amp; Creed:</strong> Hold the Crucifix, make the Sign of the Cross, and recite the Apostles&apos; Creed.

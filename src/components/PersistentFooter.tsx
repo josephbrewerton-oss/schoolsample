@@ -40,9 +40,9 @@ export default function PersistentFooter(): React.JSX.Element {
         </div>
 
         <div>
-          <h4 style={{ color: '#f8fafc', fontSize: '0.92rem', fontWeight: 600, marginBottom: '0.75rem' }}>
+          <p style={{ color: '#f8fafc', fontSize: '0.92rem', fontWeight: 600, marginBottom: '0.75rem', margin: '0 0 0.75rem 0' }}>
             Curriculum Workspaces
-          </h4>
+          </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
               <Link to="/practice-lab" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
@@ -68,9 +68,9 @@ export default function PersistentFooter(): React.JSX.Element {
         </div>
 
         <div>
-          <h4 style={{ color: '#f8fafc', fontSize: '0.92rem', fontWeight: 600, marginBottom: '0.75rem' }}>
+          <p style={{ color: '#f8fafc', fontSize: '0.92rem', fontWeight: 600, marginBottom: '0.75rem', margin: '0 0 0.75rem 0' }}>
             Mission & Standards
-          </h4>
+          </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <li>
               <Link to="/teacher-beacon" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>
