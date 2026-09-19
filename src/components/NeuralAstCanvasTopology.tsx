@@ -39,6 +39,7 @@ export default function NeuralAstCanvasTopology({
   zeroCopyFrames = 0,
 }: NeuralAstCanvasTopologyProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRectRef = useRef<DOMRect | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState<string>('');
@@ -46,6 +47,32 @@ export default function NeuralAstCanvasTopology({
   // Dimensions
   const width = 760;
   const height = 240;
+
+  // Invalidate cached canvas rect on window scroll or resize to prevent stale coordinates
+  useEffect(() => {
+    const invalidate = () => {
+      canvasRectRef.current = null;
+    };
+    window.addEventListener('resize', invalidate, { passive: true });
+    window.addEventListener('scroll', invalidate, { passive: true });
+    return () => {
+      window.removeEventListener('resize', invalidate);
+      window.removeEventListener('scroll', invalidate);
+    };
+  }, []);
+
+  // One-time Canvas Buffer Resolution setup — avoids dirtying DOM layout on every hover/render
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }, [width, height]);
 
   // Compute node positions
   const getNodes = useCallback((): NeuralNode[] => {
@@ -93,18 +120,15 @@ export default function NeuralAstCanvasTopology({
     }
   }, [selectedAnswer, correctIndex, prompt, options.length]);
 
-  // Visual 2D Canvas rendering loop
+  // Visual 2D Canvas rendering loop (Zero-reflow: uses clearRect instead of resetting canvas DOM width/height)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Handle high-DPI Retina screens
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.scale(dpr, dpr);
+    // Zero-reflow buffer clear
+    ctx.clearRect(0, 0, width, height);
 
     // Background fill
     ctx.fillStyle = '#090d16';
@@ -249,11 +273,12 @@ export default function NeuralAstCanvasTopology({
     ctx.fillText(`Zero-Copy: ${zeroCopyFrames} frames`, width - 162, 34);
   }, [width, height, getNodes, hoveredIndex, focusedIndex, fps, zeroCopyFrames]);
 
-  // Canvas Mouse Move (Hit-Testing)
+  // Canvas Mouse Move (Hit-Testing) — Uses cached rect to eliminate forced synchronous reflows
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
+    const rect = canvasRectRef.current || (canvasRectRef.current = canvas.getBoundingClientRect());
+    if (!rect || rect.width === 0 || rect.height === 0) return;
     const scaleX = width / rect.width;
     const scaleY = height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
@@ -275,7 +300,8 @@ export default function NeuralAstCanvasTopology({
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
+    const rect = canvasRectRef.current || (canvasRectRef.current = canvas.getBoundingClientRect());
+    if (!rect || rect.width === 0 || rect.height === 0) return;
     const scaleX = width / rect.width;
     const scaleY = height / rect.height;
     const x = (e.clientX - rect.left) * scaleX;
@@ -331,8 +357,14 @@ export default function NeuralAstCanvasTopology({
         role="img"
         aria-label={`Neural AST Knowledge Topology: ${options.length} options radiating from central prompt.`}
         tabIndex={0}
+        onMouseEnter={(e) => {
+          canvasRectRef.current = e.currentTarget.getBoundingClientRect();
+        }}
         onMouseMove={handleCanvasMouseMove}
-        onMouseLeave={() => setHoveredIndex(null)}
+        onMouseLeave={() => {
+          canvasRectRef.current = null;
+          setHoveredIndex(null);
+        }}
         onClick={handleCanvasClick}
         onKeyDown={handleCanvasKeyDown}
         onFocus={() => {

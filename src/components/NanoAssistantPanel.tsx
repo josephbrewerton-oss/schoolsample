@@ -79,7 +79,7 @@ export function TuringTutor({
   }, []);
 
   const voiceEnabledRef = useRef(voiceEnabled);
-  const terminalEndRef = useRef<HTMLDivElement | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Reset conversation session when the topic or language changes
   useEffect(() => {
@@ -108,8 +108,14 @@ export function TuringTutor({
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
 
+  // Scroll chat container without triggering full document reflow or smooth scroll layout thrashing
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (!container) return;
+    const rAF = requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
+    return () => cancelAnimationFrame(rAF);
   }, [messages, loading]);
 
   const buildSystemPrompt = () => {
@@ -423,6 +429,7 @@ PEDAGOGICAL RULES:
 
       {/* Chat Messages Container */}
       <div
+        ref={chatContainerRef}
         style={{
           minHeight: '90px',
           maxHeight: '220px',
@@ -480,7 +487,6 @@ PEDAGOGICAL RULES:
           </div>
         ))}
         {loading && <div style={{ color: '#64748b', fontStyle: 'italic', padding: '4px' }}>Prof. Turing is thinking...</div>}
-        <div ref={terminalEndRef} />
       </div>
 
       {/* 3-Tier Scaffolding Buttons */}

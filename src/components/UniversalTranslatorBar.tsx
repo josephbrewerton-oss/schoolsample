@@ -21,23 +21,42 @@ export default function UniversalTranslatorBar() {
   const [useGoogleFallback, setUseGoogleFallback] = useState<boolean>(false);
   const googleScriptLoadedRef = useRef(false);
 
-  // Ensure CSS variable --universal-bar-height is set once or on actual height changes without triggering synchronous reflow
+  // Ensure CSS variable --universal-bar-height is set once or on actual height changes without triggering forced synchronous reflow
+  const lastHeightRef = useRef<number>(-1);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const bar = document.getElementById('universal-translator-bar');
     if (!bar) return;
 
     let rAFId: number;
-    const syncHeight = () => {
+
+    const applyHeight = (height: number) => {
+      const rounded = Math.round(height);
+      if (rounded <= 0 || rounded === lastHeightRef.current) return;
+      lastHeightRef.current = rounded;
       rAFId = requestAnimationFrame(() => {
-        if (!bar) return;
-        const height = bar.getBoundingClientRect().height || (isCollapsed ? 34 : 41);
-        document.documentElement.style.setProperty('--universal-bar-height', `${Math.round(height)}px`);
+        document.documentElement.style.setProperty('--universal-bar-height', `${rounded}px`);
       });
     };
 
-    syncHeight();
-    const ro = new ResizeObserver(() => syncHeight());
+    // Use ResizeObserver's native entry box dimensions — zero forced layout calculations
+    const ro = new ResizeObserver((entries) => {
+      if (!entries || entries.length === 0) return;
+      const entry = entries[0];
+      let height = 0;
+      if (entry.borderBoxSize && entry.borderBoxSize.length > 0) {
+        height = entry.borderBoxSize[0].blockSize;
+      } else if (entry.contentBoxSize && entry.contentBoxSize.length > 0) {
+        height = entry.contentBoxSize[0].blockSize;
+      } else {
+        height = entry.contentRect.height;
+      }
+      if (height > 0) {
+        applyHeight(height);
+      }
+    });
+
     ro.observe(bar);
     return () => {
       cancelAnimationFrame(rAFId);
