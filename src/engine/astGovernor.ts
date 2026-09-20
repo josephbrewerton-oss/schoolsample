@@ -28,16 +28,34 @@ export class ASTFlowGovernor {
    */
   public static sanitizePromptText(rawPrompt: string): string {
     if (!rawPrompt) return '';
-    return rawPrompt
-      // Strip inline option sequences like "A) Oxygen B) Carbon C) Sodium D) Nitrogen"
-      .replace(/\s+[A-Da-d1-4][\)\.:\-]\s+.*$/s, '')
-      // Strip trailing choice patterns like ":\n\nA) 1\nB) 5..."
-      .replace(/(:\s*)?(\\n|\r|\n)*[A-Da-d1-4][\)\.:\-].*$/s, '')
-      // Strip any lingering escaped newlines
-      .replace(/\\n/g, ' ')
-      // Collapse redundant whitespace
-      .replace(/\s+/g, ' ')
-      .trim();
+    let prompt = String(rawPrompt);
+
+    // 1. Strip trailing multiline option lists (e.g. \n\nA) Paris\nB) London...)
+    // Only strip if it begins after a newline with an option label and contains multiple option choices
+    // or an explicit option block starting with A/1.
+    prompt = prompt.replace(/(?:\r?\n|\\n)+\s*(?:[\(\[]?[A-Da-d1-4][\)\]\.\:\-]\s+.*)$/s, (match) => {
+      // Check if the match looks like multiple options or has clear option formatting
+      if (/(?:[\(\[]?[A-Da-d1-4][\)\]\.\:\-]\s+.*){2,}/s.test(match) || /(?:[\r\n]|\\n)\s*[\(\[]?[B-Db-d2-4][\)\]\.\:\-]/.test(match)) {
+        return '';
+      }
+      // If single line after newline, only strip if it starts with option A or 1
+      if (/^[\r\n\s\\]*[\(\[]?[A1a][\)\]\.\:\-]/.test(match)) {
+        return '';
+      }
+      return match;
+    });
+
+    // 2. Strip inline option sequence on the same line ONLY if it starts with option A/1 and is followed by B/2
+    // e.g. "What is X? A) option1 B) option2 C) option3 D) option4"
+    prompt = prompt.replace(/(?:\s+|:\s*)(?:[\(\[]?[Aa1][\)\]\.\:\-])\s+.*?\b(?:[\(\[]?[Bb2][\)\]\.\:\-])\s+.*$/s, '');
+
+    // 3. Strip any lingering escaped newlines
+    prompt = prompt.replace(/\\n/g, ' ');
+
+    // 4. Collapse redundant whitespace
+    prompt = prompt.replace(/\s+/g, ' ').trim();
+
+    return prompt;
   }
 
   private static gcd(x: number, y: number): number {

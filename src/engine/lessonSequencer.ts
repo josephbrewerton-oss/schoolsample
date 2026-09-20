@@ -208,10 +208,10 @@ export class LessonSequencer {
       case 'HOOK': {
         // Step 1: Hook / Inquiry Engagement
         const hookStem = `🌍 [Step 1: Real-World Hook] ${hook}`;
-        const hookCorrect = `It connects directly to the foundational law: ${coreAxiom.slice(0, 100)}`;
+        const hookCorrect = `It connects directly to the foundational law: ${coreAxiom}`;
         const hookDistractor1 = `It happens entirely by chance with zero predictable natural rules.`;
         const hookDistractor2 = `It only applies inside a laboratory and never in real daily life.`;
-        const hookDistractor3 = `Common assumption: ${cognitiveTrap.slice(0, 85)}`;
+        const hookDistractor3 = `Common assumption: ${cognitiveTrap}`;
 
         const options = [hookCorrect, hookDistractor3, hookDistractor1, hookDistractor2];
         const shuffled = prng.shuffle(options.map((opt, i) => ({ opt, originalIndex: i })));
@@ -280,8 +280,8 @@ export class LessonSequencer {
       case 'SOCRATIC_PIVOT': {
         // Step Remediation: Socratic Counter-Example / Diagnostic Decoupler
         const pivotStem = `⚖️ [Diagnostic Counter-Proof] ${socraticPivot}`;
-        const pivotCorrect = `Because ${coreAxiom.slice(0, 110)}`;
-        const distractor1 = `Because ${cognitiveTrap.slice(0, 100)}`;
+        const pivotCorrect = `Because ${coreAxiom}`;
+        const distractor1 = `Because ${cognitiveTrap}`;
         const distractor2 = `Both outcomes are identical, so the distinction does not matter.`;
         const distractor3 = `Because physical laws depend on personal perspective.`;
 
@@ -346,9 +346,9 @@ export class LessonSequencer {
         }
 
         const masteryStem = `🧠 [Step 4: Deep Mastery] When applying "${cleanUnit}" to complex or unfamiliar situations, which multi-step deduction confirms the correct outcome?`;
-        const masteryCorrect = `${guidedStep} to ensure that ${coreAxiom.slice(0, 90)}`;
+        const masteryCorrect = `${guidedStep} to ensure that ${coreAxiom}`;
         const distractor1 = `Skip verifying definitions and assume the surface answer is always right.`;
-        const distractor2 = `Assume that ${cognitiveTrap.slice(0, 90)}`;
+        const distractor2 = `Assume that ${cognitiveTrap}`;
         const distractor3 = `Apply rules from an entirely unrelated subject without adaptation.`;
 
         const options = [masteryCorrect, distractor1, distractor2, distractor3];
@@ -409,8 +409,8 @@ export class LessonSequencer {
         }
 
         const practiceStem = `🎯 [Step 3: Applied Practice] How is "${cleanUnit}" applied to solve problems in ${subject}?`;
-        const practiceCorrect = `By applying: ${coreAxiom.slice(0, 100)}`;
-        const distractor1 = `By relying on: ${cognitiveTrap.slice(0, 100)}`;
+        const practiceCorrect = `By applying: ${coreAxiom}`;
+        const distractor1 = `By relying on: ${cognitiveTrap}`;
         const distractor2 = `By guessing without checking initial conditions.`;
         const distractor3 = `By inverting the relationship between cause and effect.`;
 
