@@ -511,6 +511,7 @@ export default function HomeLearnerGuidedCard() {
 
             <Link
               to={teachUrl}
+              aria-label={`Open Lesson Guide & Audio for ${activeSubject.label}: ${activeSubject.defaultUnit}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -564,6 +565,7 @@ export default function HomeLearnerGuidedCard() {
 
             <Link
               to={practiceUrl}
+              aria-label={`Start Practice Session for ${activeSubject.label}: ${activeSubject.defaultUnit}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -663,6 +665,7 @@ export default function HomeLearnerGuidedCard() {
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <Link
                     to={topicTeachUrl}
+                    aria-label={`Read lesson: ${topic.title} (${activeSubject.label})`}
                     style={{
                       flex: 1,
                       textAlign: 'center',
@@ -680,6 +683,7 @@ export default function HomeLearnerGuidedCard() {
                   </Link>
                   <Link
                     to={topicPracticeUrl}
+                    aria-label={`Practice questions: ${topic.title} (${activeSubject.label})`}
                     style={{
                       flex: 1,
                       textAlign: 'center',

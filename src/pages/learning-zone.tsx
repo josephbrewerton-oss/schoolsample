@@ -522,6 +522,7 @@ export default function LearningZonePage() {
             {/* Quick Practice shortcut button */}
             <Link
               to={practiceLabUrl}
+              aria-label={`Practice Quiz for ${selectedUnit}`}
               style={{
                 padding: '6px 14px',
                 borderRadius: '8px',
@@ -578,6 +579,7 @@ export default function LearningZonePage() {
               </button>
               <Link
                 to={practiceLabUrl}
+                aria-label={`Practice Lab Quiz for ${selectedUnit}`}
                 style={{
                   padding: '7px 16px',
                   borderRadius: '8px',
@@ -779,6 +781,7 @@ export default function LearningZonePage() {
 
                   <Link
                     to={practiceLabUrl}
+                    aria-label={`Practice questions now for ${selectedUnit}`}
                     style={{
                       padding: '7px 16px',
                       borderRadius: '8px',
@@ -937,6 +940,7 @@ export default function LearningZonePage() {
                         </div>
                         <Link
                           to={practiceLabUrl}
+                          aria-label={`Start Practice Quiz for ${selectedUnit}`}
                           style={{
                             padding: '10px 22px',
                             borderRadius: '10px',
