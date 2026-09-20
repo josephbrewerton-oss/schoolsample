@@ -18,6 +18,11 @@ import {
   triggerHapticSuccess,
   triggerHapticError,
 } from '../services/soundHaptics';
+import {
+  triggerCorrectConfetti,
+  triggerStreakCelebration,
+  triggerMasteryConfetti,
+} from '../utils/confetti';
 
 interface NeuralLabCanvasProps {
   initialKeyStage?: string;
@@ -370,7 +375,17 @@ export default function NeuralLabCanvas({
 
     if (isCorrect) {
       setScore((s) => s + 1);
-      setStreak((st) => st + 1);
+      setStreak((st) => {
+        const nextStreak = st + 1;
+        if (nextStreak === 3 || nextStreak === 5 || nextStreak === 10 || nextStreak % 5 === 0) {
+          triggerStreakCelebration(nextStreak);
+        } else if (activeQuestion.pedagogicalStage === 'MASTERY') {
+          triggerMasteryConfetti();
+        } else {
+          triggerCorrectConfetti();
+        }
+        return nextStreak;
+      });
       if (typeof window !== 'undefined') {
         localStorage.removeItem('active_student_misconception');
       }

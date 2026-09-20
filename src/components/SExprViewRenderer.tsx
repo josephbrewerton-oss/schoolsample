@@ -1,10 +1,16 @@
 // src/components/SExprViewRenderer.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { SExprAST, SExprNode } from '../types/sexpr';
+import { SExprAST, SExprNode, SExprAtom } from '../types/sexpr';
 import { parseSExpr } from '../utils/sexprParser';
 import { aiCaller } from '../engine/aicaller';
 import { compileAstStyle } from '../utils/astStyleCompiler';
 import VirtualAstNodeList from './VirtualAstNodeList';
+import { MathRenderer } from './MathRenderer';
+import {
+  triggerCorrectConfetti,
+  triggerStreakCelebration,
+  triggerMasteryConfetti,
+} from '../utils/confetti';
 
 interface Props {
   ast?: SExprAST;
@@ -64,7 +70,7 @@ export default function SExprViewRenderer({
   }
 
   if (typeof resolvedAst !== 'object') {
-    return <span>{String(resolvedAst)}</span>;
+    return <MathRenderer text={String(resolvedAst)} />;
   }
 
   const { tag, props = {}, children = [] } = resolvedAst as SExprNode;
@@ -198,6 +204,16 @@ export default function SExprViewRenderer({
     case 'ai-tutor':
       return <AiTutorNode props={props} onAction={onAction} />;
 
+    case 'math':
+    case 'formula':
+    case 'latex':
+      return <MathAstNode props={props} children={children} isFormula={tag === 'formula'} />;
+
+    case 'celebrate':
+    case 'celebration':
+    case 'confetti':
+      return <CelebrateAstNode props={props} children={children} onAction={onAction} />;
+
     default:
       return (
         <div data-unknown-tag={tag} style={{ border: '1px dashed red', padding: '0.5rem' }}>
@@ -205,6 +221,109 @@ export default function SExprViewRenderer({
         </div>
       );
   }
+}
+
+// --- First-Class Mathematical AST Node (KaTeX) ---
+
+function MathAstNode({
+  props,
+  children,
+  isFormula,
+}: {
+  props: Record<string, any>;
+  children: (SExprNode | SExprAtom)[];
+  isFormula?: boolean;
+}) {
+  const rawContent = props.latex || props.tex || props.code || (children[0] ? String(children[0]) : '');
+  const isDisplay = props.display !== undefined ? Boolean(props.display) : Boolean(isFormula);
+
+  const formattedText = rawContent.includes('$')
+    ? rawContent
+    : isDisplay
+    ? `$$${rawContent}$$`
+    : `$${rawContent}$`;
+
+  return (
+    <div
+      className="ast-math-node my-2.5 p-2.5 rounded-lg bg-slate-50 border border-slate-200 inline-block text-slate-800"
+      style={{ overflowX: 'auto', maxWidth: '100%', verticalAlign: 'middle' }}
+    >
+      <MathRenderer text={formattedText} inline={!isDisplay} />
+      {props.explanation && (
+        <div className="text-xs text-slate-500 mt-1 font-medium italic">
+          {props.explanation}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- First-Class Pedagogical Celebration AST Node (Canvas-Confetti) ---
+
+function CelebrateAstNode({
+  props,
+  children,
+  onAction,
+}: {
+  props: Record<string, any>;
+  children: (SExprNode | SExprAtom)[];
+  onAction?: (action: string, payload?: any) => void;
+}) {
+  const celebrationType = props.type || 'mastery';
+  const streak = Number(props.streak) || 0;
+  const triggerMode = props.trigger || 'auto'; // 'auto' | 'click'
+  const message = props.message || (children[0] ? String(children[0]) : 'Milestone Achieved!');
+
+  useEffect(() => {
+    if (triggerMode === 'auto') {
+      if (celebrationType === 'streak' && streak > 0) {
+        triggerStreakCelebration(streak);
+      } else if (celebrationType === 'correct' || celebrationType === 'burst') {
+        triggerCorrectConfetti();
+      } else {
+        triggerMasteryConfetti();
+      }
+    }
+  }, [celebrationType, streak, triggerMode]);
+
+  const handleCelebrateAgain = () => {
+    if (celebrationType === 'streak' && streak > 0) {
+      triggerStreakCelebration(streak);
+    } else if (celebrationType === 'correct' || celebrationType === 'burst') {
+      triggerCorrectConfetti();
+    } else {
+      triggerMasteryConfetti();
+    }
+    if (props.action && onAction) {
+      onAction(props.action, props.payload);
+    }
+  };
+
+  return (
+    <div
+      className="ast-celebrate-node p-4 my-3 rounded-xl bg-gradient-to-r from-amber-50 via-emerald-50 to-blue-50 border border-emerald-200 shadow-sm flex items-center justify-between gap-4 flex-wrap"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-2xl" role="img" aria-label="Celebration">🎉</span>
+        <div>
+          <div className="font-bold text-slate-900 text-sm md:text-base">{message}</div>
+          {streak > 0 && (
+            <div className="text-xs text-emerald-700 font-semibold">
+              🔥 {streak} Question Socratic Streak!
+            </div>
+          )}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={handleCelebrateAgain}
+        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors shadow-sm"
+        aria-label="Celebrate this achievement again"
+      >
+        🎊 Celebrate Again
+      </button>
+    </div>
+  );
 }
 
 // --- Interactive AI Tutor Terminal Node ---

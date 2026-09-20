@@ -20,6 +20,8 @@
     "esbuild": "^0.28.1"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/katex": "^0.16.8",
     "@types/node": "^26.5.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -44,6 +46,8 @@
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.85",
+    "canvas-confetti": "^1.9.4",
+    "katex": "^0.18.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

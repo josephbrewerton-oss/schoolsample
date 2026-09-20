@@ -17,6 +17,7 @@ import { MindSpaceEngine, QuestionMindSpace } from '../engine/mindSpaceEngine';
 import { PedagogicalStage } from '../engine/lessonSequencer';
 import { aiCaller } from '../engine/aicaller';
 import { playClickTone, triggerHapticClick } from '../services/soundHaptics';
+import { MathRenderer } from './MathRenderer';
 
 interface Props {
   keyStage?: string;
@@ -1135,7 +1136,7 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
               gap: '8px',
             }}
           >
-            <span>{prompt}</span>
+            <span><MathRenderer text={prompt} /></span>
             <button
               type="button"
               onClick={() => handleSpeak(prompt, 'en')}
@@ -1183,7 +1184,7 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
                 🌐 {currentLangMeta.label} ({currentLangMeta.nativeLabel}) • Bilingual Bridge
               </div>
               <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#0c4a6e', lineHeight: 1.4 }}>
-                {translatedData.prompt}
+                <MathRenderer text={translatedData.prompt} />
               </div>
             </div>
             <button
@@ -1216,7 +1217,7 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
             lineHeight: 1.5,
           }}
         >
-          {effectivePrompt}
+          <MathRenderer text={effectivePrompt} />
         </div>
       )}
 
@@ -1369,7 +1370,7 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
               {/* Option Text */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ lineHeight: 1.4 }}>
-                  {bilingualMode && isNonEnglish ? (displayOptions[idx] || opt) : opt}
+                  <MathRenderer text={bilingualMode && isNonEnglish ? (displayOptions[idx] || opt) : opt} />
                 </span>
                 {bilingualMode && isNonEnglish && translatedData.displayOptions[idx] && (
                   <span
@@ -1380,7 +1381,7 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
                       lineHeight: 1.3,
                     }}
                   >
-                    🌐 {translatedData.displayOptions[idx]}
+                    🌐 <MathRenderer text={translatedData.displayOptions[idx]} />
                   </span>
                 )}
               </div>
@@ -1520,7 +1521,7 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
               </div>
               {effectiveExplanation && (
                 <div style={{ fontSize: '0.95rem', color: '#047857', lineHeight: 1.5 }}>
-                  {effectiveExplanation}
+                  <MathRenderer text={effectiveExplanation} />
                 </div>
               )}
             </div>
