@@ -1,3 +1,4 @@
+// build-sync: 2026-09-20-01
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
