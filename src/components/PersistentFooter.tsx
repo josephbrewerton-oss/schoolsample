@@ -28,11 +28,14 @@ export default function PersistentFooter(): React.JSX.Element {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
             <img src={logoUrl} alt="School crest" style={{ width: '24px', height: '24px' }} />
             <span style={{ color: '#f8fafc', fontWeight: 700, fontSize: '1.05rem' }}>
               St Joseph's Portal
             </span>
+          </div>
+          <div style={{ display: 'inline-block', color: '#4ade80', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.02em', marginBottom: '0.6rem' }}>
+            🕊️ Education should be free
           </div>
           <p style={{ color: '#cbd5e1', fontSize: '0.84rem', lineHeight: 1.6, maxWidth: '300px' }}>
             Interactive UK National Curriculum platform powered by edge AST substrates and on-device neural evaluation.
@@ -132,7 +135,7 @@ export default function PersistentFooter(): React.JSX.Element {
           </span>
           <span>&bull;</span>
           <Link to="/licensing" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: 600 }}>
-            🕊️ 100% Free for Catholic Organisations &amp; Emerging Nations
+            🕊️ Education Should Be Free • 100% Free for Catholic Organisations &amp; Emerging Nations
           </Link>
           <span>&bull;</span>
           <Link to="/privacy" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>

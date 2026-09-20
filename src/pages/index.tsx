@@ -4,6 +4,7 @@ if (typeof window !== 'undefined' && !(window as any).process) {
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
+import HomeLearnerGuidedCard from '../components/HomeLearnerGuidedCard';
 
 export default function Home() {
   return (
@@ -19,16 +20,18 @@ export default function Home() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '6px 16px',
+            padding: '6px 18px',
             borderRadius: '9999px',
-            background: '#eff6ff',
-            border: '1px solid #bfdbfe',
-            color: '#1d4ed8',
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#15803d',
             fontSize: '0.88rem',
             fontWeight: 700,
             marginBottom: '1.25rem'
           }}>
-            <span>✨ UK National Curriculum Aligned</span>
+            <span>🕊️ Education should be free</span>
+            <span>&bull;</span>
+            <span>UK National Curriculum</span>
             <span>&bull;</span>
             <span>Works Offline</span>
           </div>
@@ -41,8 +44,29 @@ export default function Home() {
             Tailored for Key Stages 1 to 4 in Mathematics, Science, English, Computing, and more.
           </p>
 
-          {/* Dual Action Hub CTAs */}
+          {/* Action Hub CTAs */}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a
+              href="#home-learner-guided-pathway"
+              style={{
+                padding: '0.9rem 2.25rem',
+                fontSize: '1.1rem',
+                borderRadius: '10px',
+                background: '#15803d',
+                color: '#ffffff',
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px 0 rgba(21, 128, 61, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span>🕊️ Home Learners: Start Here</span>
+              <span>↓</span>
+            </a>
+
             <Link
               to="/practice-lab"
               className="button button--primary button--lg"
@@ -78,6 +102,9 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        {/* Home-Learner Guided Pathway (For Disadvantaged & Out-of-School Children) */}
+        <HomeLearnerGuidedCard />
 
         {/* Developing-Nation Safe Architecture: Compression & Inflation Banner */}
         <section

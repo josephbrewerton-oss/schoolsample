@@ -342,6 +342,23 @@ export default function PersistentNavbar(): React.JSX.Element {
               St Joseph's Portal
             </span>
           </Link>
+          <span
+            className="hidden md:inline-flex items-center gap-1"
+            title="Education should be free — 100% free in perpetuity for schools and developing nations"
+            style={{
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              color: colorMode === 'dark' ? '#4ade80' : '#15803d',
+              background: colorMode === 'dark' ? 'rgba(74, 222, 128, 0.12)' : '#f0fdf4',
+              border: `1px solid ${colorMode === 'dark' ? 'rgba(74, 222, 128, 0.3)' : '#bbf7d0'}`,
+              padding: '2px 9px',
+              borderRadius: '9999px',
+              letterSpacing: '0.01em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🕊️ Education should be free
+          </span>
         </div>
 
         {/* Desktop Navigation Links & Dropdowns */}
@@ -905,6 +922,25 @@ export default function PersistentNavbar(): React.JSX.Element {
             overflowY: 'auto',
           }}
         >
+          {/* Mission Strapline */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '8px',
+              background: colorMode === 'dark' ? 'rgba(74, 222, 128, 0.12)' : '#f0fdf4',
+              border: `1px solid ${colorMode === 'dark' ? 'rgba(74, 222, 128, 0.3)' : '#bbf7d0'}`,
+              color: colorMode === 'dark' ? '#4ade80' : '#15803d',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+            }}
+          >
+            <span>🕊️</span>
+            <span>Education should be free</span>
+          </div>
+
           {/* Group 1: Learning & Practice */}
           <div>
             <div

@@ -63,6 +63,16 @@ export default function LearningZonePage() {
     return 'lesson';
   });
 
+  const normalizeKeyStageParam = (raw: string | null): string => {
+    if (!raw) return 'ks1';
+    const l = raw.toLowerCase();
+    if (l.includes('1')) return 'ks1';
+    if (l.includes('2')) return 'ks2';
+    if (l.includes('3')) return 'ks3';
+    if (l.includes('4') || l.includes('gcse')) return 'ks4';
+    return raw;
+  };
+
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'inflation' && activeViewMode !== 'inflation') {
@@ -71,6 +81,23 @@ export default function LearningZonePage() {
       setActiveViewMode('first-communion');
     } else if (!tab && activeViewMode !== 'lesson') {
       setActiveViewMode('lesson');
+    }
+
+    const urlKs = searchParams.get('ks');
+    const urlSub = searchParams.get('sub');
+    const urlUnit = searchParams.get('unit');
+
+    if (urlKs) {
+      const normKs = normalizeKeyStageParam(urlKs);
+      if (normKs !== selectedKeyStage) {
+        setSelectedKeyStage(normKs);
+      }
+    }
+    if (urlSub && urlSub !== selectedSubject) {
+      setSelectedSubject(urlSub);
+    }
+    if (urlUnit && urlUnit !== selectedUnit) {
+      setSelectedUnit(urlUnit);
     }
   }, [searchParams]);
 
@@ -93,9 +120,16 @@ export default function LearningZonePage() {
   const [isCompiling, setIsCompiling] = useState(false);
   const [isSynthesizingFull, setIsSynthesizingFull] = useState(false);
 
-  const [selectedKeyStage, setSelectedKeyStage] = useState('ks1');
-  const [selectedSubject, setSelectedSubject] = useState('Science');
-  const [selectedUnit, setSelectedUnit] = useState('Animals and Humans');
+  const [selectedKeyStage, setSelectedKeyStage] = useState(() => {
+    const initialKs = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('ks') : null;
+    return normalizeKeyStageParam(initialKs);
+  });
+  const [selectedSubject, setSelectedSubject] = useState(() => {
+    return (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('sub') : null) || 'Science';
+  });
+  const [selectedUnit, setSelectedUnit] = useState(() => {
+    return (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('unit') : null) || 'Animals and Humans';
+  });
   const [sessionId, setSessionId] = useState('Lesson 1');
 
   // 1. Resolve Curriculum Catalogue Tree via Substrate Dispatch

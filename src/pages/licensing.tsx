@@ -68,7 +68,7 @@ export default function LicensingPage(): React.JSX.Element {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '6px 16px',
+              padding: '6px 18px',
               borderRadius: '9999px',
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
@@ -78,9 +78,9 @@ export default function LicensingPage(): React.JSX.Element {
               marginBottom: '1.25rem',
             }}
           >
-            <span>🕊️ The St Joseph's Educational Covenant</span>
+            <span>🕊️ Education should be free</span>
             <span>&bull;</span>
-            <span>Universal Access Charter</span>
+            <span>The St Joseph's Educational Covenant</span>
           </div>
 
           <h1
@@ -103,7 +103,7 @@ export default function LicensingPage(): React.JSX.Element {
               lineHeight: 1.6,
             }}
           >
-            Education is a universal human dignity. By leveraging <strong>zero-cloud on-device Edge AI</strong>,
+            <strong>Education should be free.</strong> Education is a universal human dignity. By leveraging <strong>zero-cloud on-device Edge AI</strong>,
             St Joseph&apos;s Curriculum Portal provides high-quality, interactive learning that is{' '}
             <span style={{ color: '#15803d', fontWeight: 700 }}>100% free in perpetuity for all Catholic organisations</span>{' '}
             and <span style={{ color: '#15803d', fontWeight: 700 }}>emerging nations worldwide</span>.
