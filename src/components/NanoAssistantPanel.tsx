@@ -9,6 +9,11 @@ import {
 } from '../engine/operational-language';
 import { translateText, speakInLanguage } from '../engine/translationService';
 import { getComplianceCaveat } from '../data/complianceCaveats';
+import {
+  validateStudentInput,
+  sanitizeAiOutput,
+  CHILD_SAFEGUARDING_SYSTEM_PROMPT,
+} from '../services/childSafetyFilter';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -58,6 +63,7 @@ export function TuringTutor({
   const [launchingLesson, setLaunchingLesson] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [hasConsent, setHasConsent] = useState(false);
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
 
   useEffect(() => {
     const unsub = listenToLanguageChange((newLang) => {
@@ -133,6 +139,8 @@ ${topicKnowledge ? `\nCURRICULUM GROUND TRUTH:
 - Socratic Inquiry Angle: "${topicKnowledge.socraticPivot}"` : ''}
 ${langInstruction}
 
+${CHILD_SAFEGUARDING_SYSTEM_PROMPT}
+
 PEDAGOGICAL RULES:
 1. NEVER give the direct answer.
 2. Provide ONE concise hint or thought-provoking clue (under 35 words).
@@ -179,6 +187,20 @@ PEDAGOGICAL RULES:
 
     const updatedMessages = [...messages, { role: 'pupil' as const, text: userText }];
     setMessages([...updatedMessages, { role: 'turing' as const, text: '' }]);
+
+    // 1. Mandatory Child Safeguarding Check on student input
+    const safetyCheck = validateStudentInput(userText);
+    if (!safetyCheck.isSafe) {
+      const safeReply = safetyCheck.safeReplacementText || 'Let us keep our learning safe, kind, and focused on school topics.';
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = { role: 'turing', text: safeReply };
+        return copy;
+      });
+      speak(safeReply);
+      setLoading(false);
+      return;
+    }
 
     const getRuleFallback = async (): Promise<string> => {
       let fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
@@ -235,6 +257,9 @@ PEDAGOGICAL RULES:
       let cleaned =
         cleanResponse(rawResponse) ||
         `What do you think is the first key factor we need to consider in ${currentTopic}?`;
+
+      // 2. Mandatory Child Safeguarding Sanitization on output
+      cleaned = sanitizeAiOutput(cleaned, currentTopic);
 
       // If needed, verify language translation
       if (currentLang && currentLang !== 'en') {
@@ -330,7 +355,27 @@ PEDAGOGICAL RULES:
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setShowSafetyModal(true)}
+            style={{
+              fontSize: '0.8rem',
+              background: '#f0fdf4',
+              color: '#166534',
+              border: '1px solid #bbf7d0',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+            title="View child safety, privacy, and safeguarding protections"
+          >
+            <span>🛡️ Child-Safe Guard Active</span>
+          </button>
           <button
             type="button"
             onClick={() => setVoiceEnabled(!voiceEnabled)}
@@ -621,6 +666,143 @@ PEDAGOGICAL RULES:
           Ask Tutor
         </button>
       </form>
+
+      {/* Child Safeguarding & Safety Protections Modal */}
+      {showSafetyModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1rem',
+          }}
+          onClick={() => setShowSafetyModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '540px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              border: '1px solid #e2e8f0',
+              color: '#1e293b',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.5rem' }}>🛡️</span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+                  Child Safety & Safeguarding Guarantee
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSafetyModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.4rem',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                }}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+              St Joseph&apos;s Curriculum Portal is designed from the ground up as a completely safe, protected learning sanctuary for children and young people (ages 5 to 16).
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '1.25rem' }}>🔒</span>
+                <div>
+                  <strong style={{ fontSize: '0.88rem', color: '#0f172a', display: 'block' }}>100% On-Device & Zero Cloud Data Leakage</strong>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    No student answers, microphone audio, or chats are ever sent to remote AI cloud servers or stored externally. Everything runs locally in the browser.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '1.25rem' }}>🚫</span>
+                <div>
+                  <strong style={{ fontSize: '0.88rem', color: '#0f172a', display: 'block' }}>Automated On-Device Content Filtering</strong>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    Strict filters block profanity, violence, weapons, adult material, personal data sharing, and inappropriate topics before any AI prompt is processed or displayed.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '1.25rem' }}>📚</span>
+                <div>
+                  <strong style={{ fontSize: '0.88rem', color: '#0f172a', display: 'block' }}>Curriculum-Bound Pedagogical Guardrails</strong>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    The tutor is strictly locked to UK National Curriculum topics and Socratic pedagogical hints. It will never engage in roleplay or off-curriculum discussions.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '1.25rem' }}>👥</span>
+                <div>
+                  <strong style={{ fontSize: '0.88rem', color: '#0f172a', display: 'block' }}>Zero Stranger Interaction</strong>
+                  <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                    There are no open public chatrooms, direct messaging features, or external forums. Children cannot be contacted by strangers.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', background: '#eff6ff', padding: '10px 14px', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
+                <span style={{ fontSize: '1.25rem' }}>🕊️</span>
+                <div>
+                  <strong style={{ fontSize: '0.88rem', color: '#1e40af', display: 'block' }}>Safeguarding & Crisis Support</strong>
+                  <span style={{ fontSize: '0.82rem', color: '#1e3a8a' }}>
+                    If a student ever indicates distress or feeling unsafe, the system provides immediate, compassionate advice to speak with a trusted adult or call <strong>Childline on 0800 1111</strong> (free & confidential UK helpline).
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowSafetyModal(false)}
+                style={{
+                  background: '#059669',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 18px',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Understood & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

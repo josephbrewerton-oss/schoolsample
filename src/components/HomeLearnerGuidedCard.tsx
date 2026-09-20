@@ -262,9 +262,9 @@ export default function HomeLearnerGuidedCard() {
             marginBottom: '0.85rem',
           }}
         >
-          <span>🕊️ For Home Learners &amp; Out-of-School Children</span>
+          <span>🕊️ Guided Independent Learning</span>
           <span>&bull;</span>
-          <span>No Fees &bull; No Sign-Up</span>
+          <span>100% Free &bull; Works Offline</span>
         </div>
 
         <h2
@@ -276,7 +276,7 @@ export default function HomeLearnerGuidedCard() {
             letterSpacing: '-0.02em',
           }}
         >
-          Start Here: You Don't Need a School to Learn
+          Start Here: A Guided Learning Pathway for Every Child
         </h2>
         <p
           style={{
@@ -287,8 +287,8 @@ export default function HomeLearnerGuidedCard() {
             lineHeight: 1.6,
           }}
         >
-          Whether you are educating at home, living without access to a physical classroom, or studying in an emerging nation:
-          this portal teaches you from the ground up. It explains every rule, reads text aloud, and guides you kindly through mistakes.
+          Whether you are educating at home, studying independently, or learning without access to a regular classroom:
+          this portal teaches you from the ground up. It breaks down every concept step by step, reads text aloud, and guides you patiently through mistakes.
         </p>
       </div>
 

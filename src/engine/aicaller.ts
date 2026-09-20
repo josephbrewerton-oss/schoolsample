@@ -1,5 +1,6 @@
 // src/engine/aicaller.ts
 import { edgeCognitiveEngine } from './EdgeCognitiveEngine';
+import { validateStudentInput, sanitizeAiOutput } from '../services/childSafetyFilter';
 
 export interface AiInferenceOptions {
   prompt: string;
@@ -287,6 +288,14 @@ class AiRuntimeCaller {
       throw new Error('User has not consented to in-browser AI model execution.');
     }
 
+    // Child safety check on input before calling any model
+    const safetyCheck = validateStudentInput(opts.prompt);
+    if (!safetyCheck.isSafe) {
+      return safetyCheck.safeReplacementText || 'Let us keep our learning safe and focused on your school lessons.';
+    }
+
+    let rawOutput = '';
+
     // Tier 1: Chrome Native Prompt API
     if (this.hasNativePromptApi()) {
       const isEphemeral = !opts.preserveContext;
@@ -312,7 +321,7 @@ class AiRuntimeCaller {
       );
 
       try {
-        return await Promise.race([inferencePromise, timeoutPromise]);
+        rawOutput = await Promise.race([inferencePromise, timeoutPromise]);
       } catch (err) {
         if (!isEphemeral) this.destroy();
         console.warn('[AiCaller] Chrome AI prompt failed, invoking WebLLM fallback:', err);
@@ -325,12 +334,17 @@ class AiRuntimeCaller {
     }
 
     // Tier 2: WebLLM / WebGPU neural execution for Safari 18+, Firefox, and non-Chromium
-    if (edgeCognitiveEngine.isSupported()) {
+    if (!rawOutput && edgeCognitiveEngine.isSupported()) {
       const res = await edgeCognitiveEngine.infer(opts.prompt, opts.systemPrompt);
-      return res.output;
+      rawOutput = res.output;
     }
 
-    throw new Error('No on-device AI inference engine is available in this browser environment.');
+    if (!rawOutput) {
+      throw new Error('No on-device AI inference engine is available in this browser environment.');
+    }
+
+    // Sanitize output for child safety before returning
+    return sanitizeAiOutput(rawOutput);
   }
 
   /**
@@ -339,6 +353,13 @@ class AiRuntimeCaller {
   async *promptStream(opts: AiInferenceOptions): AsyncGenerator<string, void, unknown> {
     if (!hasUserGrantedAiConsent()) {
       throw new Error('User has not consented to in-browser AI model execution.');
+    }
+
+    // Child safety check on streaming input
+    const safetyCheck = validateStudentInput(opts.prompt);
+    if (!safetyCheck.isSafe) {
+      yield safetyCheck.safeReplacementText || 'Let us keep our learning safe and focused on your school lessons.';
+      return;
     }
 
     // Tier 1: Chrome Native Prompt API Streaming

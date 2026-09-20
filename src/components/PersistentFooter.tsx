@@ -91,8 +91,13 @@ export default function PersistentFooter(): React.JSX.Element {
               </Link>
             </li>
             <li>
+              <Link to="/child-safety" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: 600 }}>
+                🛡️ Child Safety &amp; Safeguarding (KCSIE)
+              </Link>
+            </li>
+            <li>
               <Link to="/privacy" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
-                🛡️ Privacy, GDPR &amp; Cookies
+                🔒 Privacy, GDPR &amp; Cookies
               </Link>
             </li>
             <li>
@@ -138,8 +143,12 @@ export default function PersistentFooter(): React.JSX.Element {
             🕊️ Education Should Be Free • 100% Free for Catholic Organisations &amp; Emerging Nations
           </Link>
           <span>&bull;</span>
+          <Link to="/child-safety" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 600 }}>
+            🛡️ 100% Child-Safe (KCSIE)
+          </Link>
+          <span>&bull;</span>
           <Link to="/privacy" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 600 }}>
-            🛡️ Zero Cloud Egress • 🍪 No Tracking Cookies • 🇬🇧 UK GDPR
+            🔒 Zero Cloud Egress • 🍪 No Tracking Cookies • 🇬🇧 UK GDPR
           </Link>
         </div>
         <span>

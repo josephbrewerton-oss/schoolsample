@@ -63,7 +63,7 @@ export default function Home() {
                 transition: 'all 0.2s ease',
               }}
             >
-              <span>🕊️ Home Learners: Start Here</span>
+              <span>🕊️ Start Here: Guided Learning</span>
               <span>↓</span>
             </a>
 

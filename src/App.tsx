@@ -37,6 +37,7 @@ const CurriculumStudioPage = lazyRetry(() => import('./pages/curriculum-studio')
 const SettingsPage = lazyRetry(() => import('./pages/settings'));
 const BlogPage = lazyRetry(() => import('./pages/blog'));
 const PrivacyPage = lazyRetry(() => import('./pages/privacy'));
+const ChildSafetyPage = lazyRetry(() => import('./pages/child-safety'));
 const LicensingPage = lazyRetry(() => import('./pages/licensing'));
 const TeacherBeaconPage = lazyRetry(() => import('./pages/teacher-beacon'));
 const NotFoundPage = lazyRetry(() => import('./pages/not-found'));
@@ -56,6 +57,7 @@ export default function App(): React.JSX.Element {
             <Route path="licensing" element={<LicensingPage />} />
             <Route path="teacher-beacon" element={<TeacherBeaconPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="child-safety" element={<ChildSafetyPage />} />
             <Route path="blog" element={<BlogPage />} />
             <Route path="blog/*" element={<BlogPage />} />
             <Route path="*" element={<NotFoundPage />} />
