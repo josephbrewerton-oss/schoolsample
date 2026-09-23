@@ -9,6 +9,8 @@ import {
 } from './oakCatalogue';
 import { adaptOakStage } from './curriculumAdapter';
 
+export * from './curriculumMesh';
+
 export interface CurriculumPackage {
   id: string;
   country: string;

@@ -10,6 +10,7 @@ import LocalKeyGuard from '../components/LocalKeyGuard';
 import { dispatch } from '../engine/hypercall';
 
 const FirstCommunionMasteryLab = React.lazy(() => import('../components/FirstCommunionMasteryLab'));
+const ConceptConstellation = React.lazy(() => import('../components/ConceptConstellation'));
 import { hypervisor } from '../engine/hypervisor';
 import {
   SUPPORTED_LANGUAGES,
@@ -56,10 +57,11 @@ export default function LearningZonePage() {
     }
   };
 
-  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation' | 'first-communion'>(() => {
+  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation' | 'first-communion' | 'constellation'>(() => {
     const tab = searchParams.get('tab');
     if (tab === 'inflation') return 'inflation';
     if (tab === 'first-communion') return 'first-communion';
+    if (tab === 'constellation' || tab === 'graph') return 'constellation';
     return 'lesson';
   });
 
@@ -79,6 +81,8 @@ export default function LearningZonePage() {
       setActiveViewMode('inflation');
     } else if (tab === 'first-communion' && activeViewMode !== 'first-communion') {
       setActiveViewMode('first-communion');
+    } else if ((tab === 'constellation' || tab === 'graph') && activeViewMode !== 'constellation') {
+      setActiveViewMode('constellation');
     } else if (!tab && activeViewMode !== 'lesson') {
       setActiveViewMode('lesson');
     }
@@ -472,30 +476,50 @@ export default function LearningZonePage() {
             </div>
           </div>
 
-          {/* Secondary Switch: In Teacher Mode, offer Seed Inflation Engine shortcut */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {userRole === 'teacher' && (
-              <div style={{ display: 'flex', background: '#f8fafc', padding: '3px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '3px' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveViewMode('lesson');
-                    setSearchParams({});
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: activeViewMode === 'lesson' ? '#ffffff' : 'transparent',
-                    color: activeViewMode === 'lesson' ? '#0f172a' : '#64748b',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: activeViewMode === 'lesson' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                  }}
-                >
-                  Lesson Plan
-                </button>
+          {/* Mode Switchers: Lesson Plan vs Seed Engine vs Concept Constellation */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', background: '#f8fafc', padding: '3px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '3px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveViewMode('lesson');
+                  setSearchParams({});
+                }}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: activeViewMode === 'lesson' ? '#ffffff' : 'transparent',
+                  color: activeViewMode === 'lesson' ? '#0f172a' : '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: activeViewMode === 'lesson' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                }}
+              >
+                📖 Standard Lesson
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveViewMode('constellation');
+                  setSearchParams({ tab: 'constellation' });
+                }}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: activeViewMode === 'constellation' ? '#6366f1' : 'transparent',
+                  color: activeViewMode === 'constellation' ? '#ffffff' : '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: activeViewMode === 'constellation' ? '0 1px 2px rgba(99,102,241,0.2)' : 'none',
+                }}
+              >
+                ✨ Concept Constellation
+              </button>
+              {userRole === 'teacher' && (
                 <button
                   type="button"
                   onClick={() => {
@@ -516,8 +540,8 @@ export default function LearningZonePage() {
                 >
                   🌱 Seed Engine
                 </button>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Quick Practice shortcut button */}
             <Link
@@ -550,6 +574,60 @@ export default function LearningZonePage() {
           >
             <SeedInflationStudio />
           </LocalKeyGuard>
+        ) : activeViewMode === 'constellation' ? (
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Curriculum Concept Constellation
+                </h2>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
+                  Interactive in-memory AST knowledge graph inspired by Logseq. Prerequisite paths, NATO Stock Numbers, and diagnostic self-healing.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveViewMode('lesson');
+                  setSearchParams({});
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                &larr; Back to Lesson View
+              </button>
+            </div>
+            <React.Suspense
+              fallback={
+                <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', background: '#0a0e17', borderRadius: '16px' }}>
+                  <span>Loading in-memory Concept Constellation graph...</span>
+                </div>
+              }
+            >
+              <ConceptConstellation
+                filterStage={selectedKeyStage}
+                filterSubject={selectedSubject}
+                onSelectConcept={(concept) => {
+                  if (concept.path) {
+                    const parts = concept.path.split('/');
+                    if (parts.length >= 3) {
+                      setSelectedKeyStage(parts[0]);
+                      setSelectedSubject(parts[1]);
+                      setSelectedUnit(parts[2]);
+                    }
+                  }
+                }}
+              />
+            </React.Suspense>
+          </div>
         ) : activeViewMode === 'first-communion' ? (
           <>
             <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>

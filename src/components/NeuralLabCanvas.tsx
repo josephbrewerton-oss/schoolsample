@@ -114,6 +114,11 @@ export default function NeuralLabCanvas({
     subject: string;
     unit: string;
     lessonTitle?: string;
+    urn?: string;
+    csn?: string;
+    routeEngine?: string;
+    axiom?: string;
+    trap?: string;
   } | null>(null);
 
   const activeRequestIdRef = useRef(0);
@@ -205,6 +210,11 @@ export default function NeuralLabCanvas({
 
     setActiveQuestion({
       id: question.id || `q_${Date.now()}`,
+      urn: question.urn,
+      csn: question.csn,
+      routeEngine: question.routeEngine,
+      axiom: question.axiom,
+      trap: question.trap,
       seedToken: question.seedToken || payload.seedToken || '',
       pedagogicalStage: question.pedagogicalStage,
       stageBadge: question.stageBadge,
@@ -838,6 +848,9 @@ export default function NeuralLabCanvas({
               stageBadge={activeQuestion.stageBadge}
               stepLabel={activeQuestion.stepLabel}
               pedagogicalIntent={activeQuestion.pedagogicalIntent}
+              urn={activeQuestion.urn}
+              csn={activeQuestion.csn}
+              routeEngine={activeQuestion.routeEngine}
               trajectoryState={trajectoryState}
               streamTransition={streamTransition}
               onSeedJump={(customSeed) => {

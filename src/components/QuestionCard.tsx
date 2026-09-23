@@ -46,6 +46,9 @@ interface Props {
   stageBadge?: string;
   stepLabel?: string;
   pedagogicalIntent?: string;
+  urn?: string;
+  csn?: string;
+  routeEngine?: string;
   onSelectOption: (idx: number) => void;
   onNextQuestion: () => void;
   onParallelVariation?: () => void;
@@ -76,6 +79,9 @@ export const QuestionCard: React.FC<Props> = ({
   stageBadge,
   stepLabel,
   pedagogicalIntent,
+  urn,
+  csn,
+  routeEngine,
   onSelectOption,
   onNextQuestion,
   onParallelVariation,
@@ -857,6 +863,24 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
                   }}
                 >
                   {stepLabel}
+                </span>
+              )}
+              {(csn || urn) && (
+                <span
+                  title={`Curriculum Stock Number (NATO-style identifier): ${csn || ''} | Canonical URN: ${urn || ''}`}
+                  style={{
+                    fontSize: '0.72rem',
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    background: '#f8fafc',
+                    color: '#334155',
+                    border: '1px solid #cbd5e1',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  🏷️ {csn || urn?.replace(/^urn:curriculum:/, '')}
                 </span>
               )}
             </div>

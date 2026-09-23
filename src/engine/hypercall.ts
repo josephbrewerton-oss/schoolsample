@@ -7,6 +7,7 @@ import { getBufferedLesson, putBufferedLesson, CachedLessonRecord, getTopicAdapt
 import { getActiveCurriculumTree, CurriculumProviderKey } from '../data/curriculumRegistry';
 import { aiCaller } from './aicaller';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
+import { resolveCurriculumRoute, getQuestionForRoute, CurriculumRouteNode, ALL_CURRICULUM_ROUTES } from '../curriculum/curriculumMesh';
 import { translateQuestionData, translateLessonData } from './translationService';
 import { SUPPORTED_LANGUAGES } from './operational-language';
 import { MathQuestionGenerator } from './mathQuestionGenerator';
@@ -285,6 +286,12 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           const standard = (payload?.curriculum || 'uk_oak') as CurriculumProviderKey;
           return getActiveCurriculumTree(standard);
         }
+        if (intent === 'resolve:route' || intent === 'resolve:urn') {
+          return resolveCurriculumRoute(payload?.stage, payload?.subject, payload?.topic, payload?.lesson || payload?.lessonTitle);
+        }
+        if (intent === 'get:mesh') {
+          return ALL_CURRICULUM_ROUTES;
+        }
         if (intent === 'get:package') {
           // If stage, subject, and topic are provided, check IndexedDB dynamic adapters and oak knowledge
           if (payload?.topic && payload?.subject) {
@@ -342,16 +349,23 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             difficultyInstruction = 'Difficulty: Brain Buster (Level 3 - Deep Thinking). Multi-step reasoning problem or scenario that stretches thinking and tests tricky edge cases.';
           }
 
-          // 1. Deterministic Fast-Path for Procedural Mathematics & Calculations (< 1ms, 0% hallucination)
-          if (MathQuestionGenerator.canGenerate(stage, subject, topic)) {
+          // 1. Resolve deterministic Curriculum Route Node from the AST Mesh
+          const route: CurriculumRouteNode | null = resolveCurriculumRoute(stage, subject, topic, lessonTitle);
+          const executionEngine = route?.executionEngine || (MathQuestionGenerator.canGenerate(stage, subject, topic) ? 'procedural_generator' : 'curriculum_bank');
+
+          // Deterministic Fast-Path for Procedural Mathematics & Calculations (< 1ms, 0% hallucination)
+          if (executionEngine === 'procedural_generator' && MathQuestionGenerator.canGenerate(stage, subject, topic)) {
             const mathQ = MathQuestionGenerator.generate(stage, topic, activeSeedToken);
             let mathCandidate = {
               id: mathQ.id,
               seedToken: mathQ.seedToken || activeSeedToken,
-              axiom: `Standard mathematical operations and principles for ${stage}.`,
-              trap: `Common procedural or conceptual calculation slips.`,
-              hook: `How do numbers and mathematical rules structure real-world quantities?`,
-              guidedStep: `Work through the calculation step-by-step applying precedence rules.`,
+              urn: route?.urn || `urn:curriculum:${stage}:${subject}:${topic}`,
+              csn: route?.csn || `CSN-${(stage || 'KS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)}-MATH`,
+              routeEngine: 'procedural_generator',
+              axiom: route?.axiom || `Standard mathematical operations and principles for ${stage}.`,
+              trap: route?.cognitiveTrap || `Common procedural or conceptual calculation slips.`,
+              hook: route?.hook || `How do numbers and mathematical rules structure real-world quantities?`,
+              guidedStep: route?.guidedStep || `Work through the calculation step-by-step applying precedence rules.`,
               prompt: mathQ.prompt,
               options: mathQ.options,
               answerKey: mathQ.answerKey,
@@ -385,10 +399,11 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             return mathCandidate;
           }
 
-          // 2. Query verified offline curriculum knowledge base & Lesson Sequencer
-          const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
+          // 2. Query deterministic Curriculum Route Mesh for Verified Questions & Invariants
           const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase();
-          
+          const routeQuestion = route ? getQuestionForRoute(route, lessonTitle, payload?.forceVariation, activeSeedToken) : null;
+          const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
+
           // Determine current pedagogical stage (Hook -> Axiom -> Practice -> Pivot -> Mastery)
           let targetPedagogicalStage: PedagogicalStage = payload?.pedagogicalStage;
           if (!targetPedagogicalStage) {
@@ -419,41 +434,10 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             lessonId,
           });
 
-          let offlineQuestion = null;
-          if (offlineKnowledge && offlineKnowledge.questions && offlineKnowledge.questions.length > 0) {
-            const allQ = offlineKnowledge.questions;
-            // If lessonTitle is passed (e.g. "Lesson 1: ...", "Lesson 2: ..."), match question to lesson
-            if (lessonTitle) {
-              const lNumMatch = lessonTitle.match(/lesson\s*(\d+)/i);
-              if (lNumMatch) {
-                const lIdx = parseInt(lNumMatch[1], 10) - 1;
-                if (lIdx >= 0 && lIdx < allQ.length) {
-                  offlineQuestion = allQ[lIdx];
-                }
-              }
-              if (!offlineQuestion) {
-                const ltClean = lessonTitle.toLowerCase();
-                const matchedQ = allQ.find(q => {
-                  const qWords = q.prompt.toLowerCase().split(/\s+/).filter(w => w.length > 4);
-                  return qWords.some(w => ltClean.includes(w));
-                });
-                if (matchedQ) offlineQuestion = matchedQ;
-              }
-            }
-
-            if (!offlineQuestion) {
-              const lastPrompt = recentTopicQuestionMap.get(topicCacheKey);
-              const eligible = allQ.filter((q) => q.prompt.trim() !== lastPrompt && q.prompt.trim() !== excludePrompt);
-              offlineQuestion = eligible.length > 0
-                ? prng.pick(eligible)
-                : allQ.find((q) => q.prompt.trim() !== excludePrompt) || allQ[0];
-            }
-          }
-
           const currentVariant = fallbackVariantMap.get(topicCacheKey) || 0;
           fallbackVariantMap.set(topicCacheKey, currentVariant + 1);
 
-          const fallbackData = (!offlineQuestion && !offlineKnowledge)
+          const fallbackData = (!routeQuestion && !offlineKnowledge)
             ? getIntelligentTopicFallback(stage, subject, topic, currentVariant)
             : null;
 
@@ -462,26 +446,23 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           let rawAnswerKey: number;
           let rawMisconceptions: string[];
 
-          if (offlineQuestion && !activeSeedToken.startsWith('SOCRATIC-')) {
-            recentTopicQuestionMap.set(topicCacheKey, offlineQuestion.prompt.trim());
-            basePrompt = offlineQuestion.prompt;
-            rawOptions = [...offlineQuestion.options];
-            rawAnswerKey = typeof offlineQuestion.answerKey === 'number' ? offlineQuestion.answerKey : 0;
-            rawMisconceptions = rawOptions.map((opt, idx) => {
-              if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
-              return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
-            });
+          if (routeQuestion && !activeSeedToken.startsWith('SOCRATIC-')) {
+            recentTopicQuestionMap.set(topicCacheKey, routeQuestion.prompt.trim());
+            basePrompt = routeQuestion.prompt;
+            rawOptions = [...routeQuestion.options];
+            rawAnswerKey = typeof routeQuestion.answerKey === 'number' ? routeQuestion.answerKey : 0;
+            rawMisconceptions = [...routeQuestion.misconceptions];
 
             if (payload?.forceVariation) {
               const masteryVariations = [
-                `🔄 [Mastery Check] ${offlineQuestion.prompt}`,
-                `🎯 [Concept Application] ${offlineQuestion.prompt}`,
-                `💡 [Deepening Understanding] ${offlineQuestion.prompt}`,
+                `🔄 [Mastery Check] ${routeQuestion.prompt}`,
+                `🎯 [Concept Application] ${routeQuestion.prompt}`,
+                `💡 [Deepening Understanding] ${routeQuestion.prompt}`,
               ];
               basePrompt = prng.pick(masteryVariations);
             }
-          } else if (activeSeedToken.startsWith('SOCRATIC-') && offlineKnowledge?.socraticPivot) {
-            basePrompt = `⚖️ [Cognitive Counter-Proof] ${offlineKnowledge.socraticPivot}`;
+          } else if (activeSeedToken.startsWith('SOCRATIC-') && (route?.socraticPivot || offlineKnowledge?.socraticPivot)) {
+            basePrompt = `⚖️ [Cognitive Counter-Proof] ${route?.socraticPivot || offlineKnowledge?.socraticPivot}`;
             rawOptions = sequencedTemplate.options;
             rawAnswerKey = sequencedTemplate.answerKey;
             rawMisconceptions = sequencedTemplate.misconceptions;
@@ -497,31 +478,34 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
               ? sequencedTemplate.misconceptions
               : (fallbackData ? fallbackData.misconceptions : rawOptions.map((opt, idx) => {
                   if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
-                  return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
+                  return `Common trap: ${route?.cognitiveTrap || offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
                 }));
           }
 
           const displayPrompt = basePrompt;
 
           let resultCandidate = {
-            id: (offlineQuestion && offlineQuestion.id) ? offlineQuestion.id : `q_${activeSeedToken}`,
+            id: routeQuestion ? routeQuestion.id : `q_${activeSeedToken}`,
             seedToken: activeSeedToken,
-            pedagogicalStage: offlineQuestion ? 'PRACTICE' : targetPedagogicalStage,
-            stageBadge: offlineQuestion ? `${stage} • ${subject}` : sequencedTemplate.stageBadge,
-            stepLabel: offlineKnowledge?.title || topic,
-            pedagogicalIntent: offlineQuestion ? 'Verified Oak National Academy curriculum application question.' : sequencedTemplate.pedagogicalIntent,
-            axiom: offlineKnowledge?.coreAxiom || sequencedTemplate.axiom || `Core curriculum rule established for ${topic} at ${stage}.`,
-            trap: offlineKnowledge?.cognitiveTrap || sequencedTemplate.trap || `Common misconception regarding ${topic}.`,
-            hook: offlineKnowledge?.hook || sequencedTemplate.hook || `How does ${topic} operate in everyday reality?`,
-            guidedStep: offlineKnowledge?.guidedStep || sequencedTemplate.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
+            urn: route?.urn || `urn:curriculum:${stage}:${subject}:${topic}`,
+            csn: route?.csn || `CSN-${(stage || 'KS').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3)}-GEN`,
+            routeEngine: route?.executionEngine || 'curriculum_bank',
+            pedagogicalStage: routeQuestion ? 'PRACTICE' : targetPedagogicalStage,
+            stageBadge: route ? `${route.stageTitle} • ${route.subjectTitle}` : `${stage} • ${subject}`,
+            stepLabel: route?.topicTitle || offlineKnowledge?.title || topic,
+            pedagogicalIntent: routeQuestion ? 'Verified Oak National Academy curriculum application question.' : sequencedTemplate.pedagogicalIntent,
+            axiom: route?.axiom || offlineKnowledge?.coreAxiom || sequencedTemplate.axiom || `Core curriculum rule established for ${topic} at ${stage}.`,
+            trap: route?.cognitiveTrap || offlineKnowledge?.cognitiveTrap || sequencedTemplate.trap || `Common misconception regarding ${topic}.`,
+            hook: route?.hook || offlineKnowledge?.hook || sequencedTemplate.hook || `How does ${topic} operate in everyday reality?`,
+            guidedStep: route?.guidedStep || offlineKnowledge?.guidedStep || sequencedTemplate.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
             prompt: displayPrompt,
             options: rawOptions,
             answerKey: rawAnswerKey,
-            hint: offlineQuestion?.hint || sequencedTemplate.hint || fallbackData?.hint || offlineKnowledge?.scaffoldHints?.level1 || 'Focus on foundational concepts.',
-            explanation: offlineQuestion?.explanation || sequencedTemplate.explanation || fallbackData?.explanation || offlineKnowledge?.coreAxiom || 'Review the core definition.',
+            hint: routeQuestion?.hint || sequencedTemplate.hint || fallbackData?.hint || route?.scaffoldHints?.level1 || offlineKnowledge?.scaffoldHints?.level1 || 'Focus on foundational concepts.',
+            explanation: routeQuestion?.explanation || sequencedTemplate.explanation || fallbackData?.explanation || route?.axiom || offlineKnowledge?.coreAxiom || 'Review the core definition.',
             misconceptions: rawMisconceptions,
-            socraticFollowUp: offlineKnowledge?.socraticPivot || sequencedTemplate.socraticFollowUp || `Can you identify the defining feature of ${topic}?`,
-            scaffoldHints: offlineKnowledge?.scaffoldHints,
+            socraticFollowUp: route?.socraticPivot || offlineKnowledge?.socraticPivot || sequencedTemplate.socraticFollowUp || `Can you identify the defining feature of ${topic}?`,
+            scaffoldHints: route?.scaffoldHints || offlineKnowledge?.scaffoldHints,
             difficulty,
             scratchpad: '',
           };
@@ -616,10 +600,10 @@ Age/Stage Guidelines: ${stageGuidelines}
 Challenge Level: ${difficultyInstruction}
 ${langInstruction}
 ${guardrails ? `Curriculum Guardrails: "${guardrails}"\n` : ''}${exemplarAST}
-${offlineQuestion ? `Verified Oak Exemplar Template for This Topic:
-- Exemplar Prompt: "${offlineQuestion.prompt}"
-- Exemplar Options: ${JSON.stringify(offlineQuestion.options)}
-- Exemplar Key Misconception / Explanation: "${offlineQuestion.explanation}"
+${routeQuestion ? `Verified Oak Exemplar Template for This Topic:
+- Exemplar Prompt: "${routeQuestion.prompt}"
+- Exemplar Options: ${JSON.stringify(routeQuestion.options)}
+- Exemplar Key Misconception / Explanation: "${routeQuestion.explanation}"
 Instruction: Use this verified Oak exemplar as a grounding pattern. Create an authentic parallel variation with a fresh context or numbers testing the exact same core concept.\n` : ''}
 First, anchor your reasoning in this question's Mind Space: analyze why the core axiom holds and which authentic pupil misconception pulls students toward each distractor.
 Then generate an interactive diagnostic multiple-choice question testing understanding of this exact cognitive frame.
@@ -991,25 +975,53 @@ One reflective question to verify understanding.`;
 ]);
 
 /**
- * Universal Primitive: Single point of dispatch for all substrate nodes
+ * Universal Primitive: Single point of dispatch for all substrate nodes.
+ * Supports both signatures:
+ *   - dispatch('questionengine', { intent: 'synthesize:governed', payload: ... })
+ *   - dispatch({ intent: 'synthesize:governed', payload: ... })  [infers node from intent]
  */
 export async function dispatch(
-  target: string,
-  message: HyperMessage
+  targetOrMessage: string | HyperMessage,
+  maybeMessage?: HyperMessage
 ): Promise<HyperNodeResult> {
-  const symbol = target.toLowerCase();
+  let targetNode: string;
+  let message: HyperMessage;
+
+  if (typeof targetOrMessage === 'string') {
+    targetNode = targetOrMessage;
+    message = maybeMessage || { intent: '' };
+  } else {
+    message = targetOrMessage;
+    // Automatically infer target substrate node from intent namespace
+    const intent = message?.intent || '';
+    if (intent.startsWith('synthesize:') || intent.startsWith('question:')) {
+      targetNode = 'questionengine';
+    } else if (intent.startsWith('curriculum:')) {
+      targetNode = 'curriculumnode';
+    } else if (intent.startsWith('telemetry:')) {
+      targetNode = 'telemetrynode';
+    } else if (intent.startsWith('report:') || intent.startsWith('export:')) {
+      targetNode = 'reportengine';
+    } else if (intent.startsWith('hypervisor:') || intent.startsWith('execute:')) {
+      targetNode = 'hypervisornode';
+    } else {
+      targetNode = 'questionengine';
+    }
+  }
+
+  const symbol = (targetNode || '').toLowerCase();
   const node = AST_NODE_MAP.get(symbol);
 
   if (!node) {
-    console.error(`[Hypercall] Unreachable target node: "${target}"`);
-    return { ok: false, error: `AST Node '${target}' not reachable in substrate.` };
+    console.error(`[Hypercall] Unreachable target node: "${targetNode}"`);
+    return { ok: false, error: `AST Node '${targetNode}' not reachable in substrate.` };
   }
 
   try {
     const result = await node.execute(message.intent, message.payload);
     return { ok: true, data: result };
   } catch (err: any) {
-    console.error('[Hypercall Execution Error]', { target, intent: message?.intent, err });
+    console.error('[Hypercall Execution Error]', { target: targetNode, intent: message?.intent, err });
     return { ok: false, error: err?.message || 'Unknown substrate execution error' };
   }
 }

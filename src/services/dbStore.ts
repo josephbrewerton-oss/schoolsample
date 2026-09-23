@@ -106,6 +106,9 @@ export function isCoreSyllabusPinned(keyOrDomain: string): boolean {
 }
 
 export function openLocalDB(): Promise<IDBDatabase> {
+  if (typeof indexedDB === 'undefined') {
+    return Promise.reject(new Error('IndexedDB is not supported in this runtime environment.'));
+  }
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -452,8 +455,10 @@ export async function getBufferedQuestion(topicKey: string, excludePrompt?: stri
 
       req.onerror = () => resolve(null);
     });
-  } catch (err) {
-    console.warn('[dbStore] Buffer lookup error:', err);
+  } catch (err: any) {
+    if (typeof indexedDB !== 'undefined') {
+      console.warn('[dbStore] Buffer lookup error:', err);
+    }
     return null;
   }
 }

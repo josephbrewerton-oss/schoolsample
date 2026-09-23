@@ -1,0 +1,677 @@
+;; St Joseph's Curriculum Ontology Mesh AST
+;; Format: S-Expression Lisp-compatible AST
+(:curriculum-mesh
+  :version "3.0.0"
+  :total-nodes 88
+  :stages (
+    (:stage :id "ks1" :title "Key Stage 1"
+      :subjects (
+        (:subject :id "english" :title "English"
+          :topics (
+            (:topic :id "phonics-simple-sentences" :title "Phonics & Simple Sentences" :engine :curriculum_bank :questions 1
+              :axiom "A complete simple sentence contains a subject and a verb, expresses a complete thought, and begins with a capital letter and ends with punctuation."
+              :trap "Treating a random group of words or an incomplete clause without a verb as a sentence."
+              :lessons (
+                (:lesson :id "pss-l1-blending-digraphs" :number 1 :title "Lesson 1: Blending Digraphs (sh, ch, th)")
+                (:lesson :id "pss-l2-simple-sentence-structures" :number 2 :title "Lesson 2: Simple Sentence Structures (Subject + Verb)")
+              )
+            )
+            (:topic :id "capital-letters-stops" :title "Capital Letters & Full Stops" :engine :curriculum_bank :questions 1
+              :axiom "Every complete sentence starts with a capital letter, expresses a whole thought, and ends with a punctuation mark (full stop, question mark, or exclamation mark)."
+              :trap "Putting capital letters in the middle of words, or forgetting full stops between distinct ideas."
+              :lessons (
+                (:lesson :id "cls-l1-starting-sentences" :number 1 :title "Lesson 1: Starting Sentences with Capital Letters")
+                (:lesson :id "cls-l2-closing-full-stops" :number 2 :title "Lesson 2: Concluding Sentences with Full Stops")
+              )
+            )
+            (:topic :id "story-sequencing" :title "Story Sequencing" :engine :curriculum_bank :questions 1
+              :axiom "Stories have a beginning, a middle, and an end, ordered logically using chronological time connectives (First, Next, Then, After that, Finally)."
+              :trap "Telling events out of chronological order or jumping straight to the resolution without explaining the problem."
+              :lessons (
+                (:lesson :id "ss-l1-beginning-middle-end" :number 1 :title "Lesson 1: Beginning, Middle & End Structure")
+                (:lesson :id "ss-l2-time-words" :number 2 :title "Lesson 2: First, Next, Then & Finally Time Connectives")
+              )
+            )
+          )
+        )
+        (:subject :id "maths" :title "Mathematics"
+          :topics (
+            (:topic :id "addition-subtraction-20" :title "Addition & Subtraction within 20" :engine :curriculum_bank :questions 2
+              :axiom "Addition combines groups (commutative: 7 + 5 = 5 + 7); subtraction finds the difference or removes an amount (inverse of addition)."
+              :trap "Counting every single item starting from 1 rather than \"counting on\" from the larger number."
+              :lessons (
+                (:lesson :id "as20-l1-number-bonds-10-20" :number 1 :title "Lesson 1: Number Bonds to 10 and 20")
+                (:lesson :id "as20-l2-adding-counting-on" :number 2 :title "Lesson 2: Adding by Counting On on a Number Line")
+                (:lesson :id "as20-l3-subtraction-crossing-10" :number 3 :title "Lesson 3: Subtraction Crossing the 10 Boundary")
+              )
+            )
+            (:topic :id "2d-3d-shapes" :title "2D & 3D Shapes" :engine :curriculum_bank :questions 2
+              :axiom "2D shapes are flat with sides and vertices; 3D shapes are solid with faces, edges, and vertices."
+              :trap "Calling a 3D sphere a \"circle\" or a 3D cube a \"square\"."
+              :lessons (
+                (:lesson :id "shapes-l1-properties-2d" :number 1 :title "Lesson 1: Sides & Vertices of 2D Shapes")
+                (:lesson :id "shapes-l2-faces-edges-3d" :number 2 :title "Lesson 2: Faces, Edges & Vertices of 3D Prisms and Pyramids")
+              )
+            )
+            (:topic :id "place-value-50" :title "Place Value to 50" :engine :curriculum_bank :questions 2
+              :axiom "Two-digit numbers up to 50 are composed of tens and ones (e.g. 43 is 4 tens and 3 ones, which equals 40 + 3). The position of each digit determines its value."
+              :trap "Reversing digits (writing 34 for 43) or thinking the 4 in 43 just means 4 counters instead of 4 bundles of 10."
+              :lessons (
+                (:lesson :id "pv50-l1-tens-and-ones" :number 1 :title "Lesson 1: Grouping into Tens and Ones")
+                (:lesson :id "pv50-l2-comparing-numbers-50" :number 2 :title "Lesson 2: Comparing Greater Than & Less Than to 50")
+              )
+            )
+          )
+        )
+        (:subject :id "science" :title "Science"
+          :topics (
+            (:topic :id "seasonal-changes" :title "Seasonal Changes" :engine :curriculum_bank :questions 2
+              :axiom "There are four seasons (Autumn, Winter, Spring, Summer) with distinct daylight hours and weather patterns caused by the Earth orbiting the Sun."
+              :trap "Believing that seasonal weather changes happen randomly overnight rather than as a continuous cyclical pattern."
+              :lessons (
+                (:lesson :id "sc-l1-four-seasons" :number 1 :title "Lesson 1: The Four Seasons & Earth Orbit")
+                (:lesson :id "sc-l2-daylight-weather" :number 2 :title "Lesson 2: Daylight Length & Weather Patterns")
+                (:lesson :id "sc-l3-deciduous-trees" :number 3 :title "Lesson 3: Deciduous Trees & Autumn Cycles")
+              )
+            )
+            (:topic :id "animals-humans" :title "Animals and Humans" :engine :curriculum_bank :questions 2
+              :axiom "Animals, including humans, need water, food, and air to survive and can be grouped as carnivores, herbivores, or omnivores."
+              :trap "Thinking humans are not animals, or that all animals eat the exact same food."
+              :lessons (
+                (:lesson :id "ah-l1-carnivores-herbivores" :number 1 :title "Lesson 1: Carnivores, Herbivores & Omnivores")
+                (:lesson :id "ah-l2-senses-body" :number 2 :title "Lesson 2: Human Body Parts & The Five Senses")
+              )
+            )
+            (:topic :id "materials-properties" :title "Materials and Properties" :engine :curriculum_bank :questions 2
+              :axiom "Everyday objects are made from materials chosen for their specific physical properties (e.g. waterproof, flexible, transparent, rigid)."
+              :trap "Confusing the name of the object with the material it is made from (e.g. calling plastic \"spoon\")."
+              :lessons (
+                (:lesson :id "mp-l1-identifying-materials" :number 1 :title "Lesson 1: Identifying Everyday Materials")
+                (:lesson :id "mp-l2-transparent-opaque" :number 2 :title "Lesson 2: Transparent vs Opaque Properties")
+              )
+            )
+          )
+        )
+        (:subject :id "history" :title "History"
+          :topics (
+            (:topic :id "living-memory" :title "Changes Within Living Memory" :engine :curriculum_bank :questions 2
+              :axiom "Living memory refers to events remembered by people alive today (e.g. grandparents, parents), contrasting with times before anyone alive was born."
+              :trap "Believing everything in the past was in black-and-white, or confusing 50 years ago with the time of castles and dinosaurs."
+            )
+            (:topic :id "historical-figures" :title "Significant Historical Figures" :engine :curriculum_bank :questions 2
+              :axiom "Significant historical figures (such as Florence Nightingale, Mary Seacole, and Neil Armstrong) made lasting contributions that changed society or human knowledge."
+              :trap "Thinking significant figures only worked alone, or confusing who did what."
+            )
+          )
+        )
+        (:subject :id "geography" :title "Geography"
+          :topics (
+            (:topic :id "local-area" :title "Our Local Area" :engine :curriculum_bank :questions 2
+              :axiom "A local area contains both human features (built by people, e.g. roads, houses, shops) and physical features (formed by nature, e.g. rivers, hills, trees)."
+              :trap "Classifying a park as entirely natural when humans designed the paths and planted the lawn."
+            )
+            (:topic :id "weather-patterns" :title "The Four Seasons & Weather Patterns" :engine :curriculum_bank :questions 1
+              :axiom "In the UK, weather patterns cycle through four seasons. Temperature, precipitation (rain, snow), wind speed, and daylight change predictably across Autumn, Winter, Spring, and Summer."
+              :trap "Confusing \"weather\" (what is happening outside today) with \"climate\" or thinking hot weather only happens because of the Sun being closer."
+            )
+          )
+        )
+      )
+    )
+    (:stage :id "ks2" :title "Key Stage 2"
+      :subjects (
+        (:subject :id "maths" :title "Mathematics"
+          :topics (
+            (:topic :id "fractions-decimals" :title "Fractions and Decimals" :engine :curriculum_bank :questions 2
+              :axiom "Fractions and decimals represent parts of a whole. A fraction a/b denotes \"a parts out of b equal parts\". To add or subtract fractions with different denominators, you must convert them to equivalent fractions with a common denominator. Decimals express fractions with powers of ten (tenths, hundredths, thousandths)."
+              :trap "Adding both numerators and denominators straight across (e.g. 1/3 + 1/4 = 2/7), or assuming a longer decimal is always larger (e.g. thinking 0.125 > 0.5)."
+              :lessons (
+                (:lesson :id "fd-l1-unit-fractions" :number 1 :title "Lesson 1: Unit Fractions & Equal Parts of a Whole")
+                (:lesson :id "fd-l2-equivalent-fractions" :number 2 :title "Lesson 2: Equivalent Fractions on a Number Line")
+                (:lesson :id "fd-l3-tenths-hundredths" :number 3 :title "Lesson 3: Tenths and Hundredths as Decimals")
+              )
+            )
+            (:topic :id "place-value-rounding" :title "Place Value and Rounding" :engine :curriculum_bank :questions 2
+              :axiom "In the base-10 positional number system, each column represents a power of 10 (Thousands, Hundreds, Tens, Ones, Tenths, Hundredths). When rounding to the nearest 10, 100, or 1000, inspect the decisive digit immediately to the right: 0-4 rounds down, 5-9 rounds up."
+              :trap "Rounding 45 to the nearest 10 as 40 instead of 50, or changing the decisive digit without replacing following digits with placeholder zeros."
+              :lessons (
+                (:lesson :id "pvr-l1-thousands-ten-thousands" :number 1 :title "Lesson 1: Value of Digits up to 10,000")
+                (:lesson :id "pvr-l2-rounding-10-100" :number 2 :title "Lesson 2: Rounding to Nearest 10, 100 and 1,000")
+              )
+            )
+            (:topic :id "long-division-multiplication" :title "Long Division & Multiplication" :engine :procedural_generator :questions 2
+              :axiom "Formal written methods partition multi-digit calculations into place value steps. Long multiplication calculates partial products by distributing tens and ones, including placeholder zeros. Long division repeatedly groups and subtracts multiples of the divisor (Divide, Multiply, Subtract, Bring Down)."
+              :trap "Forgetting the placeholder 0 when multiplying by the tens digit in long multiplication, or misaligning place-value columns in long division."
+              :lessons (
+                (:lesson :id "ldm-l1-formal-multiplication" :number 1 :title "Lesson 1: Formal Written Long Multiplication (2-Digit by 2-Digit)")
+                (:lesson :id "ldm-l2-short-long-division" :number 2 :title "Lesson 2: Bus Stop Division & Interpreting Remainders")
+              )
+            )
+            (:topic :id "perimeter-area" :title "Perimeter and Area" :engine :curriculum_bank :questions 2
+              :axiom "Perimeter is the continuous boundary distance around the outside of a 2D shape (measured in linear units: cm, m). Area is the total surface space enclosed inside the shape (measured in square units: cm², m²). For a rectangle: Perimeter = 2(length + width); Area = length × width."
+              :trap "Confusing perimeter and area (multiplying sides when asked for perimeter, or adding all four sides when asked for area)."
+              :lessons (
+                (:lesson :id "pa-l1-calculating-perimeter" :number 1 :title "Lesson 1: Calculating Perimeter of Rectilinear Shapes")
+                (:lesson :id "pa-l2-counting-squares-area" :number 2 :title "Lesson 2: Area by Counting Squares & Length × Width")
+              )
+            )
+          )
+        )
+        (:subject :id "english" :title "English"
+          :topics (
+            (:topic :id "fronted-adverbials-commas" :title "Fronted Adverbials & Commas" :engine :curriculum_bank :questions 1
+              :axiom "A fronted adverbial is a word, phrase, or clause at the beginning of a sentence that modifies the verb (stating when, where, how, or how often), followed by a comma."
+              :trap "Omitting the mandatory comma after the fronted adverbial before the main independent clause."
+              :lessons (
+                (:lesson :id "fac-l1-adverbials-time-place" :number 1 :title "Lesson 1: Identifying Fronted Adverbials of Time, Manner & Place")
+                (:lesson :id "fac-l2-comma-rules-adverbials" :number 2 :title "Lesson 2: Punctuating Fronted Adverbials with Commas")
+              )
+            )
+            (:topic :id "direct-speech-punctuation" :title "Direct Speech Punctuation" :engine :curriculum_bank :questions 1
+              :axiom "Direct speech quotes the exact words spoken, enclosed within inverted commas (\"...\"). Punctuation (comma, full stop, question mark, or exclamation mark) MUST sit INSIDE the closing quotation mark. Each new speaker begins on a new line."
+              :trap "Placing the comma or question mark outside the quotation marks (e.g. \"Wait for me\", shouted Tom), or forgetting to start a new paragraph for a new speaker."
+              :lessons (
+                (:lesson :id "dsp-l1-inverted-commas" :number 1 :title "Lesson 1: Inverted Commas for Spoken Words")
+                (:lesson :id "dsp-l2-reporting-clauses" :number 2 :title "Lesson 2: Punctuation Before the Closing Speech Mark")
+              )
+            )
+            (:topic :id "reading-comprehension-inference" :title "Reading Comprehension: Inference" :engine :curriculum_bank :questions 1
+              :axiom "Inference is reading between the lines—combining textual clues with background knowledge to deduce meanings, emotions, or motives that the author has not explicitly stated."
+              :trap "Guessing wild ideas not supported by evidence in the text, or confusing retrieval (finding literal words) with inference (deducing implied meaning)."
+              :lessons (
+                (:lesson :id "rci-l1-textual-clues" :number 1 :title "Lesson 1: Finding Implicit Clues in Character Actions")
+                (:lesson :id "rci-l2-justifying-with-evidence" :number 2 :title "Lesson 2: Justifying Inferences Using Textual Evidence")
+              )
+            )
+          )
+        )
+        (:subject :id "science" :title "Science"
+          :topics (
+            (:topic :id "states-of-matter" :title "States of Matter" :engine :curriculum_bank :questions 2
+              :axiom "Matter exists as solids, liquids, or gases depending on particle arrangement and thermal energy."
+              :trap "Thinking gases weigh nothing or that ice, water, and steam are three completely different chemicals."
+              :lessons (
+                (:lesson :id "som-l1-solids-liquids-gases" :number 1 :title "Lesson 1: Solids, Liquids & Gases Particle Models")
+                (:lesson :id "som-l2-changes-of-state" :number 2 :title "Lesson 2: Melting, Freezing & Boiling Points")
+                (:lesson :id "som-l3-evaporation-condensation" :number 3 :title "Lesson 3: Evaporation vs Boiling")
+              )
+            )
+            (:topic :id "water-cycle" :title "The Water Cycle" :engine :curriculum_bank :questions 2
+              :axiom "The water cycle continuously circulates water through evaporation, condensation, precipitation, and collection powered by solar energy."
+              :trap "Thinking that rain comes from new water created in the clouds, rather than recycled water from Earth's oceans and land."
+              :lessons (
+                (:lesson :id "wc-l1-evaporation-clouds" :number 1 :title "Lesson 1: Evaporation and Cloud Formation")
+                (:lesson :id "wc-l2-precipitation-runoff" :number 2 :title "Lesson 2: Precipitation, Surface Runoff & Infiltration")
+              )
+            )
+            (:topic :id "forces-magnets" :title "Forces and Magnets" :engine :curriculum_bank :questions 2
+              :axiom "Forces are pushes, pulls, or twists. Friction and air resistance oppose motion. Magnets attract magnetic materials (iron, steel) and have two poles (like repel, opposites attract)."
+              :trap "Thinking all shiny metals are magnetic (e.g. thinking aluminum or copper stick to magnets)."
+              :lessons (
+                (:lesson :id "fm-l1-contact-forces" :number 1 :title "Lesson 1: Friction, Air Resistance & Contact Forces")
+                (:lesson :id "fm-l2-magnetic-poles" :number 2 :title "Lesson 2: Magnetic Attraction, Repulsion & Poles")
+              )
+            )
+            (:topic :id "earth-space" :title "Earth and Space" :engine :curriculum_bank :questions 1
+              :axiom "The Earth is a roughly spherical body that rotates on its axis once every 24 hours (causing day and night) and orbits the Sun once every 365.25 days (causing the year and seasons). The Moon is a natural satellite that orbits the Earth roughly every 28 days."
+              :trap "Believing that the Sun physically moves across the sky around the Earth, or that the Moon produces its own light like a lightbulb."
+              :lessons (
+                (:lesson :id "es-l1-solar-system" :number 1 :title "Lesson 1: The Sun, Earth and Moon Orbit System")
+                (:lesson :id "es-l2-day-night-rotation" :number 2 :title "Lesson 2: Earth Rotation and Day/Night Cycles")
+              )
+            )
+            (:topic :id "electricity-circuits" :title "Electricity & Circuits" :engine :curriculum_bank :questions 1
+              :axiom "Electric current requires an unbroken conductive loop (circuit) powered by a cell/battery to deliver energy to components."
+              :trap "The \"clashing currents\" misconception: believing positive and negative electricity rush from both ends to collide in the bulb."
+              :lessons (
+                (:lesson :id "ec-l1-complete-circuits" :number 1 :title "Lesson 1: Series Circuits & Complete Loops")
+                (:lesson :id "ec-l2-switches-components" :number 2 :title "Lesson 2: Switches, Voltage & Bulb Brightness")
+              )
+            )
+          )
+        )
+        (:subject :id "history" :title "History"
+          :topics (
+            (:topic :id "ancient-egypt" :title "Ancient Egypt & Pharaohs" :engine :curriculum_bank :questions 2
+              :axiom "Ancient Egyptian civilization flourished along the River Nile, whose annual inundation (flooding) deposited fertile silt, enabling agriculture, monument construction, and divine kingship (Pharaohs)."
+              :trap "Believing the pyramids were built by aliens or that the Sahara desert was always barren without the Nile."
+            )
+            (:topic :id "roman-empire" :title "The Roman Empire & Britain" :engine :curriculum_bank :questions 2
+              :axiom "The Roman conquest of Britain (AD 43 under Emperor Claudius) transformed British society through paved roads, stone villas, aqueducts, urban planning, Latin language, and military fortifications like Hadrian's Wall."
+              :trap "Thinking Julius Caesar conquered Britain permanently in 55 BC (he only mounted reconnaissance raids)."
+            )
+            (:topic :id "vikings-anglo-saxons" :title "The Vikings & Anglo-Saxons" :engine :curriculum_bank :questions 1
+              :axiom "Following the fall of Roman Britain, Anglo-Saxon kingdoms established settlements across England. From 793 AD (raid on Lindisfarne monastery), Scandinavian Norse Vikings raided and later settled, culminating in King Alfred the Great dividing England under Danelaw before ultimate unification."
+              :trap "Believing Vikings were purely horned-helmeted bloodthirsty raiders rather than skilled farmers, traders, craftspeople, and navigators."
+            )
+          )
+        )
+        (:subject :id "geography" :title "Geography"
+          :topics (
+            (:topic :id "rivers-water-cycle" :title "Rivers & The Water Cycle" :engine :curriculum_bank :questions 1
+              :axiom "A river profile transitions from its upper course (steep, V-shaped valleys, waterfalls) to middle course (meanders, oxbow lakes) to lower course (wide floodplains, estuaries, delta)."
+              :trap "Assuming a river flows uphill toward mountains or that water gets created out of nowhere."
+            )
+            (:topic :id "volcanoes-earthquakes" :title "Volcanoes and Earthquakes" :engine :curriculum_bank :questions 1
+              :axiom "Earthquakes and volcanoes occur primarily along tectonic plate boundaries where the Earth's crustal plates meet, collide, pull apart, or slide past each other."
+              :trap "Thinking the Earth's mantle is hollow or that volcanoes erupt randomly anywhere on Earth."
+            )
+            (:topic :id "world-biomes" :title "World Biomes & Climate Zones" :engine :curriculum_bank :questions 1
+              :axiom "A biome is a large ecological community of plants and animals adapted to a specific regional climate. Major world biomes include Tropical Rainforests, Deserts, Savannas, Temperate Forests, Taiga (boreal), and Tundra."
+              :trap "Assuming all deserts are blistering hot sand dunes (Antarctica is technically the world's largest desert because of extremely low precipitation)."
+            )
+          )
+        )
+        (:subject :id "computing" :title "Computing"
+          :topics (
+            (:topic :id "scratch-block-programming" :title "Scratch Block Programming" :engine :curriculum_bank :questions 1
+              :axiom "Block-based programming environments (like Scratch) execute algorithms using visual syntax blocks. Key constructs include Sequence (order of blocks), Selection (if/then conditional decisions), and Iteration (repeat/forever loops). Sprites respond to events (e.g. \"when green flag clicked\")."
+              :trap "Putting blocks inside a loop when they only need to run once, or omitting the \"when green flag clicked\" hat block so the script never triggers."
+            )
+            (:topic :id "online-safety" :title "Online Safety & Digital Literacy" :engine :curriculum_bank :questions 1
+              :axiom "Digital safety requires protecting personal identifiable information (PII), evaluating online content critically, maintaining strong unique passwords, and reporting inappropriate encounters to trusted adults."
+              :trap "Assuming people online are always who they claim to be, or believing everything found on internet search results is true."
+            )
+            (:topic :id "algorithms-sequencing" :title "Algorithms & Sequencing" :engine :curriculum_bank :questions 1
+              :axiom "An algorithm is a precise, ordered set of instructions designed to solve a problem or complete a task; incorrect sequence causes bugs."
+              :trap "Believing computers are smart and can \"guess\" missing instructions in a program."
+            )
+          )
+        )
+        (:subject :id "religious-education-catholic" :title "Religious Education (Catholic)"
+          :topics (
+            (:topic :id "sacrament-of-baptism" :title "Baptism: Belonging to the Family of God" :engine :curriculum_bank :questions 3
+              :axiom "Baptism is the gateway to life in the Spirit and the door giving access to the other Sacraments. Through holy water and the Holy Spirit, we are freed from original sin and reborn as children of God into the Catholic Church (CCC 1213)."
+              :trap "Believing that Baptism is merely a naming party or celebration, rather than a real spiritual transformation making us living members of the Body of Christ."
+              :lessons (
+                (:lesson :id "bap-l1-signs-symbols-water" :number 1 :title "Lesson 1: The Signs of Baptism: Holy Water, Oil of Chrism & White Garment")
+                (:lesson :id "bap-l2-belonging-church-family" :number 2 :title "Lesson 2: Welcomed into the Church Family & The Trinitarian Formula")
+              )
+            )
+            (:topic :id "first-reconciliation" :title "First Reconciliation: God’s Healing Mercy & Forgiveness" :engine :curriculum_bank :questions 3
+              :axiom "In the Sacrament of Reconciliation (Penance or Confession), those who confess their sins with true sorrow and a firm purpose of amendment obtain forgiveness from God's infinite mercy through the priest's absolution, reconciling them with God and the Church (CCC 1422)."
+              :trap "Fearing that Confession is about being judged or scolded, rather than encountering Jesus the Good Shepherd who welcomes and heals us with gentleness and mercy."
+              :lessons (
+                (:lesson :id "rec-l1-parable-lost-sheep" :number 1 :title "Lesson 1: The Parable of the Prodigal Son & The Good Shepherd")
+                (:lesson :id "rec-l2-contrition-absolution" :number 2 :title "Lesson 2: Examination of Conscience, Act of Contrition & Absolution")
+              )
+            )
+            (:topic :id "liturgy-of-the-word" :title "The Liturgy of the Word: God Speaks in Scripture" :engine :curriculum_bank :questions 3
+              :axiom "In the Liturgy of the Word, the first major part of the Holy Mass, God speaks directly to His gathered people through Sacred Scripture, and Christ proclaims His Good News in the Holy Gospel (CCC 1154)."
+              :trap "Thinking the readings at Mass are merely old historical stories, rather than God’s living, inspired Word speaking to our hearts right now in the present."
+              :lessons (
+                (:lesson :id "low-l1-scripture-readings" :number 1 :title "Lesson 1: The Old Testament, Responsorial Psalm & Epistles")
+                (:lesson :id "low-l2-gospel-homily" :number 2 :title "Lesson 2: Standing for the Gospel & The Priest’s Homily")
+              )
+            )
+            (:topic :id "the-last-supper" :title "The Last Supper: "Do This in Memory of Me"" :engine :curriculum_bank :questions 3
+              :axiom "At the Last Supper on Holy Thursday, Jesus instituted the Eucharistic Sacrifice of His Body and Blood. Taking bread and wine, He blessed them, broke them, gave them to His Apostles, and commanded: \"Do this in memory of me\" (Luke 22:19, CCC 1323)."
+              :trap "Confusing the Last Supper with an ordinary farewell dinner, or thinking \"in memory of me\" means just remembering a past memory rather than making Christ's living sacrifice present on the altar."
+              :lessons (
+                (:lesson :id "tls-l1-passover-meal" :number 1 :title "Lesson 1: The Passover Feast & Jesus Washing the Disciples’ Feet")
+                (:lesson :id "tls-l2-institution-eucharist" :number 2 :title "Lesson 2: \"This is My Body, This is My Blood\": The New Covenant")
+              )
+            )
+            (:topic :id "first-holy-communion" :title "The Sacrament of the Eucharist: The Real Presence" :engine :curriculum_bank :questions 3
+              :axiom "Through the consecration at Mass, the whole substance of the bread is changed into the Body of Christ, and the whole substance of the wine into His Blood. The Catholic Church names this miracle Transubstantiation. Jesus Christ is truly, really, and substantially present: Body, Blood, Soul, and Divinity (CCC 1374, 1376)."
+              :trap "Believing the consecrated Host is merely a symbol, a metaphor, or just a wafer of bread representing Jesus, rather than Jesus Himself truly present."
+              :lessons (
+                (:lesson :id "fhc-l1-transubstantiation-real-presence" :number 1 :title "Lesson 1: Bread and Wine Consecrated: The Real Presence of Christ")
+                (:lesson :id "fhc-l2-reverent-reception-amen" :number 2 :title "Lesson 2: Fasting, Reverence, Making a Throne & Saying \"Amen\"")
+              )
+            )
+            (:topic :id "order-of-the-mass" :title "The Order of the Mass & Reverent Reception" :engine :curriculum_bank :questions 4
+              :axiom "To receive Holy Communion worthily, a Catholic must be in the state of grace (free from grave sin), observe the Eucharistic fast of at least one hour from food and drink, and receive the Blessed Sacrament with deep faith and devotion, responding \"Amen\" (\"I believe!\") (CCC 1385, 1387)."
+              :trap "Receiving Holy Communion casually or carelessly without preparation, or saying \"Thank you\" instead of the solemn profession of faith: \"Amen\"."
+              :lessons (
+                (:lesson :id "oom-l1-introductory-rites" :number 1 :title "Lesson 1: Sign of the Cross, Penitential Act & The Gloria")
+                (:lesson :id "oom-l2-concluding-rites-mission" :number 2 :title "Lesson 2: The Final Blessing & \"Go in Peace to Love and Serve the Lord\"")
+              )
+            )
+          )
+        )
+        (:subject :id "mfl" :title "Modern Foreign Languages & Latin"
+          :topics (
+            (:topic :id "french-basics" :title "French: Greetings, Family & Gender of Nouns" :engine :curriculum_bank :questions 2
+              :axiom "Every French noun has a grammatical gender: masculine (marked by \"le\" or \"un\") or feminine (marked by \"la\" or \"une\"). Many English and French words share common origins (cognates), but false friends (faux amis) carry different meanings."
+              :trap "Assuming that inanimate objects have no gender like in English \"it\", or assuming words that sound like English words have identical meanings (e.g., confusing \"la librairie\" with library)."
+            )
+            (:topic :id "spanish-basics" :title "Spanish: Phonics, Numbers & Animals" :engine :curriculum_bank :questions 2
+              :axiom "Spanish is a phonetic, pro-drop language where verb endings show who is doing the action (e.g., \"tengo\" = I have). Noun and adjective endings must agree in gender (-o/-a) and number (-s/-es). Age is expressed with the verb \"tener\" (to have), not \"ser\" (to be)."
+              :trap "Translating English idioms literally word-for-word, such as saying \"Yo soy diez años\" (I am 10 years) instead of \"Tengo diez años\" (I have 10 years)."
+            )
+            (:topic :id "latin-roots" :title "Latin Roots & English Derivatives" :engine :curriculum_bank :questions 2
+              :axiom "Latin is the mother tongue of the Romance languages (Spanish, French, Italian, Portuguese) and the root of over 60% of academic English vocabulary. Root morphemes (e.g., \"cred\" = believe, \"aqua\" = water, \"port\" = carry, \"scrib/script\" = write) unlock the definitions of advanced words."
+              :trap "Treating complex English vocabulary words as isolated strings of letters rather than decoding them into root morphemes, prefixes, and suffixes."
+            )
+          )
+        )
+      )
+    )
+    (:stage :id "ks3" :title "Key Stage 3"
+      :subjects (
+        (:subject :id "maths" :title "Mathematics"
+          :topics (
+            (:topic :id "algebraic-expressions" :title "Algebraic Expressions & Indices" :engine :curriculum_bank :questions 3
+              :axiom "Algebra generalizes arithmetic using variables. When simplifying expressions, only LIKE TERMS (terms with identical variable powers) can be added or subtracted. Index laws dictate that when multiplying like bases we add indices (a^m * a^n = a^(m+n)), and when dividing we subtract indices (a^m / a^n = a^(m-n))."
+              :trap "Adding unlike terms (e.g. thinking 3x + 2y = 5xy, or 2x + 3x^2 = 5x^3), or multiplying indices instead of adding them when multiplying bases (e.g. thinking x^2 * x^3 = x^6)."
+              :lessons (
+                (:lesson :id "ae-l1-simplifying-like-terms" :number 1 :title "Lesson 1: Collecting Like Terms & Simplifying")
+                (:lesson :id "ae-l2-expanding-brackets" :number 2 :title "Lesson 2: Expanding Single and Double Brackets")
+                (:lesson :id "ae-l3-laws-of-indices" :number 3 :title "Lesson 3: Multiplying & Dividing Powers (Laws of Indices)")
+              )
+            )
+            (:topic :id "linear-equations" :title "Linear Equations" :engine :curriculum_bank :questions 2
+              :axiom "An algebraic equation is balanced like scales; whatever operation is applied to one side must be applied equally to the other side to isolate the unknown variable."
+              :trap "Moving numbers across the equals sign without reversing their operation (e.g. changing +5 to +5 instead of -5)."
+              :lessons (
+                (:lesson :id "le-l1-two-step-equations" :number 1 :title "Lesson 1: Solving Two-Step Linear Equations")
+                (:lesson :id "le-l2-unknowns-both-sides" :number 2 :title "Lesson 2: Equations with Unknowns on Both Sides")
+              )
+            )
+            (:topic :id "probability-venn" :title "Probability & Venn Diagrams" :engine :curriculum_bank :questions 2
+              :axiom "Probability of a single event is P(E) = (number of favourable outcomes) / (total number of possible outcomes), always bounded between 0 and 1. For complementary events, P(not E) = 1 - P(E). In Venn diagrams, the intersection (A ∩ B) represents elements in BOTH sets, and the union (A ∪ B) represents elements in EITHER or BOTH sets."
+              :trap "Expressing probability as a ratio of favourable to unfavourable outcomes (odds) rather than over the total, or double-counting the intersection in Venn diagram unions."
+              :lessons (
+                (:lesson :id "pv-l1-single-event-probability" :number 1 :title "Lesson 1: Single Event Probability Scale & P(A)")
+                (:lesson :id "pv-l2-venn-diagrams-intersection" :number 2 :title "Lesson 2: Set Notation & Venn Diagram Intersections")
+              )
+            )
+            (:topic :id "pythagoras-theorem" :title "Pythagoras Theorem" :engine :curriculum_bank :questions 1
+              :axiom "In any right-angled triangle, the area of the square on the hypotenuse (longest side opposite the right angle) equals the sum of the areas of the squares on the other two sides: a² + b² = c²."
+              :trap "Applying Pythagoras theorem to non-right-angled triangles, or forgetting to take the square root at the final step."
+              :lessons (
+                (:lesson :id "pt-l1-hypotenuse-calculation" :number 1 :title "Lesson 1: Finding the Hypotenuse (a² + b² = c²)")
+                (:lesson :id "pt-l2-shorter-sides" :number 2 :title "Lesson 2: Calculating Shorter Sides and Problem Solving")
+              )
+            )
+          )
+        )
+        (:subject :id "science" :title "Science"
+          :topics (
+            (:topic :id "atomic-structure" :title "Atomic Structure & Periodic Table" :engine :curriculum_bank :questions 2
+              :axiom "Atoms consist of a dense central nucleus containing protons (charge +1, mass 1) and neutrons (charge 0, mass 1), surrounded by electrons (charge -1, mass ~1/1840) in energy shells."
+              :trap "Assuming an atom is a solid sphere or that electrons carry most of the atom's mass."
+              :lessons (
+                (:lesson :id "as-l1-atoms-elements" :number 1 :title "Lesson 1: Atoms, Elements and Subatomic Particles")
+                (:lesson :id "as-l2-atomic-mass-number" :number 2 :title "Lesson 2: Atomic Number, Mass Number & Isotopes")
+                (:lesson :id "as-l3-electronic-structure" :number 3 :title "Lesson 3: Electronic Configuration & Periodic Groups")
+              )
+            )
+            (:topic :id "cell-biology" :title "Cell Biology & Microscopy" :engine :curriculum_bank :questions 2
+              :axiom "Cells are the fundamental building blocks of all living organisms. Plant cells contain a cell wall, chloroplasts, and permanent vacuole, which animal cells lack."
+              :trap "Confusing cell membrane (controls what enters/exits) with cell wall (provides rigid structural support)."
+              :lessons (
+                (:lesson :id "cb-l1-plant-animal-cells" :number 1 :title "Lesson 1: Eukaryotic Cells: Plant vs Animal Structures")
+                (:lesson :id "cb-l2-prokaryotes-bacteria" :number 2 :title "Lesson 2: Prokaryotic Cells & Bacterial Structure")
+                (:lesson :id "cb-l3-microscopy-magnification" :number 3 :title "Lesson 3: Light Microscopy & Magnification Calculations")
+              )
+            )
+            (:topic :id "energy-transfers" :title "Energy Transfers & Conservation" :engine :curriculum_bank :questions 1
+              :axiom "The Law of Conservation of Energy states that energy cannot be created or destroyed, only transferred between stores (Kinetic, Gravitational Potential, Chemical, Thermal, Elastic, Nuclear). Transfers occur via mechanical work, electrical work, heating, or radiation (light/sound). In any non-ideal transfer, some energy is dissipated (wasted) into thermal stores."
+              :trap "Believing energy is \"used up\" or disappears when a battery runs out, rather than being dissipated into thermal energy in the surroundings."
+              :lessons (
+                (:lesson :id "et-l1-energy-stores" :number 1 :title "Lesson 1: Energy Stores (Kinetic, Gravitational, Chemical)")
+                (:lesson :id "et-l2-energy-pathways" :number 2 :title "Lesson 2: Energy Transfer Pathways & Conservation Law")
+                (:lesson :id "et-l3-dissipation-efficiency" :number 3 :title "Lesson 3: Thermal Dissipation & Sankey Efficiency")
+              )
+            )
+          )
+        )
+        (:subject :id "english" :title "English"
+          :topics (
+            (:topic :id "shakespeare-themes" :title "Shakespeare: Key Themes" :engine :curriculum_bank :questions 1
+              :axiom "Shakespearean drama explores enduring universal human conflicts: Ambition vs Morality (Macbeth), Love vs Family Feud (Romeo and Juliet), Appearance vs Reality (Much Ado / Hamlet), and Power and Order vs Chaos (The Tempest / Julius Caesar). Dramatic irony, soliloquies, and iambic pentameter reveal characters' hidden psychology."
+              :trap "Reading Shakespearean soliloquies as dialogue spoken to other characters rather than an unfiltered private window into a character's psychological conscience."
+              :lessons (
+                (:lesson :id "st-l1-fate-free-will" :number 1 :title "Lesson 1: Fate vs Free Will in Romeo and Juliet")
+                (:lesson :id "st-l2-power-ambition-macbeth" :number 2 :title "Lesson 2: Ambition & Tyranny in Macbeth")
+              )
+            )
+            (:topic :id "gothic-literature" :title "Gothic Literature" :engine :curriculum_bank :questions 1
+              :axiom "Gothic literature explores themes of terror, the supernatural, isolation, psychological dread, uncanny doubles (doppelgängers), and transgression, often set in ruined castles, decaying estates, or sublime wild landscapes."
+              :trap "Confusing generic horror (jump scares/blood) with Gothic literature (sublime awe, psychological decay, atmospheric dread)."
+              :lessons (
+                (:lesson :id "gl-l1-gothic-tropes-setting" :number 1 :title "Lesson 1: The Sublime, Isolation & Pathetic Fallacy")
+                (:lesson :id "gl-l2-uncanny-monsters" :number 2 :title "Lesson 2: The Uncanny & The Supernatural Foil")
+              )
+            )
+            (:topic :id "persuasive-writing" :title "Persuasive Writing & Rhetoric" :engine :curriculum_bank :questions 1
+              :axiom "Rhetorical persuasion crafts arguments to influence an audience using Aristotle's classical modes: Ethos (credibility/authority), Pathos (emotional appeal), and Logos (logic/evidence). Linguistic techniques are remembered via DAFOREST (Direct address, Alliteration, Facts, Opinions, Rhetorical questions, Emotive language, Statistics, Triples)."
+              :trap "Using only emotive exclamation marks without providing logical evidence (Logos) or addressing counter-arguments."
+              :lessons (
+                (:lesson :id "pwr-l1-ethos-pathos-logos" :number 1 :title "Lesson 1: Ethos, Pathos, and Logos in Speeches")
+                (:lesson :id "pwr-l2-rhetorical-devices" :number 2 :title "Lesson 2: Anaphora, Tricolon & Rhetorical Questions")
+              )
+            )
+          )
+        )
+        (:subject :id "history" :title "History"
+          :topics (
+            (:topic :id "norman-conquest" :title "The Norman Conquest (1066)" :engine :curriculum_bank :questions 1
+              :axiom "In 1066, the death of Edward the Confessor triggered a succession crisis between Harold Godwinson, Harald Hardrada, and William Duke of Normandy. Following the Battle of Stamford Bridge, William defeated Harold at the Battle of Hastings on 14 October 1066, fundamentally transforming England through the Feudal System, motte-and-bailey castles, and the Domesday Book."
+              :trap "Believing the Norman Conquest was simply a military battle rather than a complete social, linguistic, and land-ownership revolution that replaced the Anglo-Saxon elite."
+            )
+            (:topic :id "industrial-revolution" :title "The Industrial Revolution" :engine :curriculum_bank :questions 1
+              :axiom "The Industrial Revolution (c. 1760-1840) transformed Britain from an agrarian economy to an industrial powerhouse through steam power (James Watt), mechanized textile manufacture, coal mining, railways, and rapid urban migration."
+              :trap "Believing industrialization benefited everyone equally from the start, ignoring child labour, pollution, and slum conditions."
+            )
+            (:topic :id "transatlantic-slave-trade" :title "The Transatlantic Slave Trade" :engine :curriculum_bank :questions 1
+              :axiom "Between the 16th and 19th centuries, European colonial powers operated the \"Triangular Trade\": manufactured goods from Europe to West Africa; enslaved African human beings transported across the catastrophic \"Middle Passage\" to the Americas; and slave-produced commodities (sugar, tobacco, cotton) transported back to Europe. Resistance, rebellion, and abolitionist campaigning eventually brought legal abolition."
+              :trap "Viewing enslaved Africans as passive victims rather than recognising active everyday resistance, maritime rebellions, Maroon communities, and the Haitian Revolution."
+            )
+          )
+        )
+        (:subject :id "geography" :title "Geography"
+          :topics (
+            (:topic :id "plate-tectonics" :title "Plate Tectonics & Hazards" :engine :curriculum_bank :questions 3
+              :axiom "The lithosphere is divided into tectonic plates driven by mantle convection currents, slab pull, and ridge push, generating earthquakes, tsunamis, and volcanic arcs along constructive, destructive, conservative, and collision boundaries."
+              :trap "Thinking continental drift is fast or that conservative boundaries generate explosive volcanoes."
+            )
+            (:topic :id "urbanisation-mega-cities" :title "Urbanisation & Mega Cities" :engine :curriculum_bank :questions 4
+              :axiom "Urbanisation is the increasing proportion of a country's population living in towns and cities, driven by rural-to-urban migration (push and pull factors) and high rates of natural increase, resulting in the rapid emergence of megacities (populations over 10 million)."
+              :trap "Confusing the absolute growth of a city with urbanisation (which is the proportion of total population living in urban areas), or assuming push factors attract migrants."
+            )
+            (:topic :id "glacial-landscapes" :title "Glacial Landscapes" :engine :curriculum_bank :questions 2
+              :axiom "Glaciers shape upland landscapes through freeze-thaw weathering, plucking, and abrasion, carving distinctive erosional landforms (corries, arêtes, pyramidal peaks, and U-shaped glacial troughs) and depositing unsorted till to form moraines."
+              :trap "Confusing V-shaped river valleys (carved by vertical river erosion) with U-shaped glacial troughs (carved by valley glaciers with steep sides and wide flat floors)."
+            )
+          )
+        )
+        (:subject :id "mfl" :title "Modern Foreign Languages"
+          :topics (
+            (:topic :id "french-present-routine" :title "French: Present Tense & Daily Routine" :engine :curriculum_bank :questions 1
+              :axiom "Describing daily routines in French requires reflexive verbs (verbes pronominaux) such as \"se réveiller\" (to wake up) and \"se doucher\" (to shower). The reflexive pronoun (me, te, se, nous, vous, se) must be placed directly BEFORE the conjugated verb in the present tense."
+              :trap "Applying English word order by placing the pronoun after the verb (e.g., writing \"Je réveille me\" or omitting the reflexive pronoun altogether: \"Je lève à 7h\")."
+            )
+            (:topic :id "french-passe-compose" :title "French: Passé Composé with Avoir & Être" :engine :curriculum_bank :questions 1
+              :axiom "The Passé Composé narrates completed past actions. Most verbs take \"avoir\" as the auxiliary (J'ai mangé), but 16 specific movement/state-change verbs (DR & MRS VANDERTRAMP) plus all reflexive verbs require \"être\" and their past participles MUST agree in gender (-e) and number (-s) with the subject."
+              :trap "Using \"avoir\" for verbs of movement (e.g. \"J'ai allé au cinéma\" instead of \"Je suis allé(e) au cinéma\") and forgetting to add \"-e\" or \"-s\" for feminine or plural subjects with \"être\"."
+            )
+            (:topic :id "spanish-free-time" :title "Spanish: Free Time & Hobbies" :engine :curriculum_bank :questions 1
+              :axiom "The verb \"gustar\" (to like) functions differently than English: the liked object or activity is the grammatical subject. Use \"me gusta\" + singular noun or infinitive verb (Me gusta jugar), and \"me gustan\" + plural noun (Me gustan los deportes)."
+              :trap "Saying \"Yo gusto el fútbol\" by translating English \"I like\" directly, or using \"me gusta\" before plural nouns (\"Me gusta los videojuegos\")."
+            )
+            (:topic :id "spanish-ser-estar" :title "Spanish: Ser vs Estar & Adjective Agreement" :engine :curriculum_bank :questions 2
+              :axiom "Spanish has two distinct verbs for \"to be\": \"SER\" is used for permanent characteristics, identity, origin, time, and occupation (DOCTOR mnemonic); \"ESTAR\" is used for temporary states, physical locations, and changing emotions (PLACE mnemonic). Some adjectives change meaning completely depending on whether they are paired with Ser or Estar."
+              :trap "Using \"ser\" to describe current location or temporary feelings (e.g. saying \"Soy en Madrid\" or \"Soy triste\"), or confusing \"ser aburrido\" (to be boring) with \"estar aburrido\" (to be bored)."
+            )
+          )
+        )
+        (:subject :id "religious-education-catholic" :title "Religious Education (Catholic)"
+          :topics (
+            (:topic :id "sacrament-of-confirmation" :title "The Sacrament of Confirmation & Gifts of the Holy Spirit" :engine :curriculum_bank :questions 4
+              :axiom "Confirmation is the Sacrament of Christian Initiation that completes baptismal grace. Through the laying on of hands and anointing with Sacred Chrism by the Bishop, the recipient is sealed with the indelible spiritual mark of the Holy Spirit, receiving the Seven Gifts to be courageous witnesses for Christ (CCC 1285-1321)."
+              :trap "Viewing Confirmation merely as a \"Catholic graduation\" or \"becoming an adult in the church\", rather than an outpouring of divine grace and spiritual empowerment for mission."
+            )
+            (:topic :id "holy-trinity-creed" :title "The Holy Trinity & The Nicene Creed" :engine :curriculum_bank :questions 5
+              :axiom "The mystery of the Holy Trinity is the central mystery of Christian faith and life: there is only ONE God, who is three distinct Divine Persons (Father, Son, and Holy Spirit). The Persons are co-equal, co-eternal, and of one substance (consubstantial / homoousios). The Nicene Creed (promulgated at the Councils of Nicaea in 325 AD and Constantinople in 381 AD) articulates this orthodox faith (CCC 232-260)."
+              :trap "Falling into ancient heresies: Modalism (thinking Father, Son, and Spirit are merely 3 \"roles\" or \"masks\" of one Person); Tritheism (believing in 3 separate gods); Arianism (claiming the Son was created by the Father and not eternal); or Partialism (claiming each Person is one third of God)."
+            )
+            (:topic :id "paschal-mystery" :title "The Paschal Mystery: Passion, Death & Resurrection" :engine :curriculum_bank :questions 3
+              :axiom "The Paschal Mystery—the Passion, Death, Resurrection, and Ascension of Jesus Christ—is the focal point of God's redemptive plan for humanity. By His death Christ liberates us from sin; by His Resurrection He opens for us the way to eternal life (CCC 571-658)."
+              :trap "Believing Jesus was merely an innocent martyr killed by tragic historical accidents, rather than the voluntary offering of Himself as the true Passover Lamb to conquer sin and death."
+            )
+            (:topic :id "mary-and-rosary" :title "Mary, Mother of God & The Rosary" :engine :curriculum_bank :questions 3
+              :axiom "Mary is revered as the Mother of God (Theotokos) because Jesus is true God and true man. Catholics honour Mary with \"hyperdulia\" (special veneration) and ask for her maternal intercession, while \"latria\" (adoration/worship) is reserved strictly for God alone. The Rosary is a Christocentric, scriptural prayer reflecting on the mysteries of salvation through Mary's eyes (CCC 495, 963-975, 2673-2679)."
+              :trap "Confusing Catholic veneration of Mary with worshipping her as a divine goddess, or confusing the Immaculate Conception (Mary conceived without Original Sin) with the Virgin Birth (Jesus conceived by the Holy Spirit)."
+            )
+          )
+        )
+      )
+    )
+    (:stage :id "ks4" :title "Key Stage 4 (GCSE)"
+      :subjects (
+        (:subject :id "maths" :title "Mathematics"
+          :topics (
+            (:topic :id "quadratic-equations" :title "Quadratic Equations & Graphs" :engine :curriculum_bank :questions 2
+              :axiom "A quadratic equation has the general form ax^2 + bx + c = 0 (where a ≠ 0). Solutions (roots) represent the x-intercepts of a parabola graph. Quadratics can be solved by factorising into double brackets, completing the square, or using the quadratic formula: x = (-b ± √(b^2 - 4ac)) / (2a)."
+              :trap "Forgetting that quadratic equations usually have TWO solutions (±), or dividing both sides by x (e.g. turning x^2 = 5x into x = 5, losing the root x = 0)."
+            )
+            (:topic :id "trigonometry" :title "Trigonometry (SOH CAH TOA)" :engine :curriculum_bank :questions 2
+              :axiom "In any right-angled triangle, the trigonometric ratios relate the angles to ratios of side lengths: sin(θ) = Opposite / Hypotenuse; cos(θ) = Adjacent / Hypotenuse; tan(θ) = Opposite / Adjacent (mnemonic: SOH CAH TOA). The hypotenuse is always the longest side opposite the 90° right angle."
+              :trap "Misidentifying the Opposite and Adjacent sides relative to the chosen reference angle θ, or using trigonometry on triangles that do not contain a 90° right angle without the Sine/Cosine Rule."
+            )
+            (:topic :id "circle-theorems" :title "Circle Theorems" :engine :curriculum_bank :questions 2
+              :axiom "Circle theorems state invariant geometric angle properties: 1. Angle at the centre is twice the angle at the circumference subtended by the same arc. 2. Angle in a semicircle is 90°. 3. Angles in the same segment subtended by the same arc are equal. 4. Opposite angles of a cyclic quadrilateral sum to 180°. 5. Tangent meets radius at 90°. 6. Alternate Segment Theorem."
+              :trap "Assuming opposite angles in any four-sided shape in a circle sum to 180° even when all four vertices do NOT lie on the circumference (cyclic quadrilateral condition)."
+            )
+            (:topic :id "simultaneous-equations" :title "Simultaneous Equations" :engine :curriculum_bank :questions 2
+              :axiom "Simultaneous linear equations represent two or more conditions that must be satisfied by the same set of variables at the same time. Graphically, the solution corresponds to the exact coordinate point (x, y) where the lines intersect. Analytically, they are solved via elimination (making coefficients equal and adding/subtracting) or substitution."
+              :trap "Adding the equations when the coefficients have the same sign (e.g. adding +2y and +2y makes 4y instead of eliminating y), or forgetting to multiply EVERY term including the right-hand constant."
+            )
+          )
+        )
+        (:subject :id "chemistry" :title "Chemistry"
+          :topics (
+            (:topic :id "balancing-equations" :title "Balancing Chemical Equations" :engine :curriculum_bank :questions 1
+              :axiom "Law of Conservation of Mass: Atoms cannot be created or destroyed in a chemical reaction. The number of atoms of each element in the reactants must equal the number in the products; only stoichiometric coefficients (large numbers in front) may be changed."
+              :trap "Changing the small subscript numbers inside chemical formulas (e.g. changing H₂O to H₂O₂ to balance oxygen)."
+              :lessons (
+                (:lesson :id "bce-l1-law-conservation-mass" :number 1 :title "Lesson 1: Conservation of Mass & Counting Atoms")
+                (:lesson :id "bce-l2-stoichiometric-coefficients" :number 2 :title "Lesson 2: Balancing Coefficients in Synthesis & Decomposition")
+              )
+            )
+            (:topic :id "electrolysis" :title "Electrolysis & Electrolytes" :engine :curriculum_bank :questions 1
+              :axiom "Electrolysis uses direct electrical current to decompose an ionic compound (electrolyte). Positively charged cations migrate to the negative cathode (gaining electrons: reduction); negatively charged anions migrate to the positive anode (losing electrons: oxidation)."
+              :trap "Mixing up cathode and anode charges, or forgetting OIL RIG (Oxidation Is Loss, Reduction Is Gain of electrons)."
+              :lessons (
+                (:lesson :id "el-l1-molten-electrolytes" :number 1 :title "Lesson 1: Electrolysis of Molten Ionic Compounds (Lead Bromide)")
+                (:lesson :id "el-l2-aqueous-solutions" :number 2 :title "Lesson 2: Predicting Products in Aqueous Solutions (H⁺ and OH⁻ Rules)")
+              )
+            )
+            (:topic :id "quantitative-chemistry" :title "Quantitative Chemistry & Moles" :engine :curriculum_bank :questions 2
+              :axiom "The mole is the unit for amount of substance: 1 mole contains Avogadro's constant of particles (6.02 x 10^23). Mass, moles, and relative formula mass (Mr) are linked by the fundamental equation: Moles = Mass (g) / Mr. In chemical reactions, mass is conserved: total mass of reactants equals total mass of products."
+              :trap "Thinking 1 mole of carbon has the same mass as 1 mole of uranium (they have the same NUMBER of atoms, but different atomic masses), or forgetting to calculate Mr by multiplying atomic masses by formula subscripts."
+              :lessons (
+                (:lesson :id "qc-l1-relative-formula-mass" :number 1 :title "Lesson 1: Relative Formula Mass (Mr) & Percentage Composition")
+                (:lesson :id "qc-l2-moles-avogadro" :number 2 :title "Lesson 2: Moles, Mass and Avogadro’s Constant (n = m/Mr)")
+              )
+            )
+          )
+        )
+        (:subject :id "physics" :title "Physics"
+          :topics (
+            (:topic :id "newtonian-mechanics" :title "Newtonian Mechanics & Force" :engine :curriculum_bank :questions 2
+              :axiom "Newton's 1st Law: An object remains at rest or constant velocity unless acted upon by a resultant force. Newton's 2nd Law: Resultant Force = mass × acceleration (F = ma). Newton's 3rd Law: Forces always occur in equal and opposite interaction pairs."
+              :trap "Believing that a continuous forward force is required to keep an object moving at a constant speed."
+              :lessons (
+                (:lesson :id "nm-l1-newtons-first-law" :number 1 :title "Lesson 1: Newton’s First Law & Balanced Resultant Forces")
+                (:lesson :id "nm-l2-newtons-second-law" :number 2 :title "Lesson 2: Newton’s Second Law: F = ma Calculations")
+                (:lesson :id "nm-l3-newtons-third-law" :number 3 :title "Lesson 3: Newton’s Third Law: Action-Reaction Force Pairs")
+              )
+            )
+            (:topic :id "em-spectrum" :title "Waves and Electromagnetic Spectrum" :engine :curriculum_bank :questions 2
+              :axiom "The Electromagnetic (EM) Spectrum consists of continuous transverse waves that travel at the speed of light (3 x 10^8 m/s in vacuum): Radio waves, Microwaves, Infrared, Visible light, Ultraviolet, X-rays, Gamma rays (mnemonic: Real Men In Venice Use X-ray Guns). Wavelength decreases and frequency/energy increases from Radio to Gamma. Higher frequencies (UV, X-ray, Gamma) are ionising and can cause cellular DNA damage."
+              :trap "Confusing the speed of light with sound (sound is a longitudinal wave requiring a medium; EM waves are transverse and travel through a vacuum), or thinking radio waves are sound waves."
+              :lessons (
+                (:lesson :id "em-l1-transverse-longitudinal" :number 1 :title "Lesson 1: Transverse vs Longitudinal Wave Properties (v = fλ)")
+                (:lesson :id "em-l2-em-spectrum-hazards" :number 2 :title "Lesson 2: The 7 EM Bands, Wavelength Trends & Ionising Radiation")
+              )
+            )
+            (:topic :id "radioactivity" :title "Radioactivity & Half-Life" :engine :curriculum_bank :questions 1
+              :axiom "Unstable atomic nuclei undergo spontaneous, random radioactive decay to achieve stability, emitting ionising radiation: Alpha (α, helium nucleus, highly ionising, stopped by paper), Beta (β⁻, fast electron, moderately ionising, stopped by aluminium), or Gamma (γ, high-frequency EM wave, weakly ionising, reduced by thick lead). Half-life is the time taken for half the radioactive nuclei in a sample to decay, or for its activity (Bq) to halve."
+              :trap "Thinking that after two half-lives a substance has completely decayed to zero (after 2 half-lives, 1/4 or 25% remains: 100% -> 50% -> 25%)."
+              :lessons (
+                (:lesson :id "rad-l1-alpha-beta-gamma" :number 1 :title "Lesson 1: Alpha, Beta & Gamma Ionising Powers & Penetration")
+                (:lesson :id "rad-l2-half-life-decay-curves" :number 2 :title "Lesson 2: Radioactive Half-Life & Decay Curve Graphs")
+              )
+            )
+          )
+        )
+        (:subject :id "biology" :title "Biology"
+          :topics (
+            (:topic :id "genetics-inheritance" :title "Genetics and Inheritance" :engine :curriculum_bank :questions 1
+              :axiom "Genotype determines phenotype through dominant and recessive alleles inherited from biological parents, represented using monohybrid Punnett square crosses."
+              :trap "Assuming a 3:1 ratio in a monohybrid cross means exactly 3 out of 4 real offspring must display the dominant trait (it is a statistical probability)."
+              :lessons (
+                (:lesson :id "gi-l1-dna-genes-chromosomes" :number 1 :title "Lesson 1: DNA Double Helix, Genes & Alleles")
+                (:lesson :id "gi-l2-punnett-squares-phenotype" :number 2 :title "Lesson 2: Monohybrid Crosses, Punnett Squares & Ratios")
+              )
+            )
+            (:topic :id "photosynthesis-transport" :title "Photosynthesis & Plant Transport" :engine :curriculum_bank :questions 4
+              :axiom "Photosynthesis is an endothermic reaction where light energy converts carbon dioxide and water into glucose and oxygen: 6CO₂ + 6H₂O -> C₆H₁₂O₆ + 6O₂. Water travels up through xylem; sugars travel bidirectionally through phloem."
+              :trap "Believing plants only photosynthesize and never respire, or that photosynthesis happens at night."
+              :lessons (
+                (:lesson :id "pt-l1-photosynthesis-equation" :number 1 :title "Lesson 1: The Word & Chemical Equation for Photosynthesis")
+                (:lesson :id "pt-l2-xylem-phloem-transpiration" :number 2 :title "Lesson 2: Xylem, Phloem & The Transpiration Stream")
+              )
+            )
+            (:topic :id "homeostasis-response" :title "Homeostasis and Response" :engine :curriculum_bank :questions 2
+              :axiom "Homeostasis is the regulation of internal conditions of a cell or organism to maintain optimum conditions for enzyme function and cell survival in response to internal and external changes. In humans, automatic negative feedback control systems regulate blood glucose concentration (insulin and glucagon), body temperature (vasodilation, sweating, shivering), and water levels (ADH from pituitary gland)."
+              :trap "Confusing insulin and glucagon (insulin lowers blood glucose by moving it into cells and storing it as glycogen in liver; glucagon raises blood glucose by converting glycogen back to glucose)."
+              :lessons (
+                (:lesson :id "hr-l1-nervous-reflex-arc" :number 1 :title "Lesson 1: The Nervous System, Synapses & Reflex Arcs")
+                (:lesson :id "hr-l2-blood-glucose-insulin" :number 2 :title "Lesson 2: Blood Glucose Regulation: Insulin & Glucagon Negative Feedback")
+              )
+            )
+          )
+        )
+        (:subject :id "religious-studies" :title "Religious Studies (General & GCSE)"
+          :topics (
+            (:topic :id "christian-practices" :title "Christian Practices & Sacraments" :engine :curriculum_bank :questions 1
+              :axiom "Christian practice expresses faith through worship (liturgical vs non-liturgical), prayer, pilgrimage (e.g. Lourdes, Iona), celebration of festivals (Christmas, Easter), and Sacraments. Catholic and Orthodox Christians recognize 7 Sacraments as outward signs of inward grace instituted by Christ; Protestant traditions recognize 2 (Baptism and Eucharist) as directly commanded in the Gospels."
+              :trap "Assuming all Christian denominations view the Eucharist identically (Catholic Transubstantiation vs Anglican Real Presence vs Baptist symbolic memorialism)."
+            )
+            (:topic :id "ethics-peace-conflict" :title "Ethics: Peace, Conflict and Justice" :engine :curriculum_bank :questions 2
+              :axiom "Catholic teaching on warfare is grounded in the Just War Theory (originated by St Augustine and developed by St Thomas Aquinas), establishing strict criteria under which military force may be morally justifiable: legitimate authority, just cause, right intention, last resort, proportionality, and probability of success. Pacifism also has deep roots in the Gospel of peace and early Christian martyrdom (CCC 2302-2317)."
+              :trap "Assuming Just War Theory gives countries permission to attack for wealth or revenge, or ignoring the strict contemporary requirements of proportionality regarding nuclear, biological, and chemical weapons."
+            )
+          )
+        )
+        (:subject :id "catholic-christianity" :title "Catholic Christianity (GCSE)"
+          :topics (
+            (:topic :id "gcse-re-trinity" :title "The Nature of God: The Holy Trinity" :engine :curriculum_bank :questions 2
+              :axiom "In GCSE Religious Studies, Catholic belief in the Trinity integrates biblical revelation (Matthew 28:19, 2 Corinthians 13:14), patristic theology (St Augustine's psychological analogy of Lover, Beloved, and Love), and doctrinal definitions (Nicaea 325 AD). The Trinity models perfect relational community, guiding Christian love and social ethics."
+              :trap "Treating the Trinity as a mathematical puzzle rather than an ontology of love, or failing to substantiate arguments with specific scriptural/magisterial evidence in GCSE 12-mark evaluative questions."
+            )
+            (:topic :id "catholic-social-teaching" :title "Catholic Social Teaching & Human Dignity" :engine :curriculum_bank :questions 1
+              :axiom "Catholic Social Teaching (CST) rests on foundational principles: the Sanctity of Life & Human Dignity (Imago Dei), the Common Good, Subsidiarity, Preferential Option for the Poor, and Stewardship of Creation (Laudato Si')."
+              :trap "Confusing CST with mere secular charity or party political ideologies; CST is rooted in the Gospel and papal encyclicals (from Rerum Novarum to Fratelli Tutti)."
+            )
+            (:topic :id "catholic-sources-of-authority" :title "Sources of Authority: Scripture, Tradition & Magisterium" :engine :curriculum_bank :questions 2
+              :axiom "Catholic authority rests upon a \"three-legged stool\": Sacred Scripture (written word of God), Sacred Tradition (living transmission of the Gospel through the Apostles), and the Magisterium (teaching authority of the Pope and Bishops in apostolic succession). None can stand alone; all three work harmoniously under the guidance of the Holy Spirit (Dei Verbum 10)."
+              :trap "Assuming Catholics rely on Scripture alone (Sola Scriptura), or conversely believing the Pope can invent brand-new doctrines disconnected from apostolic tradition."
+            )
+            (:topic :id "catholic-eschatology" :title "Eschatology: Death, Judgment, Purgatory, Heaven & Hell" :engine :curriculum_bank :questions 2
+              :axiom "Catholic eschatology concerns the \"Four Last Things\": Death, Judgment, Heaven, and Hell. Immediately at death, each person undergoes the Particular Judgment. Those dying in God's grace but incompletely purified undergo Purgatory to achieve the holiness required to enter the Beatific Vision of Heaven. Hell is eternal self-exclusion from communion with God resulting from unrepented mortal sin (CCC 1020-1060)."
+              :trap "Viewing Purgatory as a \"second chance\" to change one's mind about God, or viewing Hell as a torture chamber created by God to take revenge, rather than the tragic ultimate consequence of free will rejecting divine love."
+            )
+          )
+        )
+        (:subject :id "mfl" :title "Modern Foreign Languages (GCSE)"
+          :topics (
+            (:topic :id "spanish-past-future" :title "Spanish: Preterite vs Imperfect & Future" :engine :curriculum_bank :questions 1
+              :axiom "In GCSE Spanish, the past requires distinguishing between the PRETERITE (completed past events with specific start/end times: \"Ayer visité...\") and the IMPERFECT (ongoing past habits, descriptions, weather, and age: \"Cuando era joven, jugaba...\"). The immediate future uses \"ir a + infinitive\" (Voy a estudiar)."
+              :trap "Using the preterite for childhood descriptions or habits (e.g. saying \"Cuando tuve 5 años\" instead of \"Cuando tenía 5 años\")."
+            )
+            (:topic :id "french-complex-opinions" :title "French: Complex Opinions & Subjunctive" :engine :curriculum_bank :questions 1
+              :axiom "GCSE Grade 7-9 French requires expressing sophisticated opinions with connective clauses and the subjunctive mood. Impersonal structures expressing necessity or emotion trigger the subjunctive (e.g. \"Il faut que je fasse mes devoirs\", \"Bien que ce soit cher\"), whereas indicative is used for factual certainty (\"Je pense que c'est bon\")."
+              :trap "Using the regular present indicative after subjunctive triggers (writing \"Il faut que je fais\" instead of \"Il faut que je fasse\", or \"Bien que c'est\" instead of \"Bien que ce soit\")."
+            )
+          )
+        )
+      )
+    )
+  )
+)

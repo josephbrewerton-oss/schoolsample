@@ -221,6 +221,12 @@ export default function PersistentNavbar(): React.JSX.Element {
       desc: 'National Curriculum & Catholic RE interactive units',
     },
     {
+      to: '/learning-zone?tab=constellation',
+      icon: '✨',
+      title: 'Concept Constellation',
+      desc: 'Logseq-style in-memory prerequisite knowledge graph & NATO CSNs',
+    },
+    {
       to: '/practice-lab',
       icon: '⚡',
       title: 'Practice Lab',
