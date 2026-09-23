@@ -147,7 +147,11 @@ export function sanitizeAiOutput(output: string, fallbackContext: string = 'your
   }
 
   // Clean any accidental markdown or code injection
-  text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  let previousText: string;
+  do {
+    previousText = text;
+    text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  } while (text !== previousText);
   text = text.replace(/javascript:/gi, '');
   text = text.replace(/onload=/gi, '');
 
