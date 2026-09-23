@@ -39,7 +39,11 @@ export const CurriculumSelector: React.FC<Props> = ({
   onNewQuestion,
   onDownloadReport,
 }) => {
-  const catalogue = curriculumTree && Object.keys(curriculumTree).length > 0 ? curriculumTree : DEFAULT_OAK_CATALOGUE;
+  const isMultiStageTree =
+    curriculumTree &&
+    typeof curriculumTree === 'object' &&
+    (curriculumTree['ks1'] || curriculumTree['ks2'] || curriculumTree['Key Stage 1'] || curriculumTree['Key Stage 2']);
+  const catalogue = isMultiStageTree ? curriculumTree : DEFAULT_OAK_CATALOGUE;
 
   // Helper to format stage display label cleanly
   const getStageLabel = (stageKey: string): string => {

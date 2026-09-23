@@ -420,13 +420,34 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           });
 
           let offlineQuestion = null;
-          if (offlineKnowledge && offlineKnowledge.questions.length > 0) {
-            const lastPrompt = recentTopicQuestionMap.get(topicCacheKey);
-            const eligible = offlineKnowledge.questions.filter((q) => q.prompt.trim() !== lastPrompt && q.prompt.trim() !== excludePrompt);
-            const chosen = eligible.length > 0
-              ? prng.pick(eligible)
-              : offlineKnowledge.questions.find((q) => q.prompt.trim() !== excludePrompt) || offlineKnowledge.questions[0];
-            offlineQuestion = chosen;
+          if (offlineKnowledge && offlineKnowledge.questions && offlineKnowledge.questions.length > 0) {
+            const allQ = offlineKnowledge.questions;
+            // If lessonTitle is passed (e.g. "Lesson 1: ...", "Lesson 2: ..."), match question to lesson
+            if (lessonTitle) {
+              const lNumMatch = lessonTitle.match(/lesson\s*(\d+)/i);
+              if (lNumMatch) {
+                const lIdx = parseInt(lNumMatch[1], 10) - 1;
+                if (lIdx >= 0 && lIdx < allQ.length) {
+                  offlineQuestion = allQ[lIdx];
+                }
+              }
+              if (!offlineQuestion) {
+                const ltClean = lessonTitle.toLowerCase();
+                const matchedQ = allQ.find(q => {
+                  const qWords = q.prompt.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+                  return qWords.some(w => ltClean.includes(w));
+                });
+                if (matchedQ) offlineQuestion = matchedQ;
+              }
+            }
+
+            if (!offlineQuestion) {
+              const lastPrompt = recentTopicQuestionMap.get(topicCacheKey);
+              const eligible = allQ.filter((q) => q.prompt.trim() !== lastPrompt && q.prompt.trim() !== excludePrompt);
+              offlineQuestion = eligible.length > 0
+                ? prng.pick(eligible)
+                : allQ.find((q) => q.prompt.trim() !== excludePrompt) || allQ[0];
+            }
           }
 
           const currentVariant = fallbackVariantMap.get(topicCacheKey) || 0;
@@ -436,61 +457,70 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
             ? getIntelligentTopicFallback(stage, subject, topic, currentVariant)
             : null;
 
-          let basePrompt = sequencedTemplate.prompt || offlineQuestion?.prompt || fallbackData?.prompt || offlineKnowledge?.socraticPivot || `What is the key principle of ${topic}?`;
-          
-          // Coordinate Stream Handling:
-          if (activeSeedToken.startsWith('SOCRATIC-') && offlineKnowledge?.socraticPivot) {
-            basePrompt = `⚖️ [Cognitive Counter-Proof] ${offlineKnowledge.socraticPivot}`;
-          } else if (activeSeedToken.startsWith('AXIOM-') && offlineKnowledge?.hook) {
-            basePrompt = `🚀 [Mastery Application] ${offlineKnowledge.hook}`;
-          } else if ((basePrompt.trim() === excludePrompt || (offlineKnowledge && offlineKnowledge.questions.length === 1 && currentVariant % 2 === 1)) && offlineKnowledge?.socraticPivot) {
-            basePrompt = `🤔 [Diagnostic Inquiry] ${offlineKnowledge.socraticPivot}`;
-          } else if (basePrompt.trim() === excludePrompt && offlineKnowledge?.hook) {
-            basePrompt = `🌍 [Real-World Application] ${offlineKnowledge.hook}`;
-          }
+          let basePrompt: string;
+          let rawOptions: string[];
+          let rawAnswerKey: number;
+          let rawMisconceptions: string[];
 
-          if (payload?.forceVariation && offlineQuestion) {
-            const masteryVariations = [
-              `🔄 [Parallel Mastery] ${offlineQuestion.prompt}`,
-              `🎯 [Concept Clone] ${offlineQuestion.prompt}`,
-              `💡 [Parallel Scenario] ${offlineQuestion.prompt}`,
-            ];
-            basePrompt = prng.pick(masteryVariations);
+          if (offlineQuestion && !activeSeedToken.startsWith('SOCRATIC-')) {
+            recentTopicQuestionMap.set(topicCacheKey, offlineQuestion.prompt.trim());
+            basePrompt = offlineQuestion.prompt;
+            rawOptions = [...offlineQuestion.options];
+            rawAnswerKey = typeof offlineQuestion.answerKey === 'number' ? offlineQuestion.answerKey : 0;
+            rawMisconceptions = rawOptions.map((opt, idx) => {
+              if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
+              return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
+            });
+
+            if (payload?.forceVariation) {
+              const masteryVariations = [
+                `🔄 [Mastery Check] ${offlineQuestion.prompt}`,
+                `🎯 [Concept Application] ${offlineQuestion.prompt}`,
+                `💡 [Deepening Understanding] ${offlineQuestion.prompt}`,
+              ];
+              basePrompt = prng.pick(masteryVariations);
+            }
+          } else if (activeSeedToken.startsWith('SOCRATIC-') && offlineKnowledge?.socraticPivot) {
+            basePrompt = `⚖️ [Cognitive Counter-Proof] ${offlineKnowledge.socraticPivot}`;
+            rawOptions = sequencedTemplate.options;
+            rawAnswerKey = sequencedTemplate.answerKey;
+            rawMisconceptions = sequencedTemplate.misconceptions;
+          } else {
+            basePrompt = sequencedTemplate.prompt || fallbackData?.prompt || `What is the key principle of ${topic}?`;
+            rawOptions = sequencedTemplate.options.length >= 2
+              ? [...sequencedTemplate.options]
+              : (fallbackData ? [...fallbackData.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property']);
+            rawAnswerKey = sequencedTemplate.options.length >= 2
+              ? sequencedTemplate.answerKey
+              : (fallbackData ? fallbackData.answerKey : 0);
+            rawMisconceptions = sequencedTemplate.misconceptions && sequencedTemplate.misconceptions.length === rawOptions.length
+              ? sequencedTemplate.misconceptions
+              : (fallbackData ? fallbackData.misconceptions : rawOptions.map((opt, idx) => {
+                  if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
+                  return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
+                }));
           }
 
           const displayPrompt = basePrompt;
 
-          let rawOptions = sequencedTemplate.options.length >= 2 
-            ? [...sequencedTemplate.options]
-            : (offlineQuestion ? [...offlineQuestion.options] : (fallbackData ? [...fallbackData.options] : ['Accurate conceptual rule', 'Common misconception', 'Opposite condition', 'Unrelated property']));
-          let rawAnswerKey = sequencedTemplate.options.length >= 2
-            ? sequencedTemplate.answerKey
-            : (offlineQuestion !== null ? offlineQuestion.answerKey : (fallbackData ? fallbackData.answerKey : 0));
-          let rawMisconceptions: string[] = sequencedTemplate.misconceptions && sequencedTemplate.misconceptions.length === rawOptions.length
-            ? sequencedTemplate.misconceptions
-            : (fallbackData ? fallbackData.misconceptions : rawOptions.map((opt, idx) => {
-                if (idx === rawAnswerKey) return 'Correct! Accurately applies foundational curriculum rules.';
-                return `Common trap: ${offlineKnowledge?.cognitiveTrap || 'Confuses core subject definition or conditions.'}`;
-              }));
-
           let resultCandidate = {
-            id: `q_${activeSeedToken}`,
+            id: (offlineQuestion && offlineQuestion.id) ? offlineQuestion.id : `q_${activeSeedToken}`,
             seedToken: activeSeedToken,
-            pedagogicalStage: targetPedagogicalStage,
-            stageBadge: sequencedTemplate.stageBadge,
-            stepLabel: sequencedTemplate.stepLabel,
-            pedagogicalIntent: sequencedTemplate.pedagogicalIntent,
-            axiom: sequencedTemplate.axiom || offlineKnowledge?.coreAxiom || `Core curriculum rule established for ${topic} at ${stage}.`,
-            trap: sequencedTemplate.trap || offlineKnowledge?.cognitiveTrap || `Common misconception regarding ${topic}.`,
-            hook: sequencedTemplate.hook || offlineKnowledge?.hook || `How does ${topic} operate in everyday reality?`,
-            guidedStep: sequencedTemplate.guidedStep || offlineKnowledge?.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
+            pedagogicalStage: offlineQuestion ? 'PRACTICE' : targetPedagogicalStage,
+            stageBadge: offlineQuestion ? `${stage} • ${subject}` : sequencedTemplate.stageBadge,
+            stepLabel: offlineKnowledge?.title || topic,
+            pedagogicalIntent: offlineQuestion ? 'Verified Oak National Academy curriculum application question.' : sequencedTemplate.pedagogicalIntent,
+            axiom: offlineKnowledge?.coreAxiom || sequencedTemplate.axiom || `Core curriculum rule established for ${topic} at ${stage}.`,
+            trap: offlineKnowledge?.cognitiveTrap || sequencedTemplate.trap || `Common misconception regarding ${topic}.`,
+            hook: offlineKnowledge?.hook || sequencedTemplate.hook || `How does ${topic} operate in everyday reality?`,
+            guidedStep: offlineKnowledge?.guidedStep || sequencedTemplate.guidedStep || `Analyze the core properties and behaviors of ${topic}.`,
             prompt: displayPrompt,
             options: rawOptions,
             answerKey: rawAnswerKey,
-            hint: sequencedTemplate.hint || offlineQuestion?.hint || fallbackData?.hint || offlineKnowledge?.scaffoldHints.level1 || 'Focus on foundational concepts.',
-            explanation: sequencedTemplate.explanation || offlineQuestion?.explanation || fallbackData?.explanation || offlineKnowledge?.scaffoldHints.level2 || 'Review the core definition.',
+            hint: offlineQuestion?.hint || sequencedTemplate.hint || fallbackData?.hint || offlineKnowledge?.scaffoldHints?.level1 || 'Focus on foundational concepts.',
+            explanation: offlineQuestion?.explanation || sequencedTemplate.explanation || fallbackData?.explanation || offlineKnowledge?.coreAxiom || 'Review the core definition.',
             misconceptions: rawMisconceptions,
-            socraticFollowUp: sequencedTemplate.socraticFollowUp || offlineKnowledge?.socraticPivot || `Can you identify the defining feature of ${topic}?`,
+            socraticFollowUp: offlineKnowledge?.socraticPivot || sequencedTemplate.socraticFollowUp || `Can you identify the defining feature of ${topic}?`,
             scaffoldHints: offlineKnowledge?.scaffoldHints,
             difficulty,
             scratchpad: '',

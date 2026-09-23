@@ -529,6 +529,342 @@ export const UNIVERSAL_UI_LEXICON: Record<string, Record<string, string>> = {
     hi: "पोर्टल का अनुवाद करें",
     zh: "翻译整个平台",
   },
+  "Home": {
+    es: "Inicio",
+    fr: "Accueil",
+    de: "Startseite",
+    pl: "Strona Główna",
+    uk: "Головна",
+    ar: "الرئيسية",
+    ur: "ہوم",
+    bn: "হোম",
+    hi: "मुख्य पृष्ठ",
+    zh: "首页",
+  },
+  "Learning": {
+    es: "Aprendizaje",
+    fr: "Apprentissage",
+    de: "Lernen",
+    pl: "Nauka",
+    uk: "Навчання",
+    ar: "التعلم",
+    ur: "تعلیم",
+    bn: "শেখা",
+    hi: "अध्ययन",
+    zh: "学习",
+  },
+  "Curriculum Grid": {
+    es: "Cuadrícula Curricular",
+    fr: "Grille Pédagogique",
+    de: "Lehrplanübersicht",
+    pl: "Siatka Programowa",
+    uk: "Сітка Навчальних Програм",
+    ar: "شبكة المناهج الدراسية",
+    ur: "نصاب کا گرڈ",
+    bn: "পাঠ্যক্রম গ্রিড",
+    hi: "पाठ्यक्रम ग्रिड",
+    zh: "课程矩阵",
+  },
+  "Curriculum": {
+    es: "Currículo",
+    fr: "Programme",
+    de: "Lehrplan",
+    pl: "Program Nauczania",
+    uk: "Навчальна Програма",
+    ar: "المنهج الدراسي",
+    ur: "نصاب",
+    bn: "পাঠ্যক্রম",
+    hi: "पाठ्यक्रम",
+    zh: "课程",
+  },
+  "Practice Arena": {
+    es: "Arena de Práctica",
+    fr: "Arène d'Entraînement",
+    de: "Übungsarena",
+    pl: "Arena Ćwiczeń",
+    uk: "Арена Практики",
+    ar: "ميدان التدريب",
+    ur: "مشق کا میدان",
+    bn: "অনুশীলন ক্ষেত্র",
+    hi: "अभ्यास क्षेत्र",
+    zh: "实践竞技场",
+  },
+  "Daily Affirmations": {
+    es: "Afirmaciones Diarias",
+    fr: "Affirmations Quotidiennes",
+    de: "Tägliche Affirmationen",
+    pl: "Codzienne Afirmacje",
+    uk: "Щоденні Афірмації",
+    ar: "تأكيدات يومية",
+    ur: "روزانہ کے مثبت جملے",
+    bn: "দৈনিক ইতিবাচক বাণী",
+    hi: "दैनिक सकारात्मक विचार",
+    zh: "每日寄语",
+  },
+  "School News": {
+    es: "Noticias Escolares",
+    fr: "Actualités de l'École",
+    de: "Schulnachrichten",
+    pl: "Aktualności Szkolne",
+    uk: "Шкільні Новини",
+    ar: "أخبار المدرسة",
+    ur: "اسکول کی خبریں",
+    bn: "বিদ্যালয়ের সংবাদ",
+    hi: "स्कूल समाचार",
+    zh: "学校新闻",
+  },
+  "Pupil Profile": {
+    es: "Perfil del Alumno",
+    fr: "Profil de l'Élève",
+    de: "Schülerprofil",
+    pl: "Profil Ucznia",
+    uk: "Профіль Учня",
+    ar: "ملف الطالب",
+    ur: "طالب علم کا پروفائل",
+    bn: "শিক্ষার্থী প্রোফাইল",
+    hi: "छात्र प्रोफाइल",
+    zh: "学生档案",
+  },
+  "Profile": {
+    es: "Perfil",
+    fr: "Profil",
+    de: "Profil",
+    pl: "Profil",
+    uk: "Профіль",
+    ar: "الملف الشخصي",
+    ur: "پروفائل",
+    bn: "প্রোফাইল",
+    hi: "प्रोफाइल",
+    zh: "档案",
+  },
+  "Catholic Life": {
+    es: "Vida Católica",
+    fr: "Vie Catholique",
+    de: "Katholisches Leben",
+    pl: "Życie Katolickie",
+    uk: "Католицьке Життя",
+    ar: "الحياة الكاثوليكية",
+    ur: "کیتھولک زندگی",
+    bn: "ক্যাথলিক জীবন",
+    hi: "कैथोलिक जीवन",
+    zh: "天主教生活",
+  },
+  "Catholic Ethos & Prayer": {
+    es: "Valores Católicos y Oración",
+    fr: "Éthique Catholique & Prière",
+    de: "Katholischer Ethos & Gebet",
+    pl: "Etos Katolicki i Modlitwa",
+    uk: "Католицький Етос та Молитва",
+    ar: "القيم الكاثوليكية والصلاة",
+    ur: "کیتھولک اقدار اور دعا",
+    bn: "ক্যাথলিক মূল্যবোধ ও প্রার্থনা",
+    hi: "कैथोलिक संस्कार और प्रार्थना",
+    zh: "天主教精神与祈祷",
+  },
+  "Teacher Beacon": {
+    es: "Baliza del Docente",
+    fr: "Balise Enseignant",
+    de: "Lehrer-Beacon",
+    pl: "Sygnał Nauczyciela",
+    uk: "Маяк Вчителя",
+    ar: "منارة المعلم",
+    ur: "استاد کا بیکن",
+    bn: "শিক্ষক বীকন",
+    hi: "शिक्षक बीकन",
+    zh: "教师信标",
+  },
+  "Offline Storage": {
+    es: "Almacenamiento Local",
+    fr: "Stockage Hors-Ligne",
+    de: "Offline-Speicher",
+    pl: "Pamięć Offline",
+    uk: "Автономне Сховище",
+    ar: "التخزين دون اتصال",
+    ur: "آف لائن اسٹوریج",
+    bn: "অফলাইন স্টোরেজ",
+    hi: "ऑफ़लाइन संग्रहण",
+    zh: "离线存储",
+  },
+  "Data Saver": {
+    es: "Ahorro de Datos",
+    fr: "Économiseur de Données",
+    de: "Datensparmodus",
+    pl: "Oszczędzanie Danych",
+    uk: "Економія Трафіку",
+    ar: "توفير البيانات",
+    ur: "ڈیٹا سیور",
+    bn: "ডাটা সেভার",
+    hi: "डेटा बचत",
+    zh: "流量节省",
+  },
+  "Education should be free": {
+    es: "La educación debe ser gratuita",
+    fr: "L'éducation doit être gratuite",
+    de: "Bildung sollte frei sein",
+    pl: "Edukacja powinna być darmowa",
+    uk: "Освіта має бути безкоштовною",
+    ar: "التعليم يجب أن يكون مجانياً",
+    ur: "تعلیم مفت ہونی چاہیے",
+    bn: "শিক্ষা বিনামূল্যে হওয়া উচিত",
+    hi: "शिक्षा निःशुल्क होनी चाहिए",
+    zh: "教育应当完全免费",
+  },
+  "New Question": {
+    es: "Nueva Pregunta",
+    fr: "Nouvelle Question",
+    de: "Neue Frage",
+    pl: "Nowe Pytanie",
+    uk: "Нове Питання",
+    ar: "سؤال جديد",
+    ur: "نیا سوال",
+    bn: "নতুন প্রশ্ন",
+    hi: "नया प्रश्न",
+    zh: "新题目",
+  },
+  "Next Question": {
+    es: "Siguiente Pregunta",
+    fr: "Question Suivante",
+    de: "Nächste Frage",
+    pl: "Następne Pytanie",
+    uk: "Наступне Питання",
+    ar: "السؤال التالي",
+    ur: "اگلا سوال",
+    bn: "পরবর্তী প্রশ্ন",
+    hi: "अगला प्रश्न",
+    zh: "下一题",
+  },
+  "Submit Answer": {
+    es: "Enviar Respuesta",
+    fr: "Valider la Réponse",
+    de: "Antwort Bestätigen",
+    pl: "Zatwierdź Odpowiedź",
+    uk: "Надіслати Відповідь",
+    ar: "إرسال الإجابة",
+    ur: "جواب جمع کریں",
+    bn: "উত্তর জমা দিন",
+    hi: "उत्तर जमा करें",
+    zh: "提交答案",
+  },
+  "Check Answer": {
+    es: "Comprobar Respuesta",
+    fr: "Vérifier la Réponse",
+    de: "Antwort Prüfen",
+    pl: "Sprawdź Odpowiedź",
+    uk: "Перевірити Відповідь",
+    ar: "تحقق من الإجابة",
+    ur: "جواب چیک کریں",
+    bn: "উত্তর পরীক্ষা করুন",
+    hi: "उत्तर जांचें",
+    zh: "检查答案",
+  },
+  "Explanation": {
+    es: "Explicación",
+    fr: "Explication",
+    de: "Erklärung",
+    pl: "Wyjaśnienie",
+    uk: "Пояснення",
+    ar: "الشرح والتوضيح",
+    ur: "وضاحت",
+    bn: "ব্যাখ্যা",
+    hi: "व्याख्या",
+    zh: "解析",
+  },
+  "Hint": {
+    es: "Pista",
+    fr: "Indice",
+    de: "Hinweis",
+    pl: "Wskazówka",
+    uk: "Підказка",
+    ar: "تلميح",
+    ur: "اشارہ",
+    bn: "ইঙ্গিত",
+    hi: "संकेत",
+    zh: "提示",
+  },
+  "Socratic Hint": {
+    es: "Pista Socrática",
+    fr: "Indice Socratique",
+    de: "Sokratischer Hinweis",
+    pl: "Wskazówka Sokratejska",
+    uk: "Сократівська Підказка",
+    ar: "تلميح سقراطي",
+    ur: "سقراطی اشارہ",
+    bn: "সক্রেটিক ইঙ্গিত",
+    hi: "सुकराती संकेत",
+    zh: "苏格拉底式启发",
+  },
+  "Key Stage 1": {
+    es: "Etapa Clave 1",
+    fr: "Cycle 1",
+    de: "Schulstufe 1",
+    pl: "Etap Edukacyjny 1",
+    uk: "Ключовий Етап 1",
+    ar: "المرحلة الأولى (KS1)",
+    ur: "تعلیمی مرحلہ 1",
+    bn: "মূল পর্যায় ১",
+    hi: "मुख्य चरण 1",
+    zh: "第一学段 (KS1)",
+  },
+  "Key Stage 2": {
+    es: "Etapa Clave 2",
+    fr: "Cycle 2",
+    de: "Schulstufe 2",
+    pl: "Etap Edukacyjny 2",
+    uk: "Ключовий Етап 2",
+    ar: "المرحلة الثانية (KS2)",
+    ur: "تعلیمی مرحلہ 2",
+    bn: "মূল পর্যায় ২",
+    hi: "मुख्य चरण 2",
+    zh: "第二学段 (KS2)",
+  },
+  "Key Stage 3": {
+    es: "Etapa Clave 3",
+    fr: "Cycle 3",
+    de: "Schulstufe 3",
+    pl: "Etap Edukacyjny 3",
+    uk: "Ключовий Етап 3",
+    ar: "المرحلة الثالثة (KS3)",
+    ur: "تعلیمی مرحلہ 3",
+    bn: "মূল পর্যায় ৩",
+    hi: "मुख्य चरण 3",
+    zh: "第三学段 (KS3)",
+  },
+  "Key Stage 4 (GCSE)": {
+    es: "Etapa Clave 4 (GCSE)",
+    fr: "Cycle 4 (GCSE)",
+    de: "Schulstufe 4 (GCSE)",
+    pl: "Etap Edukacyjny 4 (GCSE)",
+    uk: "Ключовий Етап 4 (GCSE)",
+    ar: "المرحلة الرابعة (GCSE)",
+    ur: "تعلیمی مرحلہ 4 (GCSE)",
+    bn: "মূল পর্যায় ৪ (GCSE)",
+    hi: "मुख्य चरण 4 (GCSE)",
+    zh: "第四学段 (GCSE)",
+  },
+  "Religious Education (Catholic)": {
+    es: "Educación Religiosa (Católica)",
+    fr: "Éducation Religieuse (Catholique)",
+    de: "Religionsunterricht (Katholisch)",
+    pl: "Edukacja Religijna (Katolicka)",
+    uk: "Релігійна Освіта (Католицька)",
+    ar: "التربية الدينية (الكاثوليكية)",
+    ur: "مذہبی تعلیم (کیتھولک)",
+    bn: "ধর্মীয় শিক্ষা (ক্যাথলিক)",
+    hi: "धार्मिक शिक्षा (कैथोलिक)",
+    zh: "宗教教育 (天主教)",
+  },
+  "St Joseph's Portal": {
+    es: "Portal San José",
+    fr: "Portail Saint-Joseph",
+    de: "St. Joseph Portal",
+    pl: "Portal Św. Józefa",
+    uk: "Портал Святого Йосипа",
+    ar: "بوابة سانت جوزيف",
+    ur: "سینٹ جوزف پورٹل",
+    bn: "সেন্ট জোসেফ পোর্টাল",
+    hi: "सेंट जोसेफ पोर्टल",
+    zh: "圣约瑟夫平台",
+  },
 };
 
 // Elements to strictly ignore during DOM tree traversal
@@ -544,6 +880,7 @@ const IGNORED_TAGS = new Set([
 ]);
 
 let isUniversalTranslationRunning = false;
+let pendingTargetLang: string | null = null;
 let universalObserver: MutationObserver | null = null;
 let currentActiveTargetLang = 'en';
 
@@ -558,7 +895,10 @@ function isExcludedFromTranslation(node: Node): boolean {
       parent.classList.contains('notranslate') ||
       parent.getAttribute('translate') === 'no' ||
       parent.hasAttribute('data-no-translate') ||
-      parent.id === 'universal-translator-bar'
+      parent.id === 'universal-translator-bar' ||
+      parent.id === 'neural-worker-guest-vm' ||
+      parent.classList.contains('katex') ||
+      parent.classList.contains('math-formula')
     ) {
       return true;
     }
@@ -568,15 +908,18 @@ function isExcludedFromTranslation(node: Node): boolean {
 }
 
 /**
- * Looks up direct lexicon match with trimmed case-insensitivity
+ * Looks up direct lexicon match with trimmed case-insensitivity and symbol/emoji extraction
  */
 function getLexiconTranslation(text: string, targetLang: string): string | null {
   const trimmed = text.trim();
+  if (!trimmed) return null;
+
+  // 1. Direct exact match
   if (UNIVERSAL_UI_LEXICON[trimmed] && UNIVERSAL_UI_LEXICON[trimmed][targetLang]) {
     return UNIVERSAL_UI_LEXICON[trimmed][targetLang];
   }
 
-  // Case insensitive match
+  // 2. Direct case-insensitive match
   const lower = trimmed.toLowerCase();
   for (const [key, mapping] of Object.entries(UNIVERSAL_UI_LEXICON)) {
     if (key.toLowerCase() === lower && mapping[targetLang]) {
@@ -584,12 +927,31 @@ function getLexiconTranslation(text: string, targetLang: string): string | null 
     }
   }
 
+  // 3. Leading/Trailing Emoji or Symbol extraction (e.g. "🏠 Home" -> "🏠 Inicio", "📖 Learning" -> "📖 Aprendizaje")
+  const symbolPrefixMatch = trimmed.match(/^([^\p{L}\p{N}]*\s*)([\p{L}\p{N}].*?)(\s*[^\p{L}\p{N}]*)$/u);
+  if (symbolPrefixMatch) {
+    const [, prefix, core, suffix] = symbolPrefixMatch;
+    const coreTrimmed = core.trim();
+    if (coreTrimmed) {
+      if (UNIVERSAL_UI_LEXICON[coreTrimmed]?.[targetLang]) {
+        return `${prefix}${UNIVERSAL_UI_LEXICON[coreTrimmed][targetLang]}${suffix}`;
+      }
+      const coreLower = coreTrimmed.toLowerCase();
+      for (const [key, mapping] of Object.entries(UNIVERSAL_UI_LEXICON)) {
+        if (key.toLowerCase() === coreLower && mapping[targetLang]) {
+          return `${prefix}${mapping[targetLang]}${suffix}`;
+        }
+      }
+    }
+  }
+
   return null;
 }
 
 /**
- * Universal DOM Translator: walks through visible text nodes in the page,
- * stores the original English string, and replaces it with the translated version.
+ * Universal DOM Translator: walks through visible text nodes across the entire page DOM
+ * (body, header, navigation, and viewport), stores the original English string,
+ * and replaces it with the translated version.
  */
 export async function translatePageDOM(targetLang: string): Promise<void> {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -607,11 +969,14 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
     return;
   }
 
-  if (isUniversalTranslationRunning) return;
+  if (isUniversalTranslationRunning) {
+    pendingTargetLang = targetLang;
+    return;
+  }
   isUniversalTranslationRunning = true;
 
   try {
-    const rootScope = document.getElementById('ast-persistent-viewport') || document.body;
+    const rootScope = document.body;
     const walker = document.createTreeWalker(
       rootScope,
       NodeFilter.SHOW_TEXT,
@@ -638,7 +1003,7 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
     }
 
     // Process nodes in fast chunks to avoid UI stutter
-    const batchSize = 35;
+    const batchSize = 40;
     for (let i = 0; i < textNodesToTranslate.length; i += batchSize) {
       const batch = textNodesToTranslate.slice(i, i + batchSize);
 
@@ -665,7 +1030,6 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
             // 1. Instant dictionary lookup
             const dictMatch = getLexiconTranslation(trimmed, targetLang);
             if (dictMatch) {
-              // Preserve surrounding whitespace
               const leadingSpace = originalText.match(/^\s*/)?.[0] || '';
               const trailingSpace = originalText.match(/\s*$/)?.[0] || '';
               textNode.nodeValue = `${leadingSpace}${dictMatch}${trailingSpace}`;
@@ -673,13 +1037,15 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
               return;
             }
 
-            // 2. High-speed multi-tier translation
-            const translated = await translateText(trimmed, targetLang, 'en');
-            if (translated && translated !== trimmed) {
-              const leadingSpace = originalText.match(/^\s*/)?.[0] || '';
-              const trailingSpace = originalText.match(/\s*$/)?.[0] || '';
-              textNode.nodeValue = `${leadingSpace}${translated}${trailingSpace}`;
-              TRANSLATED_TEXT_NODES.set(textNode, { lang: targetLang, text: translated });
+            // 2. Multi-tier translation (only for compact phrases to avoid blocking network limits)
+            if (trimmed.length < 120) {
+              const translated = await translateText(trimmed, targetLang, 'en');
+              if (translated && translated !== trimmed) {
+                const leadingSpace = originalText.match(/^\s*/)?.[0] || '';
+                const trailingSpace = originalText.match(/\s*$/)?.[0] || '';
+                textNode.nodeValue = `${leadingSpace}${translated}${trailingSpace}`;
+                TRANSLATED_TEXT_NODES.set(textNode, { lang: targetLang, text: translated });
+              }
             }
           } catch {
             // Keep original text
@@ -691,11 +1057,16 @@ export async function translatePageDOM(targetLang: string): Promise<void> {
     console.warn('[Universal Translator Error]:', err);
   } finally {
     isUniversalTranslationRunning = false;
+    if (pendingTargetLang && pendingTargetLang !== currentActiveTargetLang) {
+      const nextLang = pendingTargetLang;
+      pendingTargetLang = null;
+      translatePageDOM(nextLang);
+    }
   }
 }
 
 /**
- * Restores all text nodes back to their original English text.
+ * Restores all text nodes across the entire page back to their original English text.
  */
 export function restorePageDOM(): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -704,7 +1075,7 @@ export function restorePageDOM(): void {
   document.documentElement.dir = 'ltr';
   currentActiveTargetLang = 'en';
 
-  const rootScope = document.getElementById('ast-persistent-viewport') || document.body;
+  const rootScope = document.body;
   const walker = document.createTreeWalker(
     rootScope,
     NodeFilter.SHOW_TEXT,
@@ -729,8 +1100,8 @@ export function restorePageDOM(): void {
 }
 
 /**
- * Starts a persistent MutationObserver so dynamically mounted elements
- * or route changes are automatically translated in real-time.
+ * Starts a persistent MutationObserver on document.body so dynamically mounted elements,
+ * navigation changes, and modals are automatically translated in real-time.
  */
 export function enableUniversalObserver(targetLang: string): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -742,17 +1113,23 @@ export function enableUniversalObserver(targetLang: string): void {
 
   if (!targetLang || targetLang === 'en') return;
 
-  const targetContainer = document.getElementById('ast-persistent-viewport') || document.body;
+  const targetContainer = document.body;
   let debounceTimer: any = null;
   universalObserver = new MutationObserver((mutations) => {
-    // Only trigger if new child nodes were actually added to avoid infinite loops on text mutations
-    const hasAddedNodes = mutations.some((m) => m.addedNodes && m.addedNodes.length > 0);
-    if (!hasAddedNodes) return;
+    // Only trigger if new element child nodes were added to avoid loops on text value replacements
+    const hasAddedElements = mutations.some(
+      (m) =>
+        m.addedNodes &&
+        Array.from(m.addedNodes).some(
+          (n) => n.nodeType === Node.ELEMENT_NODE && (n as HTMLElement).id !== 'universal-translator-bar'
+        )
+    );
+    if (!hasAddedElements) return;
 
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       translatePageDOM(targetLang);
-    }, 350);
+    }, 250);
   });
 
   universalObserver.observe(targetContainer, {

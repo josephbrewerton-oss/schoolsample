@@ -1368,12 +1368,57 @@ export function findCurriculumKnowledge(
     ...CURRICULUM_COMPLETE_BASE,
   };
 
+  const stopWords = new Set(['and', 'within', 'the', 'of', 'to', 'in', 'for', 'with', 'a', 'an', 'at', 'by']);
+  const getTokens = (str: string) =>
+    (str || '')
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 1 && !stopWords.has(w));
+
+  const queryTopicTokens = getTokens(topic);
+
   // 1. Direct key match (e.g. "ks2:science:states-of-matter")
   for (const [key, val] of Object.entries(combinedKnowledgeBase)) {
     const [kStage, kSub, kTop] = key.split(':');
-    const stageMatch = normStage.includes(kStage) || (kStage === 'ks1' && normStage.includes('1')) || (kStage === 'ks2' && normStage.includes('2')) || (kStage === 'ks3' && normStage.includes('3')) || (kStage === 'ks4' && (normStage.includes('4') || normStage.includes('gcse')));
-    const subjectMatch = normSubject.includes(kSub) || kSub.includes(normSubject) || (kSub === 'maths' && normSubject.includes('mat')) || (kSub === 'science' && (normSubject.includes('sci') || normSubject.includes('phys') || normSubject.includes('chem') || normSubject.includes('bio'))) || (kSub === 'history' && normSubject.includes('hist')) || (kSub === 'geography' && normSubject.includes('geo')) || (kSub === 'english' && normSubject.includes('eng')) || (kSub === 'computing' && normSubject.includes('comp')) || (kSub === 'mfl' && (normSubject.includes('mfl') || normSubject.includes('lang') || normSubject.includes('french') || normSubject.includes('spanish') || normSubject.includes('latin')));
-    const topicMatch = normTopic.includes(kTop) || kTop.includes(normTopic) || norm(val.title).includes(normTopic) || normTopic.includes(norm(val.title));
+    const stageMatch =
+      normStage.includes(kStage) ||
+      (kStage === 'ks1' && normStage.includes('1')) ||
+      (kStage === 'ks2' && normStage.includes('2')) ||
+      (kStage === 'ks3' && normStage.includes('3')) ||
+      (kStage === 'ks4' && (normStage.includes('4') || normStage.includes('gcse')));
+    const subjectMatch =
+      normSubject.includes(kSub) ||
+      kSub.includes(normSubject) ||
+      (kSub === 'maths' && (normSubject.includes('mat') || normSubject.includes('arith') || normSubject.includes('num'))) ||
+      (kSub === 'science' && (normSubject.includes('sci') || normSubject.includes('phys') || normSubject.includes('chem') || normSubject.includes('bio'))) ||
+      (kSub === 'history' && normSubject.includes('hist')) ||
+      (kSub === 'geography' && normSubject.includes('geo')) ||
+      (kSub === 'english' && (normSubject.includes('eng') || normSubject.includes('phon') || normSubject.includes('read') || normSubject.includes('writ'))) ||
+      (kSub === 'computing' && (normSubject.includes('comp') || normSubject.includes('algo'))) ||
+      (kSub.includes('relig') && (normSubject.includes('relig') || normSubject.includes('cath') || normSubject.includes('faith'))) ||
+      (kSub === 'mfl' && (normSubject.includes('mfl') || normSubject.includes('lang') || normSubject.includes('french') || normSubject.includes('spanish') || normSubject.includes('latin')));
+
+    const valNormTitle = norm(val.title);
+    const keyTopTokens = getTokens(kTop);
+    const valTitleTokens = getTokens(val.title);
+    const combinedTokens = new Set([...keyTopTokens, ...valTitleTokens]);
+
+    const directTokenOverlap =
+      queryTopicTokens.length > 0 &&
+      queryTopicTokens.every((t) => combinedTokens.has(t) || kTop.includes(t) || valNormTitle.includes(t));
+
+    const majorTokenOverlap =
+      queryTopicTokens.length >= 2 &&
+      queryTopicTokens.filter((t) => combinedTokens.has(t) || kTop.includes(t) || valNormTitle.includes(t)).length >= 2;
+
+    const topicMatch =
+      normTopic.includes(kTop) ||
+      kTop.includes(normTopic) ||
+      valNormTitle.includes(normTopic) ||
+      normTopic.includes(valNormTitle) ||
+      val.topicId === normTopic ||
+      directTokenOverlap ||
+      majorTokenOverlap;
 
     if (stageMatch && subjectMatch && topicMatch) {
       return val;
@@ -1383,7 +1428,17 @@ export function findCurriculumKnowledge(
   // 2. Fuzzy topic match across knowledge base if exact stage/subject slightly differs
   for (const val of Object.values(combinedKnowledgeBase)) {
     const valTitleNorm = norm(val.title);
-    if (valTitleNorm.includes(normTopic) || normTopic.includes(valTitleNorm) || val.topicId === normTopic) {
+    const valTitleTokens = getTokens(val.title);
+    const hasSignificantOverlap =
+      queryTopicTokens.length >= 2 &&
+      queryTopicTokens.filter((t) => valTitleTokens.includes(t) || valTitleNorm.includes(t)).length >= 2;
+
+    if (
+      valTitleNorm.includes(normTopic) ||
+      normTopic.includes(valTitleNorm) ||
+      val.topicId === normTopic ||
+      hasSignificantOverlap
+    ) {
       return val;
     }
   }

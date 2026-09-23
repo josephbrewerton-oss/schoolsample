@@ -156,16 +156,16 @@ export default function NeuralLabCanvas({
     }
   }, [initialUnit]);
 
-  // 1. Resolve Curriculum via Unified Node Dispatch
+  // 1. Resolve Curriculum Tree via Unified Node Dispatch (fetch full tree once)
   const [curriculumTree, setCurriculumTree] = useState<any>(null);
   useEffect(() => {
     dispatch('CurriculumNode', {
       intent: 'resolve:tree',
-      payload: { stage: selectedKeyStage },
+      payload: {},
     }).then((res) => {
-      if (res.ok) setCurriculumTree(res.data);
+      if (res.ok && res.data) setCurriculumTree(res.data);
     });
-  }, [selectedKeyStage]);
+  }, []);
 
   const slugify = (text: string) =>
     (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -338,17 +338,77 @@ export default function NeuralLabCanvas({
     }
   }, [curriculumSetting, difficulty, activeLang, handleNewQuestion]);
 
+  const handleKeyStageSelect = (newKs: string, firstSub: string, firstUnit: string) => {
+    const nextSub = firstSub || selectedSubject;
+    const nextUnit = firstUnit || selectedUnit;
+    activeSelectionRef.current = {
+      keyStage: newKs,
+      subject: nextSub,
+      unit: nextUnit,
+      lesson: '',
+    };
+    setSelectedKeyStage(newKs);
+    setSelectedSubject(nextSub);
+    setSelectedUnit(nextUnit);
+    setSelectedLesson('');
+    onTopicChange?.(newKs, nextSub, nextUnit);
+    requestQuestion(newKs, nextSub, nextUnit, difficulty, activeLang, false, undefined, '');
+  };
+
+  const handleSubjectSelect = (newSub: string, firstUnit: string) => {
+    const nextUnit = firstUnit || selectedUnit;
+    activeSelectionRef.current = {
+      keyStage: selectedKeyStage,
+      subject: newSub,
+      unit: nextUnit,
+      lesson: '',
+    };
+    setSelectedSubject(newSub);
+    setSelectedUnit(nextUnit);
+    setSelectedLesson('');
+    onTopicChange?.(selectedKeyStage, newSub, nextUnit);
+    requestQuestion(selectedKeyStage, newSub, nextUnit, difficulty, activeLang, false, undefined, '');
+  };
+
+  const handleUnitSelect = (newUnit: string) => {
+    activeSelectionRef.current = {
+      keyStage: selectedKeyStage,
+      subject: selectedSubject,
+      unit: newUnit,
+      lesson: '',
+    };
+    setSelectedUnit(newUnit);
+    setSelectedLesson('');
+    onTopicChange?.(selectedKeyStage, selectedSubject, newUnit);
+    requestQuestion(selectedKeyStage, selectedSubject, newUnit, difficulty, activeLang, false, undefined, '');
+  };
+
+  const handleLessonSelect = (lesson: string) => {
+    activeSelectionRef.current = {
+      keyStage: selectedKeyStage,
+      subject: selectedSubject,
+      unit: selectedUnit,
+      lesson,
+    };
+    setSelectedLesson(lesson);
+    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, lesson);
+  };
+
   const handleDifficultyChange = (newDiff: 'warmup' | 'challenger' | 'brainbuster') => {
     setDifficulty(newDiff);
     if (typeof window !== 'undefined') {
       localStorage.setItem('preferred_difficulty', newDiff);
     }
-    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, newDiff);
+    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, newDiff, activeLang, false, undefined, selectedLesson);
   };
 
+  const hasMountedRef = useRef(false);
   useEffect(() => {
-    requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty);
-  }, [selectedKeyStage, selectedSubject, selectedUnit, curriculumSetting, requestQuestion]);
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, selectedLesson);
+    }
+  }, []);
 
   // 3. User Selection & Progress Tracking via Unified Dispatch
   const handleSelectOption = (idx: number) => {
@@ -459,33 +519,15 @@ export default function NeuralLabCanvas({
         subject={selectedSubject}
         unit={selectedUnit}
         selectedLesson={selectedLesson}
-        onLessonChange={(lesson) => {
-          setSelectedLesson(lesson);
-          requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, lesson);
-        }}
+        onLessonChange={handleLessonSelect}
         status="online"
         isReady={!isGenerating}
         sessionId={sessionId}
         curriculumTree={curriculumTree}
         buttonLabel={isGenerating ? '⚡ Generating...' : 'New Question'}
-        onKeyStageChange={(newKs, firstSub, firstUnit) => {
-          setSelectedKeyStage(newKs);
-          setSelectedLesson('');
-          if (firstSub) setSelectedSubject(firstSub);
-          if (firstUnit) setSelectedUnit(firstUnit);
-          onTopicChange?.(newKs, firstSub || selectedSubject, firstUnit || selectedUnit);
-        }}
-        onSubjectChange={(newSub, firstUnit) => {
-          setSelectedSubject(newSub);
-          setSelectedLesson('');
-          if (firstUnit) setSelectedUnit(firstUnit);
-          onTopicChange?.(selectedKeyStage, newSub, firstUnit || selectedUnit);
-        }}
-        onUnitChange={(newUnit) => {
-          setSelectedUnit(newUnit);
-          setSelectedLesson('');
-          onTopicChange?.(selectedKeyStage, selectedSubject, newUnit);
-        }}
+        onKeyStageChange={handleKeyStageSelect}
+        onSubjectChange={handleSubjectSelect}
+        onUnitChange={handleUnitSelect}
         onSessionIdChange={setSessionId}
         onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, selectedLesson)}
         onDownloadReport={handleExportReport}

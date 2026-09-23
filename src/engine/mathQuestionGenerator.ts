@@ -32,6 +32,17 @@ export class MathQuestionGenerator {
     const t = (topic || '').toLowerCase();
     const ks = (keyStage || '').toLowerCase().replace(/key\s*stage\s*/g, 'ks');
 
+    // ONLY generate math if the subject is actually Mathematics, Numeracy, or Arithmetic
+    const isMathSubject = s.includes('math') || s.includes('arithmetic') || s.includes('numeracy') || s.includes('algebra') || s.includes('calculat');
+    if (!isMathSubject) {
+      return false;
+    }
+
+    // Do NOT procedurally generate if the topic is non-procedural (like 2D/3D shapes, coordinates, symmetry) where Oak has verified conceptual questions
+    if (t.includes('shape') || t.includes('geometry') || t.includes('symmetry') || t.includes('measur') || t.includes('place value')) {
+      return false;
+    }
+
     // Explicitly check for topics with dedicated procedural algorithmic generators
     if (
       t.includes('probability') ||
@@ -60,7 +71,7 @@ export class MathQuestionGenerator {
     }
 
     // If subject is math and it's a general times-table / calculation request
-    if ((s.includes('math') || s.includes('arithmetic')) && (t.includes('multipl') || t.includes('table') || t.includes('divis'))) {
+    if (t.includes('multipl') || t.includes('table') || t.includes('divis')) {
       return true;
     }
 
@@ -98,7 +109,7 @@ export class MathQuestionGenerator {
     if (t.includes('bidmas') || t.includes('order of operation')) {
       return this.generateBidmasQuestion(rng, seedToken);
     }
-    if (ks.includes('ks1') || t.includes('addition') || t.includes('within 20')) {
+    if (t.includes('addition') || t.includes('subtraction') || t.includes('within 20') || (ks.includes('ks1') && !t.includes('multipli') && !t.includes('table') && !t.includes('divis'))) {
       return this.generateKS1Arithmetic(rng, seedToken);
     }
     if (t.includes('powers') || t.includes('index')) {

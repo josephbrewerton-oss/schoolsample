@@ -1,5 +1,6 @@
 // src/components/UniversalTranslatorBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   SUPPORTED_LANGUAGES,
   getSavedLanguage,
@@ -95,24 +96,22 @@ export default function UniversalTranslatorBar() {
     return unsub;
   }, []);
 
-  // Listen to path changes / route transitions in SPA to re-translate new pages
+  const location = useLocation();
+
+  // Listen to route transitions across the entire SPA to automatically re-translate new pages
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const handleLocationChange = () => {
-      const saved = getSavedLanguage();
-      if (saved && saved !== 'en') {
-        setTimeout(() => {
-          translatePageDOM(saved);
-        }, 150);
-      }
-    };
-
-    window.addEventListener('popstate', handleLocationChange);
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-    };
-  }, []);
+    const saved = getSavedLanguage();
+    if (saved && saved !== 'en') {
+      setIsTranslated(true);
+      const timer = setTimeout(() => {
+        translatePageDOM(saved);
+        enableUniversalObserver(saved);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, location.search]);
 
   const handleLanguageSelect = async (langCode: string) => {
     setCurrentLang(langCode);
