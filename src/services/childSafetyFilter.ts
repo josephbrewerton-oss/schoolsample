@@ -152,7 +152,7 @@ export function sanitizeAiOutput(output: string, fallbackContext: string = 'your
     previousText = text;
     text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
   } while (text !== previousText);
-  text = text.replace(/javascript:/gi, '');
+  text = text.replace(/(?:javascript|data|vbscript):/gi, '');
   text = text.replace(/onload=/gi, '');
 
   return text;
