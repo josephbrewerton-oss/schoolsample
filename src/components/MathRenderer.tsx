@@ -44,6 +44,18 @@ function normalizeMathText(raw: string): string {
 }
 
 /**
+ * Escapes HTML meta-characters so plain text can be safely inserted into innerHTML.
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Safely renders a LaTeX snippet into HTML using KaTeX.
  */
 function renderKatexHtml(tex: string, displayMode: boolean = false): string {
@@ -55,7 +67,7 @@ function renderKatexHtml(tex: string, displayMode: boolean = false): string {
       strict: false,
     });
   } catch (err) {
-    return tex;
+    return `<span>${escapeHtml(tex)}</span>`;
   }
 }
 
