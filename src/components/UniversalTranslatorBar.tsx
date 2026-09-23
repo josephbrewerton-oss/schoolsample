@@ -19,7 +19,6 @@ export default function UniversalTranslatorBar() {
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isTranslated, setIsTranslated] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  const [useGoogleFallback, setUseGoogleFallback] = useState<boolean>(false);
   const googleScriptLoadedRef = useRef(false);
 
   // Ensure CSS variable --universal-bar-height is set once or on actual height changes without triggering forced synchronous reflow
@@ -63,7 +62,65 @@ export default function UniversalTranslatorBar() {
       cancelAnimationFrame(rAFId);
       ro.disconnect();
     };
-  }, [isCollapsed, useGoogleFallback]);
+  }, [isCollapsed]);
+
+  // Google Translate engine auto-loader
+  const ensureGoogleTranslateLoaded = () => {
+    if (typeof window === 'undefined') return;
+    const win = window as any;
+    if (!win.googleTranslateElementInit) {
+      win.googleTranslateElementInit = () => {
+        try {
+          if (win.google?.translate?.TranslateElement) {
+            new win.google.translate.TranslateElement(
+              {
+                pageLanguage: 'en',
+                layout: win.google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false,
+              },
+              'google_translate_element'
+            );
+          }
+        } catch (e) {
+          console.warn('[GoogleTranslate Init]:', e);
+        }
+      };
+    }
+
+    if (!googleScriptLoadedRef.current && !document.getElementById('google-translate-script')) {
+      googleScriptLoadedRef.current = true;
+      const script = document.createElement('script');
+      script.id = 'google-translate-script';
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  };
+
+  const applyGoogleTranslate = (langCode: string) => {
+    if (typeof window === 'undefined') return;
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+
+    if (langCode === 'en' || !langCode) {
+      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      if (!isLocal) {
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${host};`;
+      }
+    } else {
+      document.cookie = `googtrans=/en/${langCode}; path=/;`;
+      if (!isLocal) {
+        document.cookie = `googtrans=/en/${langCode}; path=/; domain=${host};`;
+      }
+    }
+
+    // Trigger Google combo if element already mounted
+    const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
+    if (combo) {
+      combo.value = langCode === 'en' ? '' : langCode;
+      combo.dispatchEvent(new Event('change'));
+    }
+  };
 
   // Initialize from storage on mount
   useEffect(() => {
@@ -72,6 +129,8 @@ export default function UniversalTranslatorBar() {
     setCurrentLang(saved);
     if (saved && saved !== 'en') {
       setIsTranslated(true);
+      ensureGoogleTranslateLoaded();
+      applyGoogleTranslate(saved);
       translatePageDOM(saved);
       enableUniversalObserver(saved);
     }
@@ -84,12 +143,15 @@ export default function UniversalTranslatorBar() {
       if (newLang && newLang !== 'en') {
         setIsTranslating(true);
         setIsTranslated(true);
+        ensureGoogleTranslateLoaded();
+        applyGoogleTranslate(newLang);
         translatePageDOM(newLang).then(() => {
           setIsTranslating(false);
           enableUniversalObserver(newLang);
         });
       } else {
         setIsTranslated(false);
+        applyGoogleTranslate('en');
         restorePageDOM();
       }
     });
@@ -105,6 +167,8 @@ export default function UniversalTranslatorBar() {
     const saved = getSavedLanguage();
     if (saved && saved !== 'en') {
       setIsTranslated(true);
+      ensureGoogleTranslateLoaded();
+      applyGoogleTranslate(saved);
       const timer = setTimeout(() => {
         translatePageDOM(saved);
         enableUniversalObserver(saved);
@@ -119,12 +183,15 @@ export default function UniversalTranslatorBar() {
 
     if (langCode === 'en') {
       setIsTranslated(false);
+      applyGoogleTranslate('en');
       restorePageDOM();
       return;
     }
 
     setIsTranslating(true);
     setIsTranslated(true);
+    ensureGoogleTranslateLoaded();
+    applyGoogleTranslate(langCode);
     try {
       await translatePageDOM(langCode);
       enableUniversalObserver(langCode);
@@ -135,11 +202,14 @@ export default function UniversalTranslatorBar() {
 
   const handleToggleOriginal = () => {
     if (isTranslated) {
+      applyGoogleTranslate('en');
       restorePageDOM();
       setIsTranslated(false);
     } else {
       if (currentLang && currentLang !== 'en') {
         setIsTranslating(true);
+        ensureGoogleTranslateLoaded();
+        applyGoogleTranslate(currentLang);
         translatePageDOM(currentLang).then(() => {
           setIsTranslating(false);
           setIsTranslated(true);
@@ -151,33 +221,6 @@ export default function UniversalTranslatorBar() {
 
   const handleSpeak = () => {
     speakCurrentPage(currentLang);
-  };
-
-  // Google Translate widget injection on demand
-  const handleToggleGoogleEngine = () => {
-    const nextVal = !useGoogleFallback;
-    setUseGoogleFallback(nextVal);
-
-    if (nextVal && typeof window !== 'undefined' && !googleScriptLoadedRef.current) {
-      googleScriptLoadedRef.current = true;
-      (window as any).googleTranslateElementInit = function () {
-        if ((window as any).google?.translate?.TranslateElement) {
-          new (window as any).google.translate.TranslateElement(
-            {
-              pageLanguage: 'en',
-              layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-              autoDisplay: false,
-            },
-            'google_translate_element'
-          );
-        }
-      };
-
-      const script = document.createElement('script');
-      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      script.async = true;
-      document.body.appendChild(script);
-    }
   };
 
   const langMeta = SUPPORTED_LANGUAGES[currentLang] || SUPPORTED_LANGUAGES.en;
@@ -325,33 +368,12 @@ export default function UniversalTranslatorBar() {
               <span>🔊</span> Read Page
             </button>
 
-            {/* Optional 100+ Language Web Widget Toggle */}
-            <button
-              type="button"
-              id="universal-google-engine-btn"
-              onClick={handleToggleGoogleEngine}
-              style={{
-                background: useGoogleFallback ? '#047857' : '#1e293b',
-                color: useGoogleFallback ? '#ffffff' : '#cbd5e1',
-                border: '1px solid #475569',
-                borderRadius: '6px',
-                padding: '0.25rem 0.6rem',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              title="Toggle Google Web Translator for 100+ languages"
-            >
-              {useGoogleFallback ? '✓ Web Engine Active' : '+ 100+ Languages'}
-            </button>
-
-            {/* Container for Google Translate Element if activated */}
-            {useGoogleFallback && (
-              <div
-                id="google_translate_element"
-                style={{ display: 'inline-block', verticalAlign: 'middle' }}
-              />
-            )}
+            {/* Permanent hidden container for automated Google Web Translation Engine */}
+            <div
+              id="google_translate_element"
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
           </div>
         )}
 

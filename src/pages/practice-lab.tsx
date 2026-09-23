@@ -12,6 +12,92 @@ import {
 import { dispatch } from '../engine/hypercall';
 import { hypervisor } from '../engine/hypervisor';
 
+import { ALL_CURRICULUM_ROUTES } from '../curriculum/curriculumMesh';
+
+// Known AST and topic shortcode mappings to curriculum coordinates
+const TOPIC_ALIAS_MAP: Record<string, { stage: string; subject: string; unit: string }> = {
+  'sci-states': { stage: 'Key Stage 2', subject: 'Science', unit: 'States of Matter' },
+  'sci-ecosystems': { stage: 'Key Stage 2', subject: 'Science', unit: 'Ecosystems & Energy' },
+  'sci-plants': { stage: 'Key Stage 2', subject: 'Science', unit: 'Plant Nutrition' },
+  'mat-fractions': { stage: 'Key Stage 2', subject: 'Mathematics', unit: 'Fractions and Decimals' },
+  'mat-angles': { stage: 'Key Stage 2', subject: 'Mathematics', unit: 'Angles and Triangles' },
+  'comp-algorithms': { stage: 'Key Stage 2', subject: 'Computing', unit: 'Algorithms and Sequencing' },
+  're-eucharist': { stage: 'Key Stage 2', subject: 'Religious Education (Catholic)', unit: 'The Holy Eucharist & Sacraments' },
+  'seasonal-changes': { stage: 'Key Stage 1', subject: 'Science', unit: 'Seasonal Changes' },
+  'animals-humans': { stage: 'Key Stage 1', subject: 'Science', unit: 'Animals and Humans' },
+  'materials-properties': { stage: 'Key Stage 1', subject: 'Science', unit: 'Materials and Properties' },
+  'phonics-simple-sentences': { stage: 'Key Stage 1', subject: 'English', unit: 'Phonics & Simple Sentences' },
+  'living-memory': { stage: 'Key Stage 1', subject: 'History', unit: 'Changes Within Living Memory' },
+};
+
+function resolveTopicParam(topicParam: string): { stage: string; subject: string; unit: string } | null {
+  if (!topicParam) return null;
+  const clean = topicParam.trim().toLowerCase();
+  if (TOPIC_ALIAS_MAP[clean]) return TOPIC_ALIAS_MAP[clean];
+
+  // Try matching against ALL_CURRICULUM_ROUTES
+  const found = ALL_CURRICULUM_ROUTES.find(
+    (r) =>
+      r.topicId.toLowerCase() === clean ||
+      r.topicTitle.toLowerCase() === clean ||
+      r.urn.toLowerCase().includes(clean)
+  );
+  if (found) {
+    return {
+      stage: found.stageTitle,
+      subject: found.subjectTitle,
+      unit: found.topicTitle,
+    };
+  }
+  return null;
+}
+
+function getInitialPracticeSelection(): { stage: string; subject: string; unit: string } {
+  if (typeof window === 'undefined') {
+    return { stage: 'Key Stage 1', subject: 'Science', unit: 'Seasonal Changes' };
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlKs = searchParams.get('ks');
+  const urlSub = searchParams.get('sub');
+  const urlUnit = searchParams.get('unit');
+  const urlTopic = searchParams.get('topic');
+
+  // 1. Explicit query parameters (e.g. ?ks=...&sub=...&unit=...)
+  if (urlKs || urlSub || urlUnit) {
+    const stage = urlKs || localStorage.getItem('stj_active_stage') || 'Key Stage 1';
+    const subject = urlSub || localStorage.getItem('stj_active_subject') || 'Science';
+    const unit = urlUnit || localStorage.getItem('stj_active_unit') || 'Seasonal Changes';
+    return { stage, subject, unit };
+  }
+
+  // 2. Topic shortcode or URN (?topic=sci-states, etc.)
+  if (urlTopic) {
+    const resolved = resolveTopicParam(urlTopic);
+    if (resolved) return resolved;
+  }
+
+  // 3. User's previously chosen / remembered subject & unit from localStorage
+  const savedSub = localStorage.getItem('stj_active_subject');
+  const savedStage = localStorage.getItem('stj_active_stage');
+  const savedUnit = localStorage.getItem('stj_active_unit');
+
+  if (savedSub) {
+    return {
+      stage: savedStage || 'Key Stage 1',
+      subject: savedSub,
+      unit: savedUnit || 'Seasonal Changes',
+    };
+  }
+
+  // 4. Default: Key Stage 1 Science (Seasonal Changes) — no hardcoded Mathematics
+  return {
+    stage: 'Key Stage 1',
+    subject: 'Science',
+    unit: 'Seasonal Changes',
+  };
+}
+
 // In-line error boundary to capture child crashes without wiping the page
 class ComponentGuard extends Component<
   { label: string; children: ReactNode },
@@ -60,9 +146,10 @@ export default function PracticeLabPage() {
 
   const location = useLocation();
 
-  const [activeStage, setActiveStage] = useState('Key Stage 2');
-  const [activeSubject, setActiveSubject] = useState('Mathematics');
-  const [activeUnit, setActiveUnit] = useState('Fractions and Decimals');
+  const [initialCoordinates] = useState(getInitialPracticeSelection);
+  const [activeStage, setActiveStage] = useState(initialCoordinates.stage);
+  const [activeSubject, setActiveSubject] = useState(initialCoordinates.subject);
+  const [activeUnit, setActiveUnit] = useState(initialCoordinates.unit);
   const [activeAxiomCheck, setActiveAxiomCheck] = useState<string | undefined>(undefined);
 
   // 2. Mount status
@@ -77,12 +164,31 @@ export default function PracticeLabPage() {
       const urlKs = searchParams.get('ks');
       const urlSub = searchParams.get('sub');
       const urlUnit = searchParams.get('unit');
+      const urlTopic = searchParams.get('topic');
 
-      if (urlKs && urlKs !== activeStage) setActiveStage(urlKs);
-      if (urlSub && urlSub !== activeSubject) setActiveSubject(urlSub);
-      if (urlUnit && urlUnit !== activeUnit) setActiveUnit(urlUnit);
+      if (urlKs || urlSub || urlUnit) {
+        if (urlKs && urlKs !== activeStage) setActiveStage(urlKs);
+        if (urlSub && urlSub !== activeSubject) setActiveSubject(urlSub);
+        if (urlUnit && urlUnit !== activeUnit) setActiveUnit(urlUnit);
+      } else if (urlTopic) {
+        const resolved = resolveTopicParam(urlTopic);
+        if (resolved) {
+          setActiveStage(resolved.stage);
+          setActiveSubject(resolved.subject);
+          setActiveUnit(resolved.unit);
+        }
+      }
     }
   }, [location.search]);
+
+  // Persist subject selection so it is remembered across all sessions and page refreshes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && activeSubject) {
+      localStorage.setItem('stj_active_stage', activeStage);
+      localStorage.setItem('stj_active_subject', activeSubject);
+      localStorage.setItem('stj_active_unit', activeUnit);
+    }
+  }, [activeStage, activeSubject, activeUnit]);
 
   // 4. Baseline Dispatch with Safe Promise Guard
   useEffect(() => {

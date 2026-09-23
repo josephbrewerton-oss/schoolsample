@@ -426,54 +426,6 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
 
         {/* Translation Controls Toolbar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: '#f1f5f9',
-              padding: '3px 8px',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-            }}
-          >
-            <label
-              htmlFor="card-lang-select"
-              style={{
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                color: '#334155',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              <span>🌐</span> Translate:
-            </label>
-            <select
-              id="card-lang-select"
-              value={activeLang}
-              onChange={handleLangSelect}
-              style={{
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid #94a3b8',
-                background: '#ffffff',
-                color: '#0f172a',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              {Object.values(SUPPORTED_LANGUAGES).map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.label} ({l.nativeLabel})
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Bilingual Dual-Language Toggle */}
           <button
             type="button"

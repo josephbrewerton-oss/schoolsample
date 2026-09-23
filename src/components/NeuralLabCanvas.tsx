@@ -41,9 +41,9 @@ export default function NeuralLabCanvas({
     return (typeof window !== 'undefined' && localStorage.getItem('curriculum_standard')) || 'uk_oak';
   });
 
-  const [selectedKeyStage, setSelectedKeyStage] = useState(initialKeyStage || 'Key Stage 1');
-  const [selectedSubject, setSelectedSubject] = useState(initialSubject || 'Science');
-  const [selectedUnit, setSelectedUnit] = useState(initialUnit || 'Seasonal Changes');
+  const [selectedKeyStage, setSelectedKeyStage] = useState(() => initialKeyStage || (typeof window !== 'undefined' ? localStorage.getItem('stj_active_stage') : null) || 'Key Stage 1');
+  const [selectedSubject, setSelectedSubject] = useState(() => initialSubject || (typeof window !== 'undefined' ? localStorage.getItem('stj_active_subject') : null) || 'Science');
+  const [selectedUnit, setSelectedUnit] = useState(() => initialUnit || (typeof window !== 'undefined' ? localStorage.getItem('stj_active_unit') : null) || 'Seasonal Changes');
   const [selectedLesson, setSelectedLesson] = useState('');
   const [sessionId, setSessionId] = useState('Lesson 1');
 
@@ -351,6 +351,11 @@ export default function NeuralLabCanvas({
   const handleKeyStageSelect = (newKs: string, firstSub: string, firstUnit: string) => {
     const nextSub = firstSub || selectedSubject;
     const nextUnit = firstUnit || selectedUnit;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('stj_active_stage', newKs);
+      localStorage.setItem('stj_active_subject', nextSub);
+      localStorage.setItem('stj_active_unit', nextUnit);
+    }
     activeSelectionRef.current = {
       keyStage: newKs,
       subject: nextSub,
@@ -367,6 +372,11 @@ export default function NeuralLabCanvas({
 
   const handleSubjectSelect = (newSub: string, firstUnit: string) => {
     const nextUnit = firstUnit || selectedUnit;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('stj_active_stage', selectedKeyStage);
+      localStorage.setItem('stj_active_subject', newSub);
+      localStorage.setItem('stj_active_unit', nextUnit);
+    }
     activeSelectionRef.current = {
       keyStage: selectedKeyStage,
       subject: newSub,
@@ -381,6 +391,11 @@ export default function NeuralLabCanvas({
   };
 
   const handleUnitSelect = (newUnit: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('stj_active_stage', selectedKeyStage);
+      localStorage.setItem('stj_active_subject', selectedSubject);
+      localStorage.setItem('stj_active_unit', newUnit);
+    }
     activeSelectionRef.current = {
       keyStage: selectedKeyStage,
       subject: selectedSubject,

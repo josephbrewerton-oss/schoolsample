@@ -5,7 +5,7 @@ import {
   listenToLanguageChange,
   setSavedLanguage,
 } from './operational-language';
-import { translateText, speakInLanguage } from './translationService';
+import { translateText, speakInLanguage, OFFLINE_LEXICON } from './translationService';
 
 // WeakMap storing original English text of DOM text nodes for 100% fidelity restoration
 const ORIGINAL_TEXT_NODES = new WeakMap<Text, string>();
@@ -336,6 +336,7 @@ export const UNIVERSAL_UI_LEXICON: Record<string, Record<string, string>> = {
     bn: "বিষয়",
     hi: "विषय",
     zh: "科目",
+    sw: "Somo",
   },
   "Unit": {
     es: "Unidad",
@@ -864,6 +865,293 @@ export const UNIVERSAL_UI_LEXICON: Record<string, Record<string, string>> = {
     bn: "সেন্ট জোসেফ পোর্টাল",
     hi: "सेंट जोसेफ पोर्टल",
     zh: "圣约瑟夫平台",
+    sw: "Tovuti ya San Joseph",
+  },
+  "Practice Arena & Neural Lab": {
+    es: "Arena de Práctica y Laboratorio Neuronal",
+    fr: "Arène de Pratique et Labo Neuronal",
+    de: "Übungsarena & Neuronales Labor",
+    pl: "Arena Ćwiczeń i Laboratorium Neuronowe",
+    uk: "Арена Практики та Нейронна Лабораторія",
+    ar: "ساحة التدريب والمختبر العصبي",
+    ur: "مشق کا میدان اور نیورل لیب",
+    bn: "অনুশীলন ক্ষেত্র ও নিউরাল ল্যাব",
+    hi: "अभ्यास क्षेत्र और न्यूरल लैब",
+    zh: "实践竞技场与神经实验室",
+    sw: "Uwanja wa Mazoezi na Maabara ya Neural",
+  },
+  "Interactive curriculum drills, adaptive question mastery, and on-device Socratic guidance.": {
+    es: "Ejercicios curriculares interactivos, dominio adaptativo de preguntas y guía socrática en el dispositivo.",
+    fr: "Exercices interactifs, maîtrise adaptative des questions et guidage socratique sur l'appareil.",
+    de: "Interaktive Lehrplanübungen, adaptive Fragenbeherrschung und sokratische Anleitung auf dem Gerät.",
+    pl: "Interaktywne ćwiczenia programowe, adaptacyjne opanowanie pytań i sokratejskie przewodnictwo na urządzeniu.",
+    uk: "Інтерактивні вправи, адаптивне засвоєння питань та сократичне керівництво на пристрої.",
+    ar: "تدريبات تفاعلية للمناهج، إتقان تكيفي للأسئلة، وتوجيه سقراطي على الجهاز.",
+    ur: "انٹرایکٹو نصابی مشقیں، موافقت پذیر سوالات کی مہارت، اور ڈیوائس پر سقراطی رہنمائی۔",
+    bn: "ইন্টারেক্টিভ পাঠ্যক্রম ড্রিল, অভিযোজিত প্রশ্ন দক্ষতা এবং ডিভাইসে সোক্রেটিক গাইডেন্স।",
+    hi: "इंटरैक्टिव पाठ्यक्रम अभ्यास, अनुकूली प्रश्न निपुणता, और ऑन-डिवाइस सुकराती मार्गदर्शन।",
+    zh: "互动式课程训练、自适应题目掌握以及端侧苏格拉底式辅导。",
+    sw: "Mazoezi shirikishi ya mtaala, umilisi wa maswali yanayobadilika, na mwongozo wa Kisokrasi kwenye kifaa.",
+  },
+  "Universal Translator": {
+    es: "Traductor Universal",
+    fr: "Traducteur Universel",
+    de: "Universal-Übersetzer",
+    pl: "Uniwersalny Tłumacz",
+    uk: "Універсальний Перекладач",
+    ar: "المترجم الشامل",
+    ur: "عالمگیر مترجم",
+    bn: "সার্বজনীন অনুবাদক",
+    hi: "सार्वभौमिक अनुवादक",
+    zh: "通用翻译器",
+    sw: "Mfasiri wa Ulimwengu",
+  },
+  "English Original": {
+    es: "Original en Inglés",
+    fr: "Original en Anglais",
+    de: "Englisches Original",
+    pl: "Oryginał Angielski",
+    uk: "Англійський Оригінал",
+    ar: "الأصل الإنجليزي",
+    ur: "انگریزی اصل",
+    bn: "ইংরেজি মূল",
+    hi: "अंग्रेजी मूल",
+    zh: "英文原版",
+    sw: "Asili ya Kiingereza",
+  },
+  "Translate to:": {
+    es: "Traducir a:",
+    fr: "Traduire en :",
+    de: "Übersetzen nach:",
+    pl: "Przetłumacz na:",
+    uk: "Перекласти на:",
+    ar: "ترجمة إلى:",
+    ur: "ترجمہ کریں:",
+    bn: "অনুবাদ করুন:",
+    hi: "में अनुवाद करें:",
+    zh: "翻译为：",
+    sw: "Tafsiri kwa:",
+  },
+  "Read Page": {
+    es: "Leer Página",
+    fr: "Lire la Page",
+    de: "Seite Vorlesen",
+    pl: "Przeczytaj Stronę",
+    uk: "Прочитати Сторінку",
+    ar: "قراءة الصفحة",
+    ur: "صفحہ پڑھیں",
+    bn: "পৃষ্ঠা পড়ুন",
+    hi: "पृष्ठ पढ़ें",
+    zh: "朗读页面",
+    sw: "Soma Ukurasa",
+  },
+  "Dual-Language": {
+    es: "Modo Bilingüe",
+    fr: "Bilingue",
+    de: "Zweisprachig",
+    pl: "Dwujęzyczny",
+    uk: "Двомовний",
+    ar: "ثنائي اللغة",
+    ur: "دو لسانی",
+    bn: "দ্বিভাষিক",
+    hi: "द्विभाषी",
+    zh: "双语对照",
+    sw: "Lugha Mbili",
+  },
+  "Teacher Mode": {
+    es: "Modo Profesor",
+    fr: "Mode Enseignant",
+    de: "Lehrermodus",
+    pl: "Tryb Nauczyciela",
+    uk: "Режим Вчителя",
+    ar: "وضع المعلم",
+    ur: "استاد موڈ",
+    bn: "শিক্ষক মোড",
+    hi: "शिक्षक मोड",
+    zh: "教师模式",
+    sw: "Hali ya Mwalimu",
+  },
+  "Mind Space": {
+    es: "Espacio Mental",
+    fr: "Espace Mental",
+    de: "Gedankenraum",
+    pl: "Przestrzeń Myśli",
+    uk: "Простір Думок",
+    ar: "فضاء الفكر",
+    ur: "ذہنی فضا",
+    bn: "মাইন্ড স্পেস",
+    hi: "माइंड स्पेस",
+    zh: "思维空间",
+    sw: "Nafasi ya Fikra",
+  },
+  "Challenge Level:": {
+    es: "Nivel de Desafío:",
+    fr: "Niveau de Défi :",
+    de: "Herausforderungsstufe:",
+    pl: "Poziom Wyzwania:",
+    uk: "Рівень Виклику:",
+    ar: "مستوى التحدي:",
+    ur: "چیلنج کی سطح:",
+    bn: "চ্যালেঞ্জ স্তর:",
+    hi: "चुनौती स्तर:",
+    zh: "挑战难度：",
+    sw: "Kiwango cha Changamoto:",
+  },
+  "Warm-Up": {
+    es: "Calentamiento",
+    fr: "Échauffement",
+    de: "Aufwärmen",
+    pl: "Rozgrzewka",
+    uk: "Розминка",
+    ar: "إحماء",
+    ur: "ابتدائی مشق",
+    bn: "ওয়ার্ম-আপ",
+    hi: "अभ्यास शुरुआत",
+    zh: "热身",
+    sw: "Kupasha Joto",
+  },
+  "Brain Buster": {
+    es: "Rompecabezas",
+    fr: "Casse-Tête",
+    de: "Gehirnjogging",
+    pl: "Łamigłówka",
+    uk: "Головоломка",
+    ar: "اختبار العباقرة",
+    ur: "ذہنی آزمائش",
+    bn: "মগজ ধোলাই",
+    hi: "दिमागी कसरत",
+    zh: "高难度烧脑",
+    sw: "Kupasua Kichwa",
+  },
+  "Real-world problems and clever distractors": {
+    es: "Problemas del mundo real y distractores inteligentes",
+    fr: "Problèmes du monde réel et pièges astucieux",
+    de: "Reale Aufgaben und clevere Distraktoren",
+    pl: "Zadania z życia i sprytne dystraktory",
+    uk: "Реальні задачі та розумні пастки",
+    ar: "مشكلات واقعية ومشتتات ذكية",
+    ur: "حقیقی دنیا کے مسائل اور ذہین متبادلات",
+    bn: "বাস্তব জীবনের সমস্যা ও কৌশলী বিভ্রান্তি",
+    hi: "वास्तविक दुनिया की समस्याएं और चतुर विकल्प",
+    zh: "真实生活情景问题与巧妙的干扰项",
+    sw: "Matatizo ya ulimwengu halisi na mitego janja",
+  },
+  "Download Report": {
+    es: "Descargar Informe",
+    fr: "Télécharger le Rapport",
+    de: "Bericht Herunterladen",
+    pl: "Pobierz Raport",
+    uk: "Завантажити Звіт",
+    ar: "تنزيل التقرير",
+    ur: "رپورٹ ڈاؤن لوڈ کریں",
+    bn: "প্রতিবেদন ডাউনলোড করুন",
+    hi: "रिपोर्ट डाउनलोड करें",
+    zh: "下载报告",
+    sw: "Pakua Ripoti",
+  },
+  "Generating...": {
+    es: "Generando...",
+    fr: "Génération...",
+    de: "Wird generiert...",
+    pl: "Generowanie...",
+    uk: "Генерація...",
+    ar: "جارٍ الإنشاء...",
+    ur: "تخلیق ہو رہا ہے...",
+    bn: "তৈরি হচ্ছে...",
+    hi: "तैयार हो रहा है...",
+    zh: "正在生成...",
+    sw: "Inazalisha...",
+  },
+  "Ready": {
+    es: "Listo",
+    fr: "Prêt",
+    de: "Bereit",
+    pl: "Gotowy",
+    uk: "Готово",
+    ar: "جاهز",
+    ur: "تیار",
+    bn: "প্রস্তুত",
+    hi: "तैयार",
+    zh: "准备就绪",
+    sw: "Tayari",
+  },
+  "Stage": {
+    es: "Etapa",
+    fr: "Cycle",
+    de: "Stufe",
+    pl: "Etap",
+    uk: "Етап",
+    ar: "المرحلة",
+    ur: "مرحلہ",
+    bn: "পর্যায়",
+    hi: "चरण",
+    zh: "学段",
+    sw: "Hatua",
+  },
+  "Lesson": {
+    es: "Lección",
+    fr: "Leçon",
+    de: "Lektion",
+    pl: "Lekcja",
+    uk: "Урок",
+    ar: "الدرس",
+    ur: "سبق",
+    bn: "পাঠ",
+    hi: "पाठ",
+    zh: "课程",
+    sw: "Somo Ndogo",
+  },
+  "Fractions and Decimals": {
+    es: "Fracciones y Decimales",
+    fr: "Fractions et Décimales",
+    de: "Brüche und Dezimalzahlen",
+    pl: "Ułamki i Liczby Dziesiętne",
+    uk: "Дроби та Десяткові Числа",
+    ar: "الكسور والأعداد العشرية",
+    ur: "کسور اور اعشاریہ",
+    bn: "ভগ্নাংশ এবং দশমিক",
+    hi: "भिन्न और दशमलव",
+    zh: "分数与小数",
+    sw: "Sehemu na Desimali",
+  },
+  "Seasonal Changes": {
+    es: "Cambios Estacionales",
+    fr: "Changements Saisonniers",
+    de: "Jahreszeitenwechsel",
+    pl: "Zmiany Pór Roku",
+    uk: "Сезонні Зміни",
+    ar: "التغيرات الموسمية",
+    ur: "موسمی تبدیلیاں",
+    bn: "ঋতুগত পরিবর্তন",
+    hi: "मौसमी परिवर्तन",
+    zh: "季节变化",
+    sw: "Mabadiliko ya Majira",
+  },
+  "States of Matter": {
+    es: "Estados de la Materia",
+    fr: "États de la Matière",
+    de: "Aggregatzustände",
+    pl: "Stany Skupienia Materii",
+    uk: "Агрегатні Стани Речовини",
+    ar: "حالات المادة",
+    ur: "مادے کی حالتیں",
+    bn: "পদার্থের অবস্থা",
+    hi: "पदार्थ की अवस्थाएं",
+    zh: "物质的状态",
+    sw: "Hali za Maada",
+  },
+  "Animals and Humans": {
+    es: "Animales y Humanos",
+    fr: "Animaux et Humains",
+    de: "Tiere und Menschen",
+    pl: "Zwierzęta i Ludzie",
+    uk: "Тварини та Люди",
+    ar: "الحيوانات والبشر",
+    ur: "جانور اور انسان",
+    bn: "প্রাণী এবং মানুষ",
+    hi: "जानवर और इंसान",
+    zh: "动物与人类",
+    sw: "Wanyama na Binadamu",
   },
 };
 
@@ -914,20 +1202,25 @@ function getLexiconTranslation(text: string, targetLang: string): string | null 
   const trimmed = text.trim();
   if (!trimmed) return null;
 
-  // 1. Direct exact match
+  // 1. Direct exact match in UNIVERSAL_UI_LEXICON
   if (UNIVERSAL_UI_LEXICON[trimmed] && UNIVERSAL_UI_LEXICON[trimmed][targetLang]) {
     return UNIVERSAL_UI_LEXICON[trimmed][targetLang];
   }
 
-  // 2. Direct case-insensitive match
+  // 2. Direct exact or lower match in OFFLINE_LEXICON
   const lower = trimmed.toLowerCase();
+  if (OFFLINE_LEXICON[lower] && OFFLINE_LEXICON[lower][targetLang]) {
+    return OFFLINE_LEXICON[lower][targetLang];
+  }
+
+  // 3. Direct case-insensitive match in UNIVERSAL_UI_LEXICON
   for (const [key, mapping] of Object.entries(UNIVERSAL_UI_LEXICON)) {
     if (key.toLowerCase() === lower && mapping[targetLang]) {
       return mapping[targetLang];
     }
   }
 
-  // 3. Leading/Trailing Emoji or Symbol extraction (e.g. "🏠 Home" -> "🏠 Inicio", "📖 Learning" -> "📖 Aprendizaje")
+  // 4. Leading/Trailing Emoji or Symbol extraction (e.g. "🏠 Home" -> "🏠 Inicio", "📖 Learning" -> "📖 Aprendizaje")
   const symbolPrefixMatch = trimmed.match(/^([^\p{L}\p{N}]*\s*)([\p{L}\p{N}].*?)(\s*[^\p{L}\p{N}]*)$/u);
   if (symbolPrefixMatch) {
     const [, prefix, core, suffix] = symbolPrefixMatch;
@@ -937,6 +1230,9 @@ function getLexiconTranslation(text: string, targetLang: string): string | null 
         return `${prefix}${UNIVERSAL_UI_LEXICON[coreTrimmed][targetLang]}${suffix}`;
       }
       const coreLower = coreTrimmed.toLowerCase();
+      if (OFFLINE_LEXICON[coreLower]?.[targetLang]) {
+        return `${prefix}${OFFLINE_LEXICON[coreLower][targetLang]}${suffix}`;
+      }
       for (const [key, mapping] of Object.entries(UNIVERSAL_UI_LEXICON)) {
         if (key.toLowerCase() === coreLower && mapping[targetLang]) {
           return `${prefix}${mapping[targetLang]}${suffix}`;

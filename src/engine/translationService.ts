@@ -37,7 +37,7 @@ function setCached(text: string, targetLang: string, translated: string, sourceL
 }
 
 // Pre-compiled lexicon for instant offline translation of common educational UI terms & questions
-const OFFLINE_LEXICON: Record<string, Record<string, string>> = {
+export const OFFLINE_LEXICON: Record<string, Record<string, string>> = {
   // Common UI Phrases
   'new question': {
     es: 'Nueva pregunta',
@@ -165,12 +165,207 @@ const OFFLINE_LEXICON: Record<string, Record<string, string>> = {
     zu: 'Zama futhi noma khetha enye inketho!',
     am: 'እንደገና ይሞክሩ ወይም ሌላ አማራጭ ይምረጡ!',
   },
+  'not quite — check the clue below and try another choice!': {
+    es: '¡Casi! Revisa la pista abajo y elige otra opción.',
+    fr: 'Pas tout à fait — regarde l\'indice ci-dessous et réessaie !',
+    de: 'Nicht ganz — sieh dir den Hinweis an und wähle eine andere Option!',
+    pl: 'Nie do końca — sprawdź wskazówkę poniżej i spróbuj ponownie!',
+    uk: 'Не зовсім — подивіться підказку нижче та спробуйте інший варіант!',
+    ar: 'ليس تماماً — تحقق من التلميح أدناه واختر خياراً آخر!',
+    bn: 'একদম ঠিক নয় — নীচের সূত্রটি দেখুন এবং অন্য বিকল্প চেষ্টা করুন!',
+    ur: 'بالکل نہیں — نیچے دیا گیا اشارہ دیکھیں اور دوسرا آپشن آزمائیں!',
+    hi: 'बिलकुल सही नहीं — नीचे दिए गए संकेत को देखें और दूसरा विकल्प चुनें!',
+    zh: '还不太对——请查看下方的提示并尝试其他选项！',
+    sw: 'Sio sahihi kabisa — angalia kidokezo hapa chini na ujaribu chaguo jingine!',
+  },
+  stars: {
+    es: 'Estrellas',
+    fr: 'Étoiles',
+    de: 'Sterne',
+    pl: 'Gwiazdki',
+    uk: 'Зірки',
+    ar: 'النجوم',
+    ur: 'ستارے',
+    bn: 'তারা',
+    hi: 'सितारे',
+    zh: '星星',
+    sw: 'Nyota',
+  },
+  streak: {
+    es: 'Racha',
+    fr: 'Série',
+    de: 'Serie',
+    pl: 'Seria',
+    uk: 'Серія',
+    ar: 'التتابع',
+    ur: 'سلسلہ',
+    bn: 'ধারাবাহিকতা',
+    hi: 'सिलसिला',
+    zh: '连胜',
+    sw: 'Mfululizo',
+  },
+  score: {
+    es: 'Puntuación',
+    fr: 'Score',
+    de: 'Punktzahl',
+    pl: 'Wynik',
+    uk: 'Рахунок',
+    ar: 'النتيجة',
+    ur: 'اسکور',
+    bn: 'স্কোর',
+    hi: 'स्कोर',
+    zh: '得分',
+    sw: 'Alama',
+  },
+  mathematics: {
+    es: 'Matemáticas',
+    fr: 'Mathématiques',
+    de: 'Mathematik',
+    pl: 'Matematyka',
+    uk: 'Математика',
+    ar: 'الرياضيات',
+    ur: 'ریاضی',
+    bn: 'গণিত',
+    hi: 'गणित',
+    zh: '数学',
+    sw: 'Hisabati',
+  },
+  science: {
+    es: 'Ciencias',
+    fr: 'Sciences',
+    de: 'Naturwissenschaften',
+    pl: 'Nauki Przyrodnicze',
+    uk: 'Природничі Науки',
+    ar: 'العلوم',
+    ur: 'سائنس',
+    bn: 'বিজ্ঞান',
+    hi: 'विज्ञान',
+    zh: '科学',
+    sw: 'Sayansi',
+  },
+  computing: {
+    es: 'Informática',
+    fr: 'Informatique',
+    de: 'Informatik',
+    pl: 'Informatyka',
+    uk: 'Інформатика',
+    ar: 'الحوسبة',
+    ur: 'کمپیوٹنگ',
+    bn: 'কম্পিউটিং',
+    hi: 'कंप्यूटिंग',
+    zh: '计算机科学',
+    sw: 'Sayansi ya Kompyuta',
+  },
+  history: {
+    es: 'Historia',
+    fr: 'Histoire',
+    de: 'Geschichte',
+    pl: 'Historia',
+    uk: 'Історія',
+    ar: 'التاريخ',
+    ur: 'تاریخ',
+    bn: 'ইতিহাস',
+    hi: 'इतिहास',
+    zh: '历史',
+    sw: 'Historia',
+  },
+  geography: {
+    es: 'Geografía',
+    fr: 'Géographie',
+    de: 'Geografie',
+    pl: 'Geografia',
+    uk: 'Географія',
+    ar: 'الجغرافيا',
+    ur: 'جغرافیہ',
+    bn: 'ভূগোল',
+    hi: 'भूगोल',
+    zh: '地理',
+    sw: 'Jiografia',
+  },
+  english: {
+    es: 'Inglés',
+    fr: 'Anglais',
+    de: 'Englisch',
+    pl: 'Język Angielski',
+    uk: 'Англійська Мова',
+    ar: 'اللغة الإنجليزية',
+    ur: 'انگریزی',
+    bn: 'ইংরেজি',
+    hi: 'अंग्रेजी',
+    zh: '英语',
+    sw: 'Kiingereza',
+  },
+  'religious education (catholic)': {
+    es: 'Educación Religiosa (Católica)',
+    fr: 'Éducation Religieuse (Catholique)',
+    de: 'Religionsunterricht (Katholisch)',
+    pl: 'Religia (Katolicka)',
+    uk: 'Релігійна Освіта (Католицька)',
+    ar: 'التربية الدينية (الكاثوليكية)',
+    ur: 'مذہبی تعلیم (کیتھولک)',
+    bn: 'ধর্মীয় শিক্ষা (ক্যাথলিক)',
+    hi: 'धार्मिक शिक्षा (कैथोलिक)',
+    zh: '宗教教育（天主教）',
+    sw: 'Elimu ya Dini (Kikatoliki)',
+  },
+  'fractions and decimals': {
+    es: 'Fracciones y Decimales',
+    fr: 'Fractions et Décimales',
+    de: 'Brüche und Dezimalzahlen',
+    pl: 'Ułamki i Liczby Dziesiętne',
+    uk: 'Дроби та Десяткові Числа',
+    ar: 'الكسور والأعداد العشرية',
+    ur: 'کسور اور اعشاریہ',
+    bn: 'ভগ্নাংশ এবং দশমিক',
+    hi: 'भिन्न और दशमलव',
+    zh: '分数与小数',
+    sw: 'Sehemu na Desimali',
+  },
+  'states of matter': {
+    es: 'Estados de la Materia',
+    fr: 'États de la Matière',
+    de: 'Aggregatzustände',
+    pl: 'Stany Skupienia Materii',
+    uk: 'Агрегатні Стани Речовини',
+    ar: 'حالات المادة',
+    ur: 'مادے کی حالتیں',
+    bn: 'পদার্থের অবস্থা',
+    hi: 'पदार्थ की अवस्थाएं',
+    zh: '物质的状态',
+    sw: 'Hali za Maada',
+  },
+  'seasonal changes': {
+    es: 'Cambios Estacionales',
+    fr: 'Changements Saisonniers',
+    de: 'Jahreszeitenwechsel',
+    pl: 'Zmiany Pór Roku',
+    uk: 'Сезонні Зміни',
+    ar: 'التغيرات الموسمية',
+    ur: 'موسمی تبدیلیاں',
+    bn: 'ঋতুগত পরিবর্তন',
+    hi: 'मौसमी परिवर्तन',
+    zh: '季节变化',
+    sw: 'Mabadiliko ya Majira',
+  },
+  'animals and humans': {
+    es: 'Animales y Humanos',
+    fr: 'Animaux et Humains',
+    de: 'Tiere und Menschen',
+    pl: 'Zwierzęta i Ludzie',
+    uk: 'Тварини та Люди',
+    ar: 'الحيوانات والبشر',
+    ur: 'جانور اور انسان',
+    bn: 'প্রাণী এবং মানুষ',
+    hi: 'जानवर और इंसान',
+    zh: '动物与人类',
+    sw: 'Wanyama na Binadamu',
+  },
 };
 
 /**
  * Universal text translation function utilizing multi-tiered pipeline:
  * Tier 1: In-Memory / Local Storage cache
- * Tier 2: Offline Dictionary
+ * Tier 2: Offline Dictionary & Educational Patterns
  * Tier 3: Browser Native Translation API (Chrome Translation API)
  * Tier 4: Gemini Nano / On-device AI (via aiCaller)
  * Tier 5: Free Web Translation Service (MyMemory)
@@ -187,12 +382,82 @@ export async function translateText(
   const cached = getCached(text, targetLang, sourceLang);
   if (cached) return cached;
 
-  // Tier 2: Offline Lexicon lookup
+  // Tier 2A: Direct Offline Lexicon lookup
   const cleanLower = text.trim().toLowerCase();
   if (OFFLINE_LEXICON[cleanLower] && OFFLINE_LEXICON[cleanLower][targetLang]) {
     const result = OFFLINE_LEXICON[cleanLower][targetLang];
     setCached(text, targetLang, result, sourceLang);
     return result;
+  }
+
+  // Tier 2B: Educational question templates
+  // Pattern 1: "Calculate: <expr>"
+  const calcMatch = text.match(/^Calculate:\s*(.+)$/i);
+  if (calcMatch) {
+    const expr = calcMatch[1].trim();
+    const prefixes: Record<string, string> = {
+      sw: 'Hesabu: ',
+      es: 'Calcula: ',
+      fr: 'Calculez : ',
+      de: 'Berechne: ',
+      pl: 'Oblicz: ',
+      uk: 'Обчисліть: ',
+      ar: 'احسب: ',
+      ur: 'حساب کریں: ',
+      bn: 'গণনা করুন: ',
+      hi: 'गणना करें: ',
+      zh: '计算：',
+    };
+    if (prefixes[targetLang]) {
+      const res = `${prefixes[targetLang]}${expr}`;
+      setCached(text, targetLang, res, sourceLang);
+      return res;
+    }
+  }
+
+  // Pattern 2: "What is <expr>?"
+  const whatIsMatch = text.match(/^What is\s+(.+)\?$/i);
+  if (whatIsMatch) {
+    const expr = whatIsMatch[1].trim();
+    const templates: Record<string, (e: string) => string> = {
+      sw: (e) => `Ni nini ${e}?`,
+      es: (e) => `¿Cuánto es ${e}?`,
+      fr: (e) => `Combien fait ${e} ?`,
+      de: (e) => `Was ist ${e}?`,
+      pl: (e) => `Ile to jest ${e}?`,
+      uk: (e) => `Скільки буде ${e}?`,
+      ar: (e) => `ما هو ${e}؟`,
+      ur: (e) => `${e} کیا ہے؟`,
+      bn: (e) => `${e} কত?`,
+      hi: (e) => `${e} क्या है?`,
+      zh: (e) => `${e} 是多少？`,
+    };
+    if (templates[targetLang]) {
+      const res = templates[targetLang](expr);
+      setCached(text, targetLang, res, sourceLang);
+      return res;
+    }
+  }
+
+  // Pattern 3: "Which fraction is equivalent to <fraction>?"
+  const equivMatch = text.match(/^Which fraction is equivalent to\s+(.+)\?$/i);
+  if (equivMatch) {
+    const frac = equivMatch[1].trim();
+    const templates: Record<string, (f: string) => string> = {
+      sw: (f) => `Ni sehemu gani iliyo sawa na ${f}?`,
+      es: (f) => `¿Qué fracción es equivalente a ${f}?`,
+      fr: (f) => `Quelle fraction est équivalente à ${f} ?`,
+      de: (f) => `Welcher Bruch entspricht ${f}?`,
+      pl: (f) => `Który ułamek jest równoważny ${f}?`,
+      uk: (f) => `Який дріб еквівалентний ${f}?`,
+      ar: (f) => `أي كسر يكافئ ${f}؟`,
+      zh: (f) => `哪个分数等同于 ${f}？`,
+    };
+    if (templates[targetLang]) {
+      const res = templates[targetLang](frac);
+      setCached(text, targetLang, res, sourceLang);
+      return res;
+    }
   }
 
   // Tier 3: Chromium Native Translator API
