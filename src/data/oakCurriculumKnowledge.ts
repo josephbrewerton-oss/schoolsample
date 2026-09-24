@@ -71,6 +71,53 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'What happens to the leaves in September and October?',
         explanation: 'In Autumn, deciduous trees prepare for cold weather by shedding their leaves to conserve moisture and energy.'
+      },
+      {
+        id: 'ks1-sci-season-3',
+        prompt: 'Why do we have more daylight hours to play outside in Summer compared to Winter?',
+        options: [
+          'In Summer, the UK is tilted towards the Sun, giving us longer days',
+          'The Sun moves much faster across the sky in Summer',
+          'Clouds block the Sun completely for the entire Winter',
+          'Street lamps make the sky look brighter earlier'
+        ],
+        answerKey: 0,
+        hint: 'The tilt of Earth means we face the Sun for more hours each day in summer.',
+        explanation: 'During summer in the UK, the Northern Hemisphere is tilted towards the Sun, which makes the Sun rise earlier and set later.'
+      },
+      {
+        id: 'ks1-sci-season-4',
+        prompt: 'What exciting signs of new life do we see during Spring?',
+        options: [
+          'Flowers begin to bud, birds build nests, and baby animals are born',
+          'Snow covers all fields and trees lose all their leaves',
+          'The weather turns freezing cold and days become very short',
+          'All plants stop growing and dry up'
+        ],
+        answerKey: 0,
+        hint: 'Spring is the season between Winter and Summer when the weather gets warmer.',
+        explanation: 'In Spring, temperatures rise, daylight increases, seeds germinate, and animals give birth.'
+      },
+      {
+        id: 'ks1-sci-season-5',
+        prompt: 'What is special about an evergreen tree (like a pine or fir tree) in Winter?',
+        options: [
+          'It keeps its green needle-leaves all year round',
+          'It sheds all its branches into the mud',
+          'It turns bright purple and stops breathing',
+          'It melts completely when snow falls'
+        ],
+        answerKey: 0,
+        hint: 'The name "ever-green" gives you a big clue!',
+        explanation: 'Evergreen trees have tough, waxy needles that do not fall off in Autumn, staying green throughout Winter.'
+      },
+      {
+        id: 'ks1-sci-season-6',
+        prompt: 'Which weather tool can a young scientist use to measure how much rain falls in one day?',
+        options: ['A rain gauge', 'A thermometer', 'A wind vane', 'A measuring tape'],
+        answerKey: 0,
+        hint: 'A container that catches and measures rainwater in millimetres.',
+        explanation: 'A rain gauge collects rainwater with marked measurements to show how much rain fell over a period of time.'
       }
     ]
   },
@@ -106,6 +153,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'What do you breathe, drink, and eat every single day?',
         explanation: 'All animals need air (oxygen), water, and food (nutrients) to survive and stay healthy.'
+      },
+      {
+        id: 'ks1-sci-anim-3',
+        prompt: 'Which animal is a carnivore that hunts other animals for meat?',
+        options: ['A lion', 'A sheep', 'A rabbit', 'A dairy cow'],
+        answerKey: 0,
+        hint: 'Think of an animal that has sharp teeth for eating meat, not flat teeth for chewing grass.',
+        explanation: 'Lions are carnivores because their diet consists almost entirely of other animals (meat).'
+      },
+      {
+        id: 'ks1-sci-anim-4',
+        prompt: 'What do we call animals like humans and bears that eat BOTH plants and meat?',
+        options: ['Omnivores', 'Carnivores', 'Herbivores', 'Vegetarians'],
+        answerKey: 0,
+        hint: 'The prefix "omni-" means "all".',
+        explanation: 'Omnivores eat both plant materials (fruits, vegetables) and animal meats.'
+      },
+      {
+        id: 'ks1-sci-anim-5',
+        prompt: 'Which sense organ allows you to hear music and sounds in your environment?',
+        options: ['Ears', 'Eyes', 'Nose', 'Tongue'],
+        answerKey: 0,
+        hint: 'You have two on the sides of your head.',
+        explanation: 'Our ears are our sense organs for hearing vibrations and sounds.'
+      },
+      {
+        id: 'ks1-sci-anim-6',
+        prompt: 'Which feature is unique to birds and found on no other animal group?',
+        options: ['Feathers', 'Two eyes', 'A skeleton of bones', 'Breathing air'],
+        answerKey: 0,
+        hint: 'What covers a bird\'s wings to help it fly and stay warm?',
+        explanation: 'Feathers are unique to birds; reptiles have scales, mammals have hair/fur, and amphibians have moist skin.'
       }
     ]
   },
@@ -141,6 +220,43 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Wellies must keep your feet dry and bend as you walk.',
         explanation: 'Rubber is waterproof (stops water getting through) and flexible (bends comfortably with foot movement).'
+      },
+      {
+        id: 'ks1-sci-mat-3',
+        prompt: 'If you spill water on the kitchen floor, which material is best to mop it up because it is absorbent?',
+        options: ['A cotton cloth or paper towel', 'A plastic ruler', 'A metal baking tray', 'A sheet of glass'],
+        answerKey: 0,
+        hint: 'An absorbent material soaks up liquid rather than letting it run off.',
+        explanation: 'Cotton and paper towels are porous and absorbent, soaking up water trapped in their fibres.'
+      },
+      {
+        id: 'ks1-sci-mat-4',
+        prompt: 'What word describes a material like thick cardboard that blocks all light and cannot be seen through?',
+        options: ['Opaque', 'Transparent', 'Translucent', 'Invisible'],
+        answerKey: 0,
+        hint: 'Transparent lets light through; what is the opposite word?',
+        explanation: 'Opaque materials do not allow light to pass through them, casting a solid shadow behind them.'
+      },
+      {
+        id: 'ks1-sci-mat-5',
+        prompt: 'Why do cooking saucepans usually have a metal base but a plastic or wooden handle?',
+        options: [
+          'Metal conducts heat quickly to cook food, while plastic or wood protects your hands from getting burned',
+          'Metal is soft and light, while wood is heavy and metallic',
+          'Plastic melts easily into the food to add flavour',
+          'Wood conducts heat much faster than copper and iron'
+        ],
+        answerKey: 0,
+        hint: 'Think about how you pick up the hot pan safely from the cooker.',
+        explanation: 'Metal is a thermal conductor that heats food quickly; wood and plastic are thermal insulators that stay cool to touch.'
+      },
+      {
+        id: 'ks1-sci-mat-6',
+        prompt: 'Which everyday object is made of a flexible, stretchy material?',
+        options: ['An elastic rubber band', 'A ceramic teacup', 'A brick wall', 'A glass bottle'],
+        answerKey: 0,
+        hint: 'It can be pulled long and snaps back to its original shape.',
+        explanation: 'Elastic bands are made of flexible, stretchy rubber that deforms under tension and returns to its shape.'
       }
     ]
   },
@@ -177,6 +293,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: '17 take away 7 is 10. Now take away 2 more.',
         explanation: '17 - 9 = 8. (17 - 7 = 10, and 10 - 2 = 8).'
+      },
+      {
+        id: 'ks1-mat-add-3',
+        prompt: 'What is the double of 6 (6 + 6)?',
+        options: ['12', '10', '14', '16'],
+        answerKey: 0,
+        hint: 'Count two groups of 6 or count on 6 from 6.',
+        explanation: 'Double 6 is 12 (6 + 6 = 12).'
+      },
+      {
+        id: 'ks1-mat-add-4',
+        prompt: 'What is the missing number bond to 20 in this calculation: 14 + ___ = 20?',
+        options: ['6', '5', '7', '16'],
+        answerKey: 0,
+        hint: 'How many ones do you add to 4 to reach 10?',
+        explanation: '14 + 6 = 20. Since 4 + 6 = 10, 14 + 6 = 20.'
+      },
+      {
+        id: 'ks1-mat-add-5',
+        prompt: 'Leo had 13 shiny stickers. He gave 5 stickers to his sister. How many stickers does Leo have left?',
+        options: ['8 stickers', '9 stickers', '7 stickers', '18 stickers'],
+        answerKey: 0,
+        hint: '13 take away 3 is 10, then take away 2 more.',
+        explanation: '13 - 5 = 8. Leo has 8 stickers remaining.'
+      },
+      {
+        id: 'ks1-mat-add-6',
+        prompt: 'If we know that 9 + 4 = 13, what is 4 + 9 without counting?',
+        options: ['13 (Addition is commutative and can be done in any order)', '14', '9', '4'],
+        answerKey: 0,
+        hint: 'Addition can be done in any order and gives the exact same total.',
+        explanation: 'Addition is commutative: swapping the order of numbers (9 + 4 = 4 + 9 = 13) does not change the sum.'
       }
     ]
   },
@@ -212,6 +360,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: '"Tri" means three (like a tricycle has 3 wheels).',
         explanation: 'A triangle has 3 straight sides and 3 vertices.'
+      },
+      {
+        id: 'ks1-mat-shape-3',
+        prompt: 'Which 3D solid shape has 2 flat circular faces and 1 curved surface connecting them (like a baked bean tin)?',
+        options: ['Cylinder', 'Cone', 'Sphere', 'Pyramid'],
+        answerKey: 0,
+        hint: 'Think of a food tin or toilet roll tube.',
+        explanation: 'A cylinder has 2 identical parallel circular flat faces and 1 continuous curved surface.'
+      },
+      {
+        id: 'ks1-mat-shape-4',
+        prompt: 'Which 2D shape has 4 straight sides that are ALL equal in length and 4 right-angle corners?',
+        options: ['Square', 'Rectangle', 'Triangle', 'Hexagon'],
+        answerKey: 0,
+        hint: 'All four sides are identical in length.',
+        explanation: 'A square is a regular quadrilateral with four equal sides and four right angles (90 degrees).'
+      },
+      {
+        id: 'ks1-mat-shape-5',
+        prompt: 'What 3D shape is a football, with 1 continuous curved surface and 0 flat faces or vertices?',
+        options: ['Sphere', 'Cube', 'Cuboid', 'Cone'],
+        answerKey: 0,
+        hint: 'A completely round 3D ball is called a sphere.',
+        explanation: 'A sphere is a perfectly round 3D solid where every point on the surface is an equal distance from the center.'
+      },
+      {
+        id: 'ks1-mat-shape-6',
+        prompt: 'How many straight sides does a 2D pentagon shape have?',
+        options: ['5', '6', '8', '4'],
+        answerKey: 0,
+        hint: '"Penta" means five.',
+        explanation: 'A pentagon is a 2D polygon with exactly 5 straight sides and 5 vertices.'
       }
     ]
   },
@@ -247,6 +427,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: '3 tens = 30. 30 + 6 = 36.',
         explanation: '3 tens (30) plus 6 ones (6) equals 36.'
+      },
+      {
+        id: 'ks1-mat-pv-3',
+        prompt: 'Which number is 1 more than 29?',
+        options: ['30', '28', '39', '20'],
+        answerKey: 0,
+        hint: 'When you have 9 ones and add 1 more one, you make a brand new ten!',
+        explanation: 'Adding 1 to 29 gives 30 (2 tens and 10 ones regroup to 3 tens).'
+      },
+      {
+        id: 'ks1-mat-pv-4',
+        prompt: 'Which comparison symbol correctly completes this statement: 42 ___ 24?',
+        options: ['> (greater than)', '< (less than)', '= (equal to)', '+ (plus)'],
+        answerKey: 0,
+        hint: '42 has 4 tens, while 24 only has 2 tens.',
+        explanation: '42 has 4 tens (40), which is greater than 24, which only has 2 tens (20). So 42 > 24.'
+      },
+      {
+        id: 'ks1-mat-pv-5',
+        prompt: 'How many tens and how many ones are in the number 50?',
+        options: ['5 tens and 0 ones', '0 tens and 5 ones', '50 tens and 0 ones', '5 ones and 5 tens'],
+        answerKey: 0,
+        hint: 'Look at the digit in the tens position (5) and ones position (0).',
+        explanation: '50 is composed of exactly 5 tens (5 × 10 = 50) and 0 ones.'
+      },
+      {
+        id: 'ks1-mat-pv-6',
+        prompt: 'Which two-digit number is formed by 2 tens and 9 ones?',
+        options: ['29', '92', '209', '11'],
+        answerKey: 0,
+        hint: '2 tens = 20, plus 9 ones = 29.',
+        explanation: '2 tens (20) and 9 ones (9) combine to make 29.'
       }
     ]
   },
@@ -280,6 +492,66 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Check the first letter (capital) and the last mark (full stop), without random capitals in the middle.',
         explanation: 'Sentences must start with a single capital letter ("The") and end with a full stop, keeping regular nouns in lowercase.'
+      },
+      {
+        id: 'ks1-eng-punc-2',
+        prompt: 'Which sentence correctly capitalises the name of a person?',
+        options: [
+          'My best friend in class is Jack.',
+          'My best friend in class is jack.',
+          'my best friend in class is Jack',
+          'My Best Friend In Class Is jack.'
+        ],
+        answerKey: 0,
+        hint: 'Proper names of people always begin with a capital letter.',
+        explanation: 'People\'s names are proper nouns and must always begin with a capital letter (Jack).'
+      },
+      {
+        id: 'ks1-eng-punc-3',
+        prompt: 'Which word in this sentence is missing a required capital letter: "yesterday, my sister and i went to the park."',
+        options: [
+          'Both the first word "yesterday" and the personal pronoun "i"',
+          'Only the word "park"',
+          'Only the word "sister"',
+          'None of the words need a capital'
+        ],
+        answerKey: 0,
+        hint: 'Sentences must start with a capital, and the word "I" is always capitalized when referring to yourself.',
+        explanation: 'The sentence must begin with a capital "Yesterday" and the pronoun "I" must always be written with a capital letter.'
+      },
+      {
+        id: 'ks1-eng-punc-4',
+        prompt: 'Which punctuation mark should replace the star at the end of this sentence: "Where did you put your school jumper *"',
+        options: [
+          'A question mark (?)',
+          'A full stop (.)',
+          'A comma (,)',
+          'An exclamation mark (!)'
+        ],
+        answerKey: 0,
+        hint: 'The sentence asks for information and starts with "Where".',
+        explanation: 'Sentences that ask an inquiry or question require a question mark (?) at the end.'
+      },
+      {
+        id: 'ks1-eng-punc-5',
+        prompt: 'Which day of the week is written with correct capitalisation?',
+        options: ['Friday', 'friday', 'FRiDAy', 'fRiday'],
+        answerKey: 0,
+        hint: 'Days of the week are proper nouns.',
+        explanation: 'All seven days of the week (Monday, Tuesday, etc.) must begin with a capital letter.'
+      },
+      {
+        id: 'ks1-eng-punc-6',
+        prompt: 'Which sentence correctly uses an exclamation mark to show strong surprise or urgency?',
+        options: [
+          'Look out, the ball is coming right at you!',
+          'look out the ball is coming right at you?',
+          'Look out the ball is coming right at you.',
+          'Look Out The Ball Is Coming Right At You?'
+        ],
+        answerKey: 0,
+        hint: 'Exclamation marks are used for shouting, sudden alarms, or great excitement.',
+        explanation: 'An exclamation mark (!) expresses sudden emotion, warning, or excitement.'
       }
     ]
   },
@@ -320,6 +592,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: '1/4 is 0.25. Multiply 0.25 by 3.',
         explanation: '3/4 = 3 ÷ 4 = 0.75.'
+      },
+      {
+        id: 'ks2-mat-frac-3',
+        prompt: 'Calculate: 1/2 + 1/8 = ?',
+        options: ['5/8', '2/10', '1/5', '6/8'],
+        answerKey: 0,
+        hint: 'Find a common denominator: convert 1/2 into eighths (4/8), then add 1/8.',
+        explanation: '1/2 = 4/8. Then 4/8 + 1/8 = 5/8.'
+      },
+      {
+        id: 'ks2-mat-frac-4',
+        prompt: 'What is the fraction 6/18 written in its simplest form (reduced by dividing numerator and denominator by 6)?',
+        options: ['1/3', '2/6', '3/9', '1/6'],
+        answerKey: 0,
+        hint: 'Divide both top and bottom by their greatest common factor (6).',
+        explanation: '6 ÷ 6 = 1 and 18 ÷ 6 = 3. Therefore, 6/18 simplifies to 1/3.'
+      },
+      {
+        id: 'ks2-mat-frac-5',
+        prompt: 'Which of the following decimals has the greatest value: 0.45, 0.5, 0.09, or 0.495?',
+        options: ['0.5', '0.495', '0.45', '0.09'],
+        answerKey: 0,
+        hint: 'Compare tenths first: 0.5 is 5 tenths (or 0.500), which is more than 4 tenths.',
+        explanation: 'Looking at tenths column: 0.5 has 5 tenths (0.500), whereas 0.495 only has 4 tenths. Therefore, 0.5 is greatest.'
+      },
+      {
+        id: 'ks2-mat-frac-6',
+        prompt: 'What is the improper fraction 7/3 expressed as a mixed number?',
+        options: ['2 and 1/3', '1 and 4/3', '3 and 1/3', '2 and 2/3'],
+        answerKey: 0,
+        hint: 'How many whole groups of 3 fit into 7? What is the remainder?',
+        explanation: '7 ÷ 3 = 2 with a remainder of 1, giving 2 and 1/3.'
       }
     ]
   },
@@ -355,6 +659,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Read the place value columns: Ten-thousands (5), Thousands (2), Hundreds (8), Tens (3), Ones (6).',
         explanation: 'The digit 2 is in the thousands column, representing 2,000.'
+      },
+      {
+        id: 'ks2-mat-pvr-3',
+        prompt: 'What is 385 rounded to the nearest hundred?',
+        options: ['400', '300', '380', '390'],
+        answerKey: 0,
+        hint: 'Look at the tens digit (8). Since 8 is 5 or more, round up.',
+        explanation: 'The tens digit is 8 (≥ 5), so 3 hundreds rounds up to 4 hundreds (400).'
+      },
+      {
+        id: 'ks2-mat-pvr-4',
+        prompt: 'What is 76 rounded to the nearest ten?',
+        options: ['80', '70', '75', '100'],
+        answerKey: 0,
+        hint: 'Look at the ones digit (6). 6 is 5 or more.',
+        explanation: 'Because the ones digit is 6, 76 is closer to 80 than 70.'
+      },
+      {
+        id: 'ks2-mat-pvr-5',
+        prompt: 'Calculate: 4.5 × 100 = ?',
+        options: ['450', '45', '4,500', '0.45'],
+        answerKey: 0,
+        hint: 'Multiplying by 100 shifts all digits two places to the left.',
+        explanation: 'When multiplying by 100, digits shift two places left: 4.5 × 100 = 450.'
+      },
+      {
+        id: 'ks2-mat-pvr-6',
+        prompt: 'What number is 1,000 less than 10,000?',
+        options: ['9,000', '9,990', '8,000', '9,900'],
+        answerKey: 0,
+        hint: 'Subtract 1 thousand from 10 thousands.',
+        explanation: '10,000 - 1,000 = 9,000.'
       }
     ]
   },
@@ -390,6 +726,43 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'What number multiplied by 12 gives 144?',
         explanation: '144 ÷ 12 = 12 (since 12 × 12 = 144).'
+      },
+      {
+        id: 'ks2-mat-ldm-3',
+        prompt: 'When performing long multiplication (e.g. 54 × 23), why MUST you place a placeholder 0 in the ones column when multiplying by the 2?',
+        options: [
+          'Because the 2 represents 2 tens (20), so the partial product is 10 times larger',
+          'Because all maths problems must end with a zero',
+          'To show that the first calculation was completed',
+          'Because zero is an even number'
+        ],
+        answerKey: 0,
+        hint: 'The 2 in 23 stands for twenty, not two.',
+        explanation: 'The 2 represents 20 (2 tens); writing the placeholder 0 ensures all subsequent digits align to their true place value.'
+      },
+      {
+        id: 'ks2-mat-ldm-4',
+        prompt: 'Calculate: 25 × 16 = ?',
+        options: ['400', '350', '420', '380'],
+        answerKey: 0,
+        hint: 'Notice 25 × 4 = 100, and 16 is 4 × 4. So 100 × 4 = ?',
+        explanation: '25 × 16 = 25 × 4 × 4 = 100 × 4 = 400.'
+      },
+      {
+        id: 'ks2-mat-ldm-5',
+        prompt: 'When 250 is divided by 6 using short division, what is the quotient and remainder?',
+        options: ['41 remainder 4', '40 remainder 10', '42 remainder 2', '39 remainder 6'],
+        answerKey: 0,
+        hint: '6 × 40 = 240, 6 × 41 = 246, 250 - 246 = 4.',
+        explanation: '250 ÷ 6 = 41 with a remainder of 4 (41 × 6 = 246; 246 + 4 = 250).'
+      },
+      {
+        id: 'ks2-mat-ldm-6',
+        prompt: 'Calculate: 365 × 4 = ?',
+        options: ['1,460', '1,440', '1,260', '1,560'],
+        answerKey: 0,
+        hint: '(300 × 4) + (60 × 4) + (5 × 4) = 1,200 + 240 + 20.',
+        explanation: '300 × 4 = 1,200; 60 × 4 = 240; 5 × 4 = 20. 1,200 + 240 + 20 = 1,460.'
       }
     ]
   },
@@ -425,6 +798,43 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Perimeter is the distance all the way around: 7 + 3 + 7 + 3.',
         explanation: 'Perimeter = 2 × (7 + 3) = 2 × 10 = 20 cm.'
+      },
+      {
+        id: 'ks2-mat-pa-3',
+        prompt: 'What is the AREA of a right-angled triangle with a base of 6 cm and a perpendicular height of 4 cm?',
+        options: ['12 cm²', '24 cm²', '10 cm²', '20 cm'],
+        answerKey: 0,
+        hint: 'Area of a triangle = (base × height) ÷ 2.',
+        explanation: 'Area of triangle = 1/2 × base × height = (6 × 4) ÷ 2 = 24 ÷ 2 = 12 cm².'
+      },
+      {
+        id: 'ks2-mat-pa-4',
+        prompt: 'A square has a PERIMETER of 24 cm. What is the length of one of its sides?',
+        options: ['6 cm', '12 cm', '4 cm', '8 cm'],
+        answerKey: 0,
+        hint: 'A square has 4 equal sides. Divide the total perimeter by 4.',
+        explanation: 'A square has 4 equal sides: 24 cm ÷ 4 = 6 cm per side.'
+      },
+      {
+        id: 'ks2-mat-pa-5',
+        prompt: 'A square vegetable garden has sides of length 8 metres. What is its AREA?',
+        options: ['64 m²', '32 m', '16 m²', '64 m'],
+        answerKey: 0,
+        hint: 'Area of square = side × side (8 × 8).',
+        explanation: 'Area of a square = side × side = 8 m × 8 m = 64 m².'
+      },
+      {
+        id: 'ks2-mat-pa-6',
+        prompt: 'What is the key geometric difference between "Perimeter" and "Area"?',
+        options: [
+          'Perimeter measures the boundary distance around the edge (in cm or m); area measures the 2D surface space enclosed inside (in cm² or m²)',
+          'Perimeter is only for 3D solids; area is only for 2D circles',
+          'Perimeter is calculated by multiplying all four sides together; area is calculated by adding them',
+          'Perimeter and area are identical measurements given in kilograms'
+        ],
+        answerKey: 0,
+        hint: 'Perimeter is like the fence around the field; area is the grass inside.',
+        explanation: 'Perimeter is linear distance around the perimeter rim (cm/m); Area is the two-dimensional surface space enclosed within (cm²/m²).'
       }
     ]
   },
@@ -466,6 +876,53 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Think about helium inside a balloon or steam in a room.',
         explanation: 'Gases have weak forces between particles, allowing them to move freely and expand into all available space.'
+      },
+      {
+        id: 'ks2-sci-states-3',
+        prompt: 'At what temperature at normal sea level does pure solid ice melt into liquid water?',
+        options: ['0°C', '100°C', '50°C', '-10°C'],
+        answerKey: 0,
+        hint: 'The freezing and melting point of pure water is the zero mark on the Celsius scale.',
+        explanation: 'Pure water melts from ice to liquid at 0°C and boils from liquid to steam at 100°C.'
+      },
+      {
+        id: 'ks2-sci-states-4',
+        prompt: 'Why can a liquid like water be poured easily from a jug into a tall glass?',
+        options: [
+          'Its particles are close together but can slide and flow past one another',
+          'Its particles are completely locked in a stiff, rigid grid',
+          'Liquids have no particles whatsoever inside them',
+          'The particles are spaced miles apart and move faster than light'
+        ],
+        answerKey: 0,
+        hint: 'Liquids have a definite volume, but take the shape of their container.',
+        explanation: 'In liquids, forces hold particles in contact, but they have sufficient kinetic energy to slide past each other, allowing flow.'
+      },
+      {
+        id: 'ks2-sci-states-5',
+        prompt: 'Why do tiny water droplets appear on the outside of a cold can of lemonade taken from the fridge on a warm day?',
+        options: [
+          'Water vapor in the warm surrounding air cools and condenses onto the cold surface',
+          'Lemonade leaks directly through the solid aluminum can metal',
+          'The cold can produces new water from the aluminum metal',
+          'The bubbles of carbon dioxide freeze into water droplets'
+        ],
+        answerKey: 0,
+        hint: 'Water vapor is invisible in the air around us until it hits a cold object.',
+        explanation: 'This is condensation: invisible water vapor in the warm air loses heat when touching the chilled metal and turns into liquid drops.'
+      },
+      {
+        id: 'ks2-sci-states-6',
+        prompt: 'Why can a gas be easily squashed (compressed) into a smaller cylinder, while a solid block of wood cannot?',
+        options: [
+          'There are large empty spaces between gas particles, whereas solid particles are tightly packed together',
+          'Gas particles are soft and squishy like tiny foam balls',
+          'Solid wood contains no atoms or particles',
+          'Gases are magnetic and pull themselves together under pressure'
+        ],
+        answerKey: 0,
+        hint: 'Look at the gap between particles in a gas compared to a solid.',
+        explanation: 'In gases, particles are spaced widely apart with empty space between them, so external pressure can easily push them closer together.'
       }
     ]
   },
@@ -506,6 +963,48 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'What happens when water vapor meets cold air?',
         explanation: 'Condensation happens when rising water vapor cools and turns back into billions of microscopic liquid droplets, forming clouds.'
+      },
+      {
+        id: 'ks2-sci-water-3',
+        prompt: 'Which scientific term describes water falling from clouds to Earth as rain, snow, sleet, or hail?',
+        options: ['Precipitation', 'Evaporation', 'Filtration', 'Chlorination'],
+        answerKey: 0,
+        hint: 'The word refers to any form of moisture falling from the sky.',
+        explanation: 'Precipitation occurs when water droplets in clouds become too heavy to stay suspended in air and fall under gravity.'
+      },
+      {
+        id: 'ks2-sci-water-4',
+        prompt: 'What is the main power source that drives the entire water cycle across planet Earth?',
+        options: [
+          'Thermal energy and radiation from the Sun',
+          'The gravitational pull of the Moon on waves',
+          'Underwater electric currents from submarine cables',
+          'Windmills and sailing ships on the sea'
+        ],
+        answerKey: 0,
+        hint: 'Without this hot celestial body, water would stay frozen and unable to evaporate.',
+        explanation: 'The Sun provides solar energy, warming oceans and land, driving continuous evaporation and atmospheric movement.'
+      },
+      {
+        id: 'ks2-sci-water-5',
+        prompt: 'What is the name for the process where plants absorb water through roots and release water vapor into the air through leaves?',
+        options: ['Transpiration', 'Precipitation', 'Sublimation', 'Sedimentation'],
+        answerKey: 0,
+        hint: 'It sounds like "perspiration" (sweating), but for trees and plants.',
+        explanation: 'Transpiration is the evaporation of water from plant leaves through microscopic pores called stomata.'
+      },
+      {
+        id: 'ks2-sci-water-6',
+        prompt: 'Where does rainwater go after falling on land before it evaporates again to continue the cycle?',
+        options: [
+          'It flows as surface runoff into streams, rivers, and oceans, or soaks into the soil as groundwater',
+          'It disappears permanently from Earth and leaves our planet forever',
+          'It converts instantly into solid granite rock',
+          'It turns into natural gas that fuels volcanoes'
+        ],
+        answerKey: 0,
+        hint: 'Think about how rivers always flow downhill towards the sea.',
+        explanation: 'Rain collects in soil, aquifers, lakes, and rivers, flowing back to oceans to be reheated by the Sun, sustaining the cycle.'
       }
     ]
   },
@@ -541,6 +1040,95 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Only ferrous metals (containing iron) and nickel/cobalt stick to magnets.',
         explanation: 'Iron is a ferromagnetic metal. Aluminium, copper, and gold are non-magnetic metals.'
+      },
+      {
+        id: 'ks2-sci-force-3',
+        prompt: 'What happens when the North pole of a magnet is placed near the South pole of another magnet?',
+        options: ['They attract (pull together)', 'They repel (push away)', 'They spin continuously without stopping', 'They lose all magnetism immediately'],
+        answerKey: 0,
+        hint: 'Opposite poles do the opposite of like poles.',
+        explanation: 'Opposite magnetic poles (North and South) attract each other with a strong pulling magnetic force.'
+      },
+      {
+        id: 'ks2-sci-force-4',
+        prompt: 'Why can a magnet attract a steel paperclip across a table without touching it first?',
+        options: [
+          'Magnetism is a non-contact force that acts through an invisible magnetic field',
+          'Air currents push the paperclip towards the magnet',
+          'Magnets create static electric sparks that reel in objects',
+          'Steel is naturally sticky and adheres to all hard surfaces'
+        ],
+        answerKey: 0,
+        hint: 'Some forces need direct physical contact (like friction), but magnetism can act over a distance.',
+        explanation: 'Magnetic forces are non-contact forces. A magnetic field surrounds the magnet and exerts force on magnetic objects within that field.'
+      },
+      {
+        id: 'ks2-sci-force-5',
+        prompt: 'Which surface will produce the greatest friction force opposing a moving toy car?',
+        options: ['Rough sandpaper', 'Polished ice', 'Smooth glass', 'Oiled wooden tiles'],
+        answerKey: 0,
+        hint: 'Rough, bumpy surfaces grip objects more firmly than smooth ones.',
+        explanation: 'Rougher surfaces have microscopic bumps that interlock, generating higher friction and slowing moving objects down more quickly.'
+      },
+      {
+        id: 'ks2-sci-force-6',
+        prompt: 'Why does a parachutist fall more slowly when their parachute opens?',
+        options: [
+          'The large parachute catches more air, creating huge air resistance pushing upward against gravity',
+          'Gravity completely stops acting on the parachutist once fabric opens',
+          'The air inside the parachute becomes lighter than hydrogen',
+          'The parachute pulls the jumper sideways into clouds'
+        ],
+        answerKey: 0,
+        hint: 'Air resistance is a frictional drag force that increases when surface area gets larger.',
+        explanation: 'A deployed parachute has a vast surface area that collides with air particles, generating strong upward air resistance (drag) opposing downward gravity.'
+      },
+      {
+        id: 'ks2-sci-force-7',
+        prompt: 'On a standard bar magnet, where is the magnetic pull the strongest?',
+        options: ['At both poles (North and South ends)', 'Exactly in the middle of the bar', 'Only on the sides of the bar', 'Equally weak at all points'],
+        answerKey: 0,
+        hint: 'If you dip a magnet into paperclips, where do most of them cling?',
+        explanation: 'Magnetic field lines are concentrated most densely at the two poles (ends), making the magnetic pull strongest there.'
+      },
+      {
+        id: 'ks2-sci-force-8',
+        prompt: 'How does a magnetic compass needle allow a hiker to find direction?',
+        options: [
+          'The needle is a tiny magnet that aligns with Earth\'s magnetic field',
+          'The needle is drawn towards sunlight reflecting from the horizon',
+          'The glass cover spins the needle using wind pressure',
+          'Gravity pulls the heavier end of the pointer down towards the equator'
+        ],
+        answerKey: 0,
+        hint: 'The Earth itself acts like a giant bar magnet with magnetic poles.',
+        explanation: 'Because Earth has its own magnetic field, the North-seeking pole of the magnetized compass needle pivots until it points toward Earth\'s magnetic North.'
+      },
+      {
+        id: 'ks2-sci-force-9',
+        prompt: 'Why are modern high-speed racing bicycles and swimmers\' suits designed with sleek, streamlined shapes?',
+        options: [
+          'To reduce friction with air (drag) or water resistance, allowing faster movement',
+          'To make the bicycle attract magnetic energy from the track',
+          'To eliminate all gravitational pull from the Earth',
+          'To ensure the bicycle stays completely frozen in motion'
+        ],
+        answerKey: 0,
+        hint: 'Streamlining helps fluids (air and water) flow smoothly around a moving object with less resistance.',
+        explanation: 'Streamlined shapes allow air and water to flow smoothly past, minimizing turbulence and reducing drag (resistance).'
+      },
+      {
+        id: 'ks2-sci-force-10',
+        prompt: 'Which of the following relies on magnets to work in everyday household equipment?',
+        options: [
+          'The flexible magnetic gasket that keeps refrigerator doors firmly sealed shut',
+          'A standard wooden rolling pin used in baking',
+          'A ceramic drinking mug holding warm tea',
+          'A cotton pillow on a bed'
+        ],
+        answerKey: 0,
+        hint: 'Look for an appliance door that snaps shut snugly without a mechanical latch.',
+        explanation: 'Refrigerator door seals contain flexible magnetic strips that stick to the steel fridge casing, creating an airtight thermal seal.'
       }
     ]
   },
@@ -568,6 +1156,61 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'An "open" switch creates a gap in the loop.',
         explanation: 'An open switch breaks the continuous conductive pathway, preventing current from flowing, so the bulb turns off.'
+      },
+      {
+        id: 'ks2-sci-elec-2',
+        prompt: 'Which material is an electrical conductor commonly used inside electrical cables to carry current?',
+        options: ['Copper metal', 'Plastic rubber', 'Dry wood', 'Ceramic glass'],
+        answerKey: 0,
+        hint: 'Metals allow electric current to flow through them freely.',
+        explanation: 'Copper is a good electrical conductor with low resistance; plastic casing acts as an insulator to prevent shocks.'
+      },
+      {
+        id: 'ks2-sci-elec-3',
+        prompt: 'What happens to the brightness of a bulb in a series circuit if you add a second identical battery (cell) in the correct direction?',
+        options: [
+          'The bulb shines brighter because there is greater electrical voltage pushing current',
+          'The bulb gets dimmer and slowly turns green',
+          'The brightness does not change at all under any circumstances',
+          'The wires immediately melt into water'
+        ],
+        answerKey: 0,
+        hint: 'More cells increase the electrical push (voltage) through the circuit.',
+        explanation: 'Adding more cells in series increases the total circuit voltage, driving more current through the bulb filament and making it glow brighter.'
+      },
+      {
+        id: 'ks2-sci-elec-4',
+        prompt: 'In a single series circuit with two bulbs, what happens if one bulb is unscrewed and removed?',
+        options: [
+          'The other bulb also turns off because the complete loop is broken',
+          'The other bulb stays on and burns with blinding brightness',
+          'The circuit begins to spin in circles',
+          'The battery instantly catches fire'
+        ],
+        answerKey: 0,
+        hint: 'In a simple series circuit, there is only one continuous path for the electricity.',
+        explanation: 'Removing a component from a series circuit opens a gap in the only pathway, stopping the current and turning off all components.'
+      },
+      {
+        id: 'ks2-sci-elec-5',
+        prompt: 'What does a circle with an "X" inside it represent on a standard electrical circuit diagram?',
+        options: ['A lamp (bulb)', 'A battery cell', 'An open switch', 'A buzzer'],
+        answerKey: 0,
+        hint: 'The cross represents the filament of a light emitter.',
+        explanation: 'In standard circuit diagrams, a circle containing an "X" represents a lamp (filament bulb).'
+      },
+      {
+        id: 'ks2-sci-elec-6',
+        prompt: 'Why are electric plugs and tool handles coated in thick plastic or rubber?',
+        options: [
+          'Plastic and rubber are electrical insulators that stop current escaping into your hands',
+          'Plastic makes the electric current flow three times faster',
+          'Rubber charges the battery automatically when you hold it',
+          'Metal cannot be shaped into plug handles'
+        ],
+        answerKey: 0,
+        hint: 'Electrical insulators resist current flow and keep you safe from electric shocks.',
+        explanation: 'Plastic and rubber are non-conductive insulators that protect users from hazardous electric shocks.'
       }
     ]
   },
@@ -601,6 +1244,61 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Think of a step-by-step recipe for a computer.',
         explanation: 'An algorithm is an unambiguous, step-by-step set of rules or instructions to accomplish a specific task.'
+      },
+      {
+        id: 'ks2-comp-algo-2',
+        prompt: 'What do programmers call the process of finding and fixing errors or mistakes in their code?',
+        options: ['Debugging', 'Sequencing', 'Encrypting', 'Compressing'],
+        answerKey: 0,
+        hint: 'Named after the famous story of a moth found trapped inside an early computer relay.',
+        explanation: 'Debugging is the systematic process of identifying, diagnosing, and fixing flaws (bugs) in an algorithm or program.'
+      },
+      {
+        id: 'ks2-comp-algo-3',
+        prompt: 'Which programming concept allows a program to make a decision, such as "IF score > 50 THEN play victory sound ELSE play try-again sound"?',
+        options: ['Selection (conditional decision)', 'Repetition (loop)', 'Variable storage', 'Hardware reboot'],
+        answerKey: 0,
+        hint: 'The program "selects" which branch of instructions to run based on a condition.',
+        explanation: 'Selection uses conditional statements (IF/THEN/ELSE) to direct the flow of a program down different paths.'
+      },
+      {
+        id: 'ks2-comp-algo-4',
+        prompt: 'Why would a programmer use a loop (iteration) instead of writing out the same command 100 times?',
+        options: [
+          'A loop repeats commands efficiently, making code shorter, cleaner, and less prone to mistakes',
+          'Computers crash if any command is typed more than once',
+          'Loops speed up the computer\'s monitor refresh rate',
+          'Loops automatically connect the computer to the Wi-Fi'
+        ],
+        answerKey: 0,
+        hint: 'Iteration repeats instructions without copy-pasting lines.',
+        explanation: 'Iteration (loops like "repeat 10 times" or "while true") allows instructions to execute repeatedly with minimal code.'
+      },
+      {
+        id: 'ks2-comp-algo-5',
+        prompt: 'What does "decomposition" mean when designing an algorithm for a complex game?',
+        options: [
+          'Breaking a large, difficult problem down into smaller, manageable sub-tasks',
+          'Deleting the whole program when you encounter a bug',
+          'Letting the computer overheat until it decomposes',
+          'Translating code into ancient languages'
+        ],
+        answerKey: 0,
+        hint: 'Think of taking a complex Lego castle apart into individual bricks or rooms.',
+        explanation: 'Decomposition is a core computational thinking skill where you divide a complex challenge into smaller parts that are easier to solve.'
+      },
+      {
+        id: 'ks2-comp-algo-6',
+        prompt: 'Why is the exact ORDER (sequence) of commands essential in an algorithm?',
+        options: [
+          'Computers execute commands strictly in order; running steps out of order produces incorrect outcomes or crashes',
+          'Computers randomly shuffle all lines of code before running them',
+          'Order only matters for printing text on paper, not for software',
+          'Computers will automatically guess what you intended if you reverse the steps'
+        ],
+        answerKey: 0,
+        hint: 'Think about putting socks on after shoes—the order dictates success.',
+        explanation: 'Computers follow instructions step-by-step in linear sequence unless instructed otherwise by control structures.'
       }
     ]
   },
@@ -660,6 +1358,45 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'White represents clean innocence and belonging wholly to Christ.',
         explanation: 'The white garment symbolizes that the baptized person has been cleansed of sin and has put on the righteousness of Christ (Galatians 3:27).'
+      },
+      {
+        id: 'ks2-re-bap-4',
+        prompt: 'What does the Baptismal Candle, lit from the tall Easter (Paschal) Candle, symbolize for the baptized child?',
+        options: [
+          'Christ as the Light of the World guiding the child to walk always as a child of the light',
+          'The exact time of day when the service took place',
+          'A birthday candle for their next birthday party',
+          'Protection against drafts inside the church building'
+        ],
+        answerKey: 0,
+        hint: 'Jesus said: "I am the light of the world. Whoever follows me will not walk in darkness."',
+        explanation: 'The baptismal candle represents the Light of Christ which parents and godparents must help keep burning brightly in the child\'s heart.'
+      },
+      {
+        id: 'ks2-re-bap-5',
+        prompt: 'What is the sacred perfumed olive oil called that the priest uses to anoint the newly baptized person as priest, prophet, and king?',
+        options: [
+          'Sacred Chrism',
+          'Cooking olive oil',
+          'Lavender water',
+          'Candle wax'
+        ],
+        answerKey: 0,
+        hint: 'Consecrated by the Bishop at the Chrism Mass during Holy Week.',
+        explanation: 'Sacred Chrism is consecrated oil used in Baptism, Confirmation, and Holy Orders to signify the gift of the Holy Spirit.'
+      },
+      {
+        id: 'ks2-re-bap-6',
+        prompt: 'What special role do Godparents (sponsors) undertake at a Catholic child\'s Baptism?',
+        options: [
+          'To help the parents raise the child in Catholic faith and support them with good Christian example and prayer',
+          'To buy all the child\'s school books until university',
+          'To serve as the priest\'s altar servers during the ceremony',
+          'To choose the child\'s future school'
+        ],
+        answerKey: 0,
+        hint: 'They promise to help the child practice and grow in their Catholic faith.',
+        explanation: 'Godparents promise before God and the Church to assist the parents in teaching the child to love God and live according to the Gospel.'
       }
     ]
   },
@@ -718,6 +1455,45 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'To "absolve" means to set free and unbind from sin.',
         explanation: 'The priest speaks the words of Absolution: "...and I absolve you from your sins in the name of the Father, and of the Son, and of the Holy Spirit. Amen."'
+      },
+      {
+        id: 'ks2-re-rec-4',
+        prompt: 'What is the essential first step before going to Confession, where we quietly reflect on our choices and actions in light of God\'s commandments?',
+        options: [
+          'An Examination of Conscience',
+          'Singing the closing hymn',
+          'Reading the parish financial newsletter',
+          'Choosing a baptismal name'
+        ],
+        answerKey: 0,
+        hint: 'Examining what our conscience tells us about right and wrong.',
+        explanation: 'An Examination of Conscience is a quiet prayerful reflection where we ask the Holy Spirit to reveal our sins so we can confess them honestly.'
+      },
+      {
+        id: 'ks2-re-rec-5',
+        prompt: 'What is the strict Catholic law called that forbids a priest under the pain of excommunication from ever revealing sins confessed to him?',
+        options: [
+          'The Seal of Confession',
+          'The Liturgical Calendar',
+          'The Canon of Scripture',
+          'The Diocesan Charter'
+        ],
+        answerKey: 0,
+        hint: 'The seal is sacred and inviolable: a priest can never break it under any circumstance.',
+        explanation: 'The Seal of Confession guarantees total confidentiality; a priest may never betray a penitent in any manner or for any reason whatsoever.'
+      },
+      {
+        id: 'ks2-re-rec-6',
+        prompt: 'What is the prayer or act of kindness called that the priest invites you to perform after Confession to help heal the harm caused by sin?',
+        options: [
+          'A Penance',
+          'A Collection',
+          'An Ordination',
+          'A Canonization'
+        ],
+        answerKey: 0,
+        hint: 'It is a small prayer (like an Our Father or Hail Mary) or good deed of reparation.',
+        explanation: 'A penance helps repair the spiritual harm done by sin and trains our soul to turn back toward God with renewed love.'
       }
     ]
   },
@@ -776,6 +1552,45 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'The priest preaches this from the ambo/pulpit after the Gospel.',
         explanation: 'In the Homily, the priest breaks open God\'s Word and helps us understand how to apply Jesus\' teachings in our school, home, and daily life.'
+      },
+      {
+        id: 'ks2-re-word-4',
+        prompt: 'Which biblical book of prayers and poetic songs (many written by King David) is sung or spoken by the congregation between the first and second readings?',
+        options: [
+          'The Responsorial Psalm',
+          'The Book of Revelation',
+          'The Song of Solomon',
+          'The Book of Numbers'
+        ],
+        answerKey: 0,
+        hint: 'The Psalmist or cantor sings a verse and the whole congregation sings the response.',
+        explanation: 'The Responsorial Psalm provides a prayerful response meditating on the theme of the First Reading.'
+      },
+      {
+        id: 'ks2-re-word-5',
+        prompt: 'What joyful Hebrew word meaning "Praise the Lord" is sung by the congregation as the Gospel Acclamation (except during Lent)?',
+        options: [
+          'Alleluia',
+          'Hosanna',
+          'Maranatha',
+          'Kyrie'
+        ],
+        answerKey: 0,
+        hint: 'A word of exuberant praise to welcome the proclamation of Christ\'s Gospel.',
+        explanation: 'Alleluia (Hallelujah) is the Gospel Acclamation greeting Christ who speaks to us in the Gospel.'
+      },
+      {
+        id: 'ks2-re-word-6',
+        prompt: 'What are the final intercessory prayers of the Liturgy of the Word called, where we pray for the Church, world leaders, the sick, and our local community?',
+        options: [
+          'The Universal Prayer (or Bidding Prayers)',
+          'The Eucharistic Canon',
+          'The Agnus Dei',
+          'The Angelus'
+        ],
+        answerKey: 0,
+        hint: 'The congregation answers each petition: "Lord, in your mercy, hear our prayer."',
+        explanation: 'The Universal Prayer (Bidding Prayers) expresses the priestly duty of the baptized to intercede for the needs of all humanity.'
       }
     ]
   },
@@ -834,6 +1649,45 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'A servant\'s chore in ancient times that Jesus performed to teach humility.',
         explanation: 'By washing the feet of the Apostles (John 13:1-15), Jesus showed that true greatness in the Kingdom of God comes through humble service to others.'
+      },
+      {
+        id: 'ks2-re-ls-4',
+        prompt: 'Which ancient Jewish feast commemorating liberation from slavery in Egypt were Jesus and His disciples celebrating at the Last Supper?',
+        options: [
+          'The Passover (Pesach)',
+          'Hanukkah',
+          'The Feast of Purim',
+          'Yom Kippur'
+        ],
+        answerKey: 0,
+        hint: 'The feast where unleavened bread and the Passover lamb were eaten.',
+        explanation: 'Jesus chose the Passover meal to transform the ancient covenant into the New and Eternal Covenant in His Blood.'
+      },
+      {
+        id: 'ks2-re-ls-5',
+        prompt: 'Which Apostle left the table during the Last Supper and betrayed Jesus to the chief priests for thirty pieces of silver?',
+        options: [
+          'Judas Iscariot',
+          'Simon Peter',
+          'John the Evangelist',
+          'Thomas the Apostle'
+        ],
+        answerKey: 0,
+        hint: 'He dipped bread into the dish with Jesus before departing into the dark night.',
+        explanation: 'Judas Iscariot betrayed Jesus in the Garden of Gethsemane shortly after the Last Supper.'
+      },
+      {
+        id: 'ks2-re-ls-6',
+        prompt: 'What did Jesus say when He passed the chalice of wine to the Apostles at the Last Supper?',
+        options: [
+          '"Drink of it, all of you, for this is my blood of the covenant, poured out for many for the forgiveness of sins"',
+          '"Drink this to celebrate the harvest of grapes"',
+          '"Keep this wine locked away until the end of time"',
+          '"This is an ordinary drink to quench your thirst"'
+        ],
+        answerKey: 0,
+        hint: 'Jesus revealed that His Blood would be poured out on Calvary for the forgiveness of sins.',
+        explanation: 'Jesus consecrated the wine into His Precious Blood, establishing the New Covenant (Matthew 26:27-28).'
       }
     ]
   },
@@ -892,6 +1746,45 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'The red flame shows that the King of Kings is in the house!',
         explanation: 'The sanctuary lamp burns day and night to indicate and honour the Real Presence of Christ reserved in the Holy Tabernacle.'
+      },
+      {
+        id: 'ks2-re-fhc-4',
+        prompt: 'What is the ornate golden stand called with glass rays used to display the Blessed Sacrament for Eucharistic Adoration and Benediction?',
+        options: [
+          'A Monstrance',
+          'A Chalice',
+          'A Cruet',
+          'A Lectern'
+        ],
+        answerKey: 0,
+        hint: 'From the Latin "monstrare" meaning "to show" or reveal Christ to the faithful.',
+        explanation: 'A Monstrance is a sacred vessel designed to display the consecrated Host for adoration by the congregation.'
+      },
+      {
+        id: 'ks2-re-fhc-5',
+        prompt: 'Why do Catholics genuflect on their right knee when entering or leaving a Catholic church or passing the Tabernacle?',
+        options: [
+          'To humbly worship and adore Jesus Christ truly present in the Blessed Sacrament in the Tabernacle',
+          'To stretch leg muscles before sitting down',
+          'To show respect to the choir members',
+          'Because the church floor requires inspection'
+        ],
+        answerKey: 0,
+        hint: 'Genuflection is a bodily act of deep adoration reserved for God alone.',
+        explanation: 'Touching the right knee to the ground towards the Tabernacle is an ancient sign of homage and adoration to Jesus Christ, the King of Kings.'
+      },
+      {
+        id: 'ks2-re-fhc-6',
+        prompt: 'What did Jesus say in John 6:35 when teaching about the Holy Eucharist?',
+        options: [
+          '"I am the Bread of Life; whoever comes to me shall not hunger, and whoever believes in me shall never thirst"',
+          '"Bread is only necessary for physical health"',
+          '"Do not share food with travellers"',
+          '"The bread will only satisfy you for one day"'
+        ],
+        answerKey: 0,
+        hint: 'Jesus declares that He is the Bread of Life who offers eternal salvation.',
+        explanation: 'In the Bread of Life discourse (John 6), Jesus reveals that His Flesh is true food and His Blood is true drink for eternal life.'
       }
     ]
   },
@@ -963,6 +1856,32 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'This is the most sacred time of intimate prayer and thanksgiving with Jesus.',
         explanation: 'The time right after Holy Communion is precious. We kneel in silence to thank Jesus, offer Him our prayers, and ask Him to help us live like Him.'
+      },
+      {
+        id: 'ks2-re-ord-5',
+        prompt: 'What is the liturgical response spoken by the congregation before receiving Communion when the priest proclaims: "Behold the Lamb of God, behold him who takes away the sins of the world"?',
+        options: [
+          '"Lord, I am not worthy that you should enter under my roof, but only say the word and my soul shall be healed"',
+          '"Thanks be to God, for the Lord has delivered us"',
+          '"Holy, Holy, Holy Lord God of hosts"',
+          '"Glory to God in the highest and on earth peace to people of good will"'
+        ],
+        answerKey: 0,
+        hint: 'This response echoes the humble faith of the Roman Centurion in the Gospel of Matthew (8:8).',
+        explanation: 'Before receiving Holy Communion, Catholics recite the Centurion\'s prayer of deep humility and trust: "Lord, I am not worthy that you should enter under my roof, but only say the word and my soul shall be healed."'
+      },
+      {
+        id: 'ks2-re-ord-6',
+        prompt: 'What must a Catholic do before receiving Holy Communion if they are conscious of having committed a grave (mortal) sin?',
+        options: [
+          'Receive the Sacrament of Reconciliation (Confession) to be restored to the state of grace',
+          'Just fast for an extra thirty minutes before Mass begins',
+          'Whisper a private promise to a friend sitting nearby',
+          'Write an apology letter to the parish bishop'
+        ],
+        answerKey: 0,
+        hint: 'The Sacrament of Reconciliation forgives sins and restores us to the state of sanctifying grace.',
+        explanation: 'To receive the Eucharist worthily, anyone aware of having committed a mortal sin must first receive absolution in the Sacrament of Penance and Reconciliation (CCC 1457).'
       }
     ]
   },
@@ -1003,6 +1922,48 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Mass number = Protons + Neutrons.',
         explanation: 'Mass number is the total number of protons and neutrons in the nucleus: 11 + 12 = 23 (Sodium).'
+      },
+      {
+        id: 'ks3-sci-atom-3',
+        prompt: 'Which two subatomic particles are located together inside the central nucleus of an atom?',
+        options: ['Protons and neutrons', 'Electrons and protons', 'Neutrons and electrons', 'Only electrons'],
+        answerKey: 0,
+        hint: 'They both have a relative mass of 1 and form the heavy core.',
+        explanation: 'The atomic nucleus consists of positively charged protons and uncharged neutrons tightly bound together.'
+      },
+      {
+        id: 'ks3-sci-atom-4',
+        prompt: 'Why do neutral, uncharged atoms have NO overall electric charge?',
+        options: [
+          'The number of positive protons exactly equals the number of negative electrons',
+          'Neutrons cancel out all magnetic and electrical fields',
+          'Atoms only produce charge when heated above 10,000°C',
+          'Electrons and protons have zero mass and zero charge'
+        ],
+        answerKey: 0,
+        hint: 'Compare the number of +1 charges to -1 charges in a stable neutral atom.',
+        explanation: 'In any neutral atom, the number of positive protons in the nucleus equals the number of negative electrons orbiting it (+1 and -1 balance to 0).'
+      },
+      {
+        id: 'ks3-sci-atom-5',
+        prompt: 'What is the maximum number of electrons that can occupy the first (innermost) energy shell in an atom?',
+        options: ['2', '8', '18', '32'],
+        answerKey: 0,
+        hint: 'Hydrogen has 1 and Helium fills this first shell with 2.',
+        explanation: 'The innermost shell can hold a maximum of 2 electrons, while the second and third shells can hold up to 8 electrons each.'
+      },
+      {
+        id: 'ks3-sci-atom-6',
+        prompt: 'Which fundamental property determines which chemical element an atom is on the Periodic Table?',
+        options: [
+          'The atomic number (number of protons in its nucleus)',
+          'The number of neutrons in its outer shell',
+          'The overall physical weight in grams',
+          'The temperature at which it was formed'
+        ],
+        answerKey: 0,
+        hint: 'Every Carbon atom has 6 of these, and every Oxygen atom has 8.',
+        explanation: 'An element\'s identity is defined strictly by its atomic number (number of protons). If proton number changes, it becomes a different element.'
       }
     ]
   },
@@ -1043,6 +2004,48 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'It acts like a security guard or semi-permeable boundary.',
         explanation: 'The cell membrane is a selectively permeable barrier controlling the movement of substances into and out of the cell.'
+      },
+      {
+        id: 'ks3-sci-cell-3',
+        prompt: 'What vital biological process occurs inside the mitochondria of plant and animal cells?',
+        options: [
+          'Aerobic cellular respiration to release usable energy (ATP)',
+          'Photosynthesis using green chlorophyll pigments',
+          'Storing solid food waste indefinitely',
+          'Replicating the cell wall during mitosis'
+        ],
+        answerKey: 0,
+        hint: 'Mitochondria are often referred to as the "powerhouses" of the cell.',
+        explanation: 'Mitochondria are the sites of aerobic respiration, combining glucose with oxygen to release energy for cellular processes.'
+      },
+      {
+        id: 'ks3-sci-cell-4',
+        prompt: 'Which organelle acts as the control center of the cell and encloses the genetic DNA chromosomes?',
+        options: ['The nucleus', 'The vacuole', 'The ribosome', 'The cytoplasm'],
+        answerKey: 0,
+        hint: 'Found in eukaryotic cells holding hereditary information.',
+        explanation: 'The nucleus contains genetic material (DNA) organized into chromosomes, directing enzyme production and cellular division.'
+      },
+      {
+        id: 'ks3-sci-cell-5',
+        prompt: 'If a student uses a microscope with a 10× eyepiece lens and a 40× objective lens, what is the TOTAL MAGNIFICATION of the specimen?',
+        options: ['400×', '50×', '40×', '4000×'],
+        answerKey: 0,
+        hint: 'Total magnification = Eyepiece lens magnification × Objective lens magnification.',
+        explanation: 'Total magnification is calculated by multiplying: 10 × 40 = 400×.'
+      },
+      {
+        id: 'ks3-sci-cell-6',
+        prompt: 'What is the essential function of ribosomes in living cells?',
+        options: [
+          'Synthesizing proteins by assembling amino acids',
+          'Pumping water out of the cell through osmosis',
+          'Digesting toxic chemicals into carbon gas',
+          'Reflecting ultraviolet light away from the nucleus'
+        ],
+        answerKey: 0,
+        hint: 'Ribosomes read mRNA instructions to build vital structural molecules and enzymes.',
+        explanation: 'Ribosomes are the cellular factories responsible for protein synthesis according to the genetic code.'
       }
     ]
   },
@@ -1079,6 +2082,38 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Divide both sides by 2 first: y - 3 = 7, then add 3.',
         explanation: 'Divide both sides by 2: y - 3 = 7. Add 3 to both sides: y = 10. (Alternatively expand: 2y - 6 = 14 -> 2y = 20 -> y = 10).'
+      },
+      {
+        id: 'ks3-mat-eq-3',
+        prompt: 'Solve for x: 5x - 8 = 3x + 12',
+        options: ['x = 10', 'x = 2', 'x = 5', 'x = 8'],
+        answerKey: 0,
+        hint: 'Subtract 3x from both sides first to get 2x - 8 = 12, then add 8.',
+        explanation: '5x - 3x = 12 + 8 -> 2x = 20 -> x = 10.'
+      },
+      {
+        id: 'ks3-mat-eq-4',
+        prompt: 'Solve for x: (x + 4) / 3 = 5',
+        options: ['x = 11', 'x = 19', 'x = 15', 'x = 7'],
+        answerKey: 0,
+        hint: 'Multiply both sides by 3 to clear the denominator, then subtract 4.',
+        explanation: '(x + 4) = 5 × 3 = 15 -> x = 15 - 4 = 11.'
+      },
+      {
+        id: 'ks3-mat-eq-5',
+        prompt: 'Solve for x: 18 - 2x = 6',
+        options: ['x = 6', 'x = 12', 'x = -6', 'x = 4'],
+        answerKey: 0,
+        hint: 'Subtract 18 from both sides (-2x = -12), then divide by -2.',
+        explanation: '-2x = 6 - 18 = -12 -> x = -12 / -2 = 6.'
+      },
+      {
+        id: 'ks3-mat-eq-6',
+        prompt: 'Sam thinks of a secret number n, multiplies it by 4, and adds 3. If the final answer is 27, what is the value of n?',
+        options: ['n = 6', 'n = 7', 'n = 8', 'n = 5'],
+        answerKey: 0,
+        hint: 'Form the equation 4n + 3 = 27, subtract 3, then divide by 4.',
+        explanation: '4n + 3 = 27 -> 4n = 24 -> n = 6. Checking: 4(6) + 3 = 24 + 3 = 27.'
       }
     ]
   },
@@ -1106,6 +2141,51 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: '6² + 8² = 36 + 64 = 100. Now take the square root of 100.',
         explanation: 'a² + b² = c² -> 6² + 8² = 36 + 64 = 100 -> c = √100 = 10 cm.'
+      },
+      {
+        id: 'ks3-mat-pyth-2',
+        prompt: 'In a right-angled triangle, the hypotenuse is 13 cm and one of the shorter legs is 5 cm. What is the length of the third side?',
+        options: ['12 cm', '8 cm', '144 cm', '18 cm'],
+        answerKey: 0,
+        hint: 'Rearrange formula: a² = c² - b² = 13² - 5² = 169 - 25 = 144.',
+        explanation: 'a² = 13² - 5² = 169 - 25 = 144 -> a = √144 = 12 cm.'
+      },
+      {
+        id: 'ks3-mat-pyth-3',
+        prompt: 'A right-angled triangle has perpendicular legs of length 9 m and 12 m. What is the hypotenuse length?',
+        options: ['15 m', '21 m', '225 m', '18 m'],
+        answerKey: 0,
+        hint: '9² = 81, 12² = 144. 81 + 144 = 225.',
+        explanation: 'c² = 9² + 12² = 81 + 144 = 225 -> c = √225 = 15 m.'
+      },
+      {
+        id: 'ks3-mat-pyth-4',
+        prompt: 'A 5-metre ladder leans against a vertical wall. The base of the ladder is placed 3 metres away from the wall on level ground. How high up the wall does the ladder reach?',
+        options: ['4 metres', '2 metres', '8 metres', '3.5 metres'],
+        answerKey: 0,
+        hint: 'The ladder is the hypotenuse (5 m). Height² = 5² - 3² = 25 - 9 = 16.',
+        explanation: 'Height² = 5² - 3² = 25 - 9 = 16 -> Height = √16 = 4 metres.'
+      },
+      {
+        id: 'ks3-mat-pyth-5',
+        prompt: 'Which set of three side lengths forms a valid right-angled triangle (a Pythagorean triple)?',
+        options: ['7 cm, 24 cm, 25 cm', '5 cm, 6 cm, 7 cm', '4 cm, 5 cm, 6 cm', '8 cm, 10 cm, 12 cm'],
+        answerKey: 0,
+        hint: 'Test if a² + b² = c²: 7² + 24² = 49 + 576 = 625 = 25².',
+        explanation: '7² + 24² = 49 + 576 = 625, and 25² = 625. Since 625 = 625, this is a right-angled triangle.'
+      },
+      {
+        id: 'ks3-mat-pyth-6',
+        prompt: 'In any right-angled triangle, where is the hypotenuse always located?',
+        options: [
+          'Directly opposite the 90-degree right angle (and it is always the longest side)',
+          'Adjacent to the smallest acute angle',
+          'Along the horizontal bottom edge only',
+          'It can be any of the three sides at random'
+        ],
+        answerKey: 0,
+        hint: 'Look directly across from the square right-angle corner box.',
+        explanation: 'The hypotenuse is defined geometrically as the longest side of a right-angled triangle, always situated directly opposite the right angle.'
       }
     ]
   },
@@ -1141,6 +2221,43 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Remember to subtract the 5 students who play both so they are not counted twice: 18 + 12 - 5.',
         explanation: 'Union = Football + Rugby - Both = 18 + 12 - 5 = 25 students.'
+      },
+      {
+        id: 'ks3-mat-prob-3',
+        prompt: 'If the probability of a commuter train arriving on time tomorrow is 0.82, what is the probability that it arrives late (complementary event)?',
+        options: ['0.18', '0.82', '0.28', '0.08'],
+        answerKey: 0,
+        hint: 'The sum of an event happening and not happening is always 1: P(late) = 1 - 0.82.',
+        explanation: 'Complementary rule: P(not E) = 1 - P(E) = 1 - 0.82 = 0.18.'
+      },
+      {
+        id: 'ks3-mat-prob-4',
+        prompt: 'A bag contains 4 red, 5 green, and 11 yellow marbles. If one marble is drawn at random, what is the probability of selecting a green marble?',
+        options: ['1/4 (or 5/20)', '5/15', '1/5', '5/16'],
+        answerKey: 0,
+        hint: 'Total marbles = 4 + 5 + 11 = 20. Favourable = 5.',
+        explanation: 'Probability = favourable / total = 5 / 20 = 1/4 (or 0.25).'
+      },
+      {
+        id: 'ks3-mat-prob-5',
+        prompt: 'In Venn diagram set notation, what does the intersection symbol ∩ (e.g. A ∩ B) represent?',
+        options: [
+          'Elements that belong to BOTH set A and set B simultaneously',
+          'Elements that belong to set A OR set B or both',
+          'Elements that do not belong to either set',
+          'The total number of elements in the universal set'
+        ],
+        answerKey: 0,
+        hint: 'The overlapping central section where both sets meet.',
+        explanation: 'Intersection (A ∩ B) denotes the set of elements common to both sets.'
+      },
+      {
+        id: 'ks3-mat-prob-6',
+        prompt: 'A card is drawn from a standard shuffled deck of 52 playing cards. What is the probability of drawing an Ace?',
+        options: ['1/13 (or 4/52)', '1/52', '1/4', '4/13'],
+        answerKey: 0,
+        hint: 'There are 4 Aces in a 52-card deck (one in each suit).',
+        explanation: 'Probability = 4 / 52 = 1 / 13.'
       }
     ]
   },
@@ -1177,6 +2294,43 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Literally means "I call myself".',
         explanation: '"Me llamo" followed by your name translates to "My name is" (literally "I call myself").'
+      },
+      {
+        id: 'ks2-spa-greet-3',
+        prompt: 'How would you politely answer when someone asks you "¿Cómo estás?" (How are you?) in Spanish?',
+        options: ['Muy bien, gracias', 'Me llamo Carlos', 'Buenas noches', 'De nada'],
+        answerKey: 0,
+        hint: 'Means "Very well, thank you".',
+        explanation: '"Muy bien, gracias" means "Very well, thank you," answering an inquiry about your wellbeing.'
+      },
+      {
+        id: 'ks2-spa-greet-4',
+        prompt: 'What unique punctuation mark does Spanish place at the BEGINNING of a question?',
+        options: [
+          'An inverted upside-down question mark (¿)',
+          'A semicolon (;)',
+          'A colon (:)',
+          'An inverted exclamation mark (¡)'
+        ],
+        answerKey: 0,
+        hint: 'Spanish warns the reader that a question clause is starting before they finish reading.',
+        explanation: 'Spanish uses the inverted question mark (¿) at the start of an interrogative phrase and a regular (?) at the end.'
+      },
+      {
+        id: 'ks2-spa-greet-5',
+        prompt: 'Which word means "Goodbye" when taking your leave in Spanish?',
+        options: ['Adiós', 'Hola', 'Buenos días', 'Por favor'],
+        answerKey: 0,
+        hint: 'Common parting word in Spanish.',
+        explanation: '"Adiós" is the standard Spanish farewell for "Goodbye".'
+      },
+      {
+        id: 'ks2-spa-greet-6',
+        prompt: 'What are the polite Spanish words for "Please" and "Thank you"?',
+        options: ['Por favor and Gracias', 'De nada and Perdón', 'Hola and Adiós', 'Mucho gusto and Salud'],
+        answerKey: 0,
+        hint: '"Por favor" means please and "Gracias" means thanks.',
+        explanation: '"Por favor" translates to "please" and "gracias" translates to "thank you".'
       }
     ]
   },
@@ -1213,6 +2367,43 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'For -er verbs, the third-person plural ("ellos/ellas") ending is -en.',
         explanation: 'For regular -er verbs in the present indicative, the "ellos/ellas" ending is -en: comer -> comen.'
+      },
+      {
+        id: 'ks3-spa-verb-3',
+        prompt: 'How do you conjugate the regular verb "vivir" (to live) for "I live" (yo)?',
+        options: ['Vivo', 'Vives', 'Viven', 'Vivimos'],
+        answerKey: 0,
+        hint: 'Almost all regular verbs take -o for the first-person singular "yo" in the present tense.',
+        explanation: 'Remove the -ir ending from vivir to find the stem "viv-", then append -o to get "vivo" (I live).'
+      },
+      {
+        id: 'ks3-spa-verb-4',
+        prompt: 'How do you say "You speak" when addressing a friend informally (tú) with "hablar"?',
+        options: ['Hablas', 'Habla', 'Hablo', 'Hablamos'],
+        answerKey: 0,
+        hint: 'The informal "tú" ending for -ar verbs ends in -as.',
+        explanation: 'For regular -ar verbs, the "tú" form takes -as: hablar -> tú hablas.'
+      },
+      {
+        id: 'ks3-spa-verb-5',
+        prompt: 'What is the correct present tense form of "escribir" (to write) for "We write" (nosotros)?',
+        options: ['Escribimos', 'Escribemos', 'Escriban', 'Escribo'],
+        answerKey: 0,
+        hint: 'For regular -ir verbs, the "nosotros" ending retains the letter i (-imos).',
+        explanation: 'Regular -ir verbs use -imos for the nosotros form: escribir -> escribimos.'
+      },
+      {
+        id: 'ks3-spa-verb-6',
+        prompt: 'Why do Spanish speakers often say "Hablo inglés" instead of "Yo hablo inglés"?',
+        options: [
+          'Because the verb ending "-o" already makes it 100% clear that the subject is "yo" (I)',
+          'Because Spanish grammar completely forbids the use of the word "yo"',
+          'Because "yo" can only be spoken by kings and teachers',
+          'Because subject pronouns slow down the internet in Spain'
+        ],
+        answerKey: 0,
+        hint: 'Spanish is a pro-drop (pronoun-dropping) language because verb conjugations encode the person.',
+        explanation: 'Since the inflectional ending "-o" uniquely signals the first person singular, the subject pronoun "yo" is redundant and usually omitted.'
       }
     ]
   },
@@ -1253,6 +2444,53 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Rearrange F = ma to find a: a = F / m.',
         explanation: 'a = F / m = 60 N / 12 kg = 5 m/s².'
+      },
+      {
+        id: 'ks4-phy-newton-3',
+        prompt: 'According to Newton\'s First Law of Motion, what happens to a deep-space probe travelling at 15,000 m/s when its rocket thrusters are turned off in empty space?',
+        options: [
+          'It continues moving at 15,000 m/s in a straight line at constant velocity indefinitely',
+          'It gradually slows down to a complete halt because no force keeps it moving',
+          'It immediately drops vertically toward the nearest nebula',
+          'It starts spinning in circles at increasing speed'
+        ],
+        answerKey: 0,
+        hint: 'In the vacuum of deep space there is no friction or resultant force to change its state of motion.',
+        explanation: 'Newton\'s First Law states an object remains in uniform motion at constant velocity unless acted upon by an external resultant force.'
+      },
+      {
+        id: 'ks4-phy-newton-4',
+        prompt: 'A car of mass 1,500 kg accelerates uniformly along a flat road at 2.5 m/s². What resultant force must act on the car?',
+        options: ['3,750 N', '600 N', '1,500 N', '375 N'],
+        answerKey: 0,
+        hint: 'Use Newton\'s Second Law: F = m × a.',
+        explanation: 'F = m × a = 1,500 kg × 2.5 m/s² = 3,750 N.'
+      },
+      {
+        id: 'ks4-phy-newton-5',
+        prompt: 'When an astronaut in orbit pushes forward on a 50 kg equipment crate with a force of 100 N, what happens to the astronaut according to Newton\'s Third Law?',
+        options: [
+          'The astronaut experiences an equal and opposite force of 100 N pushing backwards',
+          'The astronaut remains completely motionless with zero force acting on them',
+          'The astronaut is pulled forward in the same direction as the crate',
+          'The force on the astronaut depends only on the temperature of space'
+        ],
+        answerKey: 0,
+        hint: 'Newton\'s Third Law: For every action force, there is an equal and opposite reaction force.',
+        explanation: 'Forces always occur in matched interaction pairs; pushing forward on the crate generates an equal 100 N reactionary force pushing backward on the astronaut.'
+      },
+      {
+        id: 'ks4-phy-newton-6',
+        prompt: 'What is the crucial scientific distinction between the MASS of an object and its WEIGHT?',
+        options: [
+          'Mass is the quantity of matter (measured in kg, constant anywhere); weight is the gravitational force acting on that mass (measured in Newtons, W = mg)',
+          'Mass changes on the Moon, while weight stays identical everywhere',
+          'Mass and weight are identical terms measuring volume in litres',
+          'Mass is measured with a spring scale in Newtons; weight is measured in kilograms'
+        ],
+        answerKey: 0,
+        hint: 'Weight is a force caused by gravity (W = mg), measured in Newtons.',
+        explanation: 'Mass is an intrinsic measure of matter in kilograms (scalar). Weight is the downward gravitational force acting on mass (vector, measured in Newtons).'
       }
     ]
   },
@@ -1281,6 +2519,66 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Right side has 2 Fe and 3 O in each Fe₂O₃. To balance odd and even oxygens, target 6 oxygens.',
         explanation: '4 Fe + 3 O₂ -> 2 Fe₂O₃ gives 4 Iron atoms and 6 Oxygen atoms on both reactant and product sides.'
+      },
+      {
+        id: 'ks4-chem-bal-2',
+        prompt: 'Which coefficients correctly balance the complete combustion of methane: ___ CH₄ + ___ O₂ -> ___ CO₂ + ___ H₂O ?',
+        options: [
+          'CH₄ + 2 O₂ -> CO₂ + 2 H₂O',
+          'CH₄ + O₂ -> CO₂ + H₂O',
+          '2 CH₄ + 3 O₂ -> 2 CO₂ + 2 H₂O',
+          'CH₄ + 4 O₂ -> CO₂ + 4 H₂O'
+        ],
+        answerKey: 0,
+        hint: 'Reactants have 4 H, so you need 2 H₂O on the product side. Then tally total oxygen atoms.',
+        explanation: 'CH₄ + 2 O₂ -> CO₂ + 2 H₂O gives 1 C, 4 H, and 4 O on both sides.'
+      },
+      {
+        id: 'ks4-chem-bal-3',
+        prompt: 'Why is it strictly forbidden to alter the subscript numbers inside a chemical formula (e.g. changing CO₂ to CO) when balancing a chemical equation?',
+        options: [
+          'Because changing the subscript changes the chemical identity and molecular structure of the substance itself',
+          'Because subscripts must always be even numbers',
+          'Because the periodic table only allows coefficients of 2 or higher',
+          'Because printers cannot reproduce changed subscripts'
+        ],
+        answerKey: 0,
+        hint: 'CO₂ is carbon dioxide; CO is poisonous carbon monoxide.',
+        explanation: 'Subscripts define the fixed chemical composition and bonding ratio of the compound. Altering subscripts invents a completely different substance.'
+      },
+      {
+        id: 'ks4-chem-bal-4',
+        prompt: 'Which coefficients correctly balance the Haber synthesis of ammonia: ___ N₂ + ___ H₂ -> ___ NH₃ ?',
+        options: [
+          'N₂ + 3 H₂ -> 2 NH₃',
+          'N₂ + H₂ -> NH₃',
+          '2 N₂ + 3 H₂ -> 4 NH₃',
+          'N₂ + 2 H₂ -> 2 NH₃'
+        ],
+        answerKey: 0,
+        hint: '2 Nitrogen atoms on the left require 2 NH₃ on the right, which gives 2 × 3 = 6 Hydrogen atoms.',
+        explanation: 'N₂ + 3 H₂ -> 2 NH₃ gives 2 Nitrogen atoms and 6 Hydrogen atoms on both sides.'
+      },
+      {
+        id: 'ks4-chem-bal-5',
+        prompt: 'In the reaction 2 Na + Cl₂ -> 2 NaCl, if 46 g of sodium reacts completely with 71 g of chlorine gas, what mass of sodium chloride is produced according to the Law of Conservation of Mass?',
+        options: ['117 g', '100 g', '25 g', '46 g'],
+        answerKey: 0,
+        hint: 'Conservation of mass: Total mass of reactants = Total mass of products.',
+        explanation: 'Total reactant mass = 46 g + 71 g = 117 g. Mass is conserved, so exactly 117 g of NaCl is produced.'
+      },
+      {
+        id: 'ks4-chem-bal-6',
+        prompt: 'Which set of coefficients correctly balances the reaction between aluminium and hydrochloric acid: ___ Al + ___ HCl -> ___ AlCl₃ + ___ H₂ ?',
+        options: [
+          '2 Al + 6 HCl -> 2 AlCl₃ + 3 H₂',
+          'Al + 3 HCl -> AlCl₃ + H₂',
+          '2 Al + 3 HCl -> 2 AlCl₃ + 3 H₂',
+          'Al + 2 HCl -> AlCl₃ + 2 H₂'
+        ],
+        answerKey: 0,
+        hint: 'Find the lowest common multiple for Cl (3) and H (2), which is 6.',
+        explanation: '2 Al + 6 HCl -> 2 AlCl₃ + 3 H₂ balances 2 Al, 6 H, and 6 Cl on both sides of the equation.'
       }
     ]
   },
@@ -1333,6 +2631,32 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Water evaporates from spongy mesophyll and diffuses out through open stomata, pulling more water up via cohesion.',
         explanation: 'Evaporation of water vapor from leaf surfaces creates negative pressure tension, pulling a continuous column of water up xylem tubes via cohesive hydrogen bonds.'
+      },
+      {
+        id: 'ks4-bio-photo-5',
+        prompt: 'What is the inverse square law relationship between light intensity and the distance (d) from a light source in a photosynthesis experiment?',
+        options: [
+          'Light intensity is inversely proportional to the square of the distance (Light intensity ∝ 1 / d²)',
+          'Light intensity decreases linearly as distance increases (Light intensity ∝ 1 / d)',
+          'Light intensity is directly proportional to the square of distance (Light intensity ∝ d²)',
+          'Distance has no mathematical effect on light intensity'
+        ],
+        answerKey: 0,
+        hint: 'If you double the distance (×2), light intensity drops to one quarter (1/4 or 1/2²).',
+        explanation: 'According to the inverse square law, as distance from the light source increases, light intensity drops proportionally to the square of the distance: Light intensity ∝ 1 / d².'
+      },
+      {
+        id: 'ks4-bio-photo-6',
+        prompt: 'What cellular adaptation enables root hair cells to absorb water by osmosis and mineral ions by active transport with maximum efficiency?',
+        options: [
+          'A greatly elongated microscopic projection providing an immense surface area-to-volume ratio and abundant mitochondria for active transport ATP',
+          'A thick waxy cuticle layer that prevents water from leaking into the surrounding soil',
+          'Abundant chloroplasts that carry out photosynthesis underground in the dark',
+          'Lignified dead walls that filter out all dissolved mineral ions'
+        ],
+        answerKey: 0,
+        hint: 'Root hairs have long microscopic fingers to maximize surface area and lots of mitochondria for energy.',
+        explanation: 'Root hair cells possess long, thin extensions that dramatically increase surface area for osmosis, along with large numbers of mitochondria providing ATP for active transport of nitrates and other minerals against concentration gradients.'
       }
     ]
   }

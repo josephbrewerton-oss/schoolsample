@@ -89,6 +89,19 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Christianity is not polytheistic; it professes one divine essence shared completely by three Divine Persons.',
         explanation: 'Christianity maintains monotheism (One God). The Trinity does not divide the divine unity; each Divine Person is whole and entire God, distinct only in their relations of origin.'
+      },
+      {
+        id: 'ks3-re-trinity-6',
+        prompt: 'What ancient Trinitarian heresy falsely claimed that the Father, Son, and Holy Spirit are not three distinct eternal Persons, but merely three temporary masks or modes worn by one solitary God?',
+        options: [
+          'Modalism (or Sabellianism)',
+          'Arianism',
+          'Pelagianism',
+          'Donatism'
+        ],
+        answerKey: 0,
+        hint: 'This heresy views God like an actor changing costumes or modes depending on the role.',
+        explanation: 'Modalism (Sabellianism) denies the real distinction between the three divine Persons, treating Father, Son, and Holy Spirit merely as three consecutive modes of one divine Person.'
       }
     ]
   },
@@ -160,6 +173,32 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Fifty days after Easter, the disciples were empowered by the Holy Spirit to go into the world.',
         explanation: 'Pentecost (Acts 2) is the foundational model for Confirmation. Just as the Apostles received the fullness of the Holy Spirit to witness to Christ, candidates receive the same empowering Spirit in Confirmation.'
+      },
+      {
+        id: 'ks3-re-conf-5',
+        prompt: 'What is the primary spiritual purpose of selecting a Confirmation Saint\'s name and choosing a sponsor for the sacrament?',
+        options: [
+          'To adopt a patron saint as a heavenly role model and intercessor, and to have a practicing Catholic guide for spiritual growth',
+          'To officially change one\'s legal surname on national government registers',
+          'To qualify for financial loans from the local parish',
+          'To replace one\'s biological family in civil law'
+        ],
+        answerKey: 0,
+        hint: 'The saint prays for the candidate and provides an inspiring example of following Jesus.',
+        explanation: 'Taking a saint\'s name provides the candidate with a spiritual patron and exemplar of virtue, while the sponsor commits to assisting the candidate to lead a Christian life in harmony with baptism.'
+      },
+      {
+        id: 'ks3-re-conf-6',
+        prompt: 'Which of the Twelve Fruits of the Holy Spirit (Galatians 5:22-23) describes the inner calm and trust that comes from being reconciled with God and others?',
+        options: [
+          'Peace (Pax)',
+          'Ambition',
+          'Curiosity',
+          'Pride'
+        ],
+        answerKey: 0,
+        hint: 'Jesus gave this greeting to His apostles after the Resurrection: "_____ be with you."',
+        explanation: 'Peace is a Fruit of the Holy Spirit reflecting the tranquil order and soul-deep serenity that comes from communion with God and charity towards one\'s neighbour.'
       }
     ]
   },
@@ -218,6 +257,45 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'In Luke 24, the risen Jesus said: "Touch me and see; a ghost does not have flesh and bones, as you see I have."',
         explanation: 'The Resurrection was not a ghost or metaphor, nor a simple resuscitation like Lazarus. Christ rose with a real, transformed, glorified body that conquered death forever (1 Cor 15).'
+      },
+      {
+        id: 'ks3-re-pasch-4',
+        prompt: 'What happened during Christ\'s "Descent into Hell" (Harrowing of Hell / Hades) commemorated on Holy Saturday before His Resurrection?',
+        options: [
+          'Christ in His holy soul proclaimed salvation to the righteous souls (such as Adam, Eve, and Abraham) who were waiting to enter heaven',
+          'Christ was condemned to eternal torment like the damned',
+          'Christ ceased to exist until the Father recreated Him on Sunday',
+          'Christ travelled to Rome to confront the Roman Emperor'
+        ],
+        answerKey: 0,
+        hint: 'The Apostles\' Creed states: "He descended into hell; on the third day he rose again from the dead."',
+        explanation: 'As the Catechism (CCC 632-635) teaches, Christ descended to the realm of the dead to free the holy souls who were awaiting their Redeemer and open heaven\'s gates to them.'
+      },
+      {
+        id: 'ks3-re-pasch-5',
+        prompt: 'What is commemorated on Ascension Thursday, forty days after Easter Sunday in the liturgical year?',
+        options: [
+          'Jesus returning in glory to the Father, entering heavenly sanctuary with His glorified human nature',
+          'The birth of the Church with tongues of fire in the upper room',
+          'The arrival of the Wise Men in Bethlehem',
+          'The arrest of Jesus in the Garden of Gethsemane'
+        ],
+        answerKey: 0,
+        hint: 'Forty days after Easter, Christ ascended into heaven in the presence of His disciples.',
+        explanation: 'The Ascension (Acts 1:9-11) marks Christ\'s definitive entrance into heavenly sanctuary at the right hand of the Father, elevating human nature to divine glory.'
+      },
+      {
+        id: 'ks3-re-pasch-6',
+        prompt: 'How is the historical sacrifice of Jesus on Mount Calvary made present in Catholic worship today?',
+        options: [
+          'Through the celebration of the Holy Eucharist (Mass), where the one sacrifice of the Cross is re-presented in an unbloody sacramental manner',
+          'By sacrificing livestock at the parish altar every Sunday',
+          'Only as an annual theatrical passion play acted out during Holy Week',
+          'Through written exam papers taken by secondary school students'
+        ],
+        answerKey: 0,
+        hint: 'The Mass is not a new sacrifice or re-killing of Jesus; it is the memorial re-presentation of Calvary.',
+        explanation: 'Catholic doctrine teaches that the Mass is the same sacrifice as that of the Cross: Christ offers Himself through the ministry of the priest, making His saving grace actively present to the Church.'
       }
     ]
   },
@@ -276,6 +354,45 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'These mysteries include the Baptism in the Jordan, Wedding at Cana, Proclamation of the Kingdom, Transfiguration, and Institution of the Eucharist.',
         explanation: 'In his apostolic letter Rosarium Virginis Mariae (2002), Pope St John Paul II introduced the Luminous Mysteries (Mysteries of Light) to bridge the childhood of Jesus (Joyful) and His Passion (Sorrowful).'
+      },
+      {
+        id: 'ks3-re-mary-4',
+        prompt: 'What does the ancient title "Theotokos" (defined at the Council of Ephesus in 431 AD) proclaim about the Virgin Mary?',
+        options: [
+          'She is the "God-bearer" or Mother of God because Jesus is one divine person with a fully human and fully divine nature',
+          'She existed before God created the universe',
+          'She is the biological creator of God the Father',
+          'She was an earthly queen of the Roman Empire'
+        ],
+        answerKey: 0,
+        hint: 'The Greek word "Theos" means God and "tokos" means bearer or mother.',
+        explanation: 'The Council of Ephesus (431 AD) affirmed Mary as Theotokos (Mother of God) against Nestorius, ensuring that Christ\'s true divinity and humanity in one single divine person are upheld.'
+      },
+      {
+        id: 'ks3-re-mary-5',
+        prompt: 'What does the Catholic dogma of the "Assumption of Mary" (defined by Pope Pius XII in 1950) declare?',
+        options: [
+          'Mary, at the end of her earthly life, was taken up body and soul into heavenly glory',
+          'Mary was elected as the first bishop of Rome',
+          'Mary assumed leadership over the Roman legions',
+          'Mary never lived on Earth and was an angel from heaven'
+        ],
+        answerKey: 0,
+        hint: 'Because she was preserved from original sin, Mary shared directly in her Son\'s bodily resurrection.',
+        explanation: 'The dogma of the Assumption proclaims that Mary was assumed body and soul into heavenly glory, anticipating the bodily resurrection promised to all faithful Christians.'
+      },
+      {
+        id: 'ks3-re-mary-6',
+        prompt: 'Which of the following describes the biblical structure of the "Hail Mary" prayer recited in each decade of the Rosary?',
+        options: [
+          'The greeting of the Archangel Gabriel (Luke 1:28), Elizabeth\'s blessing (Luke 1:42), and the Church\'s petition for Mary\'s intercession now and at the hour of death',
+          'A psalm composed by King David in the Old Testament',
+          'A poem written by St Francis of Assisi in the Middle Ages',
+          'A translation of Roman imperial civil laws'
+        ],
+        answerKey: 0,
+        hint: '"Hail Mary, full of grace, the Lord is with thee..." comes directly from Gabriel\'s words at the Annunciation.',
+        explanation: 'The Hail Mary weaves together Scripture from the Annunciation and Visitation with the Church\'s petition asking the Mother of God to pray for sinners.'
       }
     ]
   },
@@ -324,6 +441,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Look for the presence of the voice from heaven, the dove, and Jesus in the Jordan.',
         explanation: 'At Christ\'s Baptism (a key theophany), all three Divine Persons are revealed at once: the Son in the water, the Holy Spirit descending like a dove, and the Father\'s voice from heaven.'
+      },
+      {
+        id: 'ks4-re-trin-3',
+        prompt: 'How does the "Economic Trinity" differ from the "Immanent Trinity" in Christian systematic theology?',
+        options: [
+          'The Immanent Trinity refers to God\'s eternal inner life and relational nature within Himself; the Economic Trinity refers to God\'s actions and revelation in human history and creation',
+          'The Economic Trinity refers to how churches raise financial tithes and donations',
+          'The Immanent Trinity refers only to angels, whereas the Economic Trinity refers to human saints',
+          'They are identical terms with no philosophical distinction'
+        ],
+        answerKey: 0,
+        hint: '"Immanent" looks inward at God\'s inner essence; "Economic" (from oikonomia) looks outward at God\'s work in salvation history.',
+        explanation: 'The Immanent Trinity considers the internal life and eternal relations between Father, Son, and Holy Spirit. The Economic Trinity considers how the Triune God acts outwardly in creation, redemption, and sanctification.'
+      },
+      {
+        id: 'ks4-re-trin-4',
+        prompt: 'What theological command did the risen Jesus give in the Great Commission (Matthew 28:19) that establishes the Trinitarian baptismal formula?',
+        options: [
+          '"Go therefore and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit"',
+          '"Go and establish political monarchies throughout the Mediterranean basin"',
+          '"Baptize believers only in the name of the Prophet Moses"',
+          '"Refrain from preaching the Gospel to foreign lands"'
+        ],
+        answerKey: 0,
+        hint: 'Notice Jesus says "in the NAME" (singular), not names (plural), affirming one God in three Persons.',
+        explanation: 'Matthew 28:19 provides the definitive scriptural mandate for Trinitarian baptism: "in the name [singular] of the Father and of the Son and of the Holy Spirit", expressing both the unity of essence and trinity of persons.'
+      },
+      {
+        id: 'ks4-re-trin-5',
+        prompt: 'In GCSE evaluative theology, how does belief in the Trinity directly influence Catholic social teaching on human community and dignity?',
+        options: [
+          'Because humans are made in the image of a Triune God who is an eternal communion of mutual self-giving love, human beings are inherently relational and called to solidarity',
+          'It requires all citizens to pursue solitary hermetic isolation without community',
+          'It teaches that hierarchical domination of the strong over the weak is divinely ordained',
+          'It suggests society should be divided into three strictly segregated social castes'
+        ],
+        answerKey: 0,
+        hint: 'If God is a community of self-giving love, humans created in His image are made for solidarity and mutual charity.',
+        explanation: 'Catholic Social Teaching (e.g. Caritas in Veritate) emphasises that because the Trinity is a communion of persons, human beings find their true fulfilment not in isolated individualism, but in self-giving communion and social solidarity.'
+      },
+      {
+        id: 'ks4-re-trin-6',
+        prompt: 'What role does the Holy Spirit play in the life of the Church according to John 14:26 and Catholic dogma?',
+        options: [
+          'As the Paraclete (Advocate and Counsellor), guiding the Church into all truth, sanctifying believers, and animating the sacraments',
+          'As a destructive force that abolishes previous scripture',
+          'As an earthly political ruler elected by democratic referendum',
+          'As an ancient prophet who died in the Old Testament period'
+        ],
+        answerKey: 0,
+        hint: 'Jesus promised: "The Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things."',
+        explanation: 'In John 14:26, Jesus designates the Holy Spirit as the Paraclete (Advocate/Comforter) who sanctifies, guides, inspires, and preserves the apostolic Church in theological truth.'
       }
     ]
   },
@@ -369,6 +538,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: '"Ex Cathedra" literally means "from the chair" of St Peter.',
         explanation: 'Papal Infallibility is strictly limited: the Pope must speak Ex Cathedra (from the Chair of Peter), explicitly intending to define a dogma regarding faith or morals, to be definitively held by the universal Church.'
+      },
+      {
+        id: 'ks4-re-auth-3',
+        prompt: 'What is "Apostolic Succession" and why is it vital for Catholic episcopal authority?',
+        options: [
+          'The continuous, unbroken line of sacramental ordination and authority passed from the original Apostles down to contemporary Catholic bishops through the laying on of hands',
+          'A democratic election where parish congregations vote on new biblical interpretations every five years',
+          'The inheritance of church property by biological descendants of medieval monarchs',
+          'The written chronological history of ancient Roman civil magistrates'
+        ],
+        answerKey: 0,
+        hint: 'Bishops trace their spiritual lineage through an unbroken chain of episcopal consecrations back to the Apostles.',
+        explanation: 'Apostolic Succession guarantees that the authentic teaching, pastoral authority, and sacramental validity of the Apostles are continuously preserved in the Church through episcopal consecration.'
+      },
+      {
+        id: 'ks4-re-auth-4',
+        prompt: 'What is the Catholic understanding of "Biblical Inspiration" regarding the human authors of Sacred Scripture?',
+        options: [
+          'God inspired the human authors through the Holy Spirit so that they wrote all that God wanted without error in matters of salvation, using their own human faculties and cultural language',
+          'God dictated each word mechanistically like a typewriter while the human author was unconscious',
+          'The Bible is purely human folklore with no divine involvement whatsoever',
+          'Human authors wrote modern scientific textbooks designed to explain nuclear physics'
+        ],
+        answerKey: 0,
+        hint: 'Dei Verbum 11 explains that God worked in and through the human authors, acting as true authors themselves.',
+        explanation: 'Catholic doctrine teaches dual authorship: the Holy Spirit inspired human authors who actively used their literary styles and contemporary contexts to express the salvific truth God intended without error (inerrancy in matters of faith and morals).'
+      },
+      {
+        id: 'ks4-re-auth-5',
+        prompt: 'What is the difference between the Church\'s "Ordinary Magisterium" and "Extraordinary Magisterium"?',
+        options: [
+          'The Ordinary Magisterium is the day-to-day consistent teaching of the Pope and bishops worldwide; the Extraordinary Magisterium involves solemn ex cathedra papal definitions or declarations of Ecumenical Councils',
+          'The Ordinary Magisterium applies only to monks; the Extraordinary Magisterium applies to lay people',
+          'The Ordinary Magisterium changes every decade; the Extraordinary Magisterium was abolished at Vatican II',
+          'There is no distinction; both refer to parish newsletters'
+        ],
+        answerKey: 0,
+        hint: 'Extraordinary instances are rare, solemn occasions like an Ecumenical Council (e.g. Vatican II) or Ex Cathedra definition.',
+        explanation: 'The Ordinary Magisterium is exercised in routine pastoral encyclicals and daily episcopal preaching. The Extraordinary Magisterium occurs in solemn definitive pronouncements by an Ecumenical Council or when a Pope speaks Ex Cathedra.'
+      },
+      {
+        id: 'ks4-re-auth-6',
+        prompt: 'How did the Second Vatican Council document "Dei Verbum" clarify the relationship between Sacred Scripture and Sacred Tradition?',
+        options: [
+          'They flow from the same divine wellspring, form one sacred deposit of the Word of God, and together communicate divine revelation',
+          'Sacred Scripture completely replaced and abolished all Sacred Tradition in the 16th century',
+          'Sacred Tradition is superior to Scripture and can contradict the Gospels at any time',
+          'They are mutually contradictory sources that Catholics must choose between'
+        ],
+        answerKey: 0,
+        hint: 'Dei Verbum 9 states that both spring from the same divine fountain and tend toward the same goal.',
+        explanation: 'Dei Verbum 9 proclaims: "Sacred Tradition and Sacred Scripture form one sacred deposit of the word of God, committed to the Church," mutually interpreting and enriching one another.'
       }
     ]
   },
@@ -414,6 +635,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'God does not force anyone to reject Him; Hell is the chosen refusal of divine love.',
         explanation: 'Hell is defined as eternal separation from God, freely chosen by a person who obstinately persists in mortal sin and refuses God\'s merciful love until death.'
+      },
+      {
+        id: 'ks4-re-esch-3',
+        prompt: 'What is the theological distinction between the "Particular Judgment" and the "General (Last) Judgment" in Catholic eschatology?',
+        options: [
+          'Particular Judgment occurs immediately at the individual\'s physical death; General Judgment occurs at the end of time when Christ returns in glory and all dead are resurrected bodily',
+          'Particular Judgment is conducted by local parish priests; General Judgment is conducted by the Pope',
+          'Particular Judgment applies only to saints; General Judgment applies only to sinners',
+          'They are two names for the same event that took place in 70 AD'
+        ],
+        answerKey: 0,
+        hint: 'One happens at individual death (Particular); the other happens at the Parousia/Resurrection of the dead for all humanity (General).',
+        explanation: 'At death, the soul faces the Particular Judgment determining heaven, purgatory, or hell (CCC 1021-1022). At the Parousia, the General Judgment reveals the full moral ripple of all human history alongside bodily resurrection.'
+      },
+      {
+        id: 'ks4-re-esch-4',
+        prompt: 'What does the "Beatific Vision" describe in Catholic doctrine regarding the life of Heaven?',
+        options: [
+          'The ultimate, eternal, direct contemplation of God face-to-face in His infinite truth, beauty, and love, bringing supreme human happiness',
+          'A temporary dream experienced by disciples on Mount Tabor',
+          'An earthly political paradise built by human technological advancement',
+          'The physical view from the dome of St Peter\'s Basilica in Rome'
+        ],
+        answerKey: 0,
+        hint: '1 Corinthians 13:12: "For now we see in a mirror dimly, but then face to face."',
+        explanation: 'The Beatific Vision (CCC 1028) is the direct, unmediated encounter with God as He is, satisfying the deepest longing of the human heart in eternal communion.'
+      },
+      {
+        id: 'ks4-re-esch-5',
+        prompt: 'Why do Catholics offer Masses and recite prayers (such as the Requiem) for the faithful departed?',
+        options: [
+          'To assist souls undergoing purification in Purgatory so they may be swiftly comforted and admitted into the fullness of heavenly joy',
+          'To change God\'s mind and rescue souls from Hell',
+          'Because deceased souls have no memory of their earthly lives unless reminded by prayer',
+          'To ward off ghosts and supernatural phantoms from church buildings'
+        ],
+        answerKey: 0,
+        hint: '2 Maccabees 12:46: "It is a holy and wholesome thought to pray for the dead, that they may be loosed from sins."',
+        explanation: 'Through the Communion of Saints, prayers, almsgiving, and especially the Holy Sacrifice of the Mass offered on behalf of the dead assist holy souls in Purgatory during their purification (CCC 1032).'
+      },
+      {
+        id: 'ks4-re-esch-6',
+        prompt: 'How does the Catholic Church understand the "Resurrection of the Body" at the end of time professed in the Apostles\' Creed?',
+        options: [
+          'Our mortal bodies will be reunited with our immortal souls and transformed into glorified, incorruptible bodies, sharing in Christ\'s Resurrection',
+          'Human souls will inhabit mechanical robot bodies in outer space',
+          'Souls will be reincarnated into new infant bodies on Earth repeatedly',
+          'Human bodies remain in the grave forever while souls become disembodied clouds'
+        ],
+        answerKey: 0,
+        hint: 'St Paul writes in 1 Corinthians 15: "It is sown a perishable body, it is raised an imperishable body."',
+        explanation: 'Catholics believe that at Christ\'s second coming, our bodies will be raised incorruptible and reunited with our souls, mirroring the physical, glorified Resurrection of Jesus (CCC 997-1004).'
       }
     ]
   },
@@ -459,6 +732,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Combatants are active soldiers; non-combatants are innocent citizens, doctors, children, and elders.',
         explanation: 'Just War Theory and international humanitarian law strictly forbid the intentional targeting of non-combatants (civilians). Attacking innocent lives is intrinsically evil.'
+      },
+      {
+        id: 'ks4-re-war-3',
+        prompt: 'What does the Just War criterion of "Proportionality" require regarding military action?',
+        options: [
+          'The destruction, loss of life, and damage inflicted by military force must not be greater than the evil being averted',
+          'Both opposing armies must deploy exactly identical numbers of rifles and tanks',
+          'A military conflict must last for an equal amount of days on each side',
+          'Military victories must result in equal financial restitution to all participating companies'
+        ],
+        answerKey: 0,
+        hint: 'You cannot drop a weapon of mass destruction to stop a minor border skirmish.',
+        explanation: 'Proportionality (CCC 2309) demands that the anticipated destruction and harm caused by military intervention must not outweigh the evil being resisted.'
+      },
+      {
+        id: 'ks4-re-war-4',
+        prompt: 'Why does the Catholic Church support "Conscientious Objection" for individuals in military service?',
+        options: [
+          'Because Catholic moral theology upholds the supremacy of conscience, recognizing an individual\'s moral duty to refuse orders that violate God\'s law or involve unjust war crimes',
+          'Because soldiers should be allowed to go on holiday whenever they dislike cold weather',
+          'Because the Church opposes all forms of civil government and civic laws',
+          'Because conscientious objection exempts citizens from paying all national taxes'
+        ],
+        answerKey: 0,
+        hint: 'Gaudium et Spes 79: Conscience must never be forced to commit atrocities or unjust killing.',
+        explanation: 'Vatican II (Gaudium et Spes 79) and CCC 2311 teach that public authorities should make equitable provision for those who, for reasons of conscience, refuse to bear arms, while serving the community in other ways.'
+      },
+      {
+        id: 'ks4-re-war-5',
+        prompt: 'What did Pope Francis declare in his encyclical "Fratelli Tutti" (2020) regarding modern nuclear, chemical, and biological weapons and the concept of "Just War"?',
+        options: [
+          'Modern weapons of mass destruction make it exceedingly difficult to invoke the rational criteria of "just war" today, meaning war can no longer be seen as a solution',
+          'Nuclear weapons should be distributed equally to every sovereign nation',
+          'Just War Theory justifies the preemptive use of nuclear weapons during trade disputes',
+          'Wars fought with drones and missiles are completely free from moral examination'
+        ],
+        answerKey: 0,
+        hint: 'Fratelli Tutti warns that modern high-tech weaponry creates catastrophic, uncontrollable collateral civilian slaughter.',
+        explanation: 'In Fratelli Tutti (258), Pope Francis stated that given chemical, nuclear, and biological technology, the risks will always outweigh the hypothetical utility, declaring "it is very difficult nowadays to invoke the rational criteria elaborated in other centuries to speak of the possibility of a \'just war.\'"'
+      },
+      {
+        id: 'ks4-re-war-6',
+        prompt: 'Which of the following describes "Christian Pacifism" as practiced by groups like the early Christian martyrs, Quakers, and the Catholic Worker Movement?',
+        options: [
+          'The absolute moral conviction that all violence, warfare, and killing are fundamentally incompatible with Jesus\'s teachings to turn the other cheek and love one\'s enemies',
+          'The belief that war is acceptable only if fought using medieval swords and shields',
+          'The policy of passively submitting to evil without taking any nonviolent action or protest',
+          'The military strategy of fighting wars exclusively at sea rather than on land'
+        ],
+        answerKey: 0,
+        hint: 'Rooted in the Beatitudes: "Blessed are the peacemakers" and Christ\'s command to put away the sword (Matthew 26:52).',
+        explanation: 'Christian Pacifism rejects armed combat as a violation of the Gospel command to love enemies, practicing active nonviolent resistance and reconciliation following the example of Christ.'
       }
     ]
   },
@@ -520,6 +845,45 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Think of index division: 7^3 / 7^3 = 7^(3-3) = 7^0. What is any number divided by itself?',
         explanation: 'Any non-zero number raised to the power of zero equals 1 because a^n / a^n = a^(n-n) = a^0 = 1.'
+      },
+      {
+        id: 'ks3-mat-alg-4',
+        prompt: 'Expand and simplify the single bracket expression: 3(2x - 5) + 4(x + 2)',
+        options: [
+          '10x - 7',
+          '10x - 23',
+          '7x - 3',
+          '10x + 23'
+        ],
+        answerKey: 0,
+        hint: 'Expand each bracket first: 3 * 2x = 6x, 3 * (-5) = -15, 4 * x = 4x, 4 * 2 = 8. Then collect like terms.',
+        explanation: 'Expanding gives: 6x - 15 + 4x + 8. Collecting like terms: (6x + 4x) + (-15 + 8) = 10x - 7.'
+      },
+      {
+        id: 'ks3-mat-alg-5',
+        prompt: 'Simplify the power of a power index expression: (y^3)^4',
+        options: [
+          'y^12 (Multiply the exponents: 3 * 4 = 12)',
+          'y^7 (Mistakenly added the exponents)',
+          'y^81 (Calculated 3^4 in the power)',
+          '4y^3'
+        ],
+        answerKey: 0,
+        hint: 'When raising a power to another power, multiply the indices: (a^m)^n = a^(m*n).',
+        explanation: 'By the third law of indices, (y^3)^4 = y^(3*4) = y^12.'
+      },
+      {
+        id: 'ks3-mat-alg-6',
+        prompt: 'Factorise fully by taking out the highest common factor: 12x^2 + 18x',
+        options: [
+          '6x(2x + 3)',
+          '6(2x^2 + 3x) (Partially factorised, missed the common x variable)',
+          '2x(6x + 9) (Missed the highest numeric factor 6)',
+          'x(12x + 18)'
+        ],
+        answerKey: 0,
+        hint: 'The highest common numerical factor of 12 and 18 is 6, and both terms share the variable x.',
+        explanation: 'The highest common factor of 12x^2 and 18x is 6x. Dividing each term by 6x yields: 6x(2x + 3).'
       }
     ]
   },
@@ -565,6 +929,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Remember that (-5)^2 is also equal to +25.',
         explanation: 'x^2 - 25 factors into (x - 5)(x + 5) = 0, giving two valid real roots: x = 5 and x = -5.'
+      },
+      {
+        id: 'ks4-mat-quad-3',
+        prompt: 'What is the Quadratic Formula used to find the roots of any equation in the form ax^2 + bx + c = 0?',
+        options: [
+          'x = (-b ± √(b^2 - 4ac)) / (2a)',
+          'x = (b ± √(b^2 + 4ac)) / (2a)',
+          'x = (-b ± √(b^2 - 4ac)) / 2',
+          'x = -b / (2a)'
+        ],
+        answerKey: 0,
+        hint: 'Remember the -b at the front, minus 4ac inside the square root, and dividing the ENTIRE expression by 2a.',
+        explanation: 'The standard quadratic formula is x = (-b ± √(b^2 - 4ac)) / (2a), derived by completing the square on the general quadratic equation.'
+      },
+      {
+        id: 'ks4-mat-quad-4',
+        prompt: 'What does a negative discriminant (b^2 - 4ac < 0) tell you about the roots of a quadratic equation and its graph?',
+        options: [
+          'The quadratic equation has no real roots, and its parabola graph never touches or crosses the x-axis',
+          'The parabola has two identical positive integer roots',
+          'The parabola is a straight horizontal line',
+          'The quadratic formula produces two rational integer solutions'
+        ],
+        answerKey: 0,
+        hint: 'You cannot take the square root of a negative number in real numbers (√negative is non-real).',
+        explanation: 'Because √(b^2 - 4ac) cannot be evaluated within the real number system when the discriminant is negative, there are no real solutions, and the parabola does not intersect the x-axis.'
+      },
+      {
+        id: 'ks4-mat-quad-5',
+        prompt: 'By completing the square, write the expression x^2 - 6x + 11 in completed square form:',
+        options: [
+          '(x - 3)^2 + 2',
+          '(x - 3)^2 + 11',
+          '(x - 6)^2 + 2',
+          '(x + 3)^2 - 2'
+        ],
+        answerKey: 0,
+        hint: 'Halve the middle coefficient (-6 / 2 = -3), square it (9), subtract it, and add 11: (x - 3)^2 - 9 + 11.',
+        explanation: 'Completed square form: (x + b/2)^2 - (b/2)^2 + c. Here: (x - 3)^2 - 9 + 11 = (x - 3)^2 + 2.'
+      },
+      {
+        id: 'ks4-mat-quad-6',
+        prompt: 'What are the coordinates of the turning point (minimum vertex) of the parabola y = (x - 4)^2 + 7?',
+        options: [
+          '(4, 7)',
+          '(-4, 7)',
+          '(4, -7)',
+          '(-4, -7)'
+        ],
+        answerKey: 0,
+        hint: 'The bracket squared is minimized when x - 4 = 0 (x = 4), which leaves y = 7.',
+        explanation: 'For any quadratic in completed square form y = (x - p)^2 + q, the minimum turning point occurs when the squared term is zero, giving vertex coordinates (p, q), so here (4, 7).'
       }
     ]
   },
@@ -610,6 +1026,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Look for the ratio that links Opposite and Adjacent (TOA).',
         explanation: 'TOA in SOH CAH TOA states tan(θ) = Opposite / Adjacent. When Opposite and θ are known, Adjacent = Opposite / tan(θ).'
+      },
+      {
+        id: 'ks4-mat-trig-3',
+        prompt: 'In a right-angled triangle, the angle θ is 30° and the hypotenuse is 12 cm. Given that sin(30°) = 0.5, what is the length of the opposite side?',
+        options: [
+          '6 cm (Opposite = Hypotenuse * sin(30°) = 12 * 0.5)',
+          '24 cm (Divided instead of multiplying)',
+          '10 cm',
+          '8.5 cm'
+        ],
+        answerKey: 0,
+        hint: 'Rearrange sin(θ) = Opposite / Hypotenuse to: Opposite = Hypotenuse * sin(θ).',
+        explanation: 'Opposite = Hypotenuse × sin(30°) = 12 cm × 0.5 = 6 cm.'
+      },
+      {
+        id: 'ks4-mat-trig-4',
+        prompt: 'What is the exact value of cos(60°) and sin(30°) from the standard special right-angled triangle (equilateral triangle split in half)?',
+        options: [
+          '1/2 (or 0.5)',
+          '√3 / 2',
+          '1 / √2',
+          '1'
+        ],
+        answerKey: 0,
+        hint: 'Remember that complementary angles have sin(θ) = cos(90° - θ). Both equal 1/2.',
+        explanation: 'In a 30-60-90 special triangle with hypotenuse 2 and short side 1, cos(60°) = adjacent / hypotenuse = 1/2, and sin(30°) = opposite / hypotenuse = 1/2.'
+      },
+      {
+        id: 'ks4-mat-trig-5',
+        prompt: 'In a non-right-angled triangle, which formula should you use to find an unknown side when you are given two sides and the included angle between them?',
+        options: [
+          'The Cosine Rule: a^2 = b^2 + c^2 - 2bc * cos(A)',
+          'Pythagoras\' Theorem directly without modification',
+          'The Tangent ratio from SOH CAH TOA',
+          'The Circumference formula: C = 2πr'
+        ],
+        answerKey: 0,
+        hint: 'When SAS (Side-Angle-Side) is known, use the rule that generalizes Pythagoras with a -2bc*cos(A) term.',
+        explanation: 'The Cosine Rule (a^2 = b^2 + c^2 - 2bc*cos(A)) applies to any triangle when two sides and the included angle (SAS) are known.'
+      },
+      {
+        id: 'ks4-mat-trig-6',
+        prompt: 'What is the formula for calculating the area of any non-right-angled triangle given two sides a and b and their included angle C?',
+        options: [
+          'Area = 1/2 * a * b * sin(C)',
+          'Area = 1/2 * a * b * cos(C)',
+          'Area = a * b * tan(C)',
+          'Area = (a + b + C) / 2'
+        ],
+        answerKey: 0,
+        hint: 'Standard triangle area is 1/2 * base * height, where vertical height h = b * sin(C).',
+        explanation: 'The trigonometric area of a triangle formula is Area = 1/2 ab sin(C), where C is the angle enclosed between sides a and b.'
       }
     ]
   },
@@ -658,6 +1126,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Ionisation means removing an electron from an atom or molecule.',
         explanation: 'High-frequency EM waves carry sufficient quantum energy per photon to remove tightly bound electrons from atoms (ionisation), creating free radicals that can mutate DNA.'
+      },
+      {
+        id: 'ks4-phy-em-3',
+        prompt: 'What is the speed of ALL electromagnetic waves when travelling through a vacuum (such as outer space)?',
+        options: [
+          '3.0 x 10^8 m/s (300,000,000 m/s)',
+          '330 m/s (the speed of sound in air)',
+          '3.0 x 10^6 m/s',
+          'Their speeds vary widely from 100 m/s to infinite speed depending on frequency'
+        ],
+        answerKey: 0,
+        hint: 'All EM waves travel at the universal cosmic speed of light "c" in a vacuum.',
+        explanation: 'In a vacuum, every wave on the EM spectrum—from low-frequency radio waves to high-energy gamma rays—travels at the constant speed of light: approximately 3.0 × 10^8 m/s.'
+      },
+      {
+        id: 'ks4-phy-em-4',
+        prompt: 'A radio transmitter emits radio waves with a frequency of 1.5 x 10^6 Hz. Using the wave equation v = f * λ and the speed of light (3.0 x 10^8 m/s), what is the wavelength λ?',
+        options: [
+          '200 m (3.0 x 10^8 / 1.5 x 10^6)',
+          '0.005 m (Inverted division)',
+          '4.5 x 10^14 m (Multiplied instead of dividing)',
+          '50 m'
+        ],
+        answerKey: 0,
+        hint: 'Rearrange v = f * λ to find wavelength: λ = v / f.',
+        explanation: 'λ = v / f = (3.0 × 10^8 m/s) / (1.5 × 10^6 Hz) = 200 metres.'
+      },
+      {
+        id: 'ks4-phy-em-5',
+        prompt: 'Why are microwaves with specific frequencies used for satellite telecommunications to transmit signals between Earth and orbiting satellites?',
+        options: [
+          'They can penetrate through the Earth\'s atmosphere and ionosphere without being reflected or absorbed',
+          'They are longitudinal waves that bounce off ocean surfaces',
+          'They travel twice as fast as other light waves',
+          'They are completely invisible to human eyes only at night'
+        ],
+        answerKey: 0,
+        hint: 'Radio waves of certain low frequencies bounce off the ionosphere, but satellite microwaves pass straight through it.',
+        explanation: 'Microwaves used for satellite communication have wavelengths that pass directly through the Earth\'s watery atmosphere and ionosphere into space without significant absorption.'
+      },
+      {
+        id: 'ks4-phy-em-6',
+        prompt: 'What property of infrared radiation makes it essential for thermal imaging cameras and night-vision equipment?',
+        options: [
+          'All objects emit infrared radiation, and the intensity and wavelength distribution increase with the object\'s temperature',
+          'Infrared radiation turns cold objects into radioactive isotopes',
+          'Infrared radiation is only emitted by living human skin and no inanimate objects',
+          'Infrared waves can only travel through solid lead barriers'
+        ],
+        answerKey: 0,
+        hint: 'Hotter objects radiate more thermal infrared energy than cooler surroundings.',
+        explanation: 'Every object above absolute zero emits thermal infrared radiation. Thermal imaging sensors detect this radiated heat and convert temperature gradients into visible images.'
       }
     ]
   },
@@ -703,6 +1223,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Use the formula: Moles = Mass / Mr.',
         explanation: 'Moles = Mass / Mr = 88 g / 44 g/mol = 2 moles.'
+      },
+      {
+        id: 'ks4-chm-mol-3',
+        prompt: 'What is the percentage by mass of Carbon in Methane (CH4)? (Relative atomic masses: C = 12, H = 1)',
+        options: [
+          '75% ((12 / 16) * 100%)',
+          '25% ((4 / 16) * 100%)',
+          '12%',
+          '80%'
+        ],
+        answerKey: 0,
+        hint: 'Total Mr of CH4 is 12 + 4 = 16. Percentage = (Mass of Carbon / Total Mr) * 100%.',
+        explanation: 'Mr of CH4 = 12 + (4 × 1) = 16. Percentage of carbon = (12 / 16) × 100% = 0.75 × 100% = 75%.'
+      },
+      {
+        id: 'ks4-chm-mol-4',
+        prompt: 'Under standard room temperature and pressure (rtp: 20°C and 1 atm), what volume does 1 mole of any ideal gas occupy?',
+        options: [
+          '24 dm^3 (or 24,000 cm^3)',
+          '1 dm^3',
+          '100 dm^3',
+          '22.4 cm^3'
+        ],
+        answerKey: 0,
+        hint: 'Avogadro\'s Law states equal volumes of gases under identical conditions contain equal numbers of molecules; 1 mole at rtp occupies 24 dm³.',
+        explanation: 'At standard room temperature and pressure (rtp), the molar gas volume is 24 dm³ (or 24 litres / 24,000 cm³).'
+      },
+      {
+        id: 'ks4-chm-mol-5',
+        prompt: 'What is meant by the "Limiting Reactant" in a chemical reaction?',
+        options: [
+          'The reactant that is completely consumed first, thereby determining and limiting the maximum amount of product that can form',
+          'The reactant that is left over in excess when the reaction stops',
+          'The catalyst that speeds up the reaction without being used up',
+          'The product that evaporates during heating'
+        ],
+        answerKey: 0,
+        hint: 'Once this reactant runs out, the reaction cannot continue producing any more product.',
+        explanation: 'The limiting reactant is the substance completely used up first in a reaction. All other reactants are in excess, and the theoretical yield depends solely on the moles of limiting reactant.'
+      },
+      {
+        id: 'ks4-chm-mol-6',
+        prompt: 'A chemist synthesises aspirin. The theoretical yield calculated from the balanced equation is 50.0 g, but the actual mass collected after purification is 40.0 g. What is the percentage yield?',
+        options: [
+          '80.0% ((40.0 / 50.0) * 100%)',
+          '125.0% ((50.0 / 40.0) * 100%)',
+          '90.0%',
+          '10.0%'
+        ],
+        answerKey: 0,
+        hint: 'Percentage Yield = (Actual Yield / Theoretical Yield) * 100%.',
+        explanation: 'Percentage Yield = (Actual Yield / Theoretical Yield) × 100% = (40.0 g / 50.0 g) × 100% = 80.0%.'
       }
     ]
   },
@@ -748,6 +1320,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'When warm, your skin turns flushed pink because blood vessels widen near the surface.',
         explanation: 'During vasodilation, arterioles dilate so more warm blood flows through skin capillaries, radiating excess thermal energy away from the body to cool down.'
+      },
+      {
+        id: 'ks4-bio-hom-3',
+        prompt: 'What hormone is released by the pituitary gland to increase water reabsorption in the kidney nephrons when the body is dehydrated?',
+        options: [
+          'Anti-diuretic Hormone (ADH)',
+          'Insulin',
+          'Adrenaline',
+          'Thyroxine'
+        ],
+        answerKey: 0,
+        hint: '"Diuresis" means producing watery urine. "Anti-diuretic" prevents water loss so kidneys reabsorb more water back into the blood.',
+        explanation: 'When blood water concentration falls, the brain\'s hypothalamus detects it and stimulates the pituitary gland to release ADH, making kidney collecting ducts more permeable to water.'
+      },
+      {
+        id: 'ks4-bio-hom-4',
+        prompt: 'How does Type 1 diabetes differ fundamentally from Type 2 diabetes?',
+        options: [
+          'Type 1 is an autoimmune disorder where the pancreas produces little or no insulin; Type 2 is characterized by body cells becoming resistant to insulin',
+          'Type 1 is caused exclusively by eating too much sugar; Type 2 is a bacterial infection',
+          'Type 1 occurs only in elderly patients; Type 2 only occurs in newborn infants',
+          'There is no difference; they are treated with identical vitamin pills'
+        ],
+        answerKey: 0,
+        hint: 'Type 1 requires daily insulin injections because the pancreatic beta cells are destroyed. Type 2 is cellular insulin resistance often linked to lifestyle/obesity.',
+        explanation: 'Type 1 diabetes is an autoimmune condition where the pancreas fails to produce insulin. In Type 2 diabetes, the pancreas may produce insulin, but body cells no longer respond effectively to it (insulin resistance).'
+      },
+      {
+        id: 'ks4-bio-hom-5',
+        prompt: 'How do shivering and vasoconstriction work together to conserve and generate heat when core body temperature drops?',
+        options: [
+          'Shivering causes rapid muscle contractions releasing thermal energy from respiration, while vasoconstriction reduces blood flow to surface capillaries to minimise heat radiation',
+          'Shivering stops breathing to store air, while vasoconstriction bursts capillaries to release sweat',
+          'Shivering pumps cool blood to the brain, while vasoconstriction expands skin surface area',
+          'Both processes cool the body down to induce hibernation'
+        ],
+        answerKey: 0,
+        hint: 'Muscle contraction requires ATP respiration which generates heat as a byproduct. Constricting surface vessels keeps warm blood deep inside vital organs.',
+        explanation: 'When cold, shivering uses skeletal muscle contractions that increase cellular respiration, liberating heat. Simultaneously, vasoconstriction narrows surface arterioles, conserving thermal energy in core organs.'
+      },
+      {
+        id: 'ks4-bio-hom-6',
+        prompt: 'In the human nervous system reflex arc, why does a reflex response (such as pulling your hand away from a hot stove) occur without prior conscious thought?',
+        options: [
+          'The impulse travels directly from sensory neurone through a relay neurone in the spinal cord to an effector motor neurone, bypassing conscious brain processing',
+          'The skin muscles make their own conscious decisions independently of neurones',
+          'Motor neurones fire before sensory receptors even detect the heat',
+          'Reflexes rely entirely on blood hormone circulation rather than electrical impulses'
+        ],
+        answerKey: 0,
+        hint: 'Reflex arcs are involuntary and rapid because the neural pathway routes through the spinal cord before the brain registers pain.',
+        explanation: 'A reflex arc bypasses the conscious areas of the brain: Receptor -> Sensory Neurone -> Relay Neurone in Spinal Cord -> Motor Neurone -> Effector. This minimal synaptic delay protects tissue from severe damage.'
       }
     ]
   },
@@ -796,6 +1420,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'Opposite angles of a cyclic quadrilateral always sum to 180°: Angle C = 180° - 75°.',
         explanation: 'Opposite angles in a cyclic quadrilateral sum to 180°. Therefore, angle C = 180° - 75° = 105°.'
+      },
+      {
+        id: 'ks4-mat-circ-3',
+        prompt: 'What angle is formed between a tangent to a circle and the radius drawn to the point of contact?',
+        options: [
+          '90° (A right angle)',
+          '45°',
+          '60°',
+          '180°'
+        ],
+        answerKey: 0,
+        hint: 'A tangent touches the circle at one point and is always perpendicular to the radius at that point.',
+        explanation: 'A fundamental circle theorem states that the angle between a tangent and the radius at the point of contact is exactly 90° (perpendicular).'
+      },
+      {
+        id: 'ks4-mat-circ-4',
+        prompt: 'Triangle ABC is inscribed in a circle where side AB is the diameter of the circle. What is the size of angle ACB at the circumference?',
+        options: [
+          '90° (The angle subtended in a semicircle is a right angle)',
+          '60°',
+          '45°',
+          '120°'
+        ],
+        answerKey: 0,
+        hint: 'A diameter subtends a right angle at any point on the circumference.',
+        explanation: 'The semicircle circle theorem (Thales\'s theorem) states that the angle subtended by a diameter at the circumference is always 90°.'
+      },
+      {
+        id: 'ks4-mat-circ-5',
+        prompt: 'What does the Alternate Segment Theorem state regarding a tangent and a chord meeting at a point on a circle?',
+        options: [
+          'The angle between the tangent and the chord is equal to the angle subtended by the chord in the alternate segment',
+          'The tangent is always twice the length of the chord',
+          'The angle in the alternate segment is always 90°',
+          'The chord bisects the tangent into two equal halves'
+        ],
+        answerKey: 0,
+        hint: 'Look at the angle between the tangent line and chord: it equals the opposite interior angle inside the triangle.',
+        explanation: 'The Alternate Segment Theorem states that the angle between a tangent and a chord through the point of contact equals the angle subtended by that chord in the opposite (alternate) segment.'
+      },
+      {
+        id: 'ks4-mat-circ-6',
+        prompt: 'Two tangents are drawn to a circle from the same external point P, touching the circle at points A and B. What is the geometric relationship between lengths PA and PB?',
+        options: [
+          'PA = PB (Tangents from an external point to a circle are equal in length)',
+          'PA is twice as long as PB',
+          'PA + PB = 360 cm',
+          'Their lengths depend on the time of day'
+        ],
+        answerKey: 0,
+        hint: 'Joining P to the centre creates two congruent right-angled triangles with a shared hypotenuse and equal radii.',
+        explanation: 'By congruent triangle symmetry (RHS congruence using radii and shared line to centre), two tangents drawn to a circle from the same exterior point are always equal in length (PA = PB).'
       }
     ]
   },
@@ -841,6 +1517,58 @@ export const CURRICULUM_COMPLETE_BASE: Record<string, CurriculumTopicEntry> = {
         answerKey: 0,
         hint: 'At what point do both equations have the same x and y values at the same time?',
         explanation: 'The solution (x, y) to a pair of simultaneous equations is the single geometric point where the two lines intersect on a Cartesian plane.'
+      },
+      {
+        id: 'ks4-mat-sim-3',
+        prompt: 'Solve the simultaneous equations by elimination: \n3x + 2y = 16 \n2x - 2y = 4',
+        options: [
+          'x = 4, y = 2',
+          'x = 2, y = 5',
+          'x = 3, y = 3',
+          'x = 5, y = 0.5'
+        ],
+        answerKey: 0,
+        hint: 'The y coefficients have opposite signs (+2y and -2y): add the equations together: (3x + 2x) = 16 + 4.',
+        explanation: 'Adding the equations: 5x = 20 -> x = 4. Substitute into 2(4) - 2y = 4 -> 8 - 2y = 4 -> 2y = 4 -> y = 2.'
+      },
+      {
+        id: 'ks4-mat-sim-4',
+        prompt: 'Solve the linear simultaneous equations: \nx + 3y = 11 \n4x - y = 5',
+        options: [
+          'x = 2, y = 3',
+          'x = 5, y = 2',
+          'x = 3, y = 2',
+          'x = 1, y = 4'
+        ],
+        answerKey: 0,
+        hint: 'From equation 1, x = 11 - 3y. Substitute into equation 2: 4(11 - 3y) - y = 5 -> 44 - 12y - y = 5.',
+        explanation: '44 - 13y = 5 -> 13y = 39 -> y = 3. Then x = 11 - 3(3) = 11 - 9 = 2. So x = 2, y = 3.'
+      },
+      {
+        id: 'ks4-mat-sim-5',
+        prompt: 'How many points of intersection (and therefore solutions) can a linear equation and a quadratic circle equation (such as y = x + 1 and x^2 + y^2 = 25) have at most?',
+        options: [
+          'Up to 2 solutions (the straight line can cross the circle at two points, touch as a tangent at one point, or not intersect at all)',
+          'Always exactly 4 solutions',
+          'Infinite solutions in all cases',
+          'Only 1 solution under all circumstances'
+        ],
+        answerKey: 0,
+        hint: 'Substituting a linear equation into a quadratic yields a quadratic in one variable, which can have at most 2 real roots.',
+        explanation: 'When substituting a linear expression into a quadratic equation, the resulting equation is a quadratic with degree 2. Hence, by the discriminant, there can be 2, 1 (tangent), or 0 real solutions.'
+      },
+      {
+        id: 'ks4-mat-sim-6',
+        prompt: 'If two linear equations in a simultaneous system produce parallel lines with identical gradients but different y-intercepts (e.g. y = 2x + 3 and y = 2x - 5), how many solutions exist?',
+        options: [
+          'Zero solutions (No solution, because parallel lines never intersect)',
+          'One unique solution',
+          'Two distinct solutions',
+          'Infinitely many solutions'
+        ],
+        answerKey: 0,
+        hint: 'A solution is a point of intersection. Do parallel lines ever cross?',
+        explanation: 'Parallel lines with equal gradients and different intercepts never meet anywhere in the plane; hence there are no values of (x, y) that satisfy both equations simultaneously.'
       }
     ]
   }

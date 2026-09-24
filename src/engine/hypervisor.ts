@@ -940,6 +940,16 @@ export class HypervisorHost {
       dynamicAnswerKey = chosenQ.answerKey;
       dynamicHint = chosenQ.hint || 'Focus on foundational concepts.';
       dynamicExplanation = chosenQ.explanation || 'Review the core definition.';
+    } else if (questions.length > 0) {
+      // All questions have been seen in recent session history; recycle from verified bank with clean shuffle
+      const nonCurrent = questions.filter((q) => q.prompt.trim() !== exclude);
+      const pool = nonCurrent.length > 0 ? nonCurrent : questions;
+      const chosenQ = pool[Math.floor(Math.random() * pool.length)];
+      dynamicPrompt = chosenQ.prompt;
+      dynamicOptions = [...chosenQ.options];
+      dynamicAnswerKey = chosenQ.answerKey;
+      dynamicHint = chosenQ.hint || 'Focus on foundational concepts.';
+      dynamicExplanation = chosenQ.explanation || 'Review the core definition.';
     } else {
       // Rotate to distinct pedagogical inquiry perspectives so identical questions are never repeated back-to-back
       const axiom = offline?.coreAxiom || `Fundamental curriculum principle of ${topic} (${stage} ${subject}).`;
@@ -951,31 +961,31 @@ export class HypervisorHost {
 
       const perspectives: Array<() => { prompt: string; options: string[]; answerKey: number; hint: string; explanation: string }> = [
         () => ({
-          prompt: `🤔 [Diagnostic Inquiry] ${socratic || `In ${topic}, which condition is essential for the primary process to occur?`}`,
-          options: [axiom, trap, `Opposite condition of ${topic}.`, `Unrelated property of ${topic}.`],
+          prompt: `🤔 [Diagnostic Inquiry] ${socratic ? (socratic.endsWith('?') ? socratic : `${socratic}?`) : `In ${topic}, which condition is essential for the primary process to occur?`}`,
+          options: [axiom, trap, `Arbitrary opposite condition of ${topic}.`, `Unrelated property of ${topic}.`],
           answerKey: 0,
           hint: offline?.scaffoldHints?.level1 || 'Think carefully about the root cause.',
           explanation: `Curriculum principle: ${axiom}`,
         }),
         () => ({
-          prompt: `🌍 [Real-World Application] ${hook || `How does ${topic} directly impact everyday physical systems?`}`,
-          options: [axiom, trap, `It remains completely inert under all conditions.`, `It only applies to theoretical laboratory vacuums.`],
+          prompt: `🌍 [Real-World Application] ${hook ? (hook.endsWith('?') ? hook : `${hook} Which key curriculum principle explains this?`) : `How does ${topic} directly impact everyday physical and practical reality?`}`,
+          options: [axiom, trap, `It occurs completely at random with zero predictable patterns or rules.`, `It is only a theoretical concept with no observable real-world effects.`],
           answerKey: 0,
           hint: 'Connect the classroom concept to observable reality.',
           explanation: `Application principle: ${axiom}`,
         }),
         () => ({
           prompt: `🔬 [Mechanism Analysis] During ${topic}, which step represents the correct cause-and-effect relationship?`,
-          options: [step || axiom, trap, `Reactions cease spontaneously without any external change.`, `Energy is destroyed rather than transferred.`],
+          options: [step || axiom, trap, `Outcomes invert unpredictably without any underlying cause or rule.`, `The initial conditions have no bearing on subsequent changes.`],
           answerKey: 0,
           hint: level3 || 'Trace each stage in sequence.',
-          explanation: `Scientific mechanism: ${step || axiom}`,
+          explanation: `Curriculum mechanism: ${step || axiom}`,
         }),
         () => ({
           prompt: `⚠️ [Misconception Challenge] Which of the following is a widespread misconception regarding ${topic}?`,
-          options: [trap, axiom, `Scientists universally verify empirical evidence.`, `Physical laws remain constant in standard conditions.`],
+          options: [trap, axiom, `Principles can be tested and verified through consistent empirical evidence.`, `Foundational rules hold true under standard regular conditions.`],
           answerKey: 0,
-          hint: 'Look for an idea that sounds intuitively believable but is scientifically flawed.',
+          hint: 'Look for an idea that sounds intuitively believable but is flawed.',
           explanation: `Misconception trap: ${trap}`,
         }),
       ];

@@ -401,7 +401,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
 
           // 2. Query deterministic Curriculum Route Mesh for Verified Questions & Invariants
           const topicCacheKey = `${stage}_${subject}_${topic}`.toLowerCase();
-          const routeQuestion = route ? getQuestionForRoute(route, lessonTitle, payload?.forceVariation, activeSeedToken) : null;
+          const routeQuestion = route ? getQuestionForRoute(route, lessonTitle, payload?.forceVariation, activeSeedToken, excludePrompt) : null;
           const offlineKnowledge = findCurriculumKnowledge(stage, subject, topic);
 
           // Determine current pedagogical stage (Hook -> Axiom -> Practice -> Pivot -> Mastery)
@@ -446,7 +446,7 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           let rawAnswerKey: number;
           let rawMisconceptions: string[];
 
-          if (routeQuestion && !activeSeedToken.startsWith('SOCRATIC-')) {
+          if (routeQuestion && !activeSeedToken.startsWith('SOCRATIC-') && (!excludePrompt || routeQuestion.prompt.trim() !== excludePrompt.trim())) {
             recentTopicQuestionMap.set(topicCacheKey, routeQuestion.prompt.trim());
             basePrompt = routeQuestion.prompt;
             rawOptions = [...routeQuestion.options];

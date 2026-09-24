@@ -122,6 +122,7 @@ export default function NeuralLabCanvas({
   } | null>(null);
 
   const activeRequestIdRef = useRef(0);
+  const recentPromptsRef = useRef<string[]>([]);
   const activeQuestionRef = useRef(activeQuestion);
   const activeSelectionRef = useRef({
     keyStage: selectedKeyStage,
@@ -208,6 +209,11 @@ export default function NeuralLabCanvas({
     setCorrectIndex(computedCorrectIndex !== -1 ? computedCorrectIndex : 0);
     setSelectedAnswer(null);
 
+    if (question.prompt) {
+      const pTrimmed = question.prompt.trim();
+      recentPromptsRef.current = [pTrimmed, ...recentPromptsRef.current.filter((p) => p !== pTrimmed)].slice(0, 15);
+    }
+
     setActiveQuestion({
       id: question.id || `q_${Date.now()}`,
       urn: question.urn,
@@ -284,9 +290,14 @@ export default function NeuralLabCanvas({
       if (res.ok && res.data) {
         let questionData = res.data;
         // Strict guard: If the returned question stem matches the current active question stem, rotate to an alternate question
-        if (!customSeed && currentPrompt && questionData.prompt && questionData.prompt.trim() === currentPrompt.trim()) {
+        if (!customSeed && currentPrompt && questionData.prompt && (questionData.prompt.trim() === currentPrompt.trim() || recentPromptsRef.current.includes(questionData.prompt.trim()))) {
           const offline = findCurriculumKnowledge(ks, sub, u);
-          const alt = offline?.questions?.find((q) => q.prompt.trim() !== currentPrompt.trim());
+          const candidateQuestions = (offline?.questions || []).filter(
+            (q) => q.prompt.trim() !== currentPrompt.trim() && !recentPromptsRef.current.includes(q.prompt.trim())
+          );
+          const alt = candidateQuestions.length > 0
+            ? candidateQuestions[Math.floor(Math.random() * candidateQuestions.length)]
+            : offline?.questions?.find((q) => q.prompt.trim() !== currentPrompt.trim());
           if (alt) {
             questionData = {
               ...questionData,
@@ -296,15 +307,17 @@ export default function NeuralLabCanvas({
               hint: alt.hint || questionData.hint,
               explanation: alt.explanation || questionData.explanation,
             };
-          } else if (offline?.socraticPivot) {
+          } else if (offline?.questions && offline.questions.length > 0) {
+            // All questions in this unit have been seen in this session; reset history and cycle cleanly
+            recentPromptsRef.current = [];
+            const recycled = offline.questions.find((q) => q.prompt.trim() !== currentPrompt.trim()) || offline.questions[0];
             questionData = {
               ...questionData,
-              prompt: `🤔 [Diagnostic Inquiry] ${offline.socraticPivot}`,
-            };
-          } else if (offline?.hook) {
-            questionData = {
-              ...questionData,
-              prompt: `🌍 [Real-World Application] ${offline.hook}`,
+              prompt: recycled.prompt,
+              options: recycled.options,
+              answerKey: recycled.answerKey,
+              hint: recycled.hint || questionData.hint,
+              explanation: recycled.explanation || questionData.explanation,
             };
           }
         }
@@ -327,12 +340,8 @@ export default function NeuralLabCanvas({
           const chosen = eligible.length > 0
             ? eligible[Math.floor(Math.random() * eligible.length)]
             : fallbackOffline.questions[0];
-          let chosenPrompt = chosen.prompt;
-          if (chosenPrompt.trim() === currentPrompt.trim() && fallbackOffline.socraticPivot) {
-            chosenPrompt = `🤔 [Diagnostic Inquiry] ${fallbackOffline.socraticPivot}`;
-          }
           handleNewQuestion({
-            question: { ...chosen, prompt: chosenPrompt },
+            question: chosen,
             keyStage: ks,
             subject: sub,
             unit: u,
@@ -554,7 +563,7 @@ export default function NeuralLabCanvas({
         onSubjectChange={handleSubjectSelect}
         onUnitChange={handleUnitSelect}
         onSessionIdChange={setSessionId}
-        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, false, undefined, selectedLesson)}
+        onNewQuestion={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, true, undefined, selectedLesson)}
         onDownloadReport={handleExportReport}
       />
 
@@ -897,7 +906,7 @@ export default function NeuralLabCanvas({
                   selectedUnit,
                   difficulty,
                   activeLang,
-                  false,
+                  true,
                   targetSeed
                 );
               }}

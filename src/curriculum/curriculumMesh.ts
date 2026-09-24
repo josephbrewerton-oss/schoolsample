@@ -139,9 +139,30 @@ function compileCurriculumMesh() {
           stepLabel: knowledge?.title || top.title,
         }));
 
-        // Map lessons with 1:1 question bindings
+        // Map lessons with semantic question bindings (matching title keywords or falling back gracefully)
         const lessons: CurriculumLessonNode[] = (top.lessons || []).map((l: OakLesson, lIdx: number) => {
-          const matchedQ = questions[lIdx] || questions[0];
+          let matchedQ = questions[lIdx] || questions[0];
+          if (questions.length > 1 && l.title) {
+            const stopWords = new Set(['lesson', '1', '2', '3', '4', '5', 'and', 'the', 'of', 'in', 'for', 'with', 'vs']);
+            const lTokens = l.title
+              .toLowerCase()
+              .split(/[^a-z0-9]+/)
+              .filter((w) => w.length > 2 && !stopWords.has(w));
+
+            let bestScore = 0;
+            for (const q of questions) {
+              let score = 0;
+              const text = `${q.prompt} ${q.explanation} ${q.hint}`.toLowerCase();
+              for (const tok of lTokens) {
+                if (text.includes(tok)) score += 2;
+              }
+              if (score > bestScore) {
+                bestScore = score;
+                matchedQ = q;
+              }
+            }
+          }
+
           return {
             id: l.id,
             title: l.title,
@@ -431,7 +452,8 @@ export function getQuestionForRoute(
   route: CurriculumRouteNode,
   lessonTitleOrId?: string,
   forceVariation = false,
-  seedToken?: string
+  seedToken?: string,
+  excludePrompt?: string
 ): CurriculumQuestionItem | null {
   if (!route || route.questions.length === 0) return null;
 
@@ -442,7 +464,9 @@ export function getQuestionForRoute(
       (l) => l.id === lessonTitleOrId || normalizeToken(l.title).includes(lNorm) || lNorm.includes(normalizeToken(l.title))
     );
     if (matchedLesson && matchedLesson.question) {
-      return matchedLesson.question;
+      if (!excludePrompt || matchedLesson.question.prompt.trim() !== excludePrompt.trim()) {
+        return matchedLesson.question;
+      }
     }
 
     // Check lesson number e.g. "Lesson 2: ..."
@@ -450,19 +474,39 @@ export function getQuestionForRoute(
     if (lNumMatch) {
       const idx = parseInt(lNumMatch[1], 10) - 1;
       if (idx >= 0 && idx < route.questions.length) {
-        return route.questions[idx];
+        if (!excludePrompt || route.questions[idx].prompt.trim() !== excludePrompt.trim()) {
+          return route.questions[idx];
+        }
       }
     }
   }
 
-  // 2. If forceVariation is requested, pick deterministically based on seed
-  if (forceVariation && route.questions.length > 1) {
+  // Filter out excluded prompt if multiple questions exist
+  const candidates = (excludePrompt && route.questions.length > 1)
+    ? route.questions.filter((q) => q.prompt.trim() !== excludePrompt.trim())
+    : route.questions;
+  const pool = candidates.length > 0 ? candidates : route.questions;
+
+  // 2. If seedToken is provided, pick deterministically based on seed
+  if (seedToken) {
     const seedNum = (seedToken || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const idx = (seedNum % (route.questions.length - 1)) + 1;
-    return route.questions[idx] || route.questions[0];
+    const idx = Math.abs(seedNum) % pool.length;
+    return pool[idx] || pool[0];
   }
 
-  return route.questions[0];
+  // 3. If forceVariation is requested or cycling in practice, pick from pool
+  if (forceVariation && pool.length > 1) {
+    const idx = Math.floor(Math.random() * pool.length);
+    return pool[idx] || pool[0];
+  }
+
+  // 4. By default, pick pseudo-randomly among candidates so repeated drills offer variety
+  if (pool.length > 1) {
+    const idx = Math.floor(Math.random() * pool.length);
+    return pool[idx] || pool[0];
+  }
+
+  return pool[0];
 }
 
 // -------------------------------------------------------------

@@ -14,6 +14,7 @@ import {
   sanitizeAiOutput,
   CHILD_SAFEGUARDING_SYSTEM_PROMPT,
 } from '../services/childSafetyFilter';
+import { generateOfflineSocraticAnswer } from '../engine/socraticOfflineBrain';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -131,21 +132,33 @@ export function TuringTutor({
         ? `\nCRITICAL LANGUAGE REQUIREMENT: You MUST formulate your entire response in ${langMeta.label} (${langMeta.nativeLabel}). ${langMeta.promptCondition}.`
         : '';
 
-    return `You are "Super Teacher Nano" — an expert UK National Curriculum Socratic educator for ${keyStage} ${subject}.
+    const stageGuide = keyStage.includes('1')
+      ? 'Speak to a 6-year-old child: warm, friendly, simple everyday words, short sentences, and praise.'
+      : keyStage.includes('2')
+      ? 'Speak to a 9-year-old: enthusiastic, clear explanations, relatable real-world analogies, and friendly guidance.'
+      : keyStage.includes('3')
+      ? 'Speak to a 13-year-old: supportive, clear scientific/mathematical reasoning, concise conceptual breakdowns.'
+      : 'Speak to a 15-year-old GCSE student: academically rigorous, precise exam terminology, clear step-by-step logic.';
+
+    return `You are "Professor Turing" (Super Teacher Nano) — an inspiring, supportive UK National Curriculum teacher for ${keyStage} ${subject}.
 Target Topic: ${currentTopic}
 ${topicKnowledge ? `\nCURRICULUM GROUND TRUTH:
 - Core Axiom/Rule: "${topicKnowledge.coreAxiom}"
-- Target Pupil Misconception: "${topicKnowledge.cognitiveTrap}"
-- Socratic Inquiry Angle: "${topicKnowledge.socraticPivot}"` : ''}
+- Common Student Misconception: "${topicKnowledge.cognitiveTrap}"
+- Helpful Analogy: "${topicKnowledge.scaffoldHints.level1}"
+- Key Step: "${topicKnowledge.guidedStep}"` : ''}
 ${langInstruction}
 
 ${CHILD_SAFEGUARDING_SYSTEM_PROMPT}
 
-PEDAGOGICAL RULES:
-1. NEVER give the direct answer.
-2. Provide ONE concise hint or thought-provoking clue (under 35 words).
-3. Directly counter the known pupil misconception without giving the solution away.
-4. Always finish with an engaging question to help the student think through the answer.`;
+PEDAGOGICAL GOALS:
+1. Tone: Warm, encouraging, patient, and age-appropriate (${stageGuide}).
+2. When the student asks a question or asks for help:
+   - Validate their curiosity with genuine encouragement.
+   - Explain the core concept simply and clearly (in 2-3 sentences), using a vivid analogy or real-world comparison.
+   - Address any common pitfall or misconception so they don't get tripped up.
+   - Do NOT just dump the final answer if they are working on a quiz question; instead, guide their thinking with a clear mini-step or friendly check question to test their understanding.
+3. Keep the response focused, readable, and under 90 words so the student is never overwhelmed.`;
   };
 
   const speak = (text: string) => {
@@ -180,6 +193,28 @@ PEDAGOGICAL RULES:
     }
   };
 
+  const getSocraticFallback = async (queryText: string, customInstruction?: string): Promise<string> => {
+    let fallback = generateOfflineSocraticAnswer({
+      query: queryText,
+      topicKnowledge,
+      keyStage,
+      subject,
+      currentTopic,
+      customInstruction,
+      activePrompt,
+      recentMessages: messages,
+    });
+
+    if (currentLang && currentLang !== 'en') {
+      try {
+        fallback = await translateText(fallback, currentLang);
+      } catch {
+        // Keep english fallback
+      }
+    }
+    return fallback;
+  };
+
   const dispatchNanoInference = async (userText: string, customInstruction?: string) => {
     if (loading) return;
     setLoading(true);
@@ -202,30 +237,8 @@ PEDAGOGICAL RULES:
       return;
     }
 
-    const getRuleFallback = async (): Promise<string> => {
-      let fallback = `In ${currentTopic}, what clue or idea comes to mind first?`;
-      if (customInstruction?.includes('analogy') && topicKnowledge?.scaffoldHints.level1) {
-        fallback = topicKnowledge.scaffoldHints.level1;
-      } else if (customInstruction?.includes('rule') && topicKnowledge?.scaffoldHints.level2) {
-        fallback = topicKnowledge.scaffoldHints.level2;
-      } else if (customInstruction?.includes('step') && topicKnowledge?.scaffoldHints.level3) {
-        fallback = topicKnowledge.scaffoldHints.level3;
-      } else if (topicKnowledge) {
-        fallback = `Remember the key rule: ${topicKnowledge.coreAxiom}. How can we apply that here?`;
-      }
-
-      if (currentLang && currentLang !== 'en') {
-        try {
-          fallback = await translateText(fallback, currentLang);
-        } catch {
-          // Keep english fallback
-        }
-      }
-      return fallback;
-    };
-
     if (!aiCaller.isPromptApiAvailableSync()) {
-      const fallback = await getRuleFallback();
+      const fallback = await getSocraticFallback(userText, customInstruction);
       setMessages((prev) => {
         const copy = [...prev];
         copy[copy.length - 1] = { role: 'turing', text: fallback };
@@ -278,7 +291,7 @@ PEDAGOGICAL RULES:
 
       speak(cleaned);
     } catch {
-      const fallback = await getRuleFallback();
+      const fallback = await getSocraticFallback(userText, customInstruction);
       setMessages((prev) => {
         const copy = [...prev];
         copy[copy.length - 1] = { role: 'turing', text: fallback };
@@ -298,13 +311,18 @@ PEDAGOGICAL RULES:
     dispatchNanoInference(query);
   };
 
-  const handleScaffoldHint = (level: 1 | 2 | 3) => {
+  const handleScaffoldHint = (level: 1 | 2 | 3 | 4) => {
     if (level === 1) {
       dispatchNanoInference(
         'Can I have a small nudge?',
         'Give a gentle real-world analogy to orient the student without using formula jargon.'
       );
     } else if (level === 2) {
+      dispatchNanoInference(
+        'Can you explain this in plain English?',
+        'Explain the core concept in friendly, simple everyday language with clear definitions.'
+      );
+    } else if (level === 3) {
       dispatchNanoInference(
         'Can I have a clue on the rule?',
         'Point out the specific curriculum rule or property needed here, but leave the execution to the student.'
@@ -506,7 +524,7 @@ PEDAGOGICAL RULES:
               gap: '10px',
             }}
           >
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, whiteSpace: 'pre-wrap' }}>
               <strong style={{ color: m.role === 'turing' ? '#1d4ed8' : '#475569' }}>
                 {m.role === 'turing' ? '🎓 Prof. Turing: ' : '🎒 Pupil: '}
               </strong>
@@ -534,8 +552,8 @@ PEDAGOGICAL RULES:
         {loading && <div style={{ color: '#64748b', fontStyle: 'italic', padding: '4px' }}>Prof. Turing is thinking...</div>}
       </div>
 
-      {/* 3-Tier Scaffolding Buttons */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      {/* 4-Tier Scaffolding Buttons */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
         <button
           type="button"
           disabled={loading}
@@ -570,7 +588,7 @@ PEDAGOGICAL RULES:
             boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
-          🔍 Remind Me of the Rule
+          🌟 Explain Simply
         </button>
         <button
           type="button"
@@ -588,7 +606,61 @@ PEDAGOGICAL RULES:
             boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
           }}
         >
+          🔍 Remind Me of the Rule
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => handleScaffoldHint(4)}
+          style={{
+            background: '#ffffff',
+            color: '#1e40af',
+            border: '1.5px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            fontSize: '0.82rem',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontWeight: 700,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
           🧩 Break Down Step 1
+        </button>
+      </div>
+
+      {/* Quick Prompt Suggestions */}
+      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', marginBottom: '0.75rem', fontSize: '0.78rem' }}>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => dispatchNanoInference(`What is the most important idea in ${currentTopic}?`)}
+          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '20px', padding: '4px 10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}
+        >
+          🌟 What is this topic about?
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => dispatchNanoInference(`Can you give me a real-world example of ${currentTopic}?`)}
+          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '20px', padding: '4px 10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}
+        >
+          🌱 Give me an everyday example
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => dispatchNanoInference(`What is a common mistake students make in ${currentTopic}?`)}
+          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '20px', padding: '4px 10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}
+        >
+          ⚠️ What trap should I avoid?
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => dispatchNanoInference(`How do I solve problems in ${currentTopic}?`)}
+          style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '20px', padding: '4px 10px', color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 600 }}
+        >
+          🧩 How do I solve step 1?
         </button>
       </div>
 

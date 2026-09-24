@@ -204,16 +204,54 @@ export class LessonSequencer {
 
     const baseQuestions = safeKnowledge?.questions || [];
 
+    // Helper to pick verified curriculum question avoiding immediate repetition
+    const pickBankQuestion = (preferredIndex: number) => {
+      if (baseQuestions.length === 0) return null;
+      const cleanExclude = excludePrompt?.trim().toLowerCase();
+      const filtered = cleanExclude
+        ? baseQuestions.filter((q) => q.prompt.trim().toLowerCase() !== cleanExclude)
+        : baseQuestions;
+      const pool = filtered.length > 0 ? filtered : baseQuestions;
+      const idx = Math.abs(preferredIndex) % pool.length;
+      return pool[idx];
+    };
+
     switch (stage) {
       case 'HOOK': {
-        // Step 1: Hook / Inquiry Engagement
-        const hookStem = `🌍 [Step 1: Real-World Hook] ${hook}`;
-        const hookCorrect = `It connects directly to the foundational law: ${coreAxiom}`;
-        const hookDistractor1 = `It happens entirely by chance with zero predictable natural rules.`;
-        const hookDistractor2 = `It only applies inside a laboratory and never in real daily life.`;
-        const hookDistractor3 = `Common assumption: ${cognitiveTrap}`;
+        // Step 1: Hook / Inquiry Engagement - prefer verified foundational question
+        const bankQ = pickBankQuestion(0);
+        if (bankQ) {
+          return {
+            pedagogicalStage: 'HOOK',
+            stageBadge: 'Step 1 of 4: Real-World Hook',
+            stepLabel: 'Ignition & Practical Scenario',
+            pedagogicalIntent: 'Ground the Oak curriculum concept in tangible, real-world observation.',
+            prompt: `🌍 [Real-World Hook] ${bankQ.prompt}`,
+            options: [...bankQ.options],
+            answerKey: bankQ.answerKey,
+            hint: bankQ.hint || safeKnowledge?.scaffoldHints.level1 || 'Observe how this plays out in normal everyday experience.',
+            explanation: bankQ.explanation || `In everyday observation: ${coreAxiom}`,
+            misconceptions: bankQ.options.map((_, i) =>
+              i === bankQ.answerKey
+                ? 'Correct! Connects real-world observations directly to the foundational rule.'
+                : `Misconception Trap: ${cognitiveTrap}`
+            ),
+            socraticFollowUp: `Why do you think this happens in real life?`,
+            difficulty: 'warmup',
+            axiom: coreAxiom,
+            trap: cognitiveTrap,
+            hook,
+            guidedStep,
+          };
+        }
 
-        const options = [hookCorrect, hookDistractor3, hookDistractor1, hookDistractor2];
+        const hookStem = `🌍 [Step 1: Real-World Hook] ${hook}`;
+        const hookCorrect = coreAxiom;
+        const hookDistractor1 = cognitiveTrap;
+        const hookDistractor2 = `The rule only applies under artificial laboratory conditions.`;
+        const hookDistractor3 = `Outcomes are completely random and obey no scientific laws.`;
+
+        const options = [hookCorrect, hookDistractor1, hookDistractor2, hookDistractor3];
         const shuffled = prng.shuffle(options.map((opt, i) => ({ opt, originalIndex: i })));
         const answerKey = shuffled.findIndex((item) => item.originalIndex === 0);
 
@@ -242,7 +280,33 @@ export class LessonSequencer {
       }
 
       case 'AXIOM': {
-        // Step 2: Foundational Axiom verification
+        // Step 2: Foundational Axiom verification - prefer second verified question
+        const bankQ = pickBankQuestion(1);
+        if (bankQ) {
+          return {
+            pedagogicalStage: 'AXIOM',
+            stageBadge: 'Step 2 of 4: Core Axiom',
+            stepLabel: 'Foundational Law & Mechanism',
+            pedagogicalIntent: 'Verify understanding of the core invariant law from the Oak curriculum.',
+            prompt: `📐 [Core Axiom] ${bankQ.prompt}`,
+            options: [...bankQ.options],
+            answerKey: bankQ.answerKey,
+            hint: bankQ.hint || safeKnowledge?.scaffoldHints.level2 || 'Focus on the definition that holds true across all standard cases.',
+            explanation: bankQ.explanation || `Core Axiom: ${coreAxiom}`,
+            misconceptions: bankQ.options.map((_, i) =>
+              i === bankQ.answerKey
+                ? 'Correct! Accurately identifies the foundational Oak curriculum axiom.'
+                : `Cognitive Trap: ${cognitiveTrap}`
+            ),
+            socraticFollowUp: socraticPivot,
+            difficulty: 'warmup',
+            axiom: coreAxiom,
+            trap: cognitiveTrap,
+            hook,
+            guidedStep,
+          };
+        }
+
         const axiomStem = `📐 [Step 2: Core Axiom] In ${keyStage} ${subject}, which statement expresses the fundamental rule of "${cleanUnit}"?`;
         const axiomCorrect = coreAxiom;
         const distractor1 = `Misconception: ${cognitiveTrap}`;
@@ -279,6 +343,32 @@ export class LessonSequencer {
 
       case 'SOCRATIC_PIVOT': {
         // Step Remediation: Socratic Counter-Example / Diagnostic Decoupler
+        const bankQ = pickBankQuestion(2);
+        if (bankQ && bankQ.prompt.includes('?')) {
+          return {
+            pedagogicalStage: 'SOCRATIC_PIVOT',
+            stageBadge: 'Socratic Decoupler',
+            stepLabel: 'Misconception Resolution',
+            pedagogicalIntent: 'Expose why the common trap fails through targeted counter-inquiry.',
+            prompt: `⚖️ [Diagnostic Counter-Proof] ${socraticPivot}`,
+            options: [...bankQ.options],
+            answerKey: bankQ.answerKey,
+            hint: bankQ.hint || safeKnowledge?.scaffoldHints.level1 || 'Imagine what would go wrong if the misconception were true.',
+            explanation: bankQ.explanation || `Counter-proof insight: ${coreAxiom}`,
+            misconceptions: bankQ.options.map((_, i) =>
+              i === bankQ.answerKey
+                ? 'Well reasoned! You successfully resolved the cognitive contradiction.'
+                : `This re-triggers the trap: ${cognitiveTrap}`
+            ),
+            socraticFollowUp: `Can you state in your own words why the trap answer fails?`,
+            difficulty: 'challenger',
+            axiom: coreAxiom,
+            trap: cognitiveTrap,
+            hook,
+            guidedStep,
+          };
+        }
+
         const pivotStem = `⚖️ [Diagnostic Counter-Proof] ${socraticPivot}`;
         const pivotCorrect = `Because ${coreAxiom}`;
         const distractor1 = `Because ${cognitiveTrap}`;
@@ -314,25 +404,21 @@ export class LessonSequencer {
       }
 
       case 'MASTERY': {
-        // Step 4: Mastery Synthesis & Deep Transfer
-        // Select either a second verified Oak question or create a Brain Buster challenge
-        const altQuestion = baseQuestions.length > 1
-          ? baseQuestions.find((q) => !excludePrompt || q.prompt.trim() !== excludePrompt.trim()) || baseQuestions[1]
-          : null;
-
-        if (altQuestion) {
+        // Step 4: Mastery Synthesis & Deep Transfer - pick advanced question from bank
+        const bankQ = pickBankQuestion(3);
+        if (bankQ) {
           return {
             pedagogicalStage: 'MASTERY',
             stageBadge: 'Step 4 of 4: Deep Mastery',
             stepLabel: 'Transfer & Synthesis Challenge',
             pedagogicalIntent: 'Demonstrate deep independent transfer across new variable conditions.',
-            prompt: `🧠 [Step 4: Deep Mastery] ${altQuestion.prompt}`,
-            options: [...altQuestion.options],
-            answerKey: altQuestion.answerKey,
-            hint: altQuestion.hint || safeKnowledge?.scaffoldHints.level3 || 'Apply the full chain of reasoning you built in previous steps.',
-            explanation: altQuestion.explanation || `Mastery achieved: ${coreAxiom}`,
-            misconceptions: altQuestion.options.map((_, i) =>
-              i === altQuestion.answerKey
+            prompt: `🧠 [Deep Mastery] ${bankQ.prompt}`,
+            options: [...bankQ.options],
+            answerKey: bankQ.answerKey,
+            hint: bankQ.hint || safeKnowledge?.scaffoldHints.level3 || 'Apply the full chain of reasoning you built in previous steps.',
+            explanation: bankQ.explanation || `Mastery confirmed: ${coreAxiom}`,
+            misconceptions: bankQ.options.map((_, i) =>
+              i === bankQ.answerKey
                 ? 'Mastery confirmed! Flawlessly synthesized all steps to reach the correct answer.'
                 : `Misconception distractor: ${cognitiveTrap}`
             ),
@@ -380,22 +466,21 @@ export class LessonSequencer {
 
       case 'PRACTICE':
       default: {
-        // Step 3: Standard Practice & Application (Primary Oak Question)
-        const primaryQuestion = baseQuestions.length > 0 ? baseQuestions[0] : null;
-
-        if (primaryQuestion) {
+        // Step 3: Standard Practice & Application - pick question with rotation
+        const bankQ = pickBankQuestion(2);
+        if (bankQ) {
           return {
             pedagogicalStage: 'PRACTICE',
             stageBadge: 'Step 3 of 4: Applied Practice',
             stepLabel: 'Curriculum Application',
             pedagogicalIntent: 'Apply the verified axiom to standard curriculum problem scenarios.',
-            prompt: `🎯 [Step 3: Applied Practice] ${primaryQuestion.prompt}`,
-            options: [...primaryQuestion.options],
-            answerKey: primaryQuestion.answerKey,
-            hint: primaryQuestion.hint || safeKnowledge?.scaffoldHints.level2 || 'Recall the core axiom from Step 2.',
-            explanation: primaryQuestion.explanation || `Application of core rule: ${coreAxiom}`,
-            misconceptions: primaryQuestion.options.map((_, i) =>
-              i === primaryQuestion.answerKey
+            prompt: `🎯 [Applied Practice] ${bankQ.prompt}`,
+            options: [...bankQ.options],
+            answerKey: bankQ.answerKey,
+            hint: bankQ.hint || safeKnowledge?.scaffoldHints.level2 || 'Recall the core axiom from Step 2.',
+            explanation: bankQ.explanation || `Application of core rule: ${coreAxiom}`,
+            misconceptions: bankQ.options.map((_, i) =>
+              i === bankQ.answerKey
                 ? 'Correct! Solid application of the core curriculum principle.'
                 : `Misconception Trap: ${cognitiveTrap}`
             ),

@@ -933,7 +933,9 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
                   borderRadius: '9999px',
                 }}
               >
-                ⚠️ {trajectoryState.activeTrapVector} ({Math.round(trajectoryState.trapConfidence * 100)}% convergence)
+                {selectedAnswer !== null
+                  ? `⚠️ ${trajectoryState.activeTrapVector} (${Math.round(trajectoryState.trapConfidence * 100)}% convergence)`
+                  : `⚠️ Prior Misconception Detected: Watch for subtle conceptual traps`}
               </span>
             ) : (
               <span
