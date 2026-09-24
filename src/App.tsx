@@ -31,6 +31,7 @@ function lazyRetry<T extends React.ComponentType<any>>(
 }
 
 const PracticeLabPage = lazyRetry(() => import('./pages/practice-lab'));
+const CatholicLifePage = lazyRetry(() => import('./pages/catholic-life'));
 const LearningZonePage = lazyRetry(() => import('./pages/learning-zone'));
 const ProfilePage = lazyRetry(() => import('./pages/profile'));
 const CurriculumStudioPage = lazyRetry(() => import('./pages/curriculum-studio'));
@@ -49,6 +50,8 @@ export default function App(): React.JSX.Element {
         <Routes>
           <Route path="/" element={<PersistentAppShell />}>
             <Route index element={<HomePage />} />
+            <Route path="catholic-life" element={<CatholicLifePage />} />
+            <Route path="first-communion" element={<CatholicLifePage />} />
             <Route path="practice-lab" element={<PracticeLabPage />} />
             <Route path="learning-zone" element={<LearningZonePage />} />
             <Route path="profile" element={<ProfilePage />} />

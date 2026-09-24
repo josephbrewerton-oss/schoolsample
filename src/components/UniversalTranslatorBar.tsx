@@ -6,6 +6,12 @@ import {
   getSavedLanguage,
   setSavedLanguage,
   listenToLanguageChange,
+  getLanguagePracticeMode,
+  setLanguagePracticeMode,
+  listenToLanguagePracticeMode,
+  getSpeechSpeed,
+  setSpeechSpeed,
+  listenToSpeechSpeed,
 } from '../engine/operational-language';
 import {
   translatePageDOM,
@@ -19,6 +25,8 @@ export default function UniversalTranslatorBar() {
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isTranslated, setIsTranslated] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [practiceMode, setPracticeMode] = useState<boolean>(() => getLanguagePracticeMode());
+  const [speechSpeed, setLocalSpeechSpeed] = useState<number>(() => getSpeechSpeed());
   const googleScriptLoadedRef = useRef(false);
 
   // Ensure CSS variable --universal-bar-height is set once or on actual height changes without triggering forced synchronous reflow
@@ -156,6 +164,20 @@ export default function UniversalTranslatorBar() {
       }
     });
     return unsub;
+  }, []);
+
+  // Listen to Language Practice Mode & Speech Speed changes
+  useEffect(() => {
+    const unsubPractice = listenToLanguagePracticeMode((enabled) => {
+      setPracticeMode(enabled);
+    });
+    const unsubSpeed = listenToSpeechSpeed((speed) => {
+      setLocalSpeechSpeed(speed);
+    });
+    return () => {
+      unsubPractice();
+      unsubSpeed();
+    };
   }, []);
 
   const location = useLocation();
@@ -344,6 +366,90 @@ export default function UniversalTranslatorBar() {
                 {isTranslated ? '🇬🇧 Show Original' : `🌐 Translate to ${langMeta.label}`}
               </button>
             )}
+
+            {/* Language Practice Mode (Dual Parallel Text + Ear-Training) */}
+            <button
+              type="button"
+              id="universal-practice-mode-btn"
+              onClick={() => {
+                const next = !practiceMode;
+                setPracticeMode(next);
+                setLanguagePracticeMode(next);
+              }}
+              style={{
+                background: practiceMode ? '#065f46' : '#1e293b',
+                color: practiceMode ? '#a7f3d0' : '#cbd5e1',
+                border: `1px solid ${practiceMode ? '#10b981' : '#475569'}`,
+                borderRadius: '6px',
+                padding: '0.25rem 0.65rem',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Toggle Language Practice Mode: Enables parallel bilingual text and ear-training repetition across questions"
+            >
+              <span>🗣️</span>
+              <span>{practiceMode ? 'Language Practice: ON' : 'Language Practice'}</span>
+            </button>
+
+            {/* Speech Speed Setting (Normal vs Slow/Clear) */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: '#1e293b',
+                border: '1px solid #475569',
+                borderRadius: '6px',
+                padding: '1px 3px',
+                gap: '2px',
+              }}
+              title="Text-to-speech audio playback speed"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalSpeechSpeed(0.7);
+                  setSpeechSpeed(0.7);
+                }}
+                style={{
+                  background: speechSpeed < 0.85 ? '#0284c7' : 'transparent',
+                  color: speechSpeed < 0.85 ? '#ffffff' : '#94a3b8',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+                title="Slower, phonetic speech for language acquisition"
+              >
+                🐢 0.7x
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLocalSpeechSpeed(0.95);
+                  setSpeechSpeed(0.95);
+                }}
+                style={{
+                  background: speechSpeed >= 0.85 ? '#0284c7' : 'transparent',
+                  color: speechSpeed >= 0.85 ? '#ffffff' : '#94a3b8',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+                title="Standard speech speed"
+              >
+                1.0x
+              </button>
+            </div>
 
             {/* Read Page Aloud */}
             <button

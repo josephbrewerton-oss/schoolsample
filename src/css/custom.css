@@ -457,5 +457,49 @@ body {
   box-shadow: none !important;
 }
 
+/* Classroom Print-Off Stylesheet (@media print) */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  #ast-universal-translator,
+  #persistent-site-navbar,
+  #persistent-site-footer,
+  #mobile-nav-drawer,
+  nav,
+  header,
+  footer,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  #vector-printable-worksheet {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+
+  #vector-printable-worksheet svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  @page {
+    margin: 1.2cm;
+    size: A4 portrait;
+  }
+}
+
 
 

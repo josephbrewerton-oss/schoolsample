@@ -25,121 +25,121 @@ const CREED_ARTICLES: CreedArticle[] = [
     number: 1,
     article: 'I believe in God, the Father almighty, Creator of heaven and earth,',
     latinExcerpt: 'Credo in Deum Patrem omnipotentem, Creatorem caeli et terrae,',
-    mystery: 'God is the Origin of all reality, loving Father, omnipotent and eternal.',
+    mystery: 'God is our loving Father and Creator of all that exists.',
     theologicalPillar: 'The Father & Creation',
     catechismRef: 'CCC 198-231',
     scriptureRef: 'Genesis 1:1; Matthew 6:9',
-    rciaExplanation: 'To say "I believe" is an act of total trust and self-giving. God is not an impersonal cosmic force, but our loving Father who spoke all visible and invisible creation into being ex nihilo (out of nothing).'
+    rciaExplanation: 'Saying "I believe" means putting all our trust in God’s loving hands. God is our caring Father who created everything around us — the twinkling stars, mountains, oceans, animals, and you!'
   },
   {
     number: 2,
     article: 'and in Jesus Christ, his only Son, our Lord,',
     latinExcerpt: 'et in Iesum Christum, Filium eius unicum, Dominum nostrum,',
-    mystery: 'Jesus is True God from True God, co-eternal with the Father.',
+    mystery: 'Jesus is God’s only Son, our loving Lord and Saviour.',
     theologicalPillar: 'The Son & Redemption',
     catechismRef: 'CCC 441-451',
     scriptureRef: 'John 1:1-14; Philippians 2:11',
-    rciaExplanation: '"Jesus" means "God saves." "Christ" is the Messiah, the Anointed One. Calling Him "Lord" (Kyrios) proclaims His absolute divinity and our allegiance to Him over any earthly power.'
+    rciaExplanation: '"Jesus" means "God saves." "Christ" means the Chosen One. Calling Jesus our "Lord" means we choose to follow Him, listen to His words, and love everyone like He does.'
   },
   {
     number: 3,
     article: 'who was conceived by the Holy Spirit, born of the Virgin Mary,',
     latinExcerpt: 'qui conceptus est de Spiritu Sancto, natus ex Maria Virgine,',
-    mystery: 'The Incarnation: The eternal Word took on true human flesh for our salvation.',
+    mystery: 'Jesus became a real human child through Mary and the Holy Spirit.',
     theologicalPillar: 'The Son & Redemption',
     catechismRef: 'CCC 484-507',
     scriptureRef: 'Luke 1:35; Matthew 1:20',
-    rciaExplanation: 'Through Mary\'s generous "Fiat" (let it be done), God became man without ceasing to be God. Mary is honoured as Theotokos (God-bearer) and perpetual Virgin, our mother in faith.'
+    rciaExplanation: 'Jesus came into our world as a real baby boy. Our Blessed Mother Mary said a joyful "Yes" to God, and the Holy Spirit made Jesus human while remaining truly God.'
   },
   {
     number: 4,
     article: 'suffered under Pontius Pilate, was crucified, died and was buried;',
     latinExcerpt: 'passus sub Pontio Pilato, crucifixus, mortuus, et sepultus,',
-    mystery: 'The Paschal Mystery: Christ bore the weight of human sin in sacrificial love.',
+    mystery: 'Jesus gave His life on Good Friday out of supreme love for us.',
     theologicalPillar: 'The Son & Redemption',
     catechismRef: 'CCC 571-623',
     scriptureRef: 'Mark 15:15-37; 1 Peter 2:24',
-    rciaExplanation: 'The mention of Pontius Pilate anchors Christianity firmly in real human history. Jesus truly died on the Cross, offering the supreme sacrifice that reconciles humanity to God.'
+    rciaExplanation: 'Pontius Pilate was a real Roman governor, proving this happened in real history. Jesus loved us so much that He died on the Cross on Good Friday, forgiving those who hurt Him and washing away our sins.'
   },
   {
     number: 5,
     article: 'he descended into hell; on the third day he rose again from the dead;',
     latinExcerpt: 'descendit ad inferos; tertia die resurrexit a mortuis;',
-    mystery: 'The Harrowing of Hades and the Victory of the Resurrection.',
+    mystery: 'Jesus rose victorious from the dead on Easter Sunday!',
     theologicalPillar: 'The Son & Redemption',
     catechismRef: 'CCC 631-658',
     scriptureRef: '1 Peter 3:18-19; 1 Corinthians 15:3-4',
-    rciaExplanation: '"Descended into hell" (Sheol) means Christ entered the realm of the dead to free the righteous souls who awaited Him. His bodily Resurrection is the crowning proof of His divinity and our promise of eternal life.'
+    rciaExplanation: 'Jesus visited all the holy people who had died before Him to lead them into heaven. Then, on Easter Sunday morning, He rose from the dead alive and victorious! Death has no power over Jesus.'
   },
   {
     number: 6,
     article: 'he ascended into heaven, and is seated at the right hand of God the Father almighty;',
     latinExcerpt: 'ascendit ad caelos, sedet ad dexteram Dei Patris omnipotentis,',
-    mystery: 'Christ in Glory as eternal High Priest and King of the Universe.',
+    mystery: 'Jesus returned to heaven in glory, always caring for us.',
     theologicalPillar: 'The Son & Redemption',
     catechismRef: 'CCC 659-667',
     scriptureRef: 'Acts 1:9-11; Hebrews 1:3',
-    rciaExplanation: 'Humanity, through the glorified body of Christ, is raised into the inner life of the Holy Trinity. Jesus sits at the Father\'s right hand as our eternal mediator and intercessor.'
+    rciaExplanation: 'Jesus ascended to heaven to prepare a wonderful home for us. He sits beside God our Father, listening to every little prayer we whisper from our bedrooms and classrooms.'
   },
   {
     number: 7,
     article: 'from there he will come to judge the living and the dead.',
     latinExcerpt: 'inde venturus est iudicare vivos et mortuos.',
-    mystery: 'The Parousia (Second Coming) and final triumph of Divine Justice.',
+    mystery: 'Jesus will return one day to bring fairness, peace, and eternal joy.',
     theologicalPillar: 'The Son & Redemption',
     catechismRef: 'CCC 668-682',
     scriptureRef: 'Matthew 25:31-46; 2 Timothy 4:1',
-    rciaExplanation: 'History is heading toward a glorious culmination. Christ will return in glory to judge all hearts according to truth, mercy, and our love shown to the least among us.'
+    rciaExplanation: 'One day Jesus will return in glory. He will look at how we treated others — especially the lonely, hungry, or sad — and His love will make all things right.'
   },
   {
     number: 8,
     article: 'I believe in the Holy Spirit,',
     latinExcerpt: 'Credo in Spiritum Sanctum,',
-    mystery: 'The Third Person of the Trinity, Lord and Giver of Life.',
+    mystery: 'The Holy Spirit is God’s gentle, powerful Helper inside our hearts.',
     theologicalPillar: 'The Holy Spirit & The Church',
     catechismRef: 'CCC 683-747',
     scriptureRef: 'John 14:26; Acts 2:1-4',
-    rciaExplanation: 'The Holy Spirit proceeds from the Father and the Son, adored and glorified. He animates, inspires, and guides the Church, sanctifying believers through grace and the Sacraments.'
+    rciaExplanation: 'The Holy Spirit is the Third Person of the Holy Trinity. He lives quietly in our hearts, giving us bravery when we are scared, good ideas, and peace to choose the right path.'
   },
   {
     number: 9,
     article: 'the holy catholic Church, the communion of saints,',
     latinExcerpt: 'sanctam Ecclesiam catholicam, sanctorum communionem,',
-    mystery: 'The Mystical Body of Christ and the fellowship of all believers across time.',
+    mystery: 'We are one worldwide family connected to the saints in heaven.',
     theologicalPillar: 'The Holy Spirit & The Church',
     catechismRef: 'CCC 748-975',
     scriptureRef: 'Ephesians 4:4-6; Hebrews 12:1',
-    rciaExplanation: '"Catholic" means universal and complete. The Church is One, Holy, Catholic, and Apostolic. The Communion of Saints unites the Church Militant (on earth), Suffering (in Purgatory), and Triumphant (in Heaven).'
+    rciaExplanation: '"Catholic" means universal — open to every person in every country! "Communion of saints" means we are all linked together: people on earth, holy souls, and the saints in heaven cheering us on!'
   },
   {
     number: 10,
     article: 'the forgiveness of sins,',
     latinExcerpt: 'remissionem peccatorum,',
-    mystery: 'Sacramental grace through Baptism and Reconciliation.',
+    mystery: 'Jesus washes away all our mistakes through Baptism and Confession.',
     theologicalPillar: 'The Holy Spirit & The Church',
     catechismRef: 'CCC 976-987',
     scriptureRef: 'John 20:22-23; Matthew 28:19',
-    rciaExplanation: 'Christ gave His Apostles the power to forgive sins in His Name ("Whose sins you forgive, they are forgiven"). No sin is beyond the boundless ocean of divine mercy.'
+    rciaExplanation: 'Whenever we make a slip and say sorry to God, Jesus forgives us completely. Through Baptism and Confession, God wipes the slate clean and gives us a fresh, happy start.'
   },
   {
     number: 11,
     article: 'the resurrection of the body,',
     latinExcerpt: 'carnis resurrectionem,',
-    mystery: 'Our physical bodies will be raised incorruptible on the Last Day.',
+    mystery: 'God loves our bodies and souls, and we will rise with Jesus.',
     theologicalPillar: 'The Holy Spirit & The Church',
     catechismRef: 'CCC 988-1019',
     scriptureRef: '1 Corinthians 15:42-44; John 6:40',
-    rciaExplanation: 'We are not spirits trapped in machines; body and soul form a single unity. In the final resurrection, our bodies will be reunited with our souls, transformed and glorified like Christ\'s.'
+    rciaExplanation: 'God made our bodies as well as our souls. Because Jesus rose from the dead with a glorious body, we believe that after this life, God will raise us up to live forever with Him.'
   },
   {
     number: 12,
     article: 'and life everlasting. Amen.',
     latinExcerpt: 'vitam aeternam. Amen.',
-    mystery: 'The Beatific Vision: Eternal communion with God in Heaven.',
+    mystery: 'Heaven is our forever home of eternal joy, peace, and love.',
     theologicalPillar: 'The Holy Spirit & The Church',
     catechismRef: 'CCC 1020-1065',
     scriptureRef: 'Revelation 21:1-4; 1 John 3:2',
-    rciaExplanation: 'Heaven is the ultimate end and fulfillment of deepest human longings. "Amen" means "I believe it! So be it!" sealing our personal surrender to the living God.'
+    rciaExplanation: 'In heaven, there is no more crying, illness, or sadness — only pure joy, friendship with the angels and saints, and endless happiness with Jesus. "Amen" means: "Yes, I believe it with all my heart!"'
   }
 ];
 
@@ -213,12 +213,12 @@ export default function CreedExplorer() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <span style={{ fontSize: '1.75rem' }}>📜</span>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
-              Pillar 1: The Apostles&apos; Creed Interactive Explorer
+              The Apostles&apos; Creed: What We Believe
             </h2>
-            <span className="stj-badge stj-badge-primary">RCIA Foundational</span>
+            <span className="stj-badge stj-badge-primary">For All Ages &bull; Whole School</span>
           </div>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--stj-text-muted)', maxWidth: '750px', lineHeight: 1.5 }}>
-            The 12 Articles of the Apostles&apos; Creed form the rule of faith handed down from the Apostles. Explore each article, its scriptural roots, and its theological meaning for adult initiation.
+            The 12 Articles of the Apostles&apos; Creed tell the story of God&apos;s love for us. Explore each belief, what it means for our lives, and its scripture roots.
           </p>
         </div>
 
@@ -335,7 +335,7 @@ export default function CreedExplorer() {
 
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--stj-primary)', marginBottom: '4px' }}>
-                RCIA Adult Formation Note:
+                💡 What This Means For Us:
               </div>
               <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--stj-text)' }}>
                 {active.rciaExplanation}

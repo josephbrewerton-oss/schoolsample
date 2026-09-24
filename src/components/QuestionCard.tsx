@@ -1,14 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   SUPPORTED_LANGUAGES,
   getSavedLanguage,
   listenToLanguageChange,
   setSavedLanguage,
+  getLanguagePracticeMode,
+  listenToLanguagePracticeMode,
+  getSpeechSpeed,
+  listenToSpeechSpeed,
 } from '../engine/operational-language';
 import {
   translateQuestionData,
   translateText,
   speakInLanguage,
+  speakBilingual,
+  cancelSpeech,
 } from '../engine/translationService';
 import { ProceduralManipulative } from './ProceduralManipulative';
 import { ASTKnowledgeSeed } from '../engine/seedInflationEngine';
@@ -126,8 +132,30 @@ export const QuestionCard: React.FC<Props> = ({
     return subLower.includes('foreign') || subLower.includes('mfl') || subLower.includes('french') || subLower.includes('spanish') || subLower.includes('latin') || unitLower.includes('french') || unitLower.includes('spanish') || unitLower.includes('latin');
   }, [subject, unit]);
 
-  const [bilingualMode, setBilingualMode] = useState<boolean>(() => isLanguageSubject);
+  const [bilingualMode, setBilingualMode] = useState<boolean>(() => isLanguageSubject || getLanguagePracticeMode());
+  const [speechSpeed, setLocalSpeechSpeed] = useState<number>(() => getSpeechSpeed());
+  const [audioPhase, setAudioPhase] = useState<'idle' | 'primary' | 'secondary'>('idle');
+  const cancelAudioRef = useRef<(() => void) | null>(null);
   const [teacherMode, setTeacherMode] = useState<boolean>(false);
+
+  // Sync with global Language Practice Mode and Speech Speed
+  useEffect(() => {
+    const unsubPractice = listenToLanguagePracticeMode((enabled) => {
+      setBilingualMode(enabled || isLanguageSubject);
+    });
+    const unsubSpeed = listenToSpeechSpeed((speed) => {
+      setLocalSpeechSpeed(speed);
+    });
+    return () => {
+      unsubPractice();
+      unsubSpeed();
+      if (cancelAudioRef.current) {
+        cancelAudioRef.current();
+        cancelAudioRef.current = null;
+      }
+      cancelSpeech();
+    };
+  }, [isLanguageSubject]);
 
   const inferredCpaType = useMemo<ASTKnowledgeSeed['cpaType'] | null>(() => {
     const combined = `${subject} ${unit} ${prompt}`.toLowerCase();
@@ -325,10 +353,58 @@ export const QuestionCard: React.FC<Props> = ({
     onLanguageChange?.(newLang);
   };
 
-  const handleSpeak = (customText?: string, customLang?: string) => {
+  const handleSpeak = (customText?: string, customLang?: string, slow?: boolean) => {
+    cancelSpeech();
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current();
+      cancelAudioRef.current = null;
+    }
     const text = customText || effectivePrompt;
     const langToSpeak = customLang || (isNonEnglish && !showOriginal ? activeLang : 'en');
-    speakInLanguage(text, langToSpeak);
+    setAudioPhase(langToSpeak === 'en' ? 'primary' : 'secondary');
+    speakInLanguage(text, langToSpeak, {
+      rate: slow ? 0.7 : speechSpeed,
+      onEnd: () => setAudioPhase('idle'),
+      onError: () => setAudioPhase('idle'),
+    });
+  };
+
+  const handleSpeakEcho = () => {
+    cancelSpeech();
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current();
+      cancelAudioRef.current = null;
+      setAudioPhase('idle');
+      return;
+    }
+    if (!isNonEnglish) {
+      handleSpeak(prompt, 'en');
+      return;
+    }
+
+    cancelAudioRef.current = speakBilingual(
+      prompt,
+      'en',
+      translatedData.prompt,
+      activeLang,
+      {
+        rate: speechSpeed,
+        onPhaseChange: (phase) => setAudioPhase(phase),
+        onEnd: () => {
+          setAudioPhase('idle');
+          cancelAudioRef.current = null;
+        },
+      }
+    );
+  };
+
+  const handleStopSpeech = () => {
+    cancelSpeech();
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current();
+      cancelAudioRef.current = null;
+    }
+    setAudioPhase('idle');
   };
 
   // Local AI Socratic Explainer: Unpacks the authentic misconception using on-device Gemini Nano/WebLLM
@@ -1099,90 +1175,213 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
 
       {/* Question Prompt Stem */}
       {bilingualMode && isNonEnglish ? (
-        <div style={{ marginBottom: '1.25rem' }}>
+        <div
+          style={{
+            marginBottom: '1.25rem',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '12px',
+            padding: '12px 14px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          }}
+        >
+          {/* Language Immersion Practice Toolbar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '8px',
+              paddingBottom: '8px',
+              marginBottom: '10px',
+              borderBottom: '1px solid #f1f5f9',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '0.9rem' }}>🗣️</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                Parallel Text & Ear-Training (English ⟷ {currentLangMeta.label})
+              </span>
+            </div>
+
+            {/* Echo & Audio Controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleSpeakEcho}
+                style={{
+                  background: audioPhase !== 'idle' ? '#047857' : '#ecfdf5',
+                  color: audioPhase !== 'idle' ? '#ffffff' : '#065f46',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '6px',
+                  padding: '3px 10px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: audioPhase !== 'idle' ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Play sequential bilingual audio: Speaks English first, pauses, then speaks the target translation"
+              >
+                <span>🎧</span>
+                <span>{audioPhase !== 'idle' ? 'Playing Echo...' : `Echo (EN ➔ ${currentLangMeta.code.toUpperCase()})`}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSpeak(translatedData.prompt, activeLang, true)}
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+                title="Listen to translation slowly for clear phonetic articulation"
+              >
+                <span>🐢</span> Slow (0.7x)
+              </button>
+
+              {audioPhase !== 'idle' && (
+                <button
+                  type="button"
+                  onClick={handleStopSpeech}
+                  style={{
+                    background: '#fee2e2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#b91c1c',
+                    cursor: 'pointer',
+                  }}
+                  title="Stop audio playback"
+                >
+                  ⏹ Stop
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Primary English Prompt */}
           <div
             style={{
-              fontSize: '1.3rem',
-              fontWeight: 700,
-              color: '#0f172a',
-              marginBottom: '0.5rem',
-              lineHeight: 1.5,
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: '8px',
+              padding: '8px 10px',
+              borderRadius: '8px',
+              background: audioPhase === 'primary' ? '#eff6ff' : 'transparent',
+              border: `1px solid ${audioPhase === 'primary' ? '#60a5fa' : 'transparent'}`,
+              transition: 'all 0.2s ease',
+              marginBottom: '8px',
             }}
           >
-            <span><MathRenderer text={prompt} /></span>
-            <button
-              type="button"
-              onClick={() => handleSpeak(prompt, 'en')}
-              style={{
-                background: '#f1f5f9',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '3px 8px',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#475569',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-              title="Listen in English"
-            >
-              🔊 EN
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '2px' }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  color: audioPhase === 'primary' ? '#2563eb' : '#64748b',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                🇬🇧 English Original {audioPhase === 'primary' && '• ▶ Speaking...'}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleSpeak(prompt, 'en')}
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '5px',
+                  padding: '2px 7px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: '#334155',
+                  cursor: 'pointer',
+                }}
+                title="Listen in English"
+              >
+                🔊 EN
+              </button>
+            </div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
+              <MathRenderer text={prompt} />
+            </div>
           </div>
 
-          {/* Bilingual Target Language Prompt Immersion Card */}
+          {/* Target Language Prompt Immersion Card */}
           <div
             style={{
-              background: '#f0f9ff',
-              border: '1px solid #bae6fd',
+              padding: '10px 12px',
               borderRadius: '8px',
-              padding: '8px 12px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: '12px',
+              background: audioPhase === 'secondary' ? '#f0fdf4' : '#f0f9ff',
+              border: `1px solid ${audioPhase === 'secondary' ? '#34d399' : '#bae6fd'}`,
+              transition: 'all 0.2s ease',
             }}
           >
-            <div>
-              <div
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+              <span
                 style={{
                   fontSize: '0.72rem',
                   fontWeight: 800,
-                  color: '#0369a1',
+                  color: audioPhase === 'secondary' ? '#059669' : '#0369a1',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
-                  marginBottom: '2px',
                 }}
               >
-                🌐 {currentLangMeta.label} ({currentLangMeta.nativeLabel}) • Bilingual Bridge
-              </div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#0c4a6e', lineHeight: 1.4 }}>
-                <MathRenderer text={translatedData.prompt} />
+                🌐 {currentLangMeta.label} ({currentLangMeta.nativeLabel}) • Target Audio {audioPhase === 'secondary' && '• ▶ Pronouncing...'}
+              </span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleSpeak(translatedData.prompt, activeLang, true)}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '5px',
+                    padding: '2px 6px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    color: '#64748b',
+                    cursor: 'pointer',
+                  }}
+                  title="Slow phonetic pronunciation"
+                >
+                  🐢 0.7x
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSpeak(translatedData.prompt, activeLang)}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #7dd3fc',
+                    borderRadius: '5px',
+                    padding: '2px 8px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: '#0284c7',
+                    cursor: 'pointer',
+                  }}
+                  title={`Listen in ${currentLangMeta.label}`}
+                >
+                  🔊 {currentLangMeta.code.toUpperCase()}
+                </button>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => handleSpeak(translatedData.prompt, activeLang)}
-              style={{
-                background: '#ffffff',
-                border: '1px solid #7dd3fc',
-                borderRadius: '6px',
-                padding: '3px 8px',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                color: '#0284c7',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-              title={`Listen in ${currentLangMeta.label}`}
-            >
-              🔊 {currentLangMeta.code.toUpperCase()}
-            </button>
+            <div style={{ fontSize: '1.08rem', fontWeight: 600, color: '#0c4a6e', lineHeight: 1.45 }}>
+              <MathRenderer text={translatedData.prompt} />
+            </div>
           </div>
         </div>
       ) : (
@@ -1347,20 +1546,82 @@ Explain in 2 friendly sentences why this answer is such an intuitive mistake and
 
               {/* Option Text */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ lineHeight: 1.4 }}>
-                  <MathRenderer text={bilingualMode && isNonEnglish ? (displayOptions[idx] || opt) : opt} />
-                </span>
-                {bilingualMode && isNonEnglish && translatedData.displayOptions[idx] && (
-                  <span
-                    style={{
-                      fontSize: '0.86rem',
-                      color: isSelected ? textColor : '#0369a1',
-                      fontWeight: 500,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    🌐 <MathRenderer text={translatedData.displayOptions[idx]} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <span style={{ lineHeight: 1.4 }}>
+                    <MathRenderer text={bilingualMode && isNonEnglish ? (displayOptions[idx] || opt) : opt} />
                   </span>
+                  {bilingualMode && isNonEnglish && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSpeak(displayOptions[idx] || opt, 'en');
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#64748b',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        padding: '1px 4px',
+                      }}
+                      title="Listen to option in English"
+                    >
+                      🔊 EN
+                    </button>
+                  )}
+                </div>
+                {bilingualMode && isNonEnglish && translatedData.displayOptions[idx] && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                    <span
+                      style={{
+                        fontSize: '0.86rem',
+                        color: isSelected ? textColor : '#0369a1',
+                        fontWeight: 500,
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      🌐 <MathRenderer text={translatedData.displayOptions[idx]} />
+                    </span>
+                    <div style={{ display: 'flex', gap: '2px' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSpeak(translatedData.displayOptions[idx], activeLang, true);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#64748b',
+                          fontSize: '0.68rem',
+                          cursor: 'pointer',
+                          padding: '1px 3px',
+                        }}
+                        title="Pronounce slowly"
+                      >
+                        🐢
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSpeak(translatedData.displayOptions[idx], activeLang);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#0284c7',
+                          fontSize: '0.72rem',
+                          cursor: 'pointer',
+                          padding: '1px 4px',
+                        }}
+                        title={`Listen to option in ${currentLangMeta.label}`}
+                      >
+                        🔊 {currentLangMeta.code.toUpperCase()}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
 

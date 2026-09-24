@@ -218,13 +218,19 @@ export default function PersistentNavbar(): React.JSX.Element {
       to: '/learning-zone',
       icon: '📖',
       title: 'Lessons & Curriculum',
-      desc: 'National Curriculum & Catholic RE interactive units',
+      desc: 'National Curriculum interactive unit walkthroughs',
     },
     {
       to: '/learning-zone?tab=constellation',
       icon: '✨',
       title: 'Concept Constellation',
       desc: 'Logseq-style in-memory prerequisite knowledge graph & NATO CSNs',
+    },
+    {
+      to: '/learning-zone?tab=vector-motion',
+      icon: '📐',
+      title: '0-Bloat Vector Motion & Printables',
+      desc: 'Parametric SVG motion, synchronized narration & A4 print-offs',
     },
     {
       to: '/practice-lab',
@@ -260,12 +266,6 @@ export default function PersistentNavbar(): React.JSX.Element {
       desc: 'AST graph visualizer & curriculum node architect',
     },
     {
-      to: '/settings',
-      icon: '⚙️',
-      title: 'System Settings',
-      desc: 'Storage, device quotas, AI models & telemetry',
-    },
-    {
       to: '/licensing',
       icon: '⚖️',
       title: 'MAT SLA & Licensing',
@@ -284,10 +284,13 @@ export default function PersistentNavbar(): React.JSX.Element {
     location.pathname === '/practice-lab' ||
     location.pathname === '/profile';
 
+  const isCatholicLifeActive =
+    location.pathname === '/catholic-life' ||
+    location.pathname === '/first-communion';
+
   const isAdminActive =
     location.pathname === '/teacher-beacon' ||
     location.pathname === '/curriculum-studio' ||
-    location.pathname === '/settings' ||
     location.pathname === '/licensing' ||
     location.pathname === '/privacy';
 
@@ -399,7 +402,41 @@ export default function PersistentNavbar(): React.JSX.Element {
             🏠 Home
           </NavLink>
 
-          {/* 2. Learning Dropdown */}
+          {/* 2. Catholic Life & Faith (Dedicated, Not Key Staged) */}
+          <NavLink
+            to="/catholic-life"
+            title="Whole-School Catholic Life, Mass, Sacraments & CST"
+            style={({ isActive }) => ({
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.88rem',
+              fontWeight: isActive ? 700 : 600,
+              color: isActive
+                ? '#4338ca'
+                : colorMode === 'dark'
+                ? '#c7d2fe'
+                : '#3730a3',
+              backgroundColor: isActive
+                ? colorMode === 'dark'
+                  ? 'rgba(99, 102, 241, 0.25)'
+                  : '#eef2ff'
+                : colorMode === 'dark'
+                ? 'rgba(238, 242, 255, 0.05)'
+                : 'rgba(238, 242, 255, 0.6)',
+              border: `1px solid ${isActive ? '#818cf8' : colorMode === 'dark' ? 'rgba(129, 140, 248, 0.3)' : '#e0e7ff'}`,
+              borderRadius: '6px',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            })}
+          >
+            <span>✝️</span>
+            <span>Catholic Life</span>
+          </NavLink>
+
+          {/* 3. Learning Dropdown */}
           <div
             ref={learningDropdownRef}
             className="nav-dropdown-wrapper"
@@ -867,6 +904,38 @@ export default function PersistentNavbar(): React.JSX.Element {
             </button>
           )}
 
+          {/* Standalone Settings Button (Separated from Admin) */}
+          <NavLink
+            to="/settings"
+            id="navbar-settings-btn"
+            title="System Settings: Audio, Sensory, Language, AI & Offline Storage"
+            style={({ isActive }) => ({
+              background: isActive
+                ? colorMode === 'dark' ? 'rgba(37, 99, 235, 0.2)' : '#eff6ff'
+                : 'transparent',
+              color: isActive
+                ? '#2563eb'
+                : colorMode === 'dark' ? '#94a3b8' : '#475569',
+              border: `1px solid ${
+                isActive
+                  ? '#3b82f6'
+                  : colorMode === 'dark' ? '#334155' : '#cbd5e1'
+              }`,
+              borderRadius: '6px',
+              padding: '0.35rem 0.6rem',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.15s ease',
+            })}
+          >
+            <span>⚙️</span>
+            <span className="navbar-action-desktop-only">Settings</span>
+          </NavLink>
+
           <button
             type="button"
             onClick={toggleColorMode}
@@ -947,7 +1016,56 @@ export default function PersistentNavbar(): React.JSX.Element {
             <span>Education should be free</span>
           </div>
 
-          {/* Group 1: Learning & Practice */}
+          {/* Group 1: Catholic Life & Faith (Dedicated Sanctuary, Not Key Staged) */}
+          <div>
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: '#818cf8',
+                marginBottom: '0.35rem',
+                paddingLeft: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span>✝️</span> Catholic Life &amp; Faith Sanctuary
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+              <NavLink
+                to="/catholic-life"
+                onClick={() => setMobileMenuOpen(false)}
+                style={({ isActive }) => ({
+                  textDecoration: 'none',
+                  padding: '0.6rem 0.75rem',
+                  fontSize: '0.92rem',
+                  fontWeight: 700,
+                  color: isActive
+                    ? '#ffffff'
+                    : colorMode === 'dark'
+                    ? '#e0e7ff'
+                    : '#3730a3',
+                  backgroundColor: isActive
+                    ? '#4338ca'
+                    : colorMode === 'dark'
+                    ? 'rgba(99, 102, 241, 0.15)'
+                    : '#eef2ff',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  border: `1px solid ${isActive ? '#6366f1' : colorMode === 'dark' ? 'rgba(99, 102, 241, 0.3)' : '#e0e7ff'}`,
+                })}
+              >
+                <span>✝️</span> Catholic Sanctuary (Whole School)
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Group 2: Learning & Practice */}
           <div>
             <div
               style={{
@@ -960,7 +1078,7 @@ export default function PersistentNavbar(): React.JSX.Element {
                 paddingLeft: '0.5rem',
               }}
             >
-              📖 Learning & Practice
+              📖 National Curriculum &amp; Practice
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
               <NavLink
@@ -1022,7 +1140,52 @@ export default function PersistentNavbar(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Group 2: Educator & Administration */}
+          {/* Group 3: Settings (Standalone, Separated from Admin) */}
+          <div>
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: colorMode === 'dark' ? '#94a3b8' : '#64748b',
+                marginBottom: '0.35rem',
+                paddingLeft: '0.5rem',
+              }}
+            >
+              ⚙️ Preferences &amp; Settings
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+              <NavLink
+                to="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                style={({ isActive }) => ({
+                  textDecoration: 'none',
+                  padding: '0.55rem 0.75rem',
+                  fontSize: '0.92rem',
+                  fontWeight: 600,
+                  color: isActive
+                    ? '#2563eb'
+                    : colorMode === 'dark'
+                    ? '#f8fafc'
+                    : '#1e293b',
+                  backgroundColor: isActive
+                    ? colorMode === 'dark'
+                      ? 'rgba(37, 99, 235, 0.15)'
+                      : '#eff6ff'
+                    : 'transparent',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                })}
+              >
+                <span>⚙️</span> System, Audio &amp; Language Settings
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Group 4: Educator & Administration */}
           <div>
             <div
               style={{

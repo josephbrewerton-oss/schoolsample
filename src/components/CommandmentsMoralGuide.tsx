@@ -12,103 +12,125 @@ import {
 export interface Commandment {
   number: number;
   traditionalText: string;
+  childTitle: string;
   positiveVirtue: string;
   sinAvoided: string;
   table: 'Love of God (First Tablet: 1-3)' | 'Love of Neighbor (Second Tablet: 4-10)';
   catechismRef: string;
-  rciaApplication: string;
+  howWeLiveIt: string;
+  childQuestion: string;
 }
 
 const TEN_COMMANDMENTS: Commandment[] = [
   {
     number: 1,
     traditionalText: 'I am the Lord your God: you shall not have strange Gods before me.',
-    positiveVirtue: 'The Theological Virtues: Faith, Hope, and Charity; adoration of the one true God.',
-    sinAvoided: 'Idolatry, superstition, occult practices, atheism, putting money or power above God.',
+    childTitle: 'Put God First in Everything',
+    positiveVirtue: 'Faith, hope, and deep love for God; praying each morning and night.',
+    sinAvoided: 'Putting video games, money, toys, or popularity ahead of God and doing what is right.',
     table: 'Love of God (First Tablet: 1-3)',
     catechismRef: 'CCC 2084-2141',
-    rciaApplication: 'Demands absolute priority for God in daily decisions. We examine what idols (career, vanity, digital addictions, wealth) compete for our heart.'
+    howWeLiveIt: 'Start each morning with a little prayer to Jesus. Ask yourself: does anything in my day matter more to me than loving God and being kind?',
+    childQuestion: 'Did I remember to pray every day and put God first before games or toys?'
   },
   {
     number: 2,
     traditionalText: 'You shall not take the name of the Lord your God in vain.',
-    positiveVirtue: 'Reverence, holy praise, respect for the Sacred Name of Jesus and holy things.',
-    sinAvoided: 'Blasphemy, cursing, perjury, breaking solemn vows or baptismal promises.',
+    childTitle: 'Use God’s Name with Love and Respect',
+    positiveVirtue: 'Speaking the holy names of God and Jesus with praise, gentle awe, and love.',
+    sinAvoided: 'Using God’s or Jesus’s name as an angry swear word, or making false promises in God’s name.',
     table: 'Love of God (First Tablet: 1-3)',
     catechismRef: 'CCC 2142-2167',
-    rciaApplication: 'Names have holy significance in Scripture. Speaking God\'s Name with awe reflects our inner recognition of His majesty and holiness.'
+    howWeLiveIt: 'Names are special. Jesus’s name is holy and full of peace. When we say His name, we do so with reverence, love, and a joyful heart.',
+    childQuestion: 'Did I always use God’s and Jesus’s holy name politely, never shouting it in anger?'
   },
   {
     number: 3,
     traditionalText: 'Remember to keep holy the Lord\'s Day.',
-    positiveVirtue: 'Eucharistic assembly, Sunday Mass attendance, sacred rest, family communion.',
-    sinAvoided: 'Missing Sunday Mass without serious cause, servile work that hinders worship and rest.',
+    childTitle: 'Keep Sunday Special for God and Family',
+    positiveVirtue: 'Going to Holy Mass on Sunday, singing, praying, resting, and enjoying family meals.',
+    sinAvoided: 'Skipping Sunday Mass without being ill, or letting busy chores push prayer aside.',
     table: 'Love of God (First Tablet: 1-3)',
     catechismRef: 'CCC 2168-2195',
-    rciaApplication: 'Sunday is the Eighth Day—the Day of Christ\'s Resurrection. The Eucharist is the source and summit of our week, ordering time toward eternal rest.'
+    howWeLiveIt: 'Sunday is the day Jesus rose from the dead! We celebrate with our parish community at Mass, rest our minds, and spend happy time with family.',
+    childQuestion: 'Did I go to Holy Mass on Sunday with my family and try my best to listen and pray?'
   },
   {
     number: 4,
     traditionalText: 'Honor your father and your mother.',
-    positiveVirtue: 'Filial piety, gratitude, care for elderly parents, obedience to lawful authority.',
-    sinAvoided: 'Disrespect, neglect of aging parents, rebellion against just civic laws.',
+    childTitle: 'Love and Obey Parents, Carers and Teachers',
+    positiveVirtue: 'Gratitude, cheerful obedience, helping at home, and respecting grandparents and elders.',
+    sinAvoided: 'Answering back rudely, throwing tantrums, disobeying, or ignoring our carers’ advice.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2196-2257',
-    rciaApplication: 'The Christian family is the "domestic church." Honoring parents reflects God\'s fatherhood and forms the foundation of a healthy, just society.'
+    howWeLiveIt: 'Our parents and carers look after us with unconditional love. Saying "thank you", helping tidy our bedroom, and listening carefully shows true love.',
+    childQuestion: 'Did I listen politely to my parents, carers, and teachers, and help out cheerfully at home?'
   },
   {
     number: 5,
     traditionalText: 'You shall not kill.',
-    positiveVirtue: 'Defending human life from conception to natural death; peacemaking, forgiveness.',
-    sinAvoided: 'Murder, abortion, euthanasia, anger, hatred, scandal, substance abuse that harms the body.',
+    childTitle: 'Protect Life and Be a Peacemaker',
+    positiveVirtue: 'Kindness, protecting life and animals, forgiving others quickly, and welcoming lonely classmates.',
+    sinAvoided: 'Fighting, hitting, pushing, name-calling, bullying, or holding onto angry grudges.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2258-2330',
-    rciaApplication: 'Every human person is created in the image and likeness of God (Imago Dei). Jesus extends this commandment to unbridled anger and insults (Matt 5:21-22).'
+    howWeLiveIt: 'Jesus taught that mean words hurt someone inside just like hitting. We choose to be gentle peacemakers in the playground and classroom.',
+    childQuestion: 'Was I kind to everyone today? Did I avoid hitting, teasing, or leaving someone out?'
   },
   {
     number: 6,
     traditionalText: 'You shall not commit adultery.',
-    positiveVirtue: 'Chastity, marital fidelity, purity of heart, respect for God\'s design of sexuality.',
-    sinAvoided: 'Adultery, fornication, pornography, lust, masturbation, objectifying others.',
+    childTitle: 'Keep Your Promises & Respect Special Friendships',
+    positiveVirtue: 'Loyalty in friendships, honoring family promises, and treating our bodies with respect.',
+    sinAvoided: 'Breaking promises, gossiping about friends, or treating people’s bodies without respect.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2331-2400',
-    rciaApplication: 'Chastity integrates human sexuality into authentic self-giving love. In marriage, conjugal love is unitive and procreative, imaging Christ\'s love for the Church.'
+    howWeLiveIt: 'Our bodies are holy temples of the Holy Spirit. We treat boys and girls with total respect, value marriage and family, and always keep our word.',
+    childQuestion: 'Did I keep my promises, act as a true and loyal friend, and respect my body and others?'
   },
   {
     number: 7,
     traditionalText: 'You shall not steal.',
-    positiveVirtue: 'Justice, stewardship of creation, honesty in business, fair wages, charity to the poor.',
-    sinAvoided: 'Theft, fraud, extortion, paying unjust wages, wasteful consumerism, corruption.',
+    childTitle: 'Do Not Take What Belongs to Others',
+    positiveVirtue: 'Honesty, asking before borrowing, returning things safely, and sharing with those in need.',
+    sinAvoided: 'Taking money, toys, or snacks without permission; cheating in games, tests, or schoolwork.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2401-2463',
-    rciaApplication: 'Respect for goods includes solidarity with the poor. Catholic Social Teaching emphasizes the universal destination of goods and fair treatment of workers.'
+    howWeLiveIt: 'Respecting what belongs to others is a sign of fairness. If you borrow a pencil or book, return it safely. Share generously with those who have less.',
+    childQuestion: 'Did I ask before borrowing anything, avoid taking what isn’t mine, and play fairly?'
   },
   {
     number: 8,
     traditionalText: 'You shall not bear false witness against your neighbor.',
-    positiveVirtue: 'Truthfulness, integrity, defending the good reputation of others, bearing witness to Christ.',
-    sinAvoided: 'Lying, slander, gossip (detraction), rash judgment, perjury, hypocrisy.',
+    childTitle: 'Always Tell the Truth and Never Gossip',
+    positiveVirtue: 'Honesty, courage to admit mistakes, standing up for friends, and speaking kindly.',
+    sinAvoided: 'Telling lies, blaming someone else for our own mistake, spreading rumours, or whispering mean tales.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2464-2513',
-    rciaApplication: 'God is Truth. Words have the power to heal or destroy. Christians are called to walk in the light and guard the dignity and good name of their neighbors.'
+    howWeLiveIt: 'Truth builds trust. When you make a mistake, be brave and tell the truth. Jesus said the truth will set us free. Always protect other people’s good name.',
+    childQuestion: 'Did I tell the honest truth, without making up stories or blaming others for my mistakes?'
   },
   {
     number: 9,
     traditionalText: 'You shall not covet your neighbor\'s wife.',
-    positiveVirtue: 'Purity of intention, modesty in dress and speech, custody of the eyes and mind.',
-    sinAvoided: 'Lustful interior fantasies, viewing people as disposable objects, breaking down marriages.',
+    childTitle: 'Keep a Pure Heart and Be Kind in Your Thoughts',
+    positiveVirtue: 'Thinking pure, joyful, and clean thoughts; wishing the very best for everyone’s family.',
+    sinAvoided: 'Holding mean, spiteful, or jealous thoughts about other people’s families or friendships.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2514-2533',
-    rciaApplication: 'Jesus taught: "Blessed are the pure of heart, for they shall see God." The 9th Commandment heals our internal desires, training our vision to see souls.'
+    howWeLiveIt: 'Jesus said: "Blessed are the pure in heart, for they will see God." Fill your mind with good books, kind stories, and cheerful prayers.',
+    childQuestion: 'Did I keep my thoughts kind and clean, wishing happiness for my friends and their families?'
   },
   {
     number: 10,
     traditionalText: 'You shall not covet your neighbor\'s goods.',
-    positiveVirtue: 'Poverty of spirit, contentment, gratitude, detached generosity toward the needy.',
-    sinAvoided: 'Envy, greed (avarice), jealousy over another\'s success or possessions.',
+    childTitle: 'Be Thankful for What You Have',
+    positiveVirtue: 'Gratitude, being happy with our blessings, and cheering on friends when they succeed.',
+    sinAvoided: 'Feeling jealous, envious, or grumpy because a classmate got a new game, toy, or prize.',
     table: 'Love of Neighbor (Second Tablet: 4-10)',
     catechismRef: 'CCC 2534-2557',
-    rciaApplication: 'Envy is sorrow at another\'s good fortune. True peace comes from desiring God above all earthly treasure and thanking Him for our daily bread.'
+    howWeLiveIt: 'When your friend gets a lovely gift or does well in a test, be happy for them! Say "Well done!" and thank God for everything He gives you.',
+    childQuestion: 'Was I grateful for all my blessings, and truly happy for my friends without feeling jealous?'
   }
 ];
 
@@ -122,42 +144,42 @@ const BEATITUDES: Beatitude[] = [
   {
     text: 'Blessed are the poor in spirit,',
     promise: 'for theirs is the kingdom of heaven.',
-    meaning: 'Those who recognize their radical spiritual dependence on God rather than self-sufficiency.'
+    meaning: 'Those who know they need God’s love and guidance every day, never boasting or acting superior.'
   },
   {
     text: 'Blessed are those who mourn,',
     promise: 'for they shall be comforted.',
-    meaning: 'Those who grieve over sin and the suffering of the world; God wipes away every tear.'
+    meaning: 'Those who feel sorrow when people are sad or hurting; God gently wraps them in His loving peace.'
   },
   {
     text: 'Blessed are the meek,',
     promise: 'for they shall inherit the earth.',
-    meaning: 'Gentle strength under control, avoiding vengeance, mirroring Christ who was gentle and lowly in heart.'
+    meaning: 'Those who are gentle, patient, and humble, never pushing their way to the front or shouting others down.'
   },
   {
     text: 'Blessed are those who hunger and thirst for righteousness,',
     promise: 'for they shall be satisfied.',
-    meaning: 'An ardent longing for God\'s will and justice to prevail in one\'s soul and society.'
+    meaning: 'Those who eagerly want fairness, truth, and kindness to win in our school and world.'
   },
   {
     text: 'Blessed are the merciful,',
     promise: 'for they shall obtain mercy.',
-    meaning: 'Forgiving offenses, practicing corporal and spiritual works of mercy toward the broken.'
+    meaning: 'Those who forgive easily, offer second chances, and help anyone having a difficult day.'
   },
   {
     text: 'Blessed are the pure in heart,',
     promise: 'for they shall see God.',
-    meaning: 'Single-minded devotion to God with an undivided, transparent conscience.'
+    meaning: 'Those whose hearts are honest, innocent, and focused on loving God and helping others.'
   },
   {
     text: 'Blessed are the peacemakers,',
     promise: 'for they shall be called sons of God.',
-    meaning: 'Reconciling conflicts, building communion grounded in truth and love.'
+    meaning: 'Those who calm down arguments, help friends make up, and spread peace on the playground.'
   },
   {
     text: 'Blessed are those who are persecuted for righteousness\' sake,',
     promise: 'for theirs is the kingdom of heaven.',
-    meaning: 'Courage to stand faithful to Christ even when mocked or opposed by worldly culture.'
+    meaning: 'Those who are brave enough to do the right thing and follow Jesus, even if others tease them.'
   }
 ];
 
@@ -192,18 +214,18 @@ export default function CommandmentsMoralGuide() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
             <span style={{ fontSize: '1.75rem' }}>⚖️</span>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--stj-primary)' }}>
-              Pillar 3: Life in Christ — The Ten Commandments & Beatitudes
+              God&apos;s Ten Commandments &amp; The Beatitudes
             </h2>
-            <span className="stj-badge stj-badge-primary">Moral Theology</span>
+            <span className="stj-badge stj-badge-primary">For All Ages &bull; Whole School</span>
           </div>
           <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--stj-text-muted)', maxWidth: '750px', lineHeight: 1.5 }}>
-            Catholic morality is not a cold list of prohibitions, but a blueprint for authentic human flourishing, freedom, and love as taught by Moses on Sinai and Christ on the Mount of Beatitudes.
+            God&apos;s loving rules to guide our lives and Jesus&apos;s 8 Beatitudes for true joy. Discover how each commandment helps us love God and care for our neighbour.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => handleListen(`Commandment ${activeCmd.number}: ${activeCmd.traditionalText}. ${activeCmd.rciaApplication}`)}
+          onClick={() => handleListen(`Commandment ${activeCmd.number}: ${activeCmd.childTitle}. ${activeCmd.traditionalText}. ${activeCmd.howWeLiveIt}`)}
           className="stj-btn stj-btn-secondary"
           style={{ minHeight: '38px', padding: '4px 14px', fontSize: '0.82rem' }}
         >
@@ -245,7 +267,7 @@ export default function CommandmentsMoralGuide() {
           className={`stj-btn ${activeSubTab === 'examination' ? 'stj-btn-primary' : 'stj-btn-secondary'}`}
           style={{ fontSize: '0.84rem', padding: '6px 14px' }}
         >
-          🪞 RCIA Examination of Conscience
+          🪞 Examination of Conscience
         </button>
       </div>
 
@@ -276,7 +298,10 @@ export default function CommandmentsMoralGuide() {
                 }}
               >
                 <span style={{ fontWeight: 800, fontSize: '0.85rem', width: '22px' }}>{cmd.number}.</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 600 }}>{cmd.traditionalText}</span>
+                <div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--stj-primary)' }}>{cmd.childTitle}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--stj-text-muted)', fontStyle: 'italic' }}>{cmd.traditionalText}</div>
+                </div>
               </button>
             ))}
 
@@ -302,7 +327,10 @@ export default function CommandmentsMoralGuide() {
                 }}
               >
                 <span style={{ fontWeight: 800, fontSize: '0.85rem', width: '22px' }}>{cmd.number}.</span>
-                <span style={{ fontSize: '0.86rem', fontWeight: 600 }}>{cmd.traditionalText}</span>
+                <div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--stj-primary)' }}>{cmd.childTitle}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--stj-text-muted)', fontStyle: 'italic' }}>{cmd.traditionalText}</div>
+                </div>
               </button>
             ))}
           </div>
@@ -316,14 +344,17 @@ export default function CommandmentsMoralGuide() {
               </span>
             </div>
 
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 12px 0', lineHeight: 1.4 }}>
-              &ldquo;{activeCmd.traditionalText}&rdquo;
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 4px 0', color: 'var(--stj-primary)' }}>
+              {activeCmd.childTitle}
             </h3>
+            <p style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--stj-text-muted)', margin: '0 0 12px 0' }}>
+              &ldquo;{activeCmd.traditionalText}&rdquo;
+            </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.25rem' }}>
               <div style={{ padding: '10px', background: 'var(--stj-surface)', borderRadius: 'var(--stj-radius-md)', borderLeft: '4px solid var(--stj-success)' }}>
                 <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--stj-success)', textTransform: 'uppercase', marginBottom: '2px' }}>
-                  ✓ Positive Virtue Fostered:
+                  ✓ Positive Virtue to Practice:
                 </div>
                 <div style={{ fontSize: '0.86rem', lineHeight: 1.5 }}>
                   {activeCmd.positiveVirtue}
@@ -332,7 +363,7 @@ export default function CommandmentsMoralGuide() {
 
               <div style={{ padding: '10px', background: 'var(--stj-surface)', borderRadius: 'var(--stj-radius-md)', borderLeft: '4px solid var(--stj-danger)' }}>
                 <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--stj-danger)', textTransform: 'uppercase', marginBottom: '2px' }}>
-                  ✕ Sin or Distortion Avoided:
+                  ✕ Sin or Slip to Avoid:
                 </div>
                 <div style={{ fontSize: '0.86rem', lineHeight: 1.5 }}>
                   {activeCmd.sinAvoided}
@@ -341,10 +372,10 @@ export default function CommandmentsMoralGuide() {
 
               <div style={{ padding: '10px', background: 'var(--stj-surface)', borderRadius: 'var(--stj-radius-md)' }}>
                 <div style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--stj-primary)', textTransform: 'uppercase', marginBottom: '2px' }}>
-                  💡 RCIA Adult Formation Context:
+                  💡 How We Live This as Followers of Jesus:
                 </div>
                 <div style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--stj-text)' }}>
-                  {activeCmd.rciaApplication}
+                  {activeCmd.howWeLiveIt}
                 </div>
               </div>
             </div>
@@ -361,10 +392,10 @@ export default function CommandmentsMoralGuide() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ padding: '1rem', background: 'var(--stj-canvas)', borderRadius: 'var(--stj-radius-md)', marginBottom: '0.5rem' }}>
             <h3 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', fontWeight: 800, color: 'var(--stj-primary)' }}>
-              The New Law of the Gospel: Christ&apos;s Beatitudes
+              Jesus&apos;s Beatitudes: 8 Ways to True Joy
             </h3>
             <p style={{ margin: 0, fontSize: '0.86rem', lineHeight: 1.5, color: 'var(--stj-text-muted)' }}>
-              In the Sermon on the Mount (Matthew 5), Jesus fulfills the Law of Moses. The Beatitudes reveal the heart of Christ and depict the face of true discipleship.
+              In the Sermon on the Mount (Matthew 5), Jesus taught us how to be truly happy and live like Him.
             </p>
           </div>
 
@@ -405,10 +436,10 @@ export default function CommandmentsMoralGuide() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
             <div>
               <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 800 }}>
-                🪞 RCIA Examination of Conscience
+                🪞 A Child&apos;s Loving Examination of Conscience
               </h3>
               <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--stj-text-muted)' }}>
-                Preparation for the Sacrament of Reconciliation (Penance). Check each commandment to reflect on areas needing God&apos;s healing mercy.
+                Preparing for the Sacrament of Reconciliation (Confession). Read each question gently to see where you can ask Jesus for His forgiving love and a fresh start.
               </p>
             </div>
             <span className="stj-badge stj-badge-primary">Confession Prep</span>
@@ -441,10 +472,10 @@ export default function CommandmentsMoralGuide() {
                   />
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--stj-text)', marginBottom: '2px' }}>
-                      Commandment {c.number}: {c.traditionalText}
+                      Commandment {c.number}: {c.childTitle}
                     </div>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--stj-text-muted)', lineHeight: 1.4 }}>
-                      Reflect: Have I struggled with {c.sinAvoided.toLowerCase()}? Am I cultivating {c.positiveVirtue.toLowerCase()}?
+                    <div style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', lineHeight: 1.4 }}>
+                      💭 {c.childQuestion}
                     </div>
                   </div>
                 </div>
@@ -454,7 +485,7 @@ export default function CommandmentsMoralGuide() {
 
           <div style={{ marginTop: '1.25rem', padding: '10px 14px', background: 'var(--stj-primary-surface)', borderRadius: 'var(--stj-radius-md)', border: '1px solid var(--stj-primary)' }}>
             <div style={{ fontWeight: 700, fontSize: '0.86rem', color: 'var(--stj-primary)', marginBottom: '2px' }}>
-              🕊️ Priest Absolution Formula:
+              🕊️ The Priest&apos;s Words of Absolution &amp; Mercy:
             </div>
             <div style={{ fontSize: '0.82rem', fontStyle: 'italic', lineHeight: 1.5 }}>
               &ldquo;God, the Father of mercies, through the death and resurrection of his Son has reconciled the world to himself and sent the Holy Spirit among us for the forgiveness of sins; through the ministry of the Church may God give you pardon and peace, and I absolve you from your sins in the name of the Father, and of the Son, and of the Holy Spirit. Amen.&rdquo;

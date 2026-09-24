@@ -1,6 +1,7 @@
 // src/components/ProceduralManipulative.tsx
 import React, { useState } from 'react';
 import { ASTKnowledgeSeed } from '../engine/seedInflationEngine';
+import ZeroBloatVectorStudio, { VectorPresetId } from './ZeroBloatVectorStudio';
 
 interface Props {
   cpaType: ASTKnowledgeSeed['cpaType'];
@@ -12,6 +13,8 @@ export const ProceduralManipulative: React.FC<Props> = ({
   cpaType,
   seedTopic,
 }) => {
+  const [showVectorStudioModal, setShowVectorStudioModal] = useState<boolean>(false);
+
   // Fractions state
   const [f1Num, setF1Num] = useState(1);
   const [f1Den, setF1Den] = useState(3);
@@ -1488,6 +1491,20 @@ export const ProceduralManipulative: React.FC<Props> = ({
     );
   };
 
+  // Map cpaType to matching vector preset
+  const resolvedVectorPreset: VectorPresetId = (() => {
+    if (cpaType === 'fractions') return 'fractions';
+    if (cpaType === 'photosynthesis') return 'photosynthesis';
+    const lowerTopic = (seedTopic || '').toLowerCase();
+    if (lowerTopic.includes('space') || lowerTopic.includes('orbit') || lowerTopic.includes('solar') || lowerTopic.includes('earth')) {
+      return 'solar-system';
+    }
+    if (lowerTopic.includes('pythagoras') || lowerTopic.includes('triangle') || lowerTopic.includes('geometry')) {
+      return 'pythagoras';
+    }
+    return 'fractions';
+  })();
+
   return (
     <div
       style={{
@@ -1497,23 +1514,47 @@ export const ProceduralManipulative: React.FC<Props> = ({
         background: '#ffffff',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          ⚡ Procedural Vector Manipulative &bull; {seedTopic}
-        </span>
-        <span
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            ⚡ Procedural Vector Manipulative &bull; {seedTopic}
+          </span>
+          <span
+            style={{
+              fontSize: '0.75rem',
+              padding: '2px 8px',
+              background: '#ecfdf5',
+              color: '#065f46',
+              borderRadius: '9999px',
+              fontWeight: 700,
+              border: '1px solid #a7f3d0',
+            }}
+          >
+            0 Bytes Downloaded (Pure Code)
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowVectorStudioModal(true)}
           style={{
-            fontSize: '0.75rem',
-            padding: '2px 8px',
-            background: '#ecfdf5',
-            color: '#065f46',
-            borderRadius: '9999px',
+            padding: '4px 12px',
+            borderRadius: '6px',
+            background: '#eff6ff',
+            color: '#1d4ed8',
+            border: '1px solid #bfdbfe',
+            fontSize: '0.78rem',
             fontWeight: 700,
-            border: '1px solid #a7f3d0',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
           }}
         >
-          0 Bytes Downloaded (Pure Code)
-        </span>
+          <span>🎬</span>
+          <span>0-Bloat Vector Motion &amp; Print Worksheet</span>
+        </button>
       </div>
 
       {cpaType === 'fractions' && renderFractions()}
@@ -1526,6 +1567,43 @@ export const ProceduralManipulative: React.FC<Props> = ({
       {cpaType === 'photosynthesis' && renderPhotosynthesis()}
       {cpaType === 'force-vectors' && renderForceVectors()}
       {cpaType === 'chemical-balance' && renderChemicalBalance()}
+
+      {/* Zero-Bloat Vector Motion Modal Overlay */}
+      {showVectorStudioModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '920px',
+              width: '100%',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              padding: '1.25rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              position: 'relative',
+            }}
+          >
+            <ZeroBloatVectorStudio
+              initialPreset={resolvedVectorPreset}
+              isEmbeddedModal={true}
+              onClose={() => setShowVectorStudioModal(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

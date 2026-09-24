@@ -292,6 +292,13 @@ const CATHOLIC_PRAYERS: CatholicPrayer[] = [
     missingWords: ['loving', 'sorry', 'sins', 'Jesus', 'sin']
   },
   {
+    id: 'guardian-angel',
+    title: 'Prayer to My Guardian Angel',
+    occasion: 'Morning and Evening Daily Protection',
+    text: 'Angel of God, my guardian dear, to whom God’s love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen.',
+    missingWords: ['Angel', 'love', 'side', 'guard', 'guide']
+  },
+  {
     id: 'centurion-prayer',
     title: 'The Centurion’s Prayer of Humility',
     occasion: 'Right before receiving Holy Communion at every Mass',
@@ -307,10 +314,10 @@ const CATHOLIC_PRAYERS: CatholicPrayer[] = [
   },
   {
     id: 'anima-christi',
-    title: 'Thanksgiving Prayer (Anima Christi)',
+    title: 'Thanksgiving Prayer (A Child’s Anima Christi)',
     occasion: 'Quiet reflection after receiving Holy Communion',
-    text: 'Soul of Christ, sanctify me. Body of Christ, save me. Blood of Christ, inebriate me. Water from the side of Christ, wash me. Passion of Christ, strengthen me. O good Jesus, hear me. Within your wounds hide me. Never let me be separated from you. Amen.',
-    missingWords: ['Soul', 'Body', 'Blood', 'Jesus', 'separated']
+    text: 'Soul of Christ, make me holy. Body of Christ, save me. Blood of Christ, fill my heart with love. Water from the side of Christ, wash me clean. Passion of Christ, give me strength. O good Jesus, hear my prayer. Keep me close to you always, and never let me be separated from you. Amen.',
+    missingWords: ['Soul', 'Body', 'love', 'Jesus', 'separated']
   }
 ];
 
@@ -448,7 +455,7 @@ export default function FirstCommunionMasteryLab() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, letterSpacing: '-0.01em', color: '#fef08a' }}>
-                First Holy Communion Masterclass
+                First Holy Communion &amp; Faith Lab
               </h1>
               <span
                 style={{
@@ -462,11 +469,11 @@ export default function FirstCommunionMasteryLab() {
                   textTransform: 'uppercase',
                 }}
               >
-                Key Stage 2 &bull; Year 3
+                For All Pupils &bull; Parish &bull; Family
               </span>
             </div>
             <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#e0e7ff', maxWidth: '640px', lineHeight: 1.4 }}>
-              Mistagogical formation, liturgical discovery, and sacred prayers aligned with the Catholic Bishops' Directory (RED) and the Catechism of the Catholic Church.
+              Walk through the Holy Mass step-by-step, discover the sacred vessels on the altar, practice your prayers, and get ready to welcome Jesus into your heart!
             </p>
           </div>
         </div>
@@ -474,7 +481,7 @@ export default function FirstCommunionMasteryLab() {
         {/* Global Read Aloud Header Button */}
         <button
           type="button"
-          onClick={() => handleListen("Welcome to the First Holy Communion Masterclass. Let us walk through the Holy Mass, explore the sacred vessels, and learn our prayers.")}
+          onClick={() => handleListen("Welcome to the First Holy Communion and Faith Lab. Let us walk through the Holy Mass, explore the sacred vessels, and learn our prayers.")}
           style={{
             background: 'rgba(255, 255, 255, 0.15)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -574,7 +581,7 @@ export default function FirstCommunionMasteryLab() {
           }}
         >
           <span>📜</span>
-          <span>Apostles&apos; Creed (RCIA)</span>
+          <span>Apostles&apos; Creed (What We Believe)</span>
         </button>
 
         <button
@@ -597,7 +604,7 @@ export default function FirstCommunionMasteryLab() {
           }}
         >
           <span>⚖️</span>
-          <span>10 Commandments &amp; Morality</span>
+          <span>10 Commandments &amp; Loving Choices</span>
         </button>
 
         <button

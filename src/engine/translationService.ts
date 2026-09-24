@@ -671,9 +671,13 @@ export async function translateLessonData(
 }
 
 /**
- * Text-to-speech reading in the target language
+ * Text-to-speech reading in the target language with rate control and optional completion callback
  */
-export function speakInLanguage(text: string, langCode: string): void {
+export function speakInLanguage(
+  text: string,
+  langCode: string,
+  options?: { rate?: number; onEnd?: () => void; onError?: () => void; onBoundary?: (charIndex: number) => void }
+): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   try {
@@ -695,9 +699,130 @@ export function speakInLanguage(text: string, langCode: string): void {
     if (matchingVoice) {
       utterance.voice = matchingVoice;
     }
-    utterance.rate = 0.95;
+    utterance.rate = options?.rate ?? 0.95;
+    if (options?.onEnd) {
+      utterance.onend = options.onEnd;
+    }
+    if (options?.onError) {
+      utterance.onerror = options.onError;
+    }
+    if (options?.onBoundary) {
+      utterance.onboundary = (e: SpeechSynthesisEvent) => {
+        if (e.name === 'word' || !e.name) {
+          options.onBoundary?.(e.charIndex);
+        }
+      };
+    }
     window.speechSynthesis.speak(utterance);
   } catch (e) {
     console.warn('[Speech Synthesis Error]:', e);
+  }
+}
+
+/**
+ * Sequential Dual-Audio Player:
+ * Utters the primary sentence, pauses briefly for cognitive mapping, then utters the secondary sentence in the target accent.
+ */
+export function speakBilingual(
+  primaryText: string,
+  primaryLang: string,
+  secondaryText: string,
+  secondaryLang: string,
+  options?: {
+    rate?: number;
+    pauseMs?: number;
+    onPhaseChange?: (phase: 'primary' | 'secondary' | 'idle') => void;
+    onEnd?: () => void;
+  }
+): () => void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return () => {};
+
+  window.speechSynthesis.cancel();
+  let isCancelled = false;
+
+  const cancelFn = () => {
+    isCancelled = true;
+    window.speechSynthesis.cancel();
+    options?.onPhaseChange?.('idle');
+  };
+
+  const rate = options?.rate ?? 0.95;
+  const pauseMs = options?.pauseMs ?? 450;
+
+  try {
+    const utter1 = new SpeechSynthesisUtterance(primaryText);
+    const meta1 = SUPPORTED_LANGUAGES[primaryLang];
+    const tag1 = meta1?.ttsVoiceLang || primaryLang;
+    utter1.lang = tag1;
+    utter1.rate = rate;
+
+    const voices = window.speechSynthesis.getVoices();
+    const voice1 = voices.find(
+      (v) =>
+        v.lang === tag1 ||
+        v.lang.toLowerCase().startsWith(primaryLang.toLowerCase()) ||
+        v.name.toLowerCase().includes(meta1?.label.toLowerCase() || '')
+    );
+    if (voice1) utter1.voice = voice1;
+
+    options?.onPhaseChange?.('primary');
+
+    utter1.onend = () => {
+      if (isCancelled) return;
+      setTimeout(() => {
+        if (isCancelled) return;
+        const utter2 = new SpeechSynthesisUtterance(secondaryText);
+        const meta2 = SUPPORTED_LANGUAGES[secondaryLang];
+        const tag2 = meta2?.ttsVoiceLang || secondaryLang;
+        utter2.lang = tag2;
+        utter2.rate = rate;
+
+        const voice2 = voices.find(
+          (v) =>
+            v.lang === tag2 ||
+            v.lang.toLowerCase().startsWith(secondaryLang.toLowerCase()) ||
+            v.name.toLowerCase().includes(meta2?.label.toLowerCase() || '')
+        );
+        if (voice2) utter2.voice = voice2;
+
+        options?.onPhaseChange?.('secondary');
+
+        utter2.onend = () => {
+          if (!isCancelled) {
+            options?.onPhaseChange?.('idle');
+            options?.onEnd?.();
+          }
+        };
+
+        utter2.onerror = () => {
+          options?.onPhaseChange?.('idle');
+          options?.onEnd?.();
+        };
+
+        window.speechSynthesis.speak(utter2);
+      }, pauseMs);
+    };
+
+    utter1.onerror = () => {
+      options?.onPhaseChange?.('idle');
+      options?.onEnd?.();
+    };
+
+    window.speechSynthesis.speak(utter1);
+  } catch (err) {
+    console.warn('[Bilingual Speech Error]:', err);
+    options?.onPhaseChange?.('idle');
+    options?.onEnd?.();
+  }
+
+  return cancelFn;
+}
+
+/**
+ * Cancel any ongoing speech synthesis across the app
+ */
+export function cancelSpeech(): void {
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
   }
 }

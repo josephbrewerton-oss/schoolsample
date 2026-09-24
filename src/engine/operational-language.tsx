@@ -153,10 +153,58 @@ export const SUPPORTED_LANGUAGES: Record<string, SupportedLanguage> = {
 
 export const DEFAULT_LANGUAGE = SUPPORTED_LANGUAGES.en;
 export const PORTAL_LANG_STORAGE_KEY = 'portal_language';
+export const PORTAL_PRACTICE_MODE_STORAGE_KEY = 'portal_language_practice_mode';
+export const PORTAL_SPEECH_SPEED_STORAGE_KEY = 'portal_speech_speed';
 
 export function getSavedLanguage(): string {
   if (typeof window === 'undefined') return 'en';
   return localStorage.getItem(PORTAL_LANG_STORAGE_KEY) || 'en';
+}
+
+export function getLanguagePracticeMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(PORTAL_PRACTICE_MODE_STORAGE_KEY) === 'true';
+}
+
+export function setLanguagePracticeMode(enabled: boolean): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(PORTAL_PRACTICE_MODE_STORAGE_KEY, enabled ? 'true' : 'false');
+  window.dispatchEvent(new CustomEvent('portal_practice_mode_changed', { detail: enabled }));
+  try {
+    const channel = new BroadcastChannel('neural_hypervisor_bus');
+    channel.postMessage({ type: 'SET_PRACTICE_MODE', enabled });
+    channel.close();
+  } catch {}
+}
+
+export function listenToLanguagePracticeMode(callback: (enabled: boolean) => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handleCustom = (e: any) => {
+    if (e.detail !== undefined) callback(Boolean(e.detail));
+  };
+  window.addEventListener('portal_practice_mode_changed', handleCustom);
+  return () => window.removeEventListener('portal_practice_mode_changed', handleCustom);
+}
+
+export function getSpeechSpeed(): number {
+  if (typeof window === 'undefined') return 0.95;
+  const val = parseFloat(localStorage.getItem(PORTAL_SPEECH_SPEED_STORAGE_KEY) || '0.95');
+  return isNaN(val) ? 0.95 : val;
+}
+
+export function setSpeechSpeed(speed: number): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(PORTAL_SPEECH_SPEED_STORAGE_KEY, speed.toString());
+  window.dispatchEvent(new CustomEvent('portal_speech_speed_changed', { detail: speed }));
+}
+
+export function listenToSpeechSpeed(callback: (speed: number) => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handleCustom = (e: any) => {
+    if (e.detail !== undefined) callback(Number(e.detail));
+  };
+  window.addEventListener('portal_speech_speed_changed', handleCustom);
+  return () => window.removeEventListener('portal_speech_speed_changed', handleCustom);
 }
 
 export function setSavedLanguage(langCode: string): void {

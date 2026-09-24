@@ -11,14 +11,24 @@ import { dispatch } from '../engine/hypercall';
 
 const FirstCommunionMasteryLab = React.lazy(() => import('../components/FirstCommunionMasteryLab'));
 const ConceptConstellation = React.lazy(() => import('../components/ConceptConstellation'));
+const ZeroBloatVectorStudio = React.lazy(() => import('../components/ZeroBloatVectorStudio'));
 import { hypervisor } from '../engine/hypervisor';
 import {
   SUPPORTED_LANGUAGES,
   getSavedLanguage,
   listenToLanguageChange,
   setSavedLanguage,
+  getLanguagePracticeMode,
+  listenToLanguagePracticeMode,
+  getSpeechSpeed,
+  listenToSpeechSpeed,
 } from '../engine/operational-language';
-import { translateLessonData, speakInLanguage } from '../engine/translationService';
+import {
+  translateLessonData,
+  speakInLanguage,
+  speakBilingual,
+  cancelSpeech,
+} from '../engine/translationService';
 
 export interface LessonViewContent {
   title: string;
@@ -30,7 +40,7 @@ export interface LessonViewContent {
 }
 
 const buildDefaultNarrative = (topic: string, data: Partial<LessonViewContent>): string => {
-  return `### ${topic}\n\n**1. Conceptual Narrative:**\n${data.axiom || `Core curriculum standard established for ${topic}.`}\n\n**2. Guided Practice & Key Mechanics:**\n${data.guidedStep || `Explore and observe the key principles of ${topic}.`}\n\n**3. Cognitive Trap & Misconception:**\nCommon misunderstanding: "${data.trap || `Intuitive misconception regarding ${topic}`}". In practice, we evaluate the scientific standard.\n\n**4. Check for Understanding:**\n${data.socraticCheck || `What fundamental property defines ${topic}?`}`;
+  return `### ${topic}\n\n**1. Let's Learn! (The Big Idea):**\n${data.axiom || `Let's explore what makes ${topic} so interesting and how it works.`}\n\n**2. Step-by-Step Example:**\n${data.guidedStep || `Follow along step-by-step to see how to solve questions about ${topic}.`}\n\n**3. Watch Out for This Common Mistake!:**\nDon't get tricked: "${data.trap || `It's easy to make a quick slip here with ${topic}`}". Remember to double-check your steps!\n\n**4. Quick Check — Can You Answer This?:**\n${data.socraticCheck || `Can you explain the main idea of ${topic} in your own words?`}`;
 };
 
 export default function LearningZonePage() {
@@ -57,11 +67,12 @@ export default function LearningZonePage() {
     }
   };
 
-  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation' | 'first-communion' | 'constellation'>(() => {
+  const [activeViewMode, setActiveViewMode] = useState<'lesson' | 'inflation' | 'first-communion' | 'constellation' | 'vector-motion'>(() => {
     const tab = searchParams.get('tab');
     if (tab === 'inflation') return 'inflation';
     if (tab === 'first-communion') return 'first-communion';
     if (tab === 'constellation' || tab === 'graph') return 'constellation';
+    if (tab === 'vector-motion' || tab === 'vectors') return 'vector-motion';
     return 'lesson';
   });
 
@@ -83,6 +94,8 @@ export default function LearningZonePage() {
       setActiveViewMode('first-communion');
     } else if ((tab === 'constellation' || tab === 'graph') && activeViewMode !== 'constellation') {
       setActiveViewMode('constellation');
+    } else if ((tab === 'vector-motion' || tab === 'vectors') && activeViewMode !== 'vector-motion') {
+      setActiveViewMode('vector-motion');
     } else if (!tab && activeViewMode !== 'lesson') {
       setActiveViewMode('lesson');
     }
@@ -113,11 +126,31 @@ export default function LearningZonePage() {
   const [translatedLessonData, setTranslatedLessonData] = useState<LessonViewContent | null>(null);
   const [translatedFullText, setTranslatedFullText] = useState<string | null>(null);
 
+  const [practiceMode, setPracticeMode] = useState<boolean>(() => getLanguagePracticeMode());
+  const [speechSpeed, setLocalSpeechSpeed] = useState<number>(() => getSpeechSpeed());
+  const [audioSpeaking, setAudioSpeaking] = useState<boolean>(false);
+  const cancelAudioRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
-    const unsub = listenToLanguageChange((newLang) => {
+    const unsubLang = listenToLanguageChange((newLang) => {
       setCurrentLang(newLang);
     });
-    return unsub;
+    const unsubPractice = listenToLanguagePracticeMode((enabled) => {
+      setPracticeMode(enabled);
+    });
+    const unsubSpeed = listenToSpeechSpeed((speed) => {
+      setLocalSpeechSpeed(speed);
+    });
+    return () => {
+      unsubLang();
+      unsubPractice();
+      unsubSpeed();
+      if (cancelAudioRef.current) {
+        cancelAudioRef.current();
+        cancelAudioRef.current = null;
+      }
+      cancelSpeech();
+    };
   }, []);
 
   const activeRequestIdRef = useRef(0);
@@ -223,15 +256,15 @@ export default function LearningZonePage() {
       const requestId = ++activeRequestIdRef.current;
       setIsCompiling(true);
 
-      // Instant optimistic placeholder update so the UI reacts immediately
+      // Child-friendly optimistic placeholder update so the UI reacts immediately
       setLessonData((prev) => ({
         ...prev,
         title: targetTopic,
-        axiom: `Synthesizing core curriculum principles for ${targetTopic}...`,
-        trap: `Analyzing common student misconceptions for ${targetTopic}...`,
-        hook: `How does ${targetTopic} apply to observable physical reality?`,
-        guidedStep: `Analyzing key mechanics and properties of ${targetTopic}...`,
-        socraticCheck: `What is the core principle governing ${targetTopic}?`,
+        axiom: `Getting ready to explore ${targetTopic}! Loading key facts...`,
+        trap: `Finding helpful tips so you don't get tricked...`,
+        hook: `Have you ever wondered how ${targetTopic} works in the real world?`,
+        guidedStep: `Preparing fun examples and steps to try together...`,
+        socraticCheck: `What is the most interesting thing you know about ${targetTopic}?`,
       }));
 
       const timeoutTimer = setTimeout(() => {
@@ -262,6 +295,7 @@ export default function LearningZonePage() {
           cacheRes.data &&
           cacheRes.data.axiom &&
           !cacheRes.data.axiom.startsWith('Synthesizing') &&
+          !cacheRes.data.axiom.startsWith('Getting ready') &&
           !cacheRes.data.axiom.startsWith('Core curriculum rule established');
 
         if (isRealData) {
@@ -306,11 +340,11 @@ export default function LearningZonePage() {
         if (res?.ok && res.data) {
           const freshLesson: LessonViewContent = {
             title: targetTopic,
-            axiom: res.data.axiom || `Fundamental principles governing ${targetTopic}.`,
-            trap: res.data.trap || `Common misunderstanding regarding ${targetTopic}.`,
-            hook: res.data.hook || `How does ${targetTopic} operate in everyday reality?`,
-            guidedStep: res.data.guidedStep || `Analyze the core properties and behaviors of ${targetTopic}.`,
-            socraticCheck: res.data.prompt || `What fundamental property defines ${targetTopic}?`,
+            axiom: res.data.axiom || `The big idea behind ${targetTopic} and why it matters.`,
+            trap: res.data.trap || `A friendly tip so you don't get tricked on ${targetTopic}.`,
+            hook: res.data.hook || `How does ${targetTopic} connect to our daily world?`,
+            guidedStep: res.data.guidedStep || `Follow the step-by-step guide to explore and solve ${targetTopic}.`,
+            socraticCheck: res.data.prompt || `Can you share what you've learned about ${targetTopic}?`,
           };
 
           // Update active view state with real synthesized data
@@ -390,18 +424,72 @@ export default function LearningZonePage() {
   const effectiveFullText = isNonEnglish && !showOriginal && translatedFullText ? translatedFullText : fullLessonText;
   const currentLangMeta = SUPPORTED_LANGUAGES[currentLang] || SUPPORTED_LANGUAGES.en;
 
-  const handleSpeakLesson = () => {
-    const textToSpeak = `${effectiveLesson.title}. Core Axiom: ${effectiveLesson.axiom}. Common Misconception: ${effectiveLesson.trap}. Inquiry: ${effectiveLesson.hook}. Check: ${effectiveLesson.socraticCheck}`;
+  const handleSpeakLesson = (slow?: boolean) => {
+    cancelSpeech();
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current();
+      cancelAudioRef.current = null;
+    }
+    const textToSpeak = `${effectiveLesson.title}. Today's big idea: ${effectiveLesson.axiom}. Something to think about: ${effectiveLesson.hook}. How it works: ${effectiveLesson.guidedStep}. Watch out so you don't get tricked: ${effectiveLesson.trap}. Quick question for you: ${effectiveLesson.socraticCheck}`;
     const langToSpeak = isNonEnglish && !showOriginal ? currentLang : 'en';
-    speakInLanguage(textToSpeak, langToSpeak);
+    setAudioSpeaking(true);
+    speakInLanguage(textToSpeak, langToSpeak, {
+      rate: slow ? 0.7 : speechSpeed,
+      onEnd: () => setAudioSpeaking(false),
+      onError: () => setAudioSpeaking(false),
+    });
+  };
+
+  const handleSpeakEchoLesson = () => {
+    cancelSpeech();
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current();
+      cancelAudioRef.current = null;
+      setAudioSpeaking(false);
+      return;
+    }
+
+    if (!isNonEnglish) {
+      handleSpeakLesson();
+      return;
+    }
+
+    const enText = `${lessonData.title}. The big idea: ${lessonData.axiom}. Think about this: ${lessonData.hook}.`;
+    const targetText = translatedLessonData
+      ? `${translatedLessonData.title}. ${translatedLessonData.axiom}. ${translatedLessonData.hook}.`
+      : enText;
+
+    setAudioSpeaking(true);
+    cancelAudioRef.current = speakBilingual(
+      enText,
+      'en',
+      targetText,
+      currentLang,
+      {
+        rate: speechSpeed,
+        onEnd: () => {
+          setAudioSpeaking(false);
+          cancelAudioRef.current = null;
+        },
+      }
+    );
+  };
+
+  const handleStopAudio = () => {
+    cancelSpeech();
+    if (cancelAudioRef.current) {
+      cancelAudioRef.current();
+      cancelAudioRef.current = null;
+    }
+    setAudioSpeaking(false);
   };
 
   const practiceLabUrl = `/practice-lab?ks=${encodeURIComponent(selectedKeyStage)}&sub=${encodeURIComponent(selectedSubject)}&unit=${encodeURIComponent(selectedUnit)}`;
 
   return (
     <PageMeta
-      title="Curriculum Learning Zone"
-      description="Deterministic concept exploration and misconception diagnostics."
+      title="Pupil Learning Zone | St Joseph's Curriculum"
+      description="Fun, step-by-step lessons, helpful hints, and practice quizzes for children at St Joseph's."
     >
       <div style={{ maxWidth: '1100px', margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
         {/* Header Bar: Pupil View vs. Teacher / Master View */}
@@ -447,7 +535,7 @@ export default function LearningZonePage() {
                 }}
               >
                 <span>🎒 Pupil View</span>
-                <span style={{ fontSize: '0.7rem', opacity: userRole === 'pupil' ? 0.9 : 0.6 }}>(Focused)</span>
+                <span style={{ fontSize: '0.7rem', opacity: userRole === 'pupil' ? 0.9 : 0.6 }}>(Fun &amp; Clear)</span>
               </button>
 
               <button
@@ -471,12 +559,12 @@ export default function LearningZonePage() {
                 }}
               >
                 <span>👩‍🏫 Teacher View</span>
-                <span style={{ fontSize: '0.7rem', opacity: userRole === 'teacher' ? 0.9 : 0.6 }}>(Lesson Plan & Diagnostics)</span>
+                <span style={{ fontSize: '0.7rem', opacity: userRole === 'teacher' ? 0.9 : 0.6 }}>(Lesson Plan &amp; Diagnostics)</span>
               </button>
             </div>
           </div>
 
-          {/* Mode Switchers: Lesson Plan vs Seed Engine vs Concept Constellation */}
+          {/* Mode Switchers: Lesson Plan vs Star Map vs Visual Studio */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', background: '#f8fafc', padding: '3px', borderRadius: '8px', border: '1px solid #e2e8f0', gap: '3px' }}>
               <button
@@ -497,7 +585,7 @@ export default function LearningZonePage() {
                   boxShadow: activeViewMode === 'lesson' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
                 }}
               >
-                📖 Standard Lesson
+                📖 Today&apos;s Lesson
               </button>
               <button
                 type="button"
@@ -517,7 +605,27 @@ export default function LearningZonePage() {
                   boxShadow: activeViewMode === 'constellation' ? '0 1px 2px rgba(99,102,241,0.2)' : 'none',
                 }}
               >
-                ✨ Concept Constellation
+                🌟 Learning Star Map
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveViewMode('vector-motion');
+                  setSearchParams({ tab: 'vector-motion' });
+                }}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: activeViewMode === 'vector-motion' ? '#0284c7' : 'transparent',
+                  color: activeViewMode === 'vector-motion' ? '#ffffff' : '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: activeViewMode === 'vector-motion' ? '0 1px 2px rgba(2,132,199,0.2)' : 'none',
+                }}
+              >
+                🎨 Visual Animations &amp; Worksheets
               </button>
               {userRole === 'teacher' && (
                 <button
@@ -541,6 +649,25 @@ export default function LearningZonePage() {
                   🌱 Seed Engine
                 </button>
               )}
+              <Link
+                to="/catholic-life"
+                title="Whole-School Catholic Faith Sanctuary (Not Key Staged)"
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  background: '#eef2ff',
+                  color: '#3730a3',
+                  border: '1px solid #c7d2fe',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>✝️</span> Catholic Sanctuary
+              </Link>
             </div>
 
             {/* Quick Practice shortcut button */}
@@ -561,7 +688,7 @@ export default function LearningZonePage() {
                 gap: '6px',
               }}
             >
-              <span>⚡ Practice Quiz</span>
+              <span>⭐ Practice Quiz</span>
               <span>➔</span>
             </Link>
           </div>
@@ -579,10 +706,10 @@ export default function LearningZonePage() {
             <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  Curriculum Concept Constellation
+                  Curriculum Learning Constellation
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
-                  Interactive in-memory AST knowledge graph inspired by Logseq. Prerequisite paths, NATO Stock Numbers, and diagnostic self-healing.
+                  Interactive star-map of your learning! Click any topic bubble to see how it connects and jump straight to that lesson.
                 </p>
               </div>
               <button
@@ -625,6 +752,55 @@ export default function LearningZonePage() {
                     }
                   }
                 }}
+              />
+            </React.Suspense>
+          </div>
+        ) : activeViewMode === 'vector-motion' ? (
+          <div style={{ marginBottom: '2rem' }}>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Interactive Visual Lessons &amp; Classroom Worksheets
+                </h2>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
+                  Smooth visual diagrams, maths models, animated solar systems, and printable worksheets to color and solve.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveViewMode('lesson');
+                  setSearchParams({});
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                &larr; Back to Lesson View
+              </button>
+            </div>
+            <React.Suspense
+              fallback={
+                <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '16px' }}>
+                  <span>Loading Zero-Bloat Parametric Vector Studio...</span>
+                </div>
+              }
+            >
+              <ZeroBloatVectorStudio
+                initialPreset={
+                  selectedSubject.toLowerCase().includes('math')
+                    ? 'fractions'
+                    : selectedSubject.toLowerCase().includes('science') || selectedUnit.toLowerCase().includes('space')
+                    ? 'solar-system'
+                    : 'fractions'
+                }
               />
             </React.Suspense>
           </div>
@@ -672,7 +848,7 @@ export default function LearningZonePage() {
                   gap: '6px',
                 }}
               >
-                <span>⚡ Practice Lab Quiz</span>
+                <span>⭐ Practice Lab Quiz</span>
                 <span>➔</span>
               </Link>
             </div>
@@ -698,7 +874,7 @@ export default function LearningZonePage() {
                 isReady={!isCompiling}
                 sessionId={sessionId}
                 curriculumTree={curriculumTree}
-                buttonLabel={isCompiling ? '⚡ Compiling...' : '📖 Change Topic'}
+                buttonLabel={isCompiling ? '⚡ Loading...' : '📖 Change Topic'}
                 onKeyStageChange={(newKs, firstSub, firstUnit) => {
                   setSelectedKeyStage(newKs);
                   if (firstSub) setSelectedSubject(firstSub);
@@ -741,37 +917,33 @@ export default function LearningZonePage() {
                   <span style={{ fontSize: '1.6rem' }}>✝️</span>
                   <div>
                     <strong style={{ color: '#854d0e', fontSize: '0.95rem' }}>
-                      Catholic First Holy Communion Masterclass Available
+                      Whole-School Catholic Life &amp; Faith Sanctuary Available
                     </strong>
                     <span style={{ display: 'block', fontSize: '0.8rem', color: '#713f12' }}>
-                      Interactive Walk Through the Mass, The Seven Sacraments, Liturgical Seasons (Easter &amp; Lent), and Sacred Altar Vessels.
+                      All Catholic content is now unified in one dedicated place for all ages: Holy Mass, Seven Sacraments, Rosary, Latin Prayers, and CST.
                     </span>
                   </div>
                 </div>
-                <button
-                  type="button"
+                <Link
+                  to="/catholic-life"
                   id="open-communion-masterclass-btn"
-                  onClick={() => {
-                    setActiveViewMode('first-communion');
-                    setSearchParams({ tab: 'first-communion' });
-                  }}
                   style={{
                     padding: '7px 16px',
                     borderRadius: '8px',
                     background: '#4338ca',
                     color: '#ffffff',
-                    border: 'none',
+                    textDecoration: 'none',
                     fontWeight: 700,
                     fontSize: '0.84rem',
-                    cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
                     boxShadow: '0 2px 4px rgba(67, 56, 202, 0.25)',
                   }}
                 >
-                  <span>🌟 Open Masterclass Studio</span>
-                </button>
+                  <span>✝️ Open Catholic Sanctuary</span>
+                  <span>➔</span>
+                </Link>
               </div>
             )}
 
@@ -835,9 +1007,35 @@ export default function LearningZonePage() {
                     </button>
                   )}
 
+                  {/* Audio Controls */}
+                  {isNonEnglish && (
+                    <button
+                      type="button"
+                      onClick={handleSpeakEchoLesson}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        background: audioSpeaking ? '#047857' : '#ecfdf5',
+                        border: '1px solid #a7f3d0',
+                        color: audioSpeaking ? '#ffffff' : '#065f46',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        boxShadow: audioSpeaking ? '0 0 8px rgba(16, 185, 129, 0.4)' : 'none',
+                      }}
+                      title="Sequential bilingual echo: Listen in English first, then in target language"
+                    >
+                      <span>🎧</span>
+                      <span>{audioSpeaking ? 'Playing Echo...' : `Echo (EN ➔ ${currentLangMeta.code.toUpperCase()})`}</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
-                    onClick={handleSpeakLesson}
+                    onClick={() => handleSpeakLesson()}
                     style={{
                       padding: '6px 12px',
                       borderRadius: '8px',
@@ -851,11 +1049,53 @@ export default function LearningZonePage() {
                       alignItems: 'center',
                       gap: '5px',
                     }}
-                    title="Listen to lesson overview"
+                    title="Listen to lesson overview in active language"
                   >
                     <span>🔊</span>
                     <span>Read Aloud</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSpeakLesson(true)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      color: '#475569',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Listen at slower speed (0.7x) for phonetic clarity"
+                  >
+                    <span>🐢</span>
+                    <span>Slow</span>
+                  </button>
+
+                  {audioSpeaking && (
+                    <button
+                      type="button"
+                      onClick={handleStopAudio}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '8px',
+                        background: '#fee2e2',
+                        border: '1px solid #fca5a5',
+                        color: '#b91c1c',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                      title="Stop audio playback"
+                    >
+                      ⏹ Stop
+                    </button>
+                  )}
 
                   <Link
                     to={practiceLabUrl}
@@ -912,58 +1152,67 @@ export default function LearningZonePage() {
               {userRole === 'pupil' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {/* Clean Pupil Sub-Tabs to prevent vertical scrolling fatigue */}
-                  <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={() => setPupilTab('learn')}
                       style={{
-                        padding: '6px 14px',
-                        borderRadius: '6px',
+                        padding: '7px 16px',
+                        borderRadius: '8px',
                         border: 'none',
                         background: pupilTab === 'learn' ? '#eff6ff' : 'transparent',
                         color: pupilTab === 'learn' ? '#1d4ed8' : '#64748b',
-                        fontWeight: pupilTab === 'learn' ? 700 : 500,
-                        fontSize: '0.9rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      📖 Lesson Steps
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPupilTab('tutor')}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '6px',
-                        border: 'none',
-                        background: pupilTab === 'tutor' ? '#eff6ff' : 'transparent',
-                        color: pupilTab === 'tutor' ? '#1d4ed8' : '#64748b',
-                        fontWeight: pupilTab === 'tutor' ? 700 : 500,
-                        fontSize: '0.9rem',
+                        fontWeight: pupilTab === 'learn' ? 700 : 600,
+                        fontSize: '0.92rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
                       }}
                     >
-                      <span>💬 Ask Prof. Turing</span>
-                      <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1e40af', padding: '1px 5px', borderRadius: '4px' }}>AI Tutor</span>
+                      <span>📖</span>
+                      <span>1. Step-by-Step Lesson</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPupilTab('tutor')}
+                      style={{
+                        padding: '7px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: pupilTab === 'tutor' ? '#eff6ff' : 'transparent',
+                        color: pupilTab === 'tutor' ? '#1d4ed8' : '#64748b',
+                        fontWeight: pupilTab === 'tutor' ? 700 : 600,
+                        fontSize: '0.92rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>💬</span>
+                      <span>2. Ask Professor Turing</span>
+                      <span style={{ fontSize: '0.7rem', background: '#dbeafe', color: '#1e40af', padding: '1px 6px', borderRadius: '6px', fontWeight: 700 }}>Friendly AI Buddy</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setPupilTab('full')}
                       style={{
-                        padding: '6px 14px',
-                        borderRadius: '6px',
+                        padding: '7px 16px',
+                        borderRadius: '8px',
                         border: 'none',
                         background: pupilTab === 'full' ? '#eff6ff' : 'transparent',
                         color: pupilTab === 'full' ? '#1d4ed8' : '#64748b',
-                        fontWeight: pupilTab === 'full' ? 700 : 500,
-                        fontSize: '0.9rem',
+                        fontWeight: pupilTab === 'full' ? 700 : 600,
+                        fontSize: '0.92rem',
                         cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
                       }}
                     >
-                      📝 Detailed Reading
+                      <span>📚</span>
+                      <span>3. Story &amp; Full Reading</span>
                     </button>
                   </div>
 
@@ -971,50 +1220,50 @@ export default function LearningZonePage() {
                   {pupilTab === 'learn' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                       {/* Step 1: Core Fact Banner */}
-                      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', marginBottom: '4px' }}>
-                          Key Fact to Remember:
+                      <div style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)', border: '1.5px solid #bae6fd', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 4px rgba(2, 132, 199, 0.05)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 800, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                          <span>🌟</span> The Big Idea to Remember:
                         </div>
-                        <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0f172a', margin: 0, lineHeight: 1.5 }}>
+                        <p style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1.5 }}>
                           {effectiveLesson.axiom}
                         </p>
                       </div>
 
                       {/* Step 2: What are we investigating? */}
-                      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', marginBottom: '4px' }}>
-                          1. Think About This:
+                      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                          <span>🤔</span> 1. Think About This:
                         </div>
-                        <p style={{ fontSize: '1.05rem', color: '#1e293b', margin: 0, lineHeight: 1.6 }}>
+                        <p style={{ fontSize: '1.05rem', color: '#1e293b', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
                           {effectiveLesson.hook}
                         </p>
                       </div>
 
                       {/* Step 3: Practice Activity */}
-                      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', marginBottom: '4px' }}>
-                          2. How It Works:
+                      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                          <span>🚀</span> 2. How It Works (Step-by-Step):
                         </div>
-                        <p style={{ fontSize: '1.05rem', color: '#1e293b', margin: 0, lineHeight: 1.6 }}>
+                        <p style={{ fontSize: '1.05rem', color: '#1e293b', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
                           {effectiveLesson.guidedStep}
                         </p>
                       </div>
 
                       {/* Step 4: Watch Out Trap */}
-                      <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '1.25rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', marginBottom: '4px' }}>
-                          ⚠️ Common Trap to Avoid:
+                      <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '14px', padding: '1.25rem 1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                          <span>🕵️</span> 3. Watch Out! Don&apos;t Get Tricked:
                         </div>
-                        <p style={{ fontSize: '1rem', color: '#92400e', margin: 0, lineHeight: 1.5 }}>
+                        <p style={{ fontSize: '1rem', color: '#92400e', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
                           {effectiveLesson.trap}
                         </p>
                       </div>
 
                       {/* Prompt to Test */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1.25rem', marginTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1.5px solid #93c5fd', borderRadius: '14px', padding: '1.25rem 1.5rem', marginTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1d4ed8' }}>Ready to test what you learned?</div>
-                          <div style={{ fontSize: '0.95rem', color: '#334155' }}>Try 3 quick practice questions with instant stars and hints.</div>
+                          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1d4ed8' }}>⭐ Ready for a Quick Challenge?</div>
+                          <div style={{ fontSize: '0.92rem', color: '#334155', marginTop: '2px' }}>Test your superpowers with 3 fun practice questions and earn stars!</div>
                         </div>
                         <Link
                           to={practiceLabUrl}
@@ -1028,9 +1277,13 @@ export default function LearningZonePage() {
                             textDecoration: 'none',
                             fontSize: '0.95rem',
                             boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
                           }}
                         >
-                          ⚡ Start Practice Quiz
+                          <span>⭐ Start Practice Quiz</span>
+                          <span>➔</span>
                         </Link>
                       </div>
                     </div>
@@ -1039,8 +1292,8 @@ export default function LearningZonePage() {
                   {/* Pupil Tab 2: Socratic AI Tutor */}
                   {pupilTab === 'tutor' && (
                     <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                      <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#475569' }}>
-                        Need help understanding <strong>{effectiveLesson.title}</strong>? Ask Professor Turing for a friendly hint or question!
+                      <div style={{ marginBottom: '1rem', fontSize: '0.92rem', color: '#475569', lineHeight: 1.5 }}>
+                        Stuck or curious about <strong>{effectiveLesson.title}</strong>? Professor Turing is right here with gentle hints and fun clues — no grades, just friendly help!
                       </div>
                       <TuringTutor
                         key={`${selectedKeyStage}-${selectedSubject}-${selectedUnit}-${currentLang}`}

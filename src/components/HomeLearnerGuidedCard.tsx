@@ -56,7 +56,7 @@ const STAGES: StageConfig[] = [
         unit: 'Seasonal Changes',
         icon: '🌦️',
         badge: 'Seasons & Nature',
-        hook: 'Why do deciduous trees lose their leaves in autumn and bloom in spring?',
+        hook: 'Why do trees drop their colourful leaves in autumn and sprout fresh green buds in spring?',
       },
       {
         title: 'Phonics & Capital Letters',

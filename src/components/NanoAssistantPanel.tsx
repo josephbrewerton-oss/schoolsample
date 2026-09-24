@@ -54,8 +54,8 @@ export function TuringTutor({
     {
       role: 'turing',
       text: topicKnowledge
-        ? `Hello! I'm Super Teacher Nano. In ${topicKnowledge.title}: ${topicKnowledge.socraticPivot}`
-        : `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`,
+        ? `Hello! I'm Professor Turing, your friendly learning buddy. In ${topicKnowledge.title}: ${topicKnowledge.socraticPivot}`
+        : `Hello! I'm Professor Turing, your friendly learning buddy. What fun questions do you have about ${currentTopic}?`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -93,8 +93,8 @@ export function TuringTutor({
     let cancelled = false;
     const knowledge = findCurriculumKnowledge(keyStage, subject, currentTopic);
     const baseGreeting = knowledge
-      ? `Hello! I'm Super Teacher Nano. In ${knowledge.title}: ${knowledge.socraticPivot}`
-      : `Hello! I'm Super Teacher Nano. What are you exploring in ${currentTopic}?`;
+      ? `Hello! I'm Professor Turing, your friendly learning buddy. In ${knowledge.title}: ${knowledge.socraticPivot}`
+      : `Hello! I'm Professor Turing, your friendly learning buddy. What fun questions do you have about ${currentTopic}?`;
 
     if (currentLang && currentLang !== 'en') {
       translateText(baseGreeting, currentLang).then((translated) => {

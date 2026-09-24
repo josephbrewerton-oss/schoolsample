@@ -209,13 +209,78 @@ export default function SettingsPage() {
             boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
           }}
         >
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', marginBottom: '1.5rem' }}>
-            ⚙️ Runtime & Curriculum Settings
-          </h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div>
+              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0' }}>
+                ⚙️ System, Sensory &amp; Curriculum Settings
+              </h1>
+              <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0 }}>
+                Configure your device preferences, audio chimes, offline storage, AI consent, and language.
+              </p>
+            </div>
+            <Link
+              to="/catholic-life"
+              style={{
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                color: '#4338ca',
+                background: '#eef2ff',
+                border: '1px solid #c7d2fe',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <span>✝️</span> Catholic Sanctuary &rarr;
+            </Link>
+          </div>
+
+          {/* Quick Section Anchor Jump Bar */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              overflowX: 'auto',
+              paddingBottom: '12px',
+              marginBottom: '1.5rem',
+              borderBottom: '1px solid #e2e8f0',
+            }}
+          >
+            {[
+              { id: 'settings-brainpower', label: '🧠 AI & Runtime' },
+              { id: 'settings-audio', label: '🔊 Sound & Haptics' },
+              { id: 'settings-language', label: '🌐 Language' },
+              { id: 'settings-difficulty', label: '🎯 Challenge Level' },
+              { id: 'settings-datasaver', label: '📶 Data Saver' },
+              { id: 'settings-offline', label: '💾 Offline Storage' },
+              { id: 'settings-airgap', label: '🛡️ Air-Gap Privacy' },
+            ].map((btn) => (
+              <a
+                key={btn.id}
+                href={`#${btn.id}`}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {btn.label}
+              </a>
+            ))}
+          </div>
 
           <form onSubmit={handleSave}>
             {/* Device Brainpower & In-Browser Download */}
-            <div style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <div id="settings-brainpower" style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
                   🧠 Device Brainpower & In-Browser AI
@@ -353,7 +418,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Default Challenge Level */}
-            <div style={{ marginBottom: '2rem' }}>
+            <div id="settings-difficulty" style={{ marginBottom: '2rem' }}>
               <label htmlFor="difficulty-select" style={{ display: 'block', fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem' }}>
                 🎯 Default Challenge Level
               </label>
@@ -378,7 +443,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Universal Language & Translation Settings */}
-            <div style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+            <div id="settings-language" style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '0.75rem' }}>
                 <label htmlFor="portal-language-select" style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span>🌐</span> Universal Portal Language & Translation
@@ -458,6 +523,7 @@ export default function SettingsPage() {
 
             {/* Developing Nations & Low-Bandwidth Optimization Card */}
             <div
+              id="settings-datasaver"
               style={{
                 marginBottom: '2rem',
                 padding: '1.5rem',
@@ -501,6 +567,7 @@ export default function SettingsPage() {
 
               {/* Offline Pre-cache Trigger */}
               <div
+                id="settings-offline"
                 style={{
                   marginTop: '1.25rem',
                   padding: '1rem',
@@ -601,7 +668,7 @@ export default function SettingsPage() {
             </div>
 
             {/* 🔊 Auditory & Tactile Sensory Feedback (Zero-Data Native Synthesizer) */}
-            <div className="stj-card" style={{ marginBottom: '2rem' }}>
+            <div id="settings-audio" className="stj-card" style={{ marginBottom: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 4px 0' }}>
@@ -680,7 +747,7 @@ export default function SettingsPage() {
             </div>
 
             {/* 🛡️ WebRTC Architecture & Strict Air-Gap Privacy Guard */}
-            <div className="stj-card" style={{ marginBottom: '2rem', border: strictAirGap ? '2px solid var(--stj-warning)' : '1px solid var(--stj-border)' }}>
+            <div id="settings-airgap" className="stj-card" style={{ marginBottom: '2rem', border: strictAirGap ? '2px solid var(--stj-warning)' : '1px solid var(--stj-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '0 0 4px 0' }}>

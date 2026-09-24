@@ -68,6 +68,29 @@ export default function Home() {
             </a>
 
             <Link
+              to="/catholic-life"
+              className="button button--secondary button--lg"
+              style={{
+                padding: '0.9rem 2.25rem',
+                fontSize: '1.1rem',
+                borderRadius: '10px',
+                border: '2px solid #4338ca',
+                color: '#312e81',
+                background: '#eef2ff',
+                fontWeight: 800,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 14px 0 rgba(67, 56, 202, 0.15)',
+              }}
+            >
+              <span>✝️</span>
+              <span>Catholic Life &amp; Faith</span>
+            </Link>
+
+            <Link
               to="/practice-lab"
               className="button button--primary button--lg"
               style={{
@@ -106,7 +129,7 @@ export default function Home() {
         {/* Home-Learner Guided Pathway (For Disadvantaged & Out-of-School Children) */}
         <HomeLearnerGuidedCard />
 
-        {/* Developing-Nation Safe Architecture: Compression & Inflation Banner */}
+        {/* Developing-Nation Safe Architecture: Works Offline & Tiny Data Banner */}
         <section
           style={{
             background: '#0f172a',
@@ -126,14 +149,14 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <span style={{ fontSize: '1.2rem' }}>🌱</span>
               <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Developing-Nation Safe Architecture &bull; 99.999% Bandwidth Saved
+                Works Offline &bull; Saves Your Mobile Data &bull; Ultra-Fast
               </span>
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', margin: '0 0 8px 0' }}>
-              Sub-Kilobyte AST Seeds &amp; On-Device Model Inflation
+              Tiny Lesson Seeds: Learn Anywhere, Even Without Internet!
             </h2>
             <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-              Instead of draining prepaid mobile data with 50MB streaming video, we compress entire curriculum topics into ~350-byte AST seeds. The on-device engine inflates them into interactive lessons, procedural SVG visualizers, and diagnostic misconception profilers with 0 bytes of network traffic.
+              Instead of draining expensive phone data with giant videos, each lesson is squashed into a tiny seed smaller than a single text message. Your phone or computer opens them into fun, interactive lesson guides and drawings with zero internet data needed!
             </p>
           </div>
 
@@ -154,7 +177,7 @@ export default function Home() {
               whiteSpace: 'nowrap',
             }}
           >
-            <span>Explore Seed Inflation Studio</span>
+            <span>See How Tiny Lessons Work</span>
             <span>➔</span>
           </Link>
         </section>
@@ -162,7 +185,7 @@ export default function Home() {
         {/* Core Capabilities Grid */}
         <section style={{ marginBottom: '4rem' }}>
           <h2 style={{ fontSize: '1.75rem', textAlign: 'center', marginBottom: '2.5rem', color: '#0f172a', fontWeight: 800 }}>
-            Designed for Pupil Success
+            Everything You Need to Succeed
           </h2>
 
           <div style={{
@@ -184,7 +207,7 @@ export default function Home() {
                 Instant Practice Arena
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                Bite-sized curriculum questions with real-time feedback, streak rewards, and instant hints whenever you get stuck.
+                Bite-sized questions with instant thumbs-up feedback, stars to collect, and friendly clues whenever you get stuck.
               </p>
             </div>
 
@@ -199,10 +222,10 @@ export default function Home() {
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>📖</div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0369a1' }}>
-                Curriculum Lessons
+                Step-by-Step Lessons
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                Step-by-step lesson guides covering key concepts, everyday examples, and common traps before starting a quiz.
+                Clear explanations with real-world examples, diagrams, and common tricky bits explained before you try a quiz.
               </p>
             </div>
 
@@ -217,10 +240,10 @@ export default function Home() {
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>🎓</div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#047857' }}>
-                Prof. Turing Audio Tutor
+                Friendly Voice Tutor
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                Friendly, voice-guided hints and Socratic prompts that guide your thinking without giving away the answers.
+                Listen to any lesson read aloud in clear, gentle speech with spoken hints that guide you without spoiling the answer.
               </p>
             </div>
 
@@ -235,13 +258,67 @@ export default function Home() {
             }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.85rem' }}>🎯</div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', color: '#6d28d9' }}>
-                Diagnostic Checks
+                Helpful Slip Explanations
               </h3>
               <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                Every incorrect option checks for common student slips (like adding fraction denominators) to explain exactly where you went wrong.
+                Made a mistake? Don't worry! We spot common slips (like adding fraction bottoms) and show you exactly how to fix them.
               </p>
             </div>
           </div>
+        </section>
+
+        {/* Dedicated Whole-School Catholic Life & Faith Sanctuary Banner */}
+        <section
+          style={{
+            background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)',
+            border: '2px solid #facc15',
+            borderRadius: '20px',
+            padding: '2.5rem',
+            marginBottom: '3.5rem',
+            boxShadow: '0 10px 25px -5px rgba(49, 46, 129, 0.25)',
+            color: '#ffffff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1.5rem',
+          }}
+        >
+          <div style={{ maxWidth: '680px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '1.4rem' }}>✝️</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fef08a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Whole-School &amp; Parish Faith Sanctuary &bull; For All Year Groups &bull; Not Key Staged
+              </span>
+            </div>
+            <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#ffffff', margin: '0 0 10px 0' }}>
+              Catholic Life, Liturgy &amp; Sacraments in One Place
+            </h2>
+            <p style={{ fontSize: '0.98rem', color: '#e0e7ff', lineHeight: 1.6, margin: 0 }}>
+              Our Catholic faith is not locked into key stage boxes — it belongs to every child, family, and parish member. Explore the Holy Mass step-by-step, the 7 Sacraments, the Holy Rosary, God's 10 Commandments, Church seasons, Latin Mass prayers, and how we care for God's creation.
+            </p>
+          </div>
+
+          <Link
+            to="/catholic-life"
+            style={{
+              padding: '0.95rem 2rem',
+              borderRadius: '10px',
+              background: '#facc15',
+              color: '#1e1b4b',
+              fontWeight: 800,
+              fontSize: '1rem',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(250, 204, 21, 0.35)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span>Enter Catholic Sanctuary</span>
+            <span>➔</span>
+          </Link>
         </section>
 
         {/* St Joseph's Global Mission Banner */}
@@ -274,17 +351,16 @@ export default function Home() {
               marginBottom: '1rem',
             }}
           >
-            <span>🕊️ St Joseph&apos;s Educational Covenant</span>
+            <span>🕊️ St Joseph&apos;s Promise</span>
             <span>&bull;</span>
-            <span>Perpetual Free Access</span>
+            <span>100% Free Forever</span>
           </div>
 
           <h2 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.75rem' }}>
-            Free for Catholic Organisations &amp; Emerging Nations
+            Free for All Children, Catholic Parishes &amp; Families
           </h2>
           <p style={{ fontSize: '1.05rem', color: '#334155', maxWidth: '720px', lineHeight: 1.6, margin: '0 auto 1.75rem auto' }}>
-            Powered by zero-cloud, on-device Edge AI. We believe high-calibre tutoring is a universal right.
-            All Catholic schools, parishes, dioceses, and developing communities worldwide hold an unconditional, perpetual free license with full offline capability.
+            We believe high-quality learning is a gift for every child. St Joseph's portal is 100% free with no subscriptions, no adverts, no account sign-ups, and works offline to protect your family's privacy.
           </p>
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -305,7 +381,7 @@ export default function Home() {
                 transition: 'background-color 0.2s',
               }}
             >
-              🕊️ Read the Mission Charter &amp; Covenant
+              🕊️ Read Our School Mission
             </Link>
             <Link
               to="/privacy"
@@ -323,7 +399,7 @@ export default function Home() {
                 textDecoration: 'none',
               }}
             >
-              🛡️ Zero Cloud Egress Disclosures
+              🛡️ Safe, Private &amp; On Your Device
             </Link>
           </div>
         </section>
