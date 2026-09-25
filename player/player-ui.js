@@ -178,9 +178,9 @@
     }
 
     init() {
+      this.populatePresets();
       this.bindDOMEvents();
       this.bindEngineEvents();
-      this.populatePresets();
       this.setupKeyframeMarkers();
       this.updateView();
     }
@@ -204,6 +204,8 @@
         }
         this.elements.presetSelector.appendChild(opt);
       });
+      // Explicitly sync the select value to the engine's active preset
+      this.elements.presetSelector.value = this.engine.activePresetId;
     }
 
     setupKeyframeMarkers() {
@@ -351,7 +353,9 @@
 
       if (el.presetSelector) {
         el.presetSelector.addEventListener('change', (e) => {
-          this.engine.setPreset(e.target.value);
+          if (e.target.value && e.target.value !== this.engine.activePresetId) {
+            this.engine.setPreset(e.target.value, true);
+          }
         });
       }
 

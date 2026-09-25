@@ -785,6 +785,30 @@
       }
 
       return null;
+    },
+
+    async loadConfig(url = './scenes-config.json') {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const config = await res.json();
+        if (config && Array.isArray(config.scenes)) {
+          config.scenes.forEach(sc => {
+            if (sc && sc.id && scenes[sc.id]) {
+              if (sc.title) scenes[sc.id].title = sc.title;
+              if (sc.stage) scenes[sc.id].stage = sc.stage;
+              if (sc.duration) scenes[sc.id].duration = sc.duration;
+              if (sc.keyframes) scenes[sc.id].keyframes = sc.keyframes;
+              if (sc.subtitles) scenes[sc.id].subtitles = sc.subtitles;
+              if (sc.svgFile) scenes[sc.id].svgFile = sc.svgFile;
+            }
+          });
+        }
+        return config;
+      } catch (err) {
+        console.warn('ASTSceneRegistry.loadConfig notice:', err);
+        return null;
+      }
     }
   };
 

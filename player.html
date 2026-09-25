@@ -11,7 +11,7 @@
   <!-- Top Header Bar -->
   <header>
     <div class="header-left">
-      <span class="badge" id="badge-stage">KS2 MATHS</span>
+      <span class="badge" id="badge-stage">CURRICULUM</span>
       <select id="preset-selector" title="Select Curriculum Vector Preset">
         <!-- Injected dynamically from ASTSceneRegistry -->
       </select>
@@ -139,10 +139,17 @@
       const ui = new window.ASTPlayerUI(engine);
       ui.setTheme(theme);
 
-      // 3. Setup postMessage bridge for parent iframe communication
+      // 3. Load scenes config if available
+      if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
+        window.ASTSceneRegistry.loadConfig('./player/scenes-config.json').then(() => {
+          ui.populatePresets();
+        }).catch(() => {});
+      }
+
+      // 4. Setup postMessage bridge for parent iframe communication
       window.setupPostMessageBridge(engine, ui);
 
-      // 4. Start timeline clock
+      // 5. Start timeline clock
       engine.start();
     })();
   </script>
