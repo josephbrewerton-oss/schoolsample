@@ -413,6 +413,28 @@ html[data-data-saver="true"] .ast-viewport-stage {
 /* Mobile Drawer Smooth Slide Down */
 #mobile-nav-drawer {
   animation: navDrawerFadeIn 0.15s ease-out;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Layout Integrity & Mobile Overrun Guards */
+#persistent-header-group,
+#persistent-site-navbar,
+#universal-translator-bar,
+#ast-persistent-viewport {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  #persistent-site-navbar {
+    overflow-x: clip;
+  }
+  #universal-translator-bar {
+    overflow-x: clip;
+  }
+  .ast-viewport-stage {
+    overflow-x: hidden;
+  }
 }
 
 @keyframes navDrawerFadeIn {

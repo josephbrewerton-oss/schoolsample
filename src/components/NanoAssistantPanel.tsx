@@ -15,6 +15,7 @@ import {
   CHILD_SAFEGUARDING_SYSTEM_PROMPT,
 } from '../services/childSafetyFilter';
 import { generateOfflineSocraticAnswer } from '../engine/socraticOfflineBrain';
+import { ASTFlowGovernor } from '../engine/astGovernor';
 
 interface TuringTutorProps {
   activePrompt?: string;
@@ -125,7 +126,7 @@ export function TuringTutor({
     return () => cancelAnimationFrame(rAF);
   }, [messages, loading]);
 
-  const buildSystemPrompt = () => {
+  const buildSystemPrompt = (mathGuidance?: string) => {
     const langMeta = SUPPORTED_LANGUAGES[currentLang];
     const langInstruction =
       currentLang !== 'en' && langMeta
@@ -140,6 +141,24 @@ export function TuringTutor({
       ? 'Speak to a 13-year-old: supportive, clear scientific/mathematical reasoning, concise conceptual breakdowns.'
       : 'Speak to a 15-year-old GCSE student: academically rigorous, precise exam terminology, clear step-by-step logic.';
 
+    const isMathOrSci =
+      subject.toLowerCase().includes('math') ||
+      subject.toLowerCase().includes('arithmetic') ||
+      subject.toLowerCase().includes('algebra') ||
+      subject.toLowerCase().includes('science') ||
+      Boolean(mathGuidance);
+
+    const astMathGuidelines = isMathOrSci
+      ? `\n;; AST MATHEMATICAL & CHECKUP GUIDELINES (:node "math:checkup")
+1. ZERO_HALLUCINATION: Never fabricate arithmetic numbers or mathematical answers.
+2. BIDMAS: Calculate strictly according to the order of operations.
+3. FRACTIONS: Common denominators before adding/subtracting numerators; never add denominators (1/2 + 1/4 = 3/4).
+4. PERCENTAGES: x% of Y = (x/100) * Y. Partition into 10% and 5% steps for clarity.
+5. ALGEBRA: Apply inverse operations to isolate the variable.
+6. UNITS: 1km=1000m, 1m=100cm, 1cm=10mm, 1kg=1000g, 1L=1000ml, £1=100p.
+${mathGuidance ? `\n[VERIFIED AST GROUND TRUTH FOR THIS QUERY]:\n${mathGuidance}\nRULE: Adhere strictly to this verified result. Never invent a different number.` : ''}`
+      : '';
+
     return `You are "Professor Turing" (Super Teacher Nano) — an inspiring, supportive UK National Curriculum teacher for ${keyStage} ${subject}.
 Target Topic: ${currentTopic}
 ${topicKnowledge ? `\nCURRICULUM GROUND TRUTH:
@@ -148,6 +167,7 @@ ${topicKnowledge ? `\nCURRICULUM GROUND TRUTH:
 - Helpful Analogy: "${topicKnowledge.scaffoldHints.level1}"
 - Key Step: "${topicKnowledge.guidedStep}"` : ''}
 ${langInstruction}
+${astMathGuidelines}
 
 ${CHILD_SAFEGUARDING_SYSTEM_PROMPT}
 
@@ -260,9 +280,22 @@ PEDAGOGICAL GOALS:
         activePrompt ? `Focus Question: "${activePrompt}"\n` : ''
       }${conversationHistory}\n${customInstruction ? `Instruction: ${customInstruction}\n` : ''}Teacher Socratic Response:`;
 
+      // Deterministic AST Math Checkup Evaluation (Zero Hallucination Guard)
+      const mathEval = ASTFlowGovernor.evaluateMathCheckup(userText, activePrompt);
+      let mathGuidanceStr: string | undefined = undefined;
+      if (mathEval && mathEval.isMath) {
+        mathGuidanceStr = `Exact Mathematical Result: ${mathEval.groundTruth}\nVerified Calculation Steps:\n${mathEval.steps.join('\n')}\nStudent Answer Status: ${
+          mathEval.isStudentCorrect === true
+            ? 'CORRECT. Validate and praise their accurate reasoning.'
+            : mathEval.isStudentCorrect === false
+            ? 'INCORRECT. The student slipped up. Guide them to check step 1 without giving away the answer.'
+            : 'Inquiry calculation. Guide them using the verified calculation steps above.'
+        }`;
+      }
+
       const rawResponse = await aiCaller.promptText({
         prompt: fullPrompt,
-        systemPrompt: buildSystemPrompt(),
+        systemPrompt: buildSystemPrompt(mathGuidanceStr),
         preserveContext: false, // Prevents Chrome session port collisions
         timeoutMs: 15000,
       });

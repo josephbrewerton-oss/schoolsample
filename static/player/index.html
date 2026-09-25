@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AST Vector Media Player — Decoupled Motion Suite</title>
+  <link rel="stylesheet" href="./player.css">
+</head>
+<body data-theme="dark">
+
+  <!-- Top Header Bar -->
+  <header>
+    <div class="header-left">
+      <span class="badge" id="badge-stage">KS2 MATHS</span>
+      <select id="preset-selector" title="Select Curriculum Vector Preset">
+        <!-- Injected dynamically from ASTSceneRegistry -->
+      </select>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" id="btn-interactive" title="Toggle Interactive Questions & Hotspots">🎯 <span class="btn-label">Interactive</span></button>
+      <button type="button" id="btn-print" title="Generate A4 Classroom Worksheet">🖨️ <span class="btn-label">Print</span></button>
+      <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
+      <button type="button" id="btn-theme" title="Toggle Dark/Light Mode">☀️</button>
+      <button type="button" id="btn-fullscreen" title="Toggle Fullscreen">⛶</button>
+    </div>
+  </header>
+
+  <!-- Main Vector Canvas Stage -->
+  <main id="player-stage">
+    <svg id="stage-svg" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Gradients & Glow Filters -->
+        <linearGradient id="grad-sun" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fef08a" />
+          <stop offset="100%" stop-color="#f59e0b" />
+        </linearGradient>
+        <linearGradient id="grad-leaf" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#15803d" />
+          <stop offset="100%" stop-color="#166534" />
+        </linearGradient>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <!-- Dynamic Vector Layer is generated here -->
+      <g id="scene-root"></g>
+    </svg>
+
+    <!-- Synchronized Subtitle Overlay -->
+    <div id="subtitle-overlay">Loading AST Vector Scene...</div>
+
+    <!-- Interactive Checkpoint Question / Hotspot Drawer -->
+    <div id="interactive-card" class="interactive-card hidden">
+      <div class="interactive-header">
+        <span id="interactive-badge" class="interactive-badge">CHECKPOINT CHALLENGE</span>
+        <button type="button" id="interactive-close" class="interactive-close" title="Close Checkpoint">&times;</button>
+      </div>
+      <div id="interactive-body"></div>
+    </div>
+
+    <!-- Subtle Toast Notification -->
+    <div id="ast-toast" class="ast-toast">Station Selected</div>
+  </main>
+
+  <!-- Bottom Player Chrome -->
+  <footer>
+    <!-- Interactive Timeline Scrubber -->
+    <div class="scrubber-container" id="scrubber-box">
+      <div class="timeline-track" id="timeline-track">
+        <div class="timeline-fill" id="timeline-fill"></div>
+        <div class="timeline-thumb" id="timeline-thumb"></div>
+      </div>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="controls-row">
+      <div class="controls-left">
+        <button type="button" id="btn-play" title="Play / Pause (Spacebar)">▶ Play</button>
+        <button type="button" id="btn-prev" title="Step Back 5% (Left Arrow)">⏮</button>
+        <button type="button" id="btn-next" title="Step Forward 5% (Right Arrow)">⏭</button>
+        <button type="button" id="btn-reset" title="Rewind to Beginning">↺</button>
+        <span class="time-readout" id="time-readout">00:00 / 00:10 (0%)</span>
+      </div>
+
+      <div class="controls-right">
+        <!-- Speed Multipliers -->
+        <select id="speed-selector" title="Playback Speed">
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1.0×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2.0×</option>
+        </select>
+
+        <!-- Narration Speech Toggle -->
+        <button type="button" id="btn-narrate" title="Toggle On-Device Voice Narration">🔊 Voice</button>
+
+        <!-- Language Selector -->
+        <select id="lang-selector" title="Subtitle and Narration Language">
+          <option value="en" selected>🇬🇧 EN</option>
+          <option value="es">🇪🇸 ES</option>
+          <option value="fr">🇫🇷 FR</option>
+          <option value="de">🇩🇪 DE</option>
+          <option value="it">🇮🇹 IT</option>
+          <option value="pl">🇵🇱 PL</option>
+          <option value="pt">🇵🇹 PT</option>
+          <option value="uk">🇺🇦 UK</option>
+          <option value="ar">🇸🇦 AR</option>
+          <option value="la">🇻🇦 LA</option>
+        </select>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modular Scripts -->
+  <script src="./ast-scenes.js"></script>
+  <script src="./ast-engine.js"></script>
+  <script src="./player-ui.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      const params = new URLSearchParams(window.location.search);
+      const preset = params.get('preset') || 'fractions';
+      const lang = params.get('lang') || 'en';
+      const speed = parseFloat(params.get('speed') || '1.0');
+      const autoplay = params.get('autoplay') === '1';
+      const theme = params.get('theme') || 'dark';
+
+      // 1. Initialize Engine
+      const engine = new window.ASTVectorPlayerEngine({
+        preset: preset,
+        lang: lang,
+        speed: speed,
+        autoplay: autoplay,
+      });
+
+      // 2. Initialize UI Controller
+      const ui = new window.ASTPlayerUI(engine);
+      ui.setTheme(theme);
+
+      // 3. Setup postMessage bridge for parent iframe communication
+      window.setupPostMessageBridge(engine, ui);
+
+      // 4. Start timeline clock
+      engine.start();
+    })();
+  </script>
+</body>
+</html>

@@ -266,39 +266,46 @@ export default function UniversalTranslatorBar() {
         style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: isCollapsed ? '0.35rem 1rem' : '0.5rem 1rem',
+          padding: isCollapsed ? '0.3rem 0.75rem' : '0.4rem 0.75rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '0.75rem',
+          gap: '0.4rem 0.75rem',
+          boxSizing: 'border-box',
+          width: '100%',
         }}
       >
         {/* Left: Branding & Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <span style={{ fontSize: '1.15rem' }} role="img" aria-label="Globe">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+          <span style={{ fontSize: '1.1rem' }} role="img" aria-label="Globe">
             🌐
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <strong style={{ color: '#38bdf8', letterSpacing: '0.02em' }}>
-              Universal Translator
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <strong style={{ color: '#38bdf8', letterSpacing: '0.02em', fontSize: '0.82rem' }}>
+              <span className="hidden sm:inline">Universal </span>Translator
             </strong>
             <span
               style={{
-                fontSize: '0.7rem',
-                padding: '2px 6px',
+                fontSize: '0.68rem',
+                padding: '2px 5px',
                 borderRadius: '4px',
                 background: isTranslated ? '#15803d' : '#334155',
                 color: '#ffffff',
                 fontWeight: 700,
                 textTransform: 'uppercase',
+                maxWidth: '90px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
+              title={isTranslating ? 'Translating...' : isTranslated ? langMeta.nativeLabel : 'English Original'}
             >
               {isTranslating
-                ? 'Translating...'
+                ? '...'
                 : isTranslated
                 ? `${langMeta.nativeLabel}`
-                : 'English Original'}
+                : 'English'}
             </span>
           </div>
         </div>
@@ -310,16 +317,17 @@ export default function UniversalTranslatorBar() {
               display: 'flex',
               alignItems: 'center',
               flexWrap: 'wrap',
-              gap: '0.5rem',
+              gap: '0.35rem',
             }}
           >
             {/* Language Picker Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
               <label
                 htmlFor="universal-lang-select"
-                style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}
+                className="hidden sm:inline"
+                style={{ color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}
               >
-                Translate to:
+                To:
               </label>
               <select
                 id="universal-lang-select"
@@ -330,11 +338,12 @@ export default function UniversalTranslatorBar() {
                   color: '#ffffff',
                   border: '1px solid #475569',
                   borderRadius: '6px',
-                  padding: '0.25rem 0.6rem',
-                  fontSize: '0.82rem',
+                  padding: '0.2rem 0.4rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
                   cursor: 'pointer',
                   outline: 'none',
+                  maxWidth: '125px',
                 }}
               >
                 {Object.values(SUPPORTED_LANGUAGES).map((lang) => (
@@ -356,14 +365,15 @@ export default function UniversalTranslatorBar() {
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.25rem 0.65rem',
-                  fontSize: '0.8rem',
+                  padding: '0.2rem 0.5rem',
+                  fontSize: '0.76rem',
                   fontWeight: 600,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
                 title="Toggle between translated page and original English text"
               >
-                {isTranslated ? '🇬🇧 Show Original' : `🌐 Translate to ${langMeta.label}`}
+                {isTranslated ? '🇬🇧 Original' : `🌐 ${langMeta.label}`}
               </button>
             )}
 
@@ -381,25 +391,26 @@ export default function UniversalTranslatorBar() {
                 color: practiceMode ? '#a7f3d0' : '#cbd5e1',
                 border: `1px solid ${practiceMode ? '#10b981' : '#475569'}`,
                 borderRadius: '6px',
-                padding: '0.25rem 0.65rem',
-                fontSize: '0.8rem',
+                padding: '0.2rem 0.5rem',
+                fontSize: '0.76rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '4px',
                 transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
               }}
-              title="Toggle Language Practice Mode: Enables parallel bilingual text and ear-training repetition across questions"
+              title="Toggle Language Practice Mode: Parallel bilingual text and ear-training"
             >
               <span>🗣️</span>
-              <span>{practiceMode ? 'Language Practice: ON' : 'Language Practice'}</span>
+              <span className="hidden sm:inline">{practiceMode ? 'Practice: ON' : 'Practice'}</span>
             </button>
 
-            {/* Speech Speed Setting (Normal vs Slow/Clear) */}
+            {/* Speech Speed Setting (Normal vs Slow/Clear) - Desktop / Tablet only to save mobile space */}
             <div
+              className="hidden md:inline-flex"
               style={{
-                display: 'inline-flex',
                 alignItems: 'center',
                 background: '#1e293b',
                 border: '1px solid #475569',
@@ -420,8 +431,8 @@ export default function UniversalTranslatorBar() {
                   color: speechSpeed < 0.85 ? '#ffffff' : '#94a3b8',
                   border: 'none',
                   borderRadius: '4px',
-                  padding: '2px 6px',
-                  fontSize: '0.74rem',
+                  padding: '2px 5px',
+                  fontSize: '0.72rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}
@@ -440,8 +451,8 @@ export default function UniversalTranslatorBar() {
                   color: speechSpeed >= 0.85 ? '#ffffff' : '#94a3b8',
                   border: 'none',
                   borderRadius: '4px',
-                  padding: '2px 6px',
-                  fontSize: '0.74rem',
+                  padding: '2px 5px',
+                  fontSize: '0.72rem',
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}
@@ -461,17 +472,19 @@ export default function UniversalTranslatorBar() {
                 color: '#e2e8f0',
                 border: '1px solid #475569',
                 borderRadius: '6px',
-                padding: '0.25rem 0.6rem',
-                fontSize: '0.8rem',
+                padding: '0.2rem 0.5rem',
+                fontSize: '0.76rem',
                 fontWeight: 600,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
+                whiteSpace: 'nowrap',
               }}
               title="Listen to the current page in the active language"
             >
-              <span>🔊</span> Read Page
+              <span>🔊</span>
+              <span className="hidden sm:inline">Read Page</span>
             </button>
 
             {/* Permanent hidden container for automated Google Web Translation Engine */}
@@ -492,15 +505,16 @@ export default function UniversalTranslatorBar() {
             background: 'transparent',
             border: 'none',
             color: '#94a3b8',
-            fontSize: '0.78rem',
+            fontSize: '0.75rem',
             cursor: 'pointer',
             padding: '2px 6px',
             borderRadius: '4px',
             textDecoration: 'underline',
+            whiteSpace: 'nowrap',
           }}
-          title={isCollapsed ? 'Expand Universal Translator Bar' : 'Minimize Bar'}
+          title={isCollapsed ? 'Expand language tools' : 'Minimize translator bar to save screen space'}
         >
-          {isCollapsed ? '🌐 Expand Translator' : 'Hide Bar'}
+          {isCollapsed ? '🌐 Translate ▲' : 'Minimize ▼'}
         </button>
       </div>
     </div>

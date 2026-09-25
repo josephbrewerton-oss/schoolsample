@@ -12,6 +12,7 @@ import { dispatch } from '../engine/hypercall';
 const FirstCommunionMasteryLab = React.lazy(() => import('../components/FirstCommunionMasteryLab'));
 const ConceptConstellation = React.lazy(() => import('../components/ConceptConstellation'));
 const ZeroBloatVectorStudio = React.lazy(() => import('../components/ZeroBloatVectorStudio'));
+const AstVectorMediaPlayer = React.lazy(() => import('../components/AstVectorMediaPlayer'));
 import { hypervisor } from '../engine/hypervisor';
 import {
   SUPPORTED_LANGUAGES,
@@ -75,6 +76,8 @@ export default function LearningZonePage() {
     if (tab === 'vector-motion' || tab === 'vectors') return 'vector-motion';
     return 'lesson';
   });
+
+  const [motionPlayerMode, setMotionPlayerMode] = useState<'iframe' | 'studio'>('iframe');
 
   const normalizeKeyStageParam = (raw: string | null): string => {
     if (!raw) return 'ks1';
@@ -519,23 +522,24 @@ export default function LearningZonePage() {
                 id="learning-role-pupil"
                 onClick={() => handleRoleChange('pupil')}
                 style={{
-                  padding: '6px 14px',
+                  padding: '6px 12px',
                   borderRadius: '7px',
                   border: 'none',
                   background: userRole === 'pupil' ? '#2563eb' : 'transparent',
                   color: userRole === 'pupil' ? '#ffffff' : '#475569',
                   fontWeight: 700,
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   boxShadow: userRole === 'pupil' ? '0 2px 4px rgba(37,99,235,0.2)' : 'none',
                   transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <span>🎒 Pupil View</span>
-                <span style={{ fontSize: '0.7rem', opacity: userRole === 'pupil' ? 0.9 : 0.6 }}>(Fun &amp; Clear)</span>
+                <span className="hidden sm:inline" style={{ fontSize: '0.7rem', opacity: userRole === 'pupil' ? 0.9 : 0.6 }}>(Fun &amp; Clear)</span>
               </button>
 
               <button
@@ -543,23 +547,24 @@ export default function LearningZonePage() {
                 id="learning-role-teacher"
                 onClick={() => handleRoleChange('teacher')}
                 style={{
-                  padding: '6px 14px',
+                  padding: '6px 12px',
                   borderRadius: '7px',
                   border: 'none',
                   background: userRole === 'teacher' ? '#0f172a' : 'transparent',
                   color: userRole === 'teacher' ? '#ffffff' : '#475569',
                   fontWeight: 700,
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   boxShadow: userRole === 'teacher' ? '0 2px 4px rgba(15,23,42,0.2)' : 'none',
                   transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <span>👩‍🏫 Teacher View</span>
-                <span style={{ fontSize: '0.7rem', opacity: userRole === 'teacher' ? 0.9 : 0.6 }}>(Lesson Plan &amp; Diagnostics)</span>
+                <span className="hidden sm:inline" style={{ fontSize: '0.7rem', opacity: userRole === 'teacher' ? 0.9 : 0.6 }}>(Lesson Plan)</span>
               </button>
             </div>
           </div>
@@ -760,49 +765,111 @@ export default function LearningZonePage() {
             <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  Interactive Visual Lessons &amp; Classroom Worksheets
+                  Interactive Visual Lessons &amp; Vector Motion Suite
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
-                  Smooth visual diagrams, maths models, animated solar systems, and printable worksheets to color and solve.
+                  Decoupled AST vector animations (0% main thread), mathematical proofs, solar system orbits, and printable worksheets.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveViewMode('lesson');
-                  setSearchParams({});
-                }}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: '8px',
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  color: '#334155',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                &larr; Back to Lesson View
-              </button>
-            </div>
-            <React.Suspense
-              fallback={
-                <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '16px' }}>
-                  <span>Loading Zero-Bloat Parametric Vector Studio...</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: '8px', border: '1px solid #cbd5e1', gap: '3px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setMotionPlayerMode('iframe')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: motionPlayerMode === 'iframe' ? '#0284c7' : 'transparent',
+                      color: motionPlayerMode === 'iframe' ? '#ffffff' : '#475569',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    🎬 AST iFrame Player (LMS Embed)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMotionPlayerMode('studio')}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: motionPlayerMode === 'studio' ? '#0f172a' : 'transparent',
+                      color: motionPlayerMode === 'studio' ? '#ffffff' : '#475569',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    🎨 Full Studio &amp; Worksheets
+                  </button>
                 </div>
-              }
-            >
-              <ZeroBloatVectorStudio
-                initialPreset={
-                  selectedSubject.toLowerCase().includes('math')
-                    ? 'fractions'
-                    : selectedSubject.toLowerCase().includes('science') || selectedUnit.toLowerCase().includes('space')
-                    ? 'solar-system'
-                    : 'fractions'
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveViewMode('lesson');
+                    setSearchParams({});
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    background: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    color: '#334155',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  &larr; Back to Lesson View
+                </button>
+              </div>
+            </div>
+
+            {motionPlayerMode === 'iframe' ? (
+              <React.Suspense
+                fallback={
+                  <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', background: '#090d16', borderRadius: '14px', border: '1px solid #1e293b' }}>
+                    <span>Initializing AST Vector Media Player iFrame...</span>
+                  </div>
                 }
-              />
-            </React.Suspense>
+              >
+                <AstVectorMediaPlayer
+                  preset={
+                    selectedSubject.toLowerCase().includes('math')
+                      ? 'fractions'
+                      : selectedSubject.toLowerCase().includes('science') || selectedUnit.toLowerCase().includes('space')
+                      ? 'solar-system'
+                      : 'fractions'
+                  }
+                  allowPresetSwitch={true}
+                  height="540px"
+                />
+              </React.Suspense>
+            ) : (
+              <React.Suspense
+                fallback={
+                  <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '16px' }}>
+                    <span>Loading Zero-Bloat Parametric Vector Studio...</span>
+                  </div>
+                }
+              >
+                <ZeroBloatVectorStudio
+                  initialPreset={
+                    selectedSubject.toLowerCase().includes('math')
+                      ? 'fractions'
+                      : selectedSubject.toLowerCase().includes('science') || selectedUnit.toLowerCase().includes('space')
+                      ? 'solar-system'
+                      : 'fractions'
+                  }
+                />
+              </React.Suspense>
+            )}
           </div>
         ) : activeViewMode === 'first-communion' ? (
           <>
@@ -1344,7 +1411,7 @@ export default function LearningZonePage() {
                   </div>
 
                   {/* Diagnostic Pillars */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
                     <div style={{ padding: '1.25rem', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                       <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span>📐</span> Pedagogical Axiom (Standard)

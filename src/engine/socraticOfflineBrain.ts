@@ -12,6 +12,7 @@
 
 import { CurriculumTopicKnowledge } from '../data/oakCurriculumKnowledge';
 import { validateStudentInput } from '../services/childSafetyFilter';
+import { ASTFlowGovernor } from './astGovernor';
 
 export interface SocraticQueryContext {
   query: string;
@@ -96,7 +97,19 @@ export function generateOfflineSocraticAnswer(ctx: SocraticQueryContext): string
     return `You're very welcome! Brilliant effort. Would you like to try another practice question or explore another part of ${topicKnowledge.title}?`;
   }
 
-  // 5. Match Student Query against Topic Questions & Explanations (High Precision Search)
+  // 5. Deterministic AST Math Checkup & Calculation Evaluator (Zero Hallucination)
+  const mathCheck = ASTFlowGovernor.evaluateMathCheckup(trimmed, activePrompt);
+  if (mathCheck && mathCheck.isMath) {
+    if (mathCheck.isStudentCorrect === true) {
+      return `Brilliant work! 🎯 You got it spot on: ${mathCheck.groundTruth}.\n\nHere is why your reasoning works:\n${mathCheck.steps.join('\n')}\n\nCan you explain the main step in your own words?`;
+    }
+    if (mathCheck.isStudentCorrect === false) {
+      return `You're making a great effort! Let's check our steps carefully so we don't slip up:\n\n${mathCheck.steps[0]}\n\n💡 Remember: ${mathCheck.explanation}\n\nWhat do you get when you try that step?`;
+    }
+    return `Let's work this out step-by-step using our National Curriculum rules: 🧩\n\n${mathCheck.steps.join('\n')}\n\nSo the exact result is ${mathCheck.groundTruth}! ${mathCheck.explanation}\n\nDoes this step-by-step method make sense?`;
+  }
+
+  // 6. Match Student Query against Topic Questions & Explanations (High Precision Search)
   const queryTokens = extractKeywords(lower);
   const topicTitleTokens = new Set(extractKeywords(topicKnowledge.title));
   // Exclude common title words so generic topic words don't skew individual question selection

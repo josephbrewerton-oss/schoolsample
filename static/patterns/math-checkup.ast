@@ -1,0 +1,18 @@
+(pattern:def :id "math:checkup"
+  (:description "Deterministic AST guidelines for mathematical checkup queries and AI tutor reasoning")
+  (spec:slots
+    (:slot :prompt :type "string" :description "The mathematical checkup or inquiry query")
+    (:slot :axiom :type "string" :description "Fundamental curriculum rule governing this mathematical concept")
+    (:slot :ground-truth :type "string" :description "Deterministic computed result (zero hallucination)")
+    (:slot :steps :type "list" :description "Step-by-step arithmetic or algebraic working")
+    (:slot :misconceptions :type "list" :description "Known student cognitive traps (e.g. adding denominators)"))
+  (rules:guidelines
+    (:rule "ZERO_HALLUCINATION: Mathematical numbers, calculations, and formulas must NEVER be made up or approximated.")
+    (:rule "ARITHMETIC_VERIFICATION: All two-operand, percentage, and multi-step calculations must be computed deterministically before generation.")
+    (:rule "PERCENTAGES: x% of Y = (x / 100) * Y. For mental math, partition into 10%, 5%, and 1% steps.")
+    (:rule "FRACTIONS_ADD_SUB: Denominators MUST be made equal before adding or subtracting numerators. Never add denominators (e.g. 1/2 + 1/4 = 3/4, NOT 2/6).")
+    (:rule "FRACTIONS_MUL: Multiply numerators straight across and denominators straight across: (a/b) * (c/d) = (a*c)/(b*d).")
+    (:rule "ALGEBRA_LINEAR: Use inverse operations to isolate x. For ax + b = c, first subtract b (ax = c - b), then divide by a (x = (c - b)/a).")
+    (:rule "PROBABILITY: P(event) = favorable outcomes / total outcomes. For 3 red and 7 blue, total is 10, so P(red) = 3/10.")
+    (:rule "UNITS: Standard metric ratios: 1000m = 1km, 100cm = 1m, 10mm = 1cm; 1000g = 1kg; 1000ml = 1L; 100p = £1. Convert to matching units before operating.")
+    (:rule "SOCRATIC_FEEDBACK: If student answer matches ground truth, validate warmly. If incorrect, point out the exact step where the slip occurred.")))

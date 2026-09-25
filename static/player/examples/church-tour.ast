@@ -1,0 +1,16 @@
+(scene :id "church-tour" :stage "CATHOLIC LIFE" :duration 16.0
+  (:title "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces")
+  (:easing "easeInOutQuad")
+  (:keyframes
+    ((:t 0.00 :title "1. Narthex & Holy Water Stoup" :rule "Vestibulum: We bless ourselves with Holy Water to recall our Baptism.")
+     (:t 0.20 :title "2. Nave & Central Aisle" :rule "Navis: The Pilgrim People of God; we genuflect towards the Tabernacle before entering our pew.")
+     (:t 0.40 :title "3. Ambo (Lectern)" :rule "Mensa Verbi: The Table of the Word from which the Holy Gospel is proclaimed.")
+     (:t 0.60 :title "4. Altar of Sacrifice" :rule "Altare Christi: Represents Christ Himself and the Holy Sacrifice of the Mass.")
+     (:t 0.80 :title "5. Tabernacle & Sanctuary Lamp" :rule "Tabernaculum: Houses the Blessed Sacrament; red lamp indicates Christ's Real Presence.")
+     (:t 1.00 :title "6. Lady Chapel & Baptismal Font" :rule "Fons & Sacellum: Devotional side chapel of Our Lady and the waters of new birth.")))
+  (:subtitles
+    ((:start 0.0 :end 0.20 :en "We enter through the Narthex, blessing ourselves with Holy Water in the Name of the Father, Son, and Holy Spirit." :es "Entramos por el Nártex, bendiciéndonos con Agua Bendita en el Nombre del Padre, del Hijo y del Espíritu Santo." :la "In nomine Patris, et Filii, et Spiritus Sancti. Aqua benedicta ad memoriam baptismi.")
+     (:start 0.20 :end 0.40 :en "Walking up the central aisle of the Nave, we genuflect on our right knee toward the Tabernacle before entering our pew." :es "Por el pasillo de la Nave, hacemos una genuflexión con la rodilla derecha hacia el Sagrario antes de sentarnos." :la "Ad Tabernaculum flectamus genua, Christum Dominum verum Deum adorantes.")
+     (:start 0.40 :end 0.60 :en "The Ambo is the Table of the Word, where the Holy Gospel and readings of Sacred Scripture are proclaimed." :es "El Ambón es la Mesa de la Palabra, donde se proclaman las lecturas de la Sagrada Escritura y el Evangelio." :la "Ambo est mensa Verbi Dei, unde Sanctum Evangelium fidelibus annuntiatur.")
+     (:start 0.60 :end 0.80 :en "The Altar is the sacred center representing Christ Himself, where the bread and wine become His Body and Blood." :es "El Altar es el centro sagrado que representa a Cristo, donde el pan y el vino se convierten en Su Cuerpo y Sangre." :la "Altare est Christus: hic sacrificium eucharisticum in remissionem peccatorum offertur.")
+     (:start 0.80 :end 1.00 :en "The golden Tabernacle holds the Real Presence of Christ in the Eucharist, watched over by the burning red Sanctuary Lamp." :es "El Sagrario dorado guarda la Presencia Real de Jesús en la Eucaristía, acompañado por la lámpara roja del Santuario." :la "Ecce panis angelorum: in Tabernaculo Christus vere et substantialiter praesens permanet."))))

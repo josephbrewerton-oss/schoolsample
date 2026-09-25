@@ -1,0 +1,17 @@
+# ast-sexpr.gbnf
+# GGML BNF Grammar for Constraining Local LLMs to Token-Efficient S-Expression ASTs
+# Produces valid Lisp-like (scene ...) structures parsed directly by micro-vector-player.
+
+root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws ("(:easing" ws easing ")" ws)? "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ")"
+
+keyframe ::= "(:t" ws fraction ws ":title" ws string ws ":rule" ws string ")"
+
+subtitle ::= "(:start" ws fraction ws ":end" ws fraction ws ":en" ws string (ws ":es" ws string)? ")"
+
+easing ::= "\"linear\"" | "\"easeInQuad\"" | "\"easeOutQuad\"" | "\"easeInOutQuad\"" | "\"cubic\""
+
+fraction ::= "0." [0-9] [0-9]? | "1.0" | "0.0" | "1" | "0"
+number ::= [0-9]+ ("." [0-9]+)?
+
+string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9]))* "\""
+ws ::= [ \t\n\r]*

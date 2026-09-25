@@ -1,0 +1,34 @@
+# ast-scene.gbnf
+# GGML BNF Grammar for Constraining Local LLMs to Valid AST Vector Scenes
+# Compatible with llama.cpp, Ollama, llama-cpp-python, and vLLM.
+
+root ::= "{" ws "\"id\":" ws string "," ws "\"stage\":" ws string "," ws "\"title\":" ws string "," ws "\"duration\":" ws number "," ws ("\"easing\":" ws easing "," ws)? "\"keyframes\":" ws keyframe-array ("," ws "\"subtitles\":" ws subtitle-array)? ("," ws "\"elements\":" ws element-array)? ws "}"
+
+# Keyframes Array
+keyframe-array ::= "[" ws (keyframe ("," ws keyframe)*)? ws "]"
+keyframe ::= "{" ws "\"t\":" ws fraction "," ws "\"title\":" ws string "," ws "\"rule\":" ws string ("," ws "\"mathNotation\":" ws string)? ws "}"
+
+# Subtitles Array
+subtitle-array ::= "[" ws (subtitle ("," ws subtitle)*)? ws "]"
+subtitle ::= "{" ws "\"start\":" ws fraction "," ws "\"end\":" ws fraction "," ws "\"en\":" ws string ("," ws "\"es\":" ws string)? ws "}"
+
+# Elements Array
+element-array ::= "[" ws (element ("," ws element)*)? ws "]"
+element ::= circle-el | orbit-el | particle-el
+
+circle-el ::= "{" ws "\"type\":" ws "\"circle\"" "," ws "\"cx\":" ws integer "," ws "\"cy\":" ws integer "," ws "\"r\":" ws integer "," ws "\"fill\":" ws hex-color ws "}"
+
+orbit-el ::= "{" ws "\"type\":" ws "\"orbit-path\"" "," ws "\"cx\":" ws integer "," ws "\"cy\":" ws integer "," ws "\"rx\":" ws integer "," ws "\"ry\":" ws integer "," ws "\"stroke\":" ws hex-color ws "}"
+
+particle-el ::= "{" ws "\"type\":" ws "\"particle\"" "," ws "\"orbit\":" ws "{" ws "\"cx\":" ws integer "," ws "\"cy\":" ws integer "," ws "\"rx\":" ws integer "," ws "\"ry\":" ws integer "," ws "\"speed\":" ws number ws "}" "," ws "\"r\":" ws integer "," ws "\"fill\":" ws hex-color "," ws "\"label\":" ws string ws "}"
+
+# Primitives
+easing ::= "\"linear\"" | "\"easeInQuad\"" | "\"easeOutQuad\"" | "\"easeInOutQuad\"" | "\"cubic\""
+
+fraction ::= "0." [0-9] [0-9]? | "1.0" | "0.0" | "1" | "0"
+number ::= [0-9]+ ("." [0-9]+)?
+integer ::= [0-9]+
+hex-color ::= "\"#" [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9] "\""
+
+string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9] [a-fA-F0-9]))* "\""
+ws ::= [ \t\n\r]*

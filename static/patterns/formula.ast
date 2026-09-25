@@ -1,0 +1,10 @@
+(pattern:def :id "math:formula"
+  (:description "AST schema and evaluation guidelines for mathematical formulas and notation")
+  (spec:slots
+    (:slot :latex :type "string" :description "LaTeX or ASCII formula representation")
+    (:slot :display :type "string" :description "Human-readable formula string for display")
+    (:slot :explanation :type "string" :description "Step-by-step conceptual meaning of variables"))
+  (rules:invariance
+    (:rule "Formulas must adhere strictly to UK National Curriculum definitions.")
+    (:rule "Order of operations (BIDMAS): Brackets -> Indices -> Division/Multiplication -> Addition/Subtraction.")
+    (:rule "Units must be consistent throughout calculation before substitution.")))

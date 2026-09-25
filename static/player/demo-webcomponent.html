@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Micro-Vector-Player Web Component Demo</title>
+  <script src="./micro-vector-player.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      color: #38bdf8;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    code {
+      background: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>&lt;micro-vector-player&gt; Web Component</h1>
+    <p>Zero-bloat, sandboxed AST vector player packaged into a single &lt; 5 KB script. Drop it into any page:</p>
+    <code>&lt;micro-vector-player src="/player/examples/orbit.json" autoplay voice&gt;&lt;/micro-vector-player&gt;</code>
+
+    <div class="demo-grid">
+      <!-- Demo 1: Loading from JSON AST file -->
+      <div>
+        <h3>1. Loading from <code>orbit.json</code> with Autoplay:</h3>
+        <micro-vector-player src="/player/examples/orbit.json" autoplay></micro-vector-player>
+      </div>
+
+      <!-- Demo 2: Loading from Built-in Preset -->
+      <div>
+        <h3>2. Loading Built-in Preset <code>fractions</code>:</h3>
+        <micro-vector-player preset="fractions"></micro-vector-player>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

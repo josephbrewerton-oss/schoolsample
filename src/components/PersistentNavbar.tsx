@@ -341,11 +341,10 @@ export default function PersistentNavbar(): React.JSX.Element {
               }}
             />
             <span
+              className="text-sm sm:text-base font-bold tracking-tight whitespace-nowrap truncate max-w-[155px] sm:max-w-none"
               style={{
-                fontWeight: 700,
-                fontSize: '1.05rem',
+                color: colorMode === 'dark' ? '#f8fafc' : '#0f172a',
                 letterSpacing: '-0.01em',
-                whiteSpace: 'nowrap',
               }}
             >
               St Joseph's Portal
@@ -687,8 +686,8 @@ export default function PersistentNavbar(): React.JSX.Element {
 
         {/* Right Actions (Settings & Theme Toggle & Mobile Hamburger) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-          {/* Nano Live Engine Status Pill */}
-          <div ref={nanoContainerRef} style={{ position: 'relative' }}>
+          {/* Nano Live Engine Status Pill (Desktop only; on mobile full control is in the mobile drawer) */}
+          <div ref={nanoContainerRef} className="navbar-action-desktop-only" style={{ position: 'relative' }}>
             {(() => {
               const caveat = getComplianceCaveat(currentLang);
               return (
@@ -993,10 +992,48 @@ export default function PersistentNavbar(): React.JSX.Element {
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
-            maxHeight: 'calc(100vh - 60px)',
+            maxHeight: 'calc(100dvh - 54px)',
             overflowY: 'auto',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            width: '100%',
           }}
         >
+          {/* Mobile Drawer Header with Close Button */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: '0.5rem',
+              borderBottom: `1px solid ${colorMode === 'dark' ? '#1e293b' : '#f1f5f9'}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>🧭</span>
+              <strong style={{ fontSize: '0.95rem', color: colorMode === 'dark' ? '#f8fafc' : '#0f172a' }}>
+                Portal Navigation
+              </strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close Navigation Menu"
+              style={{
+                background: 'transparent',
+                border: `1px solid ${colorMode === 'dark' ? '#334155' : '#cbd5e1'}`,
+                borderRadius: '6px',
+                padding: '4px 9px',
+                color: colorMode === 'dark' ? '#94a3b8' : '#64748b',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              ✕ Close
+            </button>
+          </div>
+
           {/* Mission Strapline */}
           <div
             style={{
@@ -1014,6 +1051,65 @@ export default function PersistentNavbar(): React.JSX.Element {
           >
             <span>🕊️</span>
             <span>Education should be free</span>
+          </div>
+
+          {/* On-Device Gemini Nano AI / Eco Status Card */}
+          <div
+            style={{
+              padding: '0.75rem',
+              borderRadius: '8px',
+              background: hasNanoConsent
+                ? colorMode === 'dark' ? '#064e3b' : '#ecfdf5'
+                : colorMode === 'dark' ? '#1e293b' : '#f8fafc',
+              border: `1px solid ${
+                hasNanoConsent
+                  ? colorMode === 'dark' ? '#10b981' : '#a7f3d0'
+                  : colorMode === 'dark' ? '#334155' : '#cbd5e1'
+              }`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  color: hasNanoConsent
+                    ? (colorMode === 'dark' ? '#6ee7b7' : '#065f46')
+                    : (colorMode === 'dark' ? '#94a3b8' : '#475569'),
+                }}
+              >
+                <span>{hasNanoConsent ? '🧠' : '🌱'}</span>
+                <span>{hasNanoConsent ? 'On-Device Nano AI: Active' : 'Eco Mode: Zero-Cloud Guard'}</span>
+              </div>
+              <div style={{ fontSize: '0.72rem', color: colorMode === 'dark' ? '#94a3b8' : '#64748b', marginTop: '2px' }}>
+                {hasNanoConsent ? 'In-browser Socratic AI active' : 'Low battery & lightweight rule engine active'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUserAiConsent(!hasNanoConsent)}
+              style={{
+                padding: '5px 12px',
+                borderRadius: '6px',
+                background: hasNanoConsent ? '#fee2e2' : '#2563eb',
+                color: hasNanoConsent ? '#991b1b' : '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {hasNanoConsent ? 'Switch to Eco' : 'Enable AI'}
+            </button>
           </div>
 
           {/* Group 1: Catholic Life & Faith (Dedicated Sanctuary, Not Key Staged) */}

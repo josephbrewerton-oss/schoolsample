@@ -416,9 +416,14 @@ export const QuestionCard: React.FC<Props> = ({
     const chosenOptionText = effectiveOptions[selectedAnswer] || '';
     const misconceptionNote = effectiveMisconceptions[selectedAnswer] || 'Conceptual confusion';
 
+    const isMath = subject.toLowerCase().includes('math') || unit.toLowerCase().includes('fraction') || unit.toLowerCase().includes('arithmetic') || unit.toLowerCase().includes('ratio') || unit.toLowerCase().includes('percent');
+    const mathConstraint = isMath
+      ? `\n;; AST MATHEMATICAL GUIDELINES (:node "math:checkup")\nAdhere strictly to invariant UK National Curriculum mathematical rules. Never fabricate arithmetic numbers or incorrect formulas.`
+      : '';
+
     const systemPrompt = `You are St Joseph's Socratic On-Device Tutor.
 Your job is to explain WHY a student's chosen option is a tempting cognitive trap, without giving away future answers.
-Speak directly to a UK student in an encouraging, friendly, and precise voice. Keep your explanation to 2-3 short, clear sentences.`;
+Speak directly to a UK student in an encouraging, friendly, and precise voice. Keep your explanation to 2-3 short, clear sentences.${mathConstraint}`;
 
     const userPrompt = `Subject: ${subject}
 Topic: ${unit}

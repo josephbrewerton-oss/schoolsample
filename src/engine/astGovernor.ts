@@ -12,6 +12,14 @@ export interface RawASTQuestion {
   socraticFollowUp?: string;
 }
 
+export interface MathCheckupResult {
+  isMath: boolean;
+  groundTruth: string;
+  steps: string[];
+  explanation: string;
+  isStudentCorrect?: boolean;
+}
+
 export interface GovernedQuestion {
   isValid: boolean;
   sanitizedQuestion: (RawASTQuestion & { id?: string }) | null;
@@ -255,6 +263,184 @@ export class ASTFlowGovernor {
 
     const minsToHrs = prompt.match(/(\d+)\s*(?:minutes|mins)\s*(?:to|in|into|as)\s*(?:hours|hrs)/i);
     if (minsToHrs) return String(parseFloat((parseFloat(minsToHrs[1]) / 60).toFixed(2)));
+
+    return null;
+  }
+
+  /**
+   * Deterministically evaluates mathematical checkup queries and checks student answers.
+   * Prevents LLM hallucinations on math checkup queries by providing ground-truth AST evaluation.
+   */
+  public static evaluateMathCheckup(promptOrQuery: string, secondaryText: string = ''): MathCheckupResult | null {
+    const combined = `${promptOrQuery} ${secondaryText}`.trim();
+    if (!combined) return null;
+    const lower = combined.toLowerCase();
+
+    // 1. Linear Algebraic Equations: e.g. 3x + 7 = 22 or 2x - 4 = 10 or x + 5 = 12
+    const linearMatch = combined.match(/(\d*)\s*([a-zA-Z])\s*([\+\-])\s*(\d+)\s*=\s*(\d+)/);
+    if (linearMatch) {
+      const coeff = linearMatch[1] === '' ? 1 : parseInt(linearMatch[1], 10);
+      const variable = linearMatch[2];
+      const sign = linearMatch[3];
+      const constant = parseInt(linearMatch[4], 10);
+      const rhs = parseInt(linearMatch[5], 10);
+
+      const adjustedRhs = sign === '+' ? rhs - constant : rhs + constant;
+      const xVal = adjustedRhs / coeff;
+      const xStr = Number.isInteger(xVal) ? String(xVal) : String(parseFloat(xVal.toFixed(2)));
+
+      const steps = [
+        `Step 1: Perform the inverse operation: ${sign === '+' ? `subtract ${constant}` : `add ${constant}`} from both sides -> ${coeff}${variable} = ${adjustedRhs}.`,
+        `Step 2: Divide both sides by ${coeff} -> ${variable} = ${xStr}.`
+      ];
+
+      // Check student guess in promptOrQuery
+      const studentMatch = promptOrQuery.match(/(?:[a-zA-Z]\s*=\s*|is\s+it\s+|answer\s+is\s+)?(-?\d+(?:\.\d+)?)/i);
+      const studentVal = studentMatch ? studentMatch[1] : null;
+      const isCorrect = studentVal !== null && Math.abs(parseFloat(studentVal) - xVal) < 0.001;
+
+      return {
+        isMath: true,
+        groundTruth: `${variable} = ${xStr}`,
+        steps,
+        explanation: `To solve ${coeff}${variable} ${sign} ${constant} = ${rhs}, isolate ${variable} using inverse operations. ${variable} equals ${xStr}.`,
+        isStudentCorrect: studentVal !== null ? isCorrect : undefined,
+      };
+    }
+
+    // 2. Fractions Addition / Subtraction Concept (e.g. "half a pizza and another quarter", "1/2 + 1/4")
+    if (lower.includes('half') && (lower.includes('quarter') || lower.includes('1/4'))) {
+      const isSubtraction = lower.includes('take away') || lower.includes('minus') || lower.includes('subtract');
+      const groundTruth = isSubtraction ? '1/4' : '3/4';
+      const steps = [
+        'Step 1: Convert half into quarters using an equivalent fraction: 1/2 = 2/4.',
+        isSubtraction
+          ? 'Step 2: Subtract the numerators keeping the denominator 4: 2/4 - 1/4 = 1/4.'
+          : 'Step 2: Add the numerators keeping the denominator 4: 2/4 + 1/4 = 3/4 (NOT 2/6! You never add denominators).'
+      ];
+      const hasStudentAns = promptOrQuery.match(/(?:is\s+it\s+|answer\s+is\s+)?([1-4]\/[2-6]|[0-9\.]+)/i);
+      const isCorrect = hasStudentAns ? hasStudentAns[1] === groundTruth : undefined;
+
+      return {
+        isMath: true,
+        groundTruth,
+        steps,
+        explanation: `1/2 is equivalent to 2/4. When you combine 2/4 with 1/4, you get 3/4. Common trap: never add denominators!`,
+        isStudentCorrect: isCorrect,
+      };
+    }
+
+    // 3. Percentages (e.g. "15% of 80", "20% of 150")
+    const pctMatch = combined.match(/(\d+(?:\.\d+)?)\s*%\s*(?:of)\s*(\d+(?:\.\d+)?)/i);
+    if (pctMatch) {
+      const pct = parseFloat(pctMatch[1]);
+      const total = parseFloat(pctMatch[2]);
+      const result = (pct / 100) * total;
+      const resultStr = Number.isInteger(result) ? String(result) : String(parseFloat(result.toFixed(2)));
+
+      const steps = [
+        `Step 1: 10% of ${total} is found by dividing by 10 -> ${total / 10}.`,
+        `Step 2: Find 5% by halving 10% -> ${(total / 10) / 2}.`,
+        `Step 3: Combine to find ${pct}% of ${total} = ${resultStr}.`
+      ];
+
+      const studentMatch = promptOrQuery.match(/(?:is\s+it\s+|answer\s+is\s+)?(-?\d+(?:\.\d+)?)/i);
+      const studentVal = studentMatch ? parseFloat(studentMatch[1]) : null;
+      const isCorrect = studentVal !== null && Math.abs(studentVal - result) < 0.01;
+
+      return {
+        isMath: true,
+        groundTruth: resultStr,
+        steps,
+        explanation: `${pct}% of ${total} is exactly ${resultStr}.`,
+        isStudentCorrect: studentVal !== null ? isCorrect : undefined,
+      };
+    }
+
+    // 4. Place Value / Word Problems: "4 packs of 10 and 3" -> 43
+    const packMatch = combined.match(/(\d+)\s+packs?\s+of\s+(\d+)(?:\s+(?:and|\+)\s+(\d+))?/i);
+    if (packMatch) {
+      const packs = parseInt(packMatch[1], 10);
+      const size = parseInt(packMatch[2], 10);
+      const extra = packMatch[3] ? parseInt(packMatch[3], 10) : 0;
+      const total = packs * size + extra;
+
+      const steps = [
+        `Step 1: Multiply the number of packs by pack size: ${packs} × ${size} = ${packs * size}.`,
+        extra > 0 ? `Step 2: Add the single extras: ${packs * size} + ${extra} = ${total}.` : `Total = ${total}.`
+      ];
+
+      const studentMatch = promptOrQuery.match(/(?:is\s+it\s+|answer\s+is\s+)?(\d+)/i);
+      const isCorrect = studentMatch ? parseInt(studentMatch[1], 10) === total : undefined;
+
+      return {
+        isMath: true,
+        groundTruth: String(total),
+        steps,
+        explanation: `${packs} packs of ${size} plus ${extra} equals ${total}.`,
+        isStudentCorrect: isCorrect,
+      };
+    }
+
+    // 5. Probability (e.g. "3 red balls and 7 blue balls")
+    const probMatch = combined.match(/(\d+)\s+red\s+(?:balls?\s+)?(?:and|\+)\s*(\d+)\s+blue/i);
+    if (probMatch) {
+      const red = parseInt(probMatch[1], 10);
+      const blue = parseInt(probMatch[2], 10);
+      const total = red + blue;
+      const groundTruth = `${red}/${total}`;
+
+      const steps = [
+        `Step 1: Find the total number of outcomes: ${red} red + ${blue} blue = ${total} total.`,
+        `Step 2: Probability = favorable outcomes / total outcomes = ${red}/${total} (NOT ${red}/${blue}!).`
+      ];
+
+      return {
+        isMath: true,
+        groundTruth,
+        steps,
+        explanation: `The probability is favorable outcomes divided by total outcomes: ${red}/${total}.`,
+      };
+    }
+
+    // 6. Rounding: "350 rounded to nearest hundred" -> 400, "349" -> 300
+    const roundMatch = combined.match(/(\d+)\s+rounded\s+to\s+(?:the\s+)?nearest\s+(ten|hundred|thousand)/i);
+    if (roundMatch) {
+      const num = parseInt(roundMatch[1], 10);
+      const unit = roundMatch[2].toLowerCase();
+      let factor = 10;
+      if (unit === 'hundred') factor = 100;
+      if (unit === 'thousand') factor = 1000;
+      const rounded = Math.round(num / factor) * factor;
+
+      const steps = [
+        `Step 1: Check the digit to the right of the ${unit} place.`,
+        `Step 2: 5 or more rounds UP, 4 or less rounds DOWN -> ${num} rounds to ${rounded}.`
+      ];
+
+      return {
+        isMath: true,
+        groundTruth: String(rounded),
+        steps,
+        explanation: `${num} rounded to the nearest ${unit} is ${rounded}.`,
+      };
+    }
+
+    // 7. General Arithmetic via verifyArithmetic
+    const directMath = this.verifyArithmetic(combined);
+    if (directMath !== null) {
+      const studentMatch = promptOrQuery.match(/(?:is\s+it\s+|answer\s+is\s+)?(-?\d+(?:\.\d+)?(?:\/\d+)?)/i);
+      const studentAns = studentMatch ? studentMatch[1] : null;
+      const isCorrect = studentAns !== null && (studentAns === directMath || Math.abs(parseFloat(studentAns) - parseFloat(directMath)) < 0.001);
+
+      return {
+        isMath: true,
+        groundTruth: directMath,
+        steps: [`Calculated deterministically according to UK National Curriculum arithmetic rules: ${directMath}`],
+        explanation: `The exact mathematical result is ${directMath}.`,
+        isStudentCorrect: studentAns !== null ? isCorrect : undefined,
+      };
+    }
 
     return null;
   }
