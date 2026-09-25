@@ -160,7 +160,7 @@
       this.emit('langchange', { lang: this.currentLang });
     }
 
-    setPreset(presetId) {
+    setPreset(presetId, shouldPlay = false) {
       this.activePresetId = presetId;
       this.scene = this.getScene(presetId);
       this.durationSec = this.scene.duration || 10.0;
@@ -174,6 +174,9 @@
         keyframes: this.scene.keyframes || []
       });
       this.seek(0);
+      if (shouldPlay) {
+        this.play();
+      }
     }
 
     toggleVoice() {
@@ -287,7 +290,9 @@
           if (data.lang) engine.setLanguage(data.lang);
           break;
         case 'SET_PRESET':
-          if (data.preset) engine.setPreset(data.preset);
+          if (data.preset) {
+            engine.setPreset(data.preset, data.play !== false);
+          }
           break;
         case 'SET_THEME':
           if (data.theme && uiController && uiController.setTheme) {

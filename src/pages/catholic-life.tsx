@@ -186,6 +186,7 @@ export default function CatholicLifePage(): React.JSX.Element {
       if (
         [
           'overview',
+          'church-tour',
           'mass',
           'sacraments',
           'first-communion',
@@ -202,7 +203,7 @@ export default function CatholicLifePage(): React.JSX.Element {
         setActiveTab(tabParam as CatholicLifeTab);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab]);
 
   const handleTabChange = (tab: CatholicLifeTab) => {
     setActiveTab(tab);
@@ -646,6 +647,53 @@ export default function CatholicLifePage(): React.JSX.Element {
                   Walk Through The Mass &rarr;
                 </button>
               </div>
+            </div>
+
+            {/* Featured Church Tour Vector Player on Overview */}
+            <div
+              style={{
+                background: '#090d16',
+                border: '1px solid #1e293b',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                marginBottom: '2.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.3rem' }}>⛪</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#f8fafc' }}>
+                      Featured: Interactive Tour of a Catholic Church
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>
+                      Narthex, Nave, Ambo, Altar, Tabernacle &amp; Lady Chapel &bull; Continuous vector motion &amp; hotspots
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('church-tour')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Full Tour &amp; Stations &rarr;
+                </button>
+              </div>
+              <AstVectorMediaPlayer
+                preset="church-tour"
+                autoPlay={true}
+                height="480px"
+                allowPresetSwitch={true}
+              />
             </div>
 
             {/* Grid of All Sanctuary Modules */}
@@ -1125,6 +1173,7 @@ export default function CatholicLifePage(): React.JSX.Element {
                 <div style={{ marginBottom: '2rem' }}>
                   <AstVectorMediaPlayer
                     preset="church-tour"
+                    autoPlay={true}
                     height="500px"
                     allowPresetSwitch={true}
                   />

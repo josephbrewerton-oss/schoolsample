@@ -1,0 +1,493 @@
+{
+  "version": "2.1.0",
+  "description": "AST Vector Media Player Curriculum Scenes Configuration",
+  "totalScenes": 9,
+  "scenes": [
+    {
+      "id": "fractions",
+      "stage": "KS2 MATHS",
+      "title": "Fractions: Why Common Denominators Rule",
+      "duration": 12,
+      "svgFile": "scenes/fractions.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Step 1: Unequal Slices",
+          "rule": "You cannot count slices of different sizes (1/2 + 1/4)!"
+        },
+        {
+          "t": 0.35,
+          "title": "Step 2: The Equivalence Cut",
+          "rule": "Cut 1/2 in half: (1×2)/(2×2) = 2/4. Same area, new denominator!"
+        },
+        {
+          "t": 0.7,
+          "title": "Step 3: Vector Fusion",
+          "rule": "Keep denominator 4 and add numerators: 2/4 + 1/4 = 3/4."
+        },
+        {
+          "t": 1,
+          "title": "Step 4: Solved Proof",
+          "rule": "3/4 of the whole! Remember: NEVER add denominators (not 2/6)."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.35,
+          "en": "Look at 1/2 and 1/4: they are completely different sizes! We cannot count them yet.",
+          "es": "Mira 1/2 y 1/4: ¡tienen tamaños diferentes! No podemos sumarlas todavía."
+        },
+        {
+          "start": 0.35,
+          "end": 0.7,
+          "en": "Watch the laser slice cut 1/2 into two equal quarters (2/4). The area stays the exact same!",
+          "es": "Mira cómo la línea corta 1/2 en dos cuartos (2/4). ¡El área es exactamente igual!"
+        },
+        {
+          "start": 0.7,
+          "end": 1,
+          "en": "Now they share a common denominator! 2 quarters + 1 quarter equals exactly 3 quarters.",
+          "es": "¡Ahora comparten el mismo denominador! 2 cuartos + 1 cuarto son 3 cuartos."
+        }
+      ]
+    },
+    {
+      "id": "solar-system",
+      "stage": "KS3 SCIENCE",
+      "title": "Solar System: Heliocentric Planetary Motion",
+      "duration": 14,
+      "svgFile": "scenes/solar-system.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Heliocentric Sun",
+          "rule": "The Sun sits at the focal center, providing gravitational attraction."
+        },
+        {
+          "t": 0.33,
+          "title": "Planetary Orbits",
+          "rule": "Inner planets orbit faster than outer planets (Kepler's 3rd Law)."
+        },
+        {
+          "t": 0.66,
+          "title": "Earth Axial Tilt",
+          "rule": "Earth's 23.5° tilt causes seasonal changes, not distance from the Sun!"
+        },
+        {
+          "t": 1,
+          "title": "Harmonic Alignment",
+          "rule": "Deterministic orbital resonance across the solar system."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.33,
+          "en": "At the center sits our Sun. Watch how Mercury speeds around much faster than Earth.",
+          "es": "En el centro se encuentra el Sol. Observa cómo Mercurio gira mucho más rápido que la Tierra."
+        },
+        {
+          "start": 0.33,
+          "end": 0.66,
+          "en": "Kepler's Law: The closer a planet is to the Sun, the faster it travels in its orbit.",
+          "es": "Ley de Kepler: Cuanto más cerca está un planeta del Sol, más rápido orbita."
+        },
+        {
+          "start": 0.66,
+          "end": 1,
+          "en": "Earth completes 1 orbit per year with a 23.5° axial tilt creating our seasons.",
+          "es": "La Tierra completa una órbita al año con una inclinación de 23.5° que crea las estaciones."
+        }
+      ]
+    },
+    {
+      "id": "photosynthesis",
+      "stage": "KS3 BIOLOGY",
+      "title": "Photosynthesis: The Green Solar Engine",
+      "duration": 10,
+      "svgFile": "scenes/photosynthesis.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Phase 1: Reactant Influx",
+          "rule": "Leaves absorb Water (H2O) through roots and Carbon Dioxide (CO2) through stomata."
+        },
+        {
+          "t": 0.4,
+          "title": "Phase 2: Light Absorption",
+          "rule": "Chlorophyll in chloroplasts absorbs light energy to split water molecules."
+        },
+        {
+          "t": 0.75,
+          "title": "Phase 3: Glucose Synthesis",
+          "rule": "Chemical rearrangement produces Glucose (C6H12O6) for plant food."
+        },
+        {
+          "t": 1,
+          "title": "Phase 4: Oxygen Release",
+          "rule": "Oxygen (O2) is released as a vital by-product through stomatal pores."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.4,
+          "en": "The plant leaf absorbs sunlight, water from veins, and carbon dioxide from air.",
+          "es": "La hoja de la planta absorbe luz solar, agua de las venas y dióxido de carbono del aire."
+        },
+        {
+          "start": 0.4,
+          "end": 0.75,
+          "en": "Inside chloroplasts, chlorophyll traps light photons to power the chemical synthesis.",
+          "es": "Dentro de los cloroplastos, la clorofila atrapa fotones para impulsar la síntesis química."
+        },
+        {
+          "start": 0.75,
+          "end": 1,
+          "en": "The equation: 6CO2 + 6H2O + Light makes Glucose (energy) and releases Oxygen!",
+          "es": "Ecuación: 6CO2 + 6H2O + Luz produce Glucosa (energía) y libera Oxígeno."
+        }
+      ]
+    },
+    {
+      "id": "pythagoras",
+      "stage": "KS3 GEOMETRY",
+      "title": "Pythagoras Theorem: Area Conservation",
+      "duration": 11,
+      "svgFile": "scenes/pythagoras.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Step 1: The 3-4-5 Triangle",
+          "rule": "A right-angled triangle with sides a = 3, b = 4, and hypotenuse c."
+        },
+        {
+          "t": 0.35,
+          "title": "Step 2: Square a² and b²",
+          "rule": "Square of side 3 has area 9; square of side 4 has area 16."
+        },
+        {
+          "t": 0.7,
+          "title": "Step 3: Vector Area Sum",
+          "rule": "Total area = 9 + 16 = 25 square units."
+        },
+        {
+          "t": 1,
+          "title": "Step 4: Hypotenuse Square c²",
+          "rule": "c² = 25 ➔ c = √25 = 5. Q.E.D."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.35,
+          "en": "In any right-angled triangle, squares formed on the legs equal the square on the hypotenuse.",
+          "es": "En un triángulo rectángulo, los cuadrados sobre los catetos equivalen al cuadrado de la hipotenusa."
+        },
+        {
+          "start": 0.35,
+          "end": 0.7,
+          "en": "Side 'a' produces a square of 9 units. Side 'b' produces a square of 16 units.",
+          "es": "El lado 'a' produce un cuadrado de 9 unidades. El lado 'b' produce un cuadrado de 16 unidades."
+        },
+        {
+          "start": 0.7,
+          "end": 1,
+          "en": "Together they sum to 25 units! The hypotenuse 'c' must be exactly 5. a² + b² = c².",
+          "es": "¡Juntos suman 25 unidades! La hipotenusa 'c' mide exactamente 5. a² + b² = c²."
+        }
+      ]
+    },
+    {
+      "id": "water-cycle",
+      "stage": "KS2 GEOGRAPHY",
+      "title": "Water Cycle: Continuous Earth Cycle",
+      "duration": 10,
+      "svgFile": "scenes/water-cycle.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Solar Heating & Evaporation",
+          "rule": "Sun warms ocean water, converting liquid into invisible water vapor."
+        },
+        {
+          "t": 0.35,
+          "title": "Atmospheric Condensation",
+          "rule": "Rising vapor cools and condenses into cloud water droplets."
+        },
+        {
+          "t": 0.7,
+          "title": "Precipitation",
+          "rule": "Heavy clouds release moisture as rain, sleet, or snow."
+        },
+        {
+          "t": 1,
+          "title": "Runoff & Collection",
+          "rule": "Rivers carry precipitation back to oceans, completing the closed cycle."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.35,
+          "en": "Solar energy heats water surfaces, causing evaporation into rising gas molecules.",
+          "es": "La energía solar calienta el agua provocando la evaporación en moléculas de gas."
+        },
+        {
+          "start": 0.35,
+          "end": 0.7,
+          "en": "As vapor climbs into cold upper air, it condenses into visible fluffy clouds.",
+          "es": "Al subir al aire frío, el vapor se condensa en nubes esponjosas."
+        },
+        {
+          "start": 0.7,
+          "end": 1,
+          "en": "When droplets become too heavy, gravity pulls them down as precipitation.",
+          "es": "Cuando las gotas son pesadas, la gravedad las hace caer en precipitación."
+        }
+      ]
+    },
+    {
+      "id": "atom",
+      "stage": "KS3 CHEMISTRY",
+      "title": "Atomic Structure: Bohr Electron Shells",
+      "duration": 12,
+      "svgFile": "scenes/atom.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Dense Nucleus",
+          "rule": "Protons (+) and Neutrons (0) tightly bound in the atomic core."
+        },
+        {
+          "t": 0.33,
+          "title": "Inner K-Shell (n=1)",
+          "rule": "Holds a maximum of 2 electrons in the lowest ground energy state."
+        },
+        {
+          "t": 0.66,
+          "title": "Outer L-Shell (n=2)",
+          "rule": "Holds up to 8 electrons (Carbon has 4 valence electrons)."
+        },
+        {
+          "t": 1,
+          "title": "Chemical Valence",
+          "rule": "Valence electrons dictate bonding affinity with other elements."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.33,
+          "en": "At the center is the dense nucleus made of positively charged protons and neutral neutrons.",
+          "es": "En el centro está el núcleo denso con protones positivos y neutrones neutros."
+        },
+        {
+          "start": 0.33,
+          "end": 0.66,
+          "en": "Electrons orbit in quantized shells. The first shell can hold only 2 electrons.",
+          "es": "Los electrones orbitan en capas cuantizadas. La primera capa solo admite 2 electrones."
+        },
+        {
+          "start": 0.66,
+          "end": 1,
+          "en": "Carbon has 6 total electrons: 2 in the inner shell, and 4 in the valence shell.",
+          "es": "El carbono tiene 6 electrones: 2 en la capa interna y 4 en la capa de valencia."
+        }
+      ]
+    },
+    {
+      "id": "velocity",
+      "stage": "KS3 PHYSICS",
+      "title": "Kinematics: Velocity & Distance-Time Vectors",
+      "duration": 10,
+      "svgFile": "scenes/velocity.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "At Rest",
+          "rule": "Position s = 0m, Velocity v = 0 m/s."
+        },
+        {
+          "t": 0.35,
+          "title": "Constant Acceleration",
+          "rule": "Slope of Distance-Time curve steepens (v = u + at)."
+        },
+        {
+          "t": 0.7,
+          "title": "Constant High Velocity",
+          "rule": "Straight steep line represents high uniform speed."
+        },
+        {
+          "t": 1,
+          "title": "Deceleration to Stop",
+          "rule": "Negative acceleration flattens curve back to zero velocity."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.35,
+          "en": "Watch the particle accelerate from rest along the vector track.",
+          "es": "Observa cómo la partícula acelera desde el reposo en la pista vectorial."
+        },
+        {
+          "start": 0.35,
+          "end": 0.7,
+          "en": "The slope on the distance-time graph represents instant velocity: steep slope = fast speed.",
+          "es": "La pendiente de la gráfica representa la velocidad instantánea: pendiente empinada = alta velocidad."
+        },
+        {
+          "start": 0.7,
+          "end": 1,
+          "en": "Braking applies negative acceleration, flattening the velocity graph to zero.",
+          "es": "El frenado aplica aceleración negativa, aplanando la gráfica a cero."
+        }
+      ]
+    },
+    {
+      "id": "dna-helix",
+      "stage": "KS3 GENETICS",
+      "title": "Genetics: DNA Base Pairing & Transcription",
+      "duration": 12,
+      "svgFile": "scenes/dna-helix.svg",
+      "keyframesCount": 4,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "Double Helix Geometry",
+          "rule": "Anti-parallel sugar-phosphate backbones spiraling in 3D."
+        },
+        {
+          "t": 0.35,
+          "title": "Watson-Crick Base Pairs",
+          "rule": "Adenine (A) always pairs with Thymine (T) via 2 hydrogen bonds."
+        },
+        {
+          "t": 0.7,
+          "title": "Cytosine-Guanine Pairs",
+          "rule": "Cytosine (C) pairs with Guanine (G) via 3 hydrogen bonds."
+        },
+        {
+          "t": 1,
+          "title": "Replication Fork Unzip",
+          "rule": "Helicase enzyme unzips hydrogen bonds for semi-conservative replication."
+        }
+      ],
+      "subtitlesCount": 3,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.35,
+          "en": "DNA contains hereditary code structured as a winding double helix.",
+          "es": "El ADN contiene el código genético estructurado como una doble hélice."
+        },
+        {
+          "start": 0.35,
+          "end": 0.7,
+          "en": "Complementary base rule: Adenine binds to Thymine; Guanine binds to Cytosine.",
+          "es": "Regla complementaria: La Adenina se une a Timina; Guanina a Citosina."
+        },
+        {
+          "start": 0.7,
+          "end": 1,
+          "en": "Hydrogen bonds hold the rungs together, unzipping during cell division replication.",
+          "es": "Los puentes de hidrógeno unen las bases, abriéndose en la replicación celular."
+        }
+      ]
+    },
+    {
+      "id": "church-tour",
+      "stage": "CATHOLIC LIFE",
+      "title": "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces",
+      "duration": 16,
+      "svgFile": "scenes/church-tour.svg",
+      "keyframesCount": 6,
+      "keyframes": [
+        {
+          "t": 0,
+          "title": "1. Narthex & Holy Water Stoup",
+          "rule": "Vestibulum: We bless ourselves with Holy Water to recall our Baptism."
+        },
+        {
+          "t": 0.2,
+          "title": "2. Nave & Central Aisle",
+          "rule": "Navis: The Pilgrim People of God; we genuflect towards the Tabernacle before entering our pew."
+        },
+        {
+          "t": 0.4,
+          "title": "3. Ambo (Lectern)",
+          "rule": "Mensa Verbi: The Table of the Word from which the Holy Gospel is proclaimed."
+        },
+        {
+          "t": 0.6,
+          "title": "4. Altar of Sacrifice",
+          "rule": "Altare Christi: Represents Christ Himself and the Holy Sacrifice of the Mass."
+        },
+        {
+          "t": 0.8,
+          "title": "5. Tabernacle & Sanctuary Lamp",
+          "rule": "Tabernaculum: Houses the Blessed Sacrament; red lamp indicates Christ's Real Presence."
+        },
+        {
+          "t": 1,
+          "title": "6. Lady Chapel & Baptismal Font",
+          "rule": "Fons & Sacellum: Devotional side chapel of Our Lady and the waters of new birth."
+        }
+      ],
+      "subtitlesCount": 5,
+      "subtitles": [
+        {
+          "start": 0,
+          "end": 0.2,
+          "en": "We enter through the Narthex, blessing ourselves with Holy Water in the Name of the Father, Son, and Holy Spirit.",
+          "es": "Entramos por el Nártex, bendiciéndonos con Agua Bendita en el Nombre del Padre, del Hijo y del Espíritu Santo.",
+          "la": "In nomine Patris, et Filii, et Spiritus Sancti. Aqua benedicta ad memoriam baptismi."
+        },
+        {
+          "start": 0.2,
+          "end": 0.4,
+          "en": "Walking up the central aisle of the Nave, we genuflect on our right knee toward the Tabernacle before entering our pew.",
+          "es": "Por el pasillo de la Nave, hacemos una genuflexión con la rodilla derecha hacia el Sagrario antes de sentarnos.",
+          "la": "Ad Tabernaculum flectamus genua, Christum Dominum verum Deum adorantes."
+        },
+        {
+          "start": 0.4,
+          "end": 0.6,
+          "en": "The Ambo is the Table of the Word, where the Holy Gospel and readings of Sacred Scripture are proclaimed.",
+          "es": "El Ambón es la Mesa de la Palabra, donde se proclaman las lecturas de la Sagrada Escritura y el Evangelio.",
+          "la": "Ambo est mensa Verbi Dei, unde Sanctum Evangelium fidelibus annuntiatur."
+        },
+        {
+          "start": 0.6,
+          "end": 0.8,
+          "en": "The Altar is the sacred center representing Christ Himself, where the bread and wine become His Body and Blood.",
+          "es": "El Altar es el centro sagrado que representa a Cristo, donde el pan y el vino se convierten en Su Cuerpo y Sangre.",
+          "la": "Altare est Christus: hic sacrificium eucharisticum in remissionem peccatorum offertur."
+        },
+        {
+          "start": 0.8,
+          "end": 1,
+          "en": "The golden Tabernacle holds the Real Presence of Christ in the Eucharist, watched over by the burning red Sanctuary Lamp.",
+          "es": "El Sagrario dorado guarda la Presencia Real de Jesús en la Eucaristía, acompañado por la lámpara roja del Santuario.",
+          "la": "Ecce panis angelorum: in Tabernaculo Christus vere et substantialiter praesens permanet."
+        }
+      ]
+    }
+  ]
+}

@@ -848,6 +848,7 @@ export default function LearningZonePage() {
                       : 'fractions'
                   }
                   allowPresetSwitch={true}
+                  autoPlay={true}
                   height="540px"
                 />
               </React.Suspense>

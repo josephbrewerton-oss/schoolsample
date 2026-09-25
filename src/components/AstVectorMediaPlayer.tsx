@@ -65,6 +65,8 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(preset);
+  const selectedPresetRef = useRef(preset);
+  const autoPlayRef = useRef(autoPlay);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [activeKeyframe, setActiveKeyframe] = useState<{ title: string; rule: string } | null>(null);
   const [currentProgress, setCurrentProgress] = useState(0);
@@ -74,7 +76,16 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   // Sync internal selected preset if external preset prop changes
   useEffect(() => {
     setSelectedPreset(preset);
+    selectedPresetRef.current = preset;
   }, [preset]);
+
+  useEffect(() => {
+    selectedPresetRef.current = selectedPreset;
+  }, [selectedPreset]);
+
+  useEffect(() => {
+    autoPlayRef.current = autoPlay;
+  }, [autoPlay]);
 
   // Derive system theme if not explicitly passed
   const activeTheme = theme || (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark' ? 'dark' : 'dark');
@@ -120,9 +131,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
       switch (data.type) {
         case 'PLAYER_READY':
           setIsPlayerReady(true);
-          if (selectedPreset) {
-            postToPlayer({ type: 'SET_PRESET', preset: selectedPreset });
-          }
+          postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
           break;
         case 'TIME_UPDATE':
           setCurrentProgress(data.progress || 0);
@@ -135,12 +144,6 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
         case 'HOTSPOT_SELECTED':
           setActiveKeyframe({ title: data.label || 'Station Selected', rule: `Interactively inspected station at ${(data.targetT * 100).toFixed(0)}%` });
           break;
-        case 'PRESETCHANGE':
-        case 'PRESET_LOADED':
-          if (data.preset && data.preset !== selectedPreset) {
-            setSelectedPreset(data.preset);
-          }
-          break;
         default:
           break;
       }
@@ -148,12 +151,14 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onKeyframeReached, onTimeUpdate, selectedPreset]);
+  }, [onKeyframeReached, onTimeUpdate, postToPlayer]);
 
-  const playerSrc = `${import.meta.env.BASE_URL}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}`;
+  const rawBase = import.meta.env.BASE_URL || '/';
+  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}`;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const embedCode = `<iframe src="${origin}${import.meta.env.BASE_URL}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
+  const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
 
   const copyEmbedCode = () => {
     navigator.clipboard.writeText(embedCode).then(() => {
@@ -218,7 +223,11 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           {allowPresetSwitch && (
             <select
               value={selectedPreset}
-              onChange={(e) => setSelectedPreset(e.target.value)}
+              onChange={(e) => {
+                const nextPreset = e.target.value;
+                setSelectedPreset(nextPreset);
+                postToPlayer({ type: 'SET_PRESET', preset: nextPreset, play: true });
+              }}
               style={{
                 background: '#1e293b',
                 color: '#f8fafc',
@@ -239,6 +248,27 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
               ))}
             </select>
           )}
+
+          <button
+            type="button"
+            onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
+            style={{
+              padding: '3px 8px',
+              borderRadius: '6px',
+              background: '#2563eb',
+              border: '1px solid #3b82f6',
+              color: '#ffffff',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Toggle Playback in iFrame"
+          >
+            ▶ / ⏸ Play
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
