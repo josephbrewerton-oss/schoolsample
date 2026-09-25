@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stjosephs.sch.uk/schemas/ast-scene-v1.json",
+  "title": "ASTSceneDefinition",
+  "description": "Standardized Minimal AST Vector Motion Scene Specification",
+  "type": "object",
+  "required": ["id", "title", "duration"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "description": "Unique identifier slug for the scene"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 120,
+      "description": "Curriculum lesson title"
+    },
+    "stage": {
+      "type": "string",
+      "description": "National Curriculum Key Stage level, e.g. KS1, KS2 MATHS, KS3 SCIENCE"
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 1.0,
+      "maximum": 120.0,
+      "description": "Full timeline duration in seconds"
+    },
+    "viewBox": {
+      "type": "string",
+      "default": "0 0 800 480",
+      "description": "SVG coordinate space boundaries"
+    },
+    "easing": {
+      "type": "string",
+      "enum": ["linear", "easeInQuad", "easeOutQuad", "easeInOutQuad", "cubic"],
+      "default": "easeInOutQuad",
+      "description": "Interpolation easing curve"
+    },
+    "keyframes": {
+      "type": "array",
+      "description": "Chronological milestone markers",
+      "items": {
+        "type": "object",
+        "required": ["t", "title", "rule"],
+        "properties": {
+          "t": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Normalized timestamp (0.0 to 1.0)"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "Milestone title"
+          },
+          "rule": {
+            "type": "string",
+            "maxLength": 240,
+            "description": "Core pedagogical rule or axiom"
+          },
+          "mathNotation": {
+            "type": "string",
+            "description": "Optional formula representation"
+          },
+          "misconceptionAlert": {
+            "type": "string",
+            "description": "Common student pitfall or warning"
+          }
+        }
+      }
+    },
+    "subtitles": {
+      "type": "array",
+      "description": "Time-coded bilingual narrative captions",
+      "items": {
+        "type": "object",
+        "required": ["start", "end", "en"],
+        "properties": {
+          "start": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "end": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "en": { "type": "string" },
+          "es": { "type": "string" },
+          "fr": { "type": "string" },
+          "de": { "type": "string" },
+          "it": { "type": "string" },
+          "pl": { "type": "string" },
+          "pt": { "type": "string" },
+          "uk": { "type": "string" },
+          "ar": { "type": "string" },
+          "la": { "type": "string" }
+        }
+      }
+    },
+    "audioCues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["t", "cue"],
+        "properties": {
+          "t": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+          "cue": { "type": "string", "enum": ["slice", "resolve", "orbit", "sparkle", "chime"] },
+          "frequencyHz": { "type": "number", "minimum": 20, "maximum": 20000 }
+        }
+      }
+    },
+    "elements": {
+      "type": "array",
+      "description": "Parametric vector elements",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "interactive": {
+      "type": "object",
+      "description": "Zero-bloat interactivity specification (hotspots and checkpoint challenges)",
+      "properties": {
+        "hotspots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "targetT"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "targetT": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "hint": { "type": "string" }
+            }
+          }
+        },
+        "checkpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["t", "prompt", "options", "answer"],
+            "properties": {
+              "t": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+              "title": { "type": "string" },
+              "prompt": { "type": "string" },
+              "options": {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 2
+              },
+              "answer": { "type": "integer", "minimum": 0 },
+              "explanation": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

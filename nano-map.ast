@@ -5,5 +5,7 @@
   (:node "quiz:numeric"      :path "/static/patterns/numeric.ast"      :slots (:prompt :precision :expected-num :margin))
   (:node "quiz:pair-sort"    :path "/static/patterns/pair-sort.ast"    :slots (:items :targets :mapping))
   (:node "math:formula"      :path "/static/patterns/formula.ast"      :slots (:latex :display :explanation))
+  (:node "math:checkup"      :path "/static/patterns/math-checkup.ast"  :slots (:prompt :axiom :ground-truth :steps :misconceptions))
+  (:node "media:vector-player" :path "/static/patterns/media-player.ast" :slots (:scene-id :preset :title :duration-sec :keyframes :subtitles :viewBox))
   (:node "effect:celebrate"  :path "/static/patterns/celebrate.ast"    :slots (:type :streak :trigger :message))
   (:node "theme:harmony"     :path "/static/patterns/harmony.ast"      :slots (:palette :typography :geometry :components)))

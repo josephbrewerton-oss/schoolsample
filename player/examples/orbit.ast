@@ -1,0 +1,10 @@
+(scene :id "orbit" :stage "KS3 PHYSICS" :duration 12.0
+  (:title "Heliocentric Planetary Gravitational Orbit")
+  (:easing "easeInOutQuad")
+  (:keyframes
+    ((:t 0.00 :title "Gravitational Focus" :rule "Sun exerts centripetal gravitational pull on orbital path.")
+     (:t 0.50 :title "Perihelion Acceleration" :rule "Planetary velocity peaks at closest approach (Kepler's 2nd Law).")
+     (:t 1.00 :title "Harmonic Orbital Period" :rule "Completed elliptical cycle back to starting aphelion.")))
+  (:subtitles
+    ((:start 0.0 :end 0.5 :en "The Sun sits at the focal center, pulling planets into elliptical orbits." :es "El Sol se encuentra en el centro focal, atrayendo a los planetas a órbitas elípticas.")
+     (:start 0.5 :end 1.0 :en "At perihelion closest approach, orbital speed reaches its maximum." :es "En el perihelio, la velocidad orbital alcanza su punto máximo."))))

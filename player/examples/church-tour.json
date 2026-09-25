@@ -1,0 +1,113 @@
+{
+  "id": "church-tour",
+  "stage": "CATHOLIC LIFE",
+  "title": "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces",
+  "duration": 16.0,
+  "viewBox": "0 0 800 480",
+  "easing": "easeInOutQuad",
+  "interactive": {
+    "hotspots": [
+      { "id": "narthex", "label": "1. Narthex & Holy Water Stoup", "targetT": 0.00 },
+      { "id": "nave", "label": "2. Nave & Central Aisle", "targetT": 0.20 },
+      { "id": "ambo", "label": "3. The Ambo (Lectern)", "targetT": 0.40 },
+      { "id": "altar", "label": "4. Altar of Sacrifice", "targetT": 0.60 },
+      { "id": "tabernacle", "label": "5. Tabernacle & Sanctuary Lamp", "targetT": 0.80 },
+      { "id": "lady-chapel", "label": "6. Lady Chapel & Baptismal Font", "targetT": 1.00 }
+    ],
+    "checkpoints": [
+      {
+        "t": 0.38,
+        "title": "Pilgrim Station Check",
+        "prompt": "Why do Catholics genuflect on the right knee when entering our pew in the Nave?",
+        "options": [
+          "To show polite respect to the priest",
+          "Because Christ is truly present in the Tabernacle",
+          "It is a traditional medieval stretch"
+        ],
+        "answer": 1,
+        "explanation": "Genuflecting is an act of royal worship acknowledging Jesus Christ truly present in the Eucharist inside the Tabernacle."
+      },
+      {
+        "t": 0.78,
+        "title": "Sanctuary Liturgy Check",
+        "prompt": "What burns constantly beside the Tabernacle to remind us that Jesus is present?",
+        "options": [
+          "Incense grains in a boat",
+          "The red Sanctuary Lamp",
+          "The Paschal baptismal candle"
+        ],
+        "answer": 1,
+        "explanation": "The red Sanctuary Lamp is kept burning day and night to indicate the Real Presence of Christ in the Blessed Sacrament."
+      }
+    ]
+  },
+  "keyframes": [
+    {
+      "t": 0.0,
+      "title": "1. Narthex & Holy Water Stoup",
+      "rule": "Vestibulum: We bless ourselves with Holy Water in the Name of the Trinity to recall our Baptism."
+    },
+    {
+      "t": 0.2,
+      "title": "2. Nave & Central Aisle",
+      "rule": "Navis: The Pilgrim People of God; we genuflect on our right knee towards the Tabernacle before entering our pew."
+    },
+    {
+      "t": 0.4,
+      "title": "3. Ambo (Lectern)",
+      "rule": "Mensa Verbi: The Table of the Word from which the Sacred Scriptures and Holy Gospel are proclaimed."
+    },
+    {
+      "t": 0.6,
+      "title": "4. Altar of Sacrifice",
+      "rule": "Altare Christi: Represents Christ Himself and the Holy Sacrifice of the Mass."
+    },
+    {
+      "t": 0.8,
+      "title": "5. Tabernacle & Sanctuary Lamp",
+      "rule": "Tabernaculum: Houses the Blessed Sacrament; red lamp indicates Christ's Real Presence."
+    },
+    {
+      "t": 1.0,
+      "title": "6. Lady Chapel & Baptismal Font",
+      "rule": "Fons & Sacellum: Devotional side chapel of Our Lady and the waters of new birth."
+    }
+  ],
+  "subtitles": [
+    {
+      "start": 0.0,
+      "end": 0.2,
+      "en": "We enter through the Narthex, blessing ourselves with Holy Water in the Name of the Father, Son, and Holy Spirit.",
+      "es": "Entramos por el Nártex, bendiciéndonos con Agua Bendita en el Nombre del Padre, del Hijo y del Espíritu Santo.",
+      "la": "In nomine Patris, et Filii, et Spiritus Sancti. Aqua benedicta ad memoriam baptismi."
+    },
+    {
+      "start": 0.2,
+      "end": 0.4,
+      "en": "Walking up the central aisle of the Nave, we genuflect on our right knee toward the Tabernacle before entering our pew.",
+      "es": "Por el pasillo de la Nave, hacemos una genuflexión con la rodilla derecha hacia el Sagrario antes de sentarnos.",
+      "la": "Ad Tabernaculum flectamus genua, Christum Dominum verum Deum adorantes."
+    },
+    {
+      "start": 0.4,
+      "end": 0.6,
+      "en": "The Ambo is the Table of the Word, where the Holy Gospel and readings of Sacred Scripture are proclaimed.",
+      "es": "El Ambón es la Mesa de la Palabra, donde se proclaman las lecturas de la Sagrada Escritura y el Evangelio.",
+      "la": "Ambo est mensa Verbi Dei, unde Sanctum Evangelium fidelibus annuntiatur."
+    },
+    {
+      "start": 0.6,
+      "end": 0.8,
+      "en": "The Altar is the sacred center representing Christ Himself, where the bread and wine become His Body and Blood.",
+      "es": "El Altar es el centro sagrado que representa a Cristo, donde el pan y el vino se convierten en Su Cuerpo y Sangre.",
+      "la": "Altare est Christus: hic sacrificium eucharisticum in remissionem peccatorum offertur."
+    },
+    {
+      "start": 0.8,
+      "end": 1.0,
+      "en": "The golden Tabernacle holds the Real Presence of Christ in the Eucharist, watched over by the burning red Sanctuary Lamp.",
+      "es": "El Sagrario dorado guarda la Presencia Real de Jesús en la Eucaristía, acompañado por la lámpara roja del Santuario.",
+      "la": "Ecce panis angelorum: in Tabernaculo Christus vere et substantialiter praesens permanet."
+    }
+  ]
+}

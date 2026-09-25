@@ -1,0 +1,17 @@
+(pattern:def :id "media:vector-player"
+  (:description "Deterministic AST-guided vector media player running in an isolated, sandboxed iframe")
+  (spec:slots
+    (:slot :scene-id     :type "string" :description "Unique identifier for the vector lesson scene")
+    (:slot :preset       :type "string" :description "Curriculum preset archetype (fractions, solar-system, etc.)")
+    (:slot :title        :type "string" :description "UK National Curriculum lesson title")
+    (:slot :duration-sec :type "number" :description "Nominal animation timeline duration in seconds")
+    (:slot :viewBox      :type "string" :description "SVG coordinate canvas boundary (e.g. 0 0 800 500)")
+    (:slot :keyframes    :type "list"   :description "Ordered milestone points (t: 0.0-1.0) with pedagogical rules")
+    (:slot :subtitles    :type "list"   :description "Time-coded bilingual narrative captions")
+    (:slot :audio-cues   :type "list"   :description "Procedural audio synthesizer frequencies and chords"))
+  (rules:architecture
+    (:rule "ZERO_BLOCKED_MAIN_THREAD: All animation calculations and rendering loops must execute inside an isolated iframe context.")
+    (:rule "ZERO_CLOUD_BANDWIDTH: No video blobs (MP4/WebM). Only compact AST vector descriptions under 5KB.")
+    (:rule "PARAMETRIC_CONTINUITY: Visual coordinates must be smooth mathematical functions of progress parameter t (0.0 to 1.0).")
+    (:rule "EMBED_STANDALONE: Player must execute without external dependencies, runnable in any standard LMS iframe.")
+    (:rule "BILINGUAL_SYNC: Real-time subtitle and Web Speech synthesis synchronized with active keyframe milestones.")))

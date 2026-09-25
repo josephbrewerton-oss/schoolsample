@@ -1,0 +1,37 @@
+{
+  "name": "@stjosephs/ast-vector-player",
+  "version": "2.1.0",
+  "description": "AST-Guided Low-Bloat Vector Motion Player & Media Suite in Sandboxed iFrame",
+  "main": "ast-engine.js",
+  "module": "ast-engine.js",
+  "style": "player.css",
+  "files": [
+    "index.html",
+    "player.css",
+    "ast-engine.js",
+    "ast-scenes.js",
+    "player-ui.js",
+    "micro-vector-player.js",
+    "schema",
+    "grammar",
+    "examples",
+    "README.md"
+  ],
+  "keywords": [
+    "ast",
+    "vector-motion",
+    "svg-player",
+    "iframe-player",
+    "zero-bloat",
+    "educational-manipulative",
+    "lms-embed",
+    "web-speech",
+    "curriculum"
+  ],
+  "author": "St Joseph's Curriculum Engineering",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stjosephs/ast-vector-player"
+  }
+}
