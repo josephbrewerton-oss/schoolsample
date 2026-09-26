@@ -24,6 +24,84 @@ export class MathQuestionGenerator {
   }
 
   /**
+   * Universal Option Governor: Guarantees exactly 4 strictly unique options,
+   * matching misconceptions, and a 100% reliable answerKey pointing to correctText.
+   */
+  private static ensureUniqueFourOptions(
+    rawOptions: Array<{ text: string; misc: string }>,
+    correctText: string,
+    rng: PRNG
+  ): { options: string[]; answerKey: number; misconceptions: string[] } {
+    const uniqueMap = new Map<string, string>();
+
+    // 1. Anchor the correct answer first
+    const correctObj = rawOptions.find((o) => o.text === correctText) || {
+      text: correctText,
+      misc: 'Correct! Accurate application of curriculum rules.',
+    };
+    uniqueMap.set(correctObj.text, correctObj.misc);
+
+    // 2. Add existing raw options if unique and not matching correctText
+    for (const opt of rawOptions) {
+      if (opt.text !== correctText && !uniqueMap.has(opt.text)) {
+        uniqueMap.set(opt.text, opt.misc);
+      }
+    }
+
+    // 3. Synthesize realistic distinct distractors if collisions reduced count below 4
+    let counter = 1;
+    const fracMatch = correctText.match(/^(\d+)\/(\d+)$/);
+    const algMatch = correctText.match(/^x\^(\d+)$/);
+    const unitMatch = correctText.match(/^(\d+(?:,\d+)?(?:\.\d+)?)\s*(cm²|cm|m²|m|students)?$/);
+    const numMatch = correctText.match(/^([£$]?)(\d+(?:,\d+)?(?:\.\d+)?)(.*)$/);
+
+    while (uniqueMap.size < 4 && counter < 30) {
+      let altText = '';
+      if (fracMatch) {
+        const n = parseInt(fracMatch[1], 10);
+        const d = parseInt(fracMatch[2], 10);
+        const altN = Math.max(1, n + (counter % 2 === 1 ? counter : -counter));
+        altText = `${altN}/${d}`;
+      } else if (algMatch) {
+        const p = parseInt(algMatch[1], 10);
+        const altP = Math.max(1, p + (counter % 2 === 1 ? counter : -counter));
+        altText = `x^${altP}`;
+      } else if (unitMatch && unitMatch[2]) {
+        const val = parseFloat(unitMatch[1].replace(/,/g, ''));
+        const u = unitMatch[2];
+        const step = val >= 20 ? 4 : 2;
+        const altVal = Math.max(1, Math.round(val + (counter % 2 === 1 ? counter * step : -counter * step)));
+        altText = `${altVal} ${u}`;
+      } else if (numMatch) {
+        const prefix = numMatch[1];
+        const valStr = numMatch[2].replace(/,/g, '');
+        const suffix = numMatch[3];
+        const val = parseFloat(valStr);
+        const step = val >= 100 ? 10 : (val >= 20 ? 5 : 2);
+        const altVal = Math.max(1, Math.round(val + (counter % 2 === 1 ? counter * step : -counter * step)));
+        altText = `${prefix}${valStr.includes(',') ? altVal.toLocaleString() : altVal}${suffix}`;
+      } else {
+        altText = `${correctText} (alt ${counter})`;
+      }
+
+      if (altText && !uniqueMap.has(altText)) {
+        uniqueMap.set(altText, 'Distractor: Inaccurate numerical estimate.');
+      }
+      counter++;
+    }
+
+    const items = Array.from(uniqueMap.entries()).slice(0, 4).map(([text, misc]) => ({ text, misc }));
+    const shuffled = rng.shuffle(items);
+    const answerKey = shuffled.findIndex((o) => o.text === correctText);
+
+    return {
+      options: shuffled.map((o) => o.text),
+      answerKey: answerKey !== -1 ? answerKey : 0,
+      misconceptions: shuffled.map((o) => o.misc),
+    };
+  }
+
+  /**
    * Checks if this generator can procedurally generate unique math problems for this topic.
    * If false, hypercall will use the verified curriculum knowledge base (e.g. Pythagoras, Circle Theorems, Shapes).
    */
@@ -144,16 +222,15 @@ export class MathQuestionGenerator {
       { text: `${trapSub}`, misc: `Operation confusion: Subtracted ${b} from ${a} instead of adding.` }
     ];
 
-    const shuffled = rng.shuffle(rawOptions);
-    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
     return {
       id: `math_ks1_${seedToken}`,
       seedToken,
       prompt: `What is ${a} + ${b}?`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Start at ${a} and count on ${b} steps.`,
       explanation: `Addition means joining the groups together: ${a} plus ${b} gives ${correct}.`,
       socraticFollowUp: `If you have ${a} counters and add 1 more, that's ${a + 1}. What happens when you add all ${b}?`
@@ -179,16 +256,15 @@ export class MathQuestionGenerator {
       { text: `${trapOffOne}`, misc: `Calculation slip: Off-by-one counting error in the times table pattern.` }
     ];
 
-    const shuffled = rng.shuffle(rawOptions);
-    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
     return {
       id: `math_ks2_${seedToken}`,
       seedToken,
       prompt: `What is ${table} × ${factor}?`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Think of ${table} equal groups of ${factor}.`,
       explanation: `Multiplication is repeated addition: adding ${factor}, ${table} times gives ${correct}.`,
       socraticFollowUp: `What is ${table} × 5? Can you use that benchmark to reach ${table} × ${factor}?`
@@ -231,24 +307,15 @@ export class MathQuestionGenerator {
       { text: trapMulNum, misc: `Operation confusion: Multiplied the top numbers instead of adding them.` }
     ];
 
-    // Filter duplicates if any coincidental match
-    const seen = new Set<string>();
-    const cleanOptions = rawOptions.filter(o => {
-      if (seen.has(o.text)) return false;
-      seen.add(o.text);
-      return true;
-    });
-
-    const shuffled = rng.shuffle(cleanOptions);
-    const answerKey = shuffled.findIndex(o => o.text === correctStr);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, correctStr, rng);
 
     return {
       id: `math_frac_${seedToken}`,
       seedToken,
       prompt: `What is ${pick.n1}/${pick.d1} + ${pick.n2}/${pick.d2}?`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Find a common denominator before adding the numerators.`,
       explanation: `To add fractions with different denominators, rewrite them with a common denominator of ${commDenom}: ${correctStr}.`,
       socraticFollowUp: `Can you add halves and thirds directly without slicing them into equal pieces first?`
@@ -276,16 +343,15 @@ export class MathQuestionGenerator {
       { text: `${trapMulFirstThenSub}`, misc: `Sign error: Multiplied first but subtracted ${a} instead of adding.` }
     ];
 
-    const shuffled = rng.shuffle(rawOptions);
-    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
     return {
       id: `math_bidmas_${seedToken}`,
       seedToken,
       prompt: `Calculate: ${a} + ${b} × ${c}`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Remember BIDMAS: Brackets, Indices, Division/Multiplication, Addition/Subtraction.`,
       explanation: `Multiplication takes precedence over addition: ${b} × ${c} = ${b * c}, then ${a} + ${b * c} = ${correct}.`,
       socraticFollowUp: `Which operation has higher priority in BIDMAS: addition or multiplication?`
@@ -314,16 +380,15 @@ export class MathQuestionGenerator {
       { text: trapCoeffStr, misc: `Algebraic confusion: Turned the power into a front coefficient.` }
     ];
 
-    const shuffled = rng.shuffle(rawOptions);
-    const answerKey = shuffled.findIndex(o => o.text === correctStr);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, correctStr, rng);
 
     return {
       id: `math_ks4_${seedToken}`,
       seedToken,
       prompt: `Simplify: x^${p1} × x^${p2}`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Recall the first index law: a^m × a^n = a^(m + n).`,
       explanation: `When multiplying terms with the same base, add the indices: x^${p1} × x^${p2} = x^(${p1}+${p2}) = x^${correctPower}.`,
       socraticFollowUp: `Write out x^${p1} as x factors and x^${p2} as x factors. How many x's are being multiplied altogether?`
@@ -354,23 +419,15 @@ export class MathQuestionGenerator {
       { text: `${trapOnePercent}`, misc: `Place value slip: Divided by 100 twice, finding 1% instead of ${pct}%.` }
     ];
 
-    const seen = new Set<string>();
-    const cleanOptions = rawOptions.filter(o => {
-      if (seen.has(o.text)) return false;
-      seen.add(o.text);
-      return true;
-    });
-
-    const shuffled = rng.shuffle(cleanOptions);
-    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
     return {
       id: `math_pct_${seedToken}`,
       seedToken,
       prompt: `What is ${pct}% of ${total}?`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Start by finding 10% of ${total} (divide by 10), then scale to ${pct}%.`,
       explanation: `To find ${pct}% of ${total}: 10% of ${total} is ${total / 10}. Multiplying by ${pct / 10} gives ${correct}.`,
       socraticFollowUp: `What is 10% of ${total}? How many 10% blocks fit into ${pct}%?`
@@ -404,23 +461,15 @@ export class MathQuestionGenerator {
       { text: `${trapSub}`, misc: `Additive misconception: Subtracted ratio numbers instead of sharing into equal parts.` }
     ];
 
-    const seen = new Set<string>();
-    const cleanOptions = rawOptions.filter(o => {
-      if (seen.has(o.text)) return false;
-      seen.add(o.text);
-      return true;
-    });
-
-    const shuffled = rng.shuffle(cleanOptions);
-    const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
     return {
       id: `math_ratio_${seedToken}`,
       seedToken,
       prompt: `Share £${totalAmount} in the ratio ${part1}:${part2}. What is the value of the first share?`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: `Step 1: Add the ratio parts (${part1} + ${part2}) to find the total number of parts.`,
       explanation: `Add the ratio parts: ${part1} + ${part2} = ${totalParts} parts. Divide £${totalAmount} by ${totalParts} = £${multiplier} per part. First share is ${part1} × £${multiplier} = £${correct}.`,
       socraticFollowUp: `If £${totalAmount} is split into ${totalParts} equal piles, how much is in each pile?`
@@ -456,16 +505,15 @@ export class MathQuestionGenerator {
       { text: `${correct} ${trapUnit}`, misc: `Unit confusion: Calculated the correct numerical value but selected the wrong units (${trapUnit} instead of ${correctUnit}).` }
     ];
 
-    const shuffled = rng.shuffle(rawOptions);
-    const answerKey = shuffled.findIndex(o => o.text === `${correct} ${correctUnit}`);
+    const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct} ${correctUnit}`, rng);
 
     return {
       id: `math_geom_${seedToken}`,
       seedToken,
       prompt: `A rectangle has a length of ${length} cm and a width of ${width} cm. What is its ${isAskingArea ? 'AREA' : 'PERIMETER'}?`,
-      options: shuffled.map(o => o.text),
-      answerKey: answerKey !== -1 ? answerKey : 0,
-      misconceptions: shuffled.map(o => o.misc),
+      options,
+      answerKey,
+      misconceptions,
       hint: isAskingArea ? `Area is the space inside: multiply length by width.` : `Perimeter is the distance all the way around all 4 sides.`,
       explanation: isAskingArea
         ? `Area = length × width = ${length} × ${width} = ${area} cm². Units for area are always squared.`
@@ -512,28 +560,15 @@ export class MathQuestionGenerator {
         { text: `${trapInverted}`, misc: `Inversion error: Placed total outcomes on top instead of favorable outcomes.` }
       ];
 
-      // If simplified was already unsimplified, tweak option so all 4 are unique
-      const uniqueOptionsMap = new Map<string, string>();
-      rawOptions.forEach(opt => {
-        if (!uniqueOptionsMap.has(opt.text)) {
-          uniqueOptionsMap.set(opt.text, opt.misc);
-        }
-      });
-      if (uniqueOptionsMap.size < 4) {
-        uniqueOptionsMap.set(`1/${total}`, `Assumed each individual outcome has equal probability 1/${total} ignoring the ${favorable} ${chosenColor} counters.`);
-      }
-
-      const finalOptionsList = Array.from(uniqueOptionsMap.entries()).slice(0, 4).map(([text, misc]) => ({ text, misc }));
-      const shuffled = rng.shuffle(finalOptionsList);
-      const answerKey = shuffled.findIndex(o => o.text === `${simpFraction}`);
+      const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${simpFraction}`, rng);
 
       return {
         id: `math_prob_${seedToken}`,
         seedToken,
         prompt: `A bag contains ${red} red, ${blue} blue, and ${green} green counters. A counter is chosen at random. What is the probability of picking a ${chosenColor} counter?`,
-        options: shuffled.map(o => o.text),
-        answerKey: answerKey !== -1 ? answerKey : 0,
-        misconceptions: shuffled.map(o => o.misc),
+        options,
+        answerKey,
+        misconceptions,
         hint: `First find the total number of counters in the bag (${red} + ${blue} + ${green}). Then write favourable outcomes over total outcomes.`,
         explanation: `Total counters = ${red} + ${blue} + ${green} = ${total}. Favourable ${chosenColor} counters = ${favorable}. Probability = ${favorable}/${total}${divisor > 1 ? ` = ${simpFraction}` : ''}.`,
         socraticFollowUp: `Can the probability of an event ever be greater than 1 or negative? What is the maximum possible value for a probability?`
@@ -548,7 +583,7 @@ export class MathQuestionGenerator {
       const pNotWin = `${complementNum}/${den}`;
       const trapInvert = `${num}/${complementNum}`;
       const trapSame = `${num}/${den}`;
-      const trapOverTotal = `${num + 1}/${den}`;
+      const trapOverTotal = `${Math.min(den - 1, num + 2)}/${den}`;
 
       const rawOptions = [
         { text: `${pNotWin}`, misc: `Correct! P(event does not happen) = 1 - P(event happens) = 1 - ${num}/${den} = ${complementNum}/${den}.` },
@@ -557,16 +592,15 @@ export class MathQuestionGenerator {
         { text: `${trapOverTotal}`, misc: `Calculation error: Did not subtract accurately from the total unit 1 (${den}/${den}).` }
       ];
 
-      const shuffled = rng.shuffle(rawOptions);
-      const answerKey = shuffled.findIndex(o => o.text === `${pNotWin}`);
+      const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${pNotWin}`, rng);
 
       return {
         id: `math_prob_comp_${seedToken}`,
         seedToken,
         prompt: `The probability that a school football team wins a match is ${pWin}. Assuming there are no draws, what is the probability that they do NOT win?`,
-        options: shuffled.map(o => o.text),
-        answerKey: answerKey !== -1 ? answerKey : 0,
-        misconceptions: shuffled.map(o => o.misc),
+        options,
+        answerKey,
+        misconceptions,
         hint: `The sum of probabilities of all mutually exclusive outcomes always equals 1: P(not A) = 1 - P(A).`,
         explanation: `P(not win) = 1 - P(win) = 1 - ${num}/${den} = ${den}/${den} - ${num}/${den} = ${complementNum}/${den}.`,
         socraticFollowUp: `If an event is guaranteed to happen, its probability is 1. If it cannot happen, it is 0. What must the probabilities of all possible outcomes add up to?`
@@ -598,16 +632,15 @@ export class MathQuestionGenerator {
           { text: `${trapUnion} students`, misc: `Calculated the UNION (A ∪ B) - all students playing either sport - instead of the intersection (both).` }
         ];
 
-        const shuffled = rng.shuffle(rawOptions);
-        const answerKey = shuffled.findIndex(o => o.text === `${correctVal} students`);
+        const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correctVal} students`, rng);
 
         return {
           id: `math_venn_${seedToken}`,
           seedToken,
           prompt: `In a class of ${totalStudents} students: ${setAOnly + intersection} play ${sportA}, ${setBOnly + intersection} play ${sportB}, and ${outside} play neither. How many students play BOTH sports (the intersection, A ∩ B)?`,
-          options: shuffled.map(o => o.text),
-          answerKey: answerKey !== -1 ? answerKey : 0,
-          misconceptions: shuffled.map(o => o.misc),
+          options,
+          answerKey,
+          misconceptions,
           hint: `Sum of students in at least one sport = ${totalStudents} - ${outside} = ${setAOnly + setBOnly + intersection}. Compare with (${setAOnly + intersection}) + (${setBOnly + intersection}).`,
           explanation: `Number playing either sport = ${totalStudents} - ${outside} = ${totalStudents - outside}. Since (${setAOnly + intersection}) + (${setBOnly + intersection}) = ${(setAOnly + intersection) + (setBOnly + intersection)}, the overlap counted twice is ${(setAOnly + intersection) + (setBOnly + intersection)} - ${totalStudents - outside} = ${intersection} students.`,
           socraticFollowUp: `In Venn diagram set notation, what does the symbol ∩ (intersection) mean compared to ∪ (union)?`
@@ -625,16 +658,15 @@ export class MathQuestionGenerator {
           { text: `${trapNeither} students`, misc: `Identified students who play NEITHER sport outside the circles.` }
         ];
 
-        const shuffled = rng.shuffle(rawOptions);
-        const answerKey = shuffled.findIndex(o => o.text === `${correctVal} students`);
+        const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correctVal} students`, rng);
 
         return {
           id: `math_venn_union_${seedToken}`,
           seedToken,
           prompt: `In a group of ${totalStudents} students, ${setAOnly} play ONLY ${sportA}, ${setBOnly} play ONLY ${sportB}, and ${intersection} play BOTH. How many students play ${sportA} OR ${sportB} (the union, A ∪ B)?`,
-          options: shuffled.map(o => o.text),
-          answerKey: answerKey !== -1 ? answerKey : 0,
-          misconceptions: shuffled.map(o => o.misc),
+          options,
+          answerKey,
+          misconceptions,
           hint: `Union means in A, in B, or in both: add the disjoint parts (${setAOnly} + ${setBOnly} + ${intersection}).`,
           explanation: `Union (A ∪ B) = (Only ${sportA}) + (Only ${sportB}) + (Both) = ${setAOnly} + ${setBOnly} + ${intersection} = ${correctVal} students.`,
           socraticFollowUp: `Why must we be careful not to count the overlapping students twice when adding two sets together?`
@@ -666,21 +698,15 @@ export class MathQuestionGenerator {
         { text: `${trapOff}`, misc: `Over-estimate: Jumped two tens columns instead of one.` },
         { text: `${trapOnes}`, misc: `Placeholder trap: Left the ones digit as ${ones} instead of replacing with placeholder 0.` },
       ];
-      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
-      while (unique.length < 4) {
-        const fake = `${correct + (unique.length * 10)}`;
-        unique.push({ text: fake, misc: 'Incorrect estimate.' });
-      }
-      const shuffled = rng.shuffle(unique);
-      const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+      const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
       return {
         id: `math_round10_${seedToken}`,
         seedToken,
         prompt: `What is ${n} rounded to the nearest ten?`,
-        options: shuffled.map(o => o.text),
-        answerKey: answerKey !== -1 ? answerKey : 0,
-        misconceptions: shuffled.map(o => o.misc),
+        options,
+        answerKey,
+        misconceptions,
         hint: `Look at the ones digit (${ones}). Remember: 5 or more rounds up; 4 or less rounds down!`,
         explanation: `In ${n}, the ones digit is ${ones}. Since ${ones} is ${ones >= 5 ? '5 or more, we round UP' : '4 or less, we round DOWN'} to ${correct}.`,
         socraticFollowUp: `Why does ${down + 5} round up to ${up}, but ${down + 4} round down to ${down}?`,
@@ -703,21 +729,15 @@ export class MathQuestionGenerator {
         { text: `${trapTens}`, misc: `Column trap: Rounded to the nearest ten instead of the nearest hundred.` },
         { text: `${correct + 100}`, misc: `Over-estimate: Jumped to an extra hundred.` },
       ];
-      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
-      while (unique.length < 4) {
-        const fake = `${Math.max(100, correct - (unique.length * 100))}`;
-        unique.push({ text: fake, misc: 'Incorrect hundred estimate.' });
-      }
-      const shuffled = rng.shuffle(unique);
-      const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+      const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct}`, rng);
 
       return {
         id: `math_round100_${seedToken}`,
         seedToken,
         prompt: `What is ${n} rounded to the nearest hundred?`,
-        options: shuffled.map(o => o.text),
-        answerKey: answerKey !== -1 ? answerKey : 0,
-        misconceptions: shuffled.map(o => o.misc),
+        options,
+        answerKey,
+        misconceptions,
         hint: `When rounding to the nearest hundred, inspect the tens digit (${tens}). 5 or more rounds up!`,
         explanation: `In ${n}, the tens digit is ${tens}. Because ${tens} is ${tens >= 5 ? '5 or more, round up' : '4 or less, round down'} to ${correct}.`,
         socraticFollowUp: `Which place value column do you inspect when rounding to the nearest hundred?`,
@@ -740,21 +760,15 @@ export class MathQuestionGenerator {
         { text: `${trapHundreds.toLocaleString()}`, misc: `Column trap: Rounded to the nearest hundred instead of nearest thousand.` },
         { text: `${(correct + 1000).toLocaleString()}`, misc: `Over-estimate: Jumped an extra thousand.` },
       ];
-      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
-      while (unique.length < 4) {
-        const fake = `${(correct + (unique.length * 1000)).toLocaleString()}`;
-        unique.push({ text: fake, misc: 'Incorrect thousand estimate.' });
-      }
-      const shuffled = rng.shuffle(unique);
-      const answerKey = shuffled.findIndex(o => o.text === `${correct.toLocaleString()}`);
+      const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, `${correct.toLocaleString()}`, rng);
 
       return {
         id: `math_round1000_${seedToken}`,
         seedToken,
         prompt: `What is ${n.toLocaleString()} rounded to the nearest thousand?`,
-        options: shuffled.map(o => o.text),
-        answerKey: answerKey !== -1 ? answerKey : 0,
-        misconceptions: shuffled.map(o => o.misc),
+        options,
+        answerKey,
+        misconceptions,
         hint: `When rounding to the nearest 1,000, inspect the hundreds digit (${hundreds}).`,
         explanation: `In ${n.toLocaleString()}, the hundreds digit is ${hundreds}. Since ${hundreds} ${hundreds >= 5 ? '≥ 5, round UP' : '< 5, round DOWN'} to ${correct.toLocaleString()}.`,
         socraticFollowUp: `Why do all digits after the thousands column become 0?`,
@@ -786,17 +800,15 @@ export class MathQuestionGenerator {
         { text: trapShiftedTen, misc: `Column slip: Shifted one place value column too high.` },
         { text: trapShiftedTenth, misc: `Column slip: Shifted one place value column too low.` },
       ];
-      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
-      const shuffled = rng.shuffle(unique);
-      const answerKey = shuffled.findIndex(o => o.text === correct);
+      const { options, answerKey, misconceptions } = this.ensureUniqueFourOptions(rawOptions, correct, rng);
 
       return {
         id: `math_pvr_value_${seedToken}`,
         seedToken,
         prompt: `In the number ${n.toLocaleString()}, what is the value of the digit ${chosenTarget.digit}?`,
-        options: shuffled.map(o => o.text),
-        answerKey: answerKey !== -1 ? answerKey : 0,
-        misconceptions: shuffled.map(o => o.misc),
+        options,
+        answerKey,
+        misconceptions,
         hint: `Identify the column where ${chosenTarget.digit} sits: Ten-thousands, Thousands, Hundreds, Tens, or Ones.`,
         explanation: `In ${n.toLocaleString()}, the digit ${chosenTarget.digit} is in the ${chosenTarget.name} column, so its value is ${correct}.`,
         socraticFollowUp: `What is the difference between a digit's face value and its place value?`,
