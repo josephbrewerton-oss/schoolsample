@@ -462,7 +462,8 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
               basePrompt = prng.pick(masteryVariations);
             }
           } else if (activeSeedToken.startsWith('SOCRATIC-') && (route?.socraticPivot || offlineKnowledge?.socraticPivot)) {
-            basePrompt = `⚖️ [Cognitive Counter-Proof] ${route?.socraticPivot || offlineKnowledge?.socraticPivot}`;
+            // When remediating via Socratic seed, keep sequencedTemplate's aligned prompt and options
+            basePrompt = sequencedTemplate.prompt || `⚖️ [Cognitive Counter-Proof] ${route?.socraticPivot || offlineKnowledge?.socraticPivot}`;
             rawOptions = sequencedTemplate.options;
             rawAnswerKey = sequencedTemplate.answerKey;
             rawMisconceptions = sequencedTemplate.misconceptions;
@@ -710,10 +711,14 @@ ${excludePrompt ? `Anti-Repetition Rule: Do NOT reuse or mirror this prior quest
           }
 
           if (excludePrompt && resultCandidate.prompt.trim() === excludePrompt) {
-            if (offlineKnowledge?.socraticPivot) {
-              resultCandidate.prompt = `🤔 [Diagnostic Inquiry] ${offlineKnowledge.socraticPivot}`;
-            } else if (offlineKnowledge?.hook) {
-              resultCandidate.prompt = `🌍 [Real-World Application] ${offlineKnowledge.hook}`;
+            // Find an alternative question from offline bank so prompt and options remain aligned
+            const alternateQ = offlineKnowledge?.questions?.find((q) => q.prompt.trim() !== excludePrompt);
+            if (alternateQ) {
+              resultCandidate.prompt = alternateQ.prompt;
+              resultCandidate.options = [...alternateQ.options];
+              resultCandidate.answerKey = alternateQ.answerKey;
+              resultCandidate.hint = alternateQ.hint || resultCandidate.hint;
+              resultCandidate.explanation = alternateQ.explanation || resultCandidate.explanation;
             } else {
               resultCandidate.prompt = `🔄 [Parallel Concept] ${resultCandidate.prompt}`;
             }

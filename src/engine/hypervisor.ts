@@ -959,17 +959,21 @@ export class HypervisorHost {
       const step = offline?.guidedStep;
       const level3 = offline?.scaffoldHints?.level3;
 
+      const isMathTopic = subject.toLowerCase().includes('math') || subject.toLowerCase().includes('arithmetic') || subject.toLowerCase().includes('numeracy');
+      const distractorA = isMathTopic ? 'The calculation rule only holds for single-digit numbers.' : 'The rule only applies under artificial laboratory conditions.';
+      const distractorB = isMathTopic ? 'Mathematical operations yield variable results based on estimation.' : 'Outcomes are completely random and obey no scientific laws.';
+
       const perspectives: Array<() => { prompt: string; options: string[]; answerKey: number; hint: string; explanation: string }> = [
         () => ({
           prompt: `🤔 [Diagnostic Inquiry] ${socratic ? (socratic.endsWith('?') ? socratic : `${socratic}?`) : `In ${topic}, which condition is essential for the primary process to occur?`}`,
-          options: [axiom, trap, `Arbitrary opposite condition of ${topic}.`, `Unrelated property of ${topic}.`],
+          options: [axiom, trap, distractorA, distractorB],
           answerKey: 0,
           hint: offline?.scaffoldHints?.level1 || 'Think carefully about the root cause.',
           explanation: `Curriculum principle: ${axiom}`,
         }),
         () => ({
           prompt: `🌍 [Real-World Application] ${hook ? (hook.endsWith('?') ? hook : `${hook} Which key curriculum principle explains this?`) : `How does ${topic} directly impact everyday physical and practical reality?`}`,
-          options: [axiom, trap, `It occurs completely at random with zero predictable patterns or rules.`, `It is only a theoretical concept with no observable real-world effects.`],
+          options: [axiom, trap, distractorB, `It is only a theoretical concept with no observable real-world effects.`],
           answerKey: 0,
           hint: 'Connect the classroom concept to observable reality.',
           explanation: `Application principle: ${axiom}`,

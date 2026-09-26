@@ -691,6 +691,27 @@ export const CURRICULUM_KNOWLEDGE_BASE: Record<string, CurriculumTopicKnowledge>
         answerKey: 0,
         hint: 'Subtract 1 thousand from 10 thousands.',
         explanation: '10,000 - 1,000 = 9,000.'
+      },
+      {
+        id: 'ks2-mat-pvr-7',
+        prompt: 'Why is 350 rounded to the nearest hundred 400, but 349 rounded to the nearest hundred 300?',
+        options: [
+          'Because the decisive tens digit is 5 in 350 (rounds up), but 4 in 349 (rounds down).',
+          'Because 350 is an even number and 349 is an odd number.',
+          'Because numbers ending in zero always round up to the next hundred.',
+          'Because 349 has fewer total digits than 350.'
+        ],
+        answerKey: 0,
+        hint: 'When rounding to the nearest hundred, inspect the digit in the tens column.',
+        explanation: 'When rounding to the nearest hundred, we inspect the decisive tens digit. In 350, the tens digit is 5 (5-9 rounds up to 400). In 349, the tens digit is 4 (0-4 rounds down to 300).'
+      },
+      {
+        id: 'ks2-mat-pvr-8',
+        prompt: 'A school has 645 pupils. Rounded to the nearest 10, how many pupils is this?',
+        options: ['650', '640', '600', '700'],
+        answerKey: 0,
+        hint: 'To round to the nearest 10, look at the ones digit (5). "5 to 9, climb the vine!"',
+        explanation: 'The ones digit is 5, so we round up to the next ten: 645 rounds up to 650.'
       }
     ]
   },

@@ -39,7 +39,7 @@ export class MathQuestionGenerator {
     }
 
     // Do NOT procedurally generate if the topic is non-procedural (like 2D/3D shapes, coordinates, symmetry) where Oak has verified conceptual questions
-    if (t.includes('shape') || t.includes('geometry') || t.includes('symmetry') || t.includes('measur') || t.includes('place value')) {
+    if (t.includes('shape') || t.includes('geometry') || t.includes('symmetry') || t.includes('measur')) {
       return false;
     }
 
@@ -65,7 +65,9 @@ export class MathQuestionGenerator {
       t.includes('multiplication') ||
       t.includes('division') ||
       t.includes('powers') ||
-      t.includes('index law')
+      t.includes('index law') ||
+      t.includes('round') ||
+      t.includes('place value')
     ) {
       return true;
     }
@@ -91,6 +93,9 @@ export class MathQuestionGenerator {
     const t = (topic || '').toLowerCase();
 
     // Route based on topic or Key Stage
+    if (t.includes('round') || t.includes('place value')) {
+      return this.generateRoundingQuestion(rng, seedToken, ks);
+    }
     if (t.includes('probability') || t.includes('venn') || t.includes('chance') || t.includes('likelihood')) {
       return this.generateProbabilityVennQuestion(rng, seedToken);
     }
@@ -635,6 +640,167 @@ export class MathQuestionGenerator {
           socraticFollowUp: `Why must we be careful not to count the overlapping students twice when adding two sets together?`
         };
       }
+    }
+  }
+
+  /**
+   * KS2 / KS3: Place Value and Rounding with decisive digit and rounding-down/up traps
+   */
+  private static generateRoundingQuestion(rng: PRNG, seedToken: string, ks: string): GeneratedMathQuestion {
+    const qType = rng.nextInt(0, 3);
+
+    if (qType === 0) {
+      // Nearest 10
+      const n = rng.nextInt(12, 98);
+      const ones = n % 10;
+      const correct = Math.round(n / 10) * 10;
+      const down = Math.floor(n / 10) * 10;
+      const up = Math.ceil(n / 10) * 10;
+      const trap = ones >= 5 ? down : up;
+      const trapOff = correct + 10;
+      const trapOnes = n;
+
+      const rawOptions = [
+        { text: `${correct}`, misc: `Correct! The ones digit is ${ones} (${ones >= 5 ? '≥ 5, so round up' : '< 5, so round down'}) to ${correct}.` },
+        { text: `${trap}`, misc: `Decisive digit slip: Rounded in the wrong direction for digit ${ones}.` },
+        { text: `${trapOff}`, misc: `Over-estimate: Jumped two tens columns instead of one.` },
+        { text: `${trapOnes}`, misc: `Placeholder trap: Left the ones digit as ${ones} instead of replacing with placeholder 0.` },
+      ];
+      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
+      while (unique.length < 4) {
+        const fake = `${correct + (unique.length * 10)}`;
+        unique.push({ text: fake, misc: 'Incorrect estimate.' });
+      }
+      const shuffled = rng.shuffle(unique);
+      const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+
+      return {
+        id: `math_round10_${seedToken}`,
+        seedToken,
+        prompt: `What is ${n} rounded to the nearest ten?`,
+        options: shuffled.map(o => o.text),
+        answerKey: answerKey !== -1 ? answerKey : 0,
+        misconceptions: shuffled.map(o => o.misc),
+        hint: `Look at the ones digit (${ones}). Remember: 5 or more rounds up; 4 or less rounds down!`,
+        explanation: `In ${n}, the ones digit is ${ones}. Since ${ones} is ${ones >= 5 ? '5 or more, we round UP' : '4 or less, we round DOWN'} to ${correct}.`,
+        socraticFollowUp: `Why does ${down + 5} round up to ${up}, but ${down + 4} round down to ${down}?`,
+      };
+    } else if (qType === 1) {
+      // Nearest 100
+      const hundreds = rng.nextInt(1, 9);
+      const tens = rng.nextInt(1, 9);
+      const ones = rng.nextInt(0, 9);
+      const n = hundreds * 100 + tens * 10 + ones;
+      const correct = Math.round(n / 100) * 100;
+      const down = hundreds * 100;
+      const up = (hundreds + 1) * 100;
+      const trap = tens >= 5 ? down : up;
+      const trapTens = hundreds * 100 + (tens >= 5 ? (tens + 1) * 10 : tens * 10);
+
+      const rawOptions = [
+        { text: `${correct}`, misc: `Correct! The decisive tens digit is ${tens} (${tens >= 5 ? '≥ 5, rounds up' : '< 5, rounds down'}) to ${correct}.` },
+        { text: `${trap}`, misc: `Decisive digit slip: Rounded in the wrong direction for tens digit ${tens}.` },
+        { text: `${trapTens}`, misc: `Column trap: Rounded to the nearest ten instead of the nearest hundred.` },
+        { text: `${correct + 100}`, misc: `Over-estimate: Jumped to an extra hundred.` },
+      ];
+      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
+      while (unique.length < 4) {
+        const fake = `${Math.max(100, correct - (unique.length * 100))}`;
+        unique.push({ text: fake, misc: 'Incorrect hundred estimate.' });
+      }
+      const shuffled = rng.shuffle(unique);
+      const answerKey = shuffled.findIndex(o => o.text === `${correct}`);
+
+      return {
+        id: `math_round100_${seedToken}`,
+        seedToken,
+        prompt: `What is ${n} rounded to the nearest hundred?`,
+        options: shuffled.map(o => o.text),
+        answerKey: answerKey !== -1 ? answerKey : 0,
+        misconceptions: shuffled.map(o => o.misc),
+        hint: `When rounding to the nearest hundred, inspect the tens digit (${tens}). 5 or more rounds up!`,
+        explanation: `In ${n}, the tens digit is ${tens}. Because ${tens} is ${tens >= 5 ? '5 or more, round up' : '4 or less, round down'} to ${correct}.`,
+        socraticFollowUp: `Which place value column do you inspect when rounding to the nearest hundred?`,
+      };
+    } else if (qType === 2) {
+      // Nearest 1000
+      const thousands = rng.nextInt(2, 8);
+      const hundreds = rng.nextInt(1, 9);
+      const rest = rng.nextInt(10, 99);
+      const n = thousands * 1000 + hundreds * 100 + rest;
+      const correct = Math.round(n / 1000) * 1000;
+      const down = thousands * 1000;
+      const up = (thousands + 1) * 1000;
+      const trap = hundreds >= 5 ? down : up;
+      const trapHundreds = Math.round(n / 100) * 100;
+
+      const rawOptions = [
+        { text: `${correct.toLocaleString()}`, misc: `Correct! Hundreds digit is ${hundreds} (${hundreds >= 5 ? '≥ 5, rounds up' : '< 5, rounds down'}) to ${correct.toLocaleString()}.` },
+        { text: `${trap.toLocaleString()}`, misc: `Direction slip: Rounded in the wrong direction for hundreds digit ${hundreds}.` },
+        { text: `${trapHundreds.toLocaleString()}`, misc: `Column trap: Rounded to the nearest hundred instead of nearest thousand.` },
+        { text: `${(correct + 1000).toLocaleString()}`, misc: `Over-estimate: Jumped an extra thousand.` },
+      ];
+      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
+      while (unique.length < 4) {
+        const fake = `${(correct + (unique.length * 1000)).toLocaleString()}`;
+        unique.push({ text: fake, misc: 'Incorrect thousand estimate.' });
+      }
+      const shuffled = rng.shuffle(unique);
+      const answerKey = shuffled.findIndex(o => o.text === `${correct.toLocaleString()}`);
+
+      return {
+        id: `math_round1000_${seedToken}`,
+        seedToken,
+        prompt: `What is ${n.toLocaleString()} rounded to the nearest thousand?`,
+        options: shuffled.map(o => o.text),
+        answerKey: answerKey !== -1 ? answerKey : 0,
+        misconceptions: shuffled.map(o => o.misc),
+        hint: `When rounding to the nearest 1,000, inspect the hundreds digit (${hundreds}).`,
+        explanation: `In ${n.toLocaleString()}, the hundreds digit is ${hundreds}. Since ${hundreds} ${hundreds >= 5 ? '≥ 5, round UP' : '< 5, round DOWN'} to ${correct.toLocaleString()}.`,
+        socraticFollowUp: `Why do all digits after the thousands column become 0?`,
+      };
+    } else {
+      // Place Value identification
+      const tenThousands = rng.nextInt(2, 9);
+      const thousands = rng.nextInt(1, 9);
+      const hundreds = rng.nextInt(1, 9);
+      const tens = rng.nextInt(1, 9);
+      const ones = rng.nextInt(1, 9);
+      const n = tenThousands * 10000 + thousands * 1000 + hundreds * 100 + tens * 10 + ones;
+
+      const targets = [
+        { digit: thousands, value: thousands * 1000, name: 'thousands', label: `${(thousands * 1000).toLocaleString()} (${thousands} thousand)` },
+        { digit: hundreds, value: hundreds * 100, name: 'hundreds', label: `${hundreds * 100} (${hundreds} hundred)` },
+        { digit: tens, value: tens * 10, name: 'tens', label: `${tens * 10} (${tens} tens)` },
+      ];
+      const chosenTarget = targets[rng.nextInt(0, targets.length - 1)];
+
+      const correct = chosenTarget.label;
+      const trapFaceValue = `${chosenTarget.digit}`;
+      const trapShiftedTen = `${chosenTarget.value * 10}`;
+      const trapShiftedTenth = `${chosenTarget.value / 10}`;
+
+      const rawOptions = [
+        { text: correct, misc: `Correct! The digit ${chosenTarget.digit} is in the ${chosenTarget.name} column, giving value ${correct}.` },
+        { text: trapFaceValue, misc: `Face value trap: Confused the digit value with the positional place value.` },
+        { text: trapShiftedTen, misc: `Column slip: Shifted one place value column too high.` },
+        { text: trapShiftedTenth, misc: `Column slip: Shifted one place value column too low.` },
+      ];
+      const unique = Array.from(new Map(rawOptions.map(o => [o.text, o])).values());
+      const shuffled = rng.shuffle(unique);
+      const answerKey = shuffled.findIndex(o => o.text === correct);
+
+      return {
+        id: `math_pvr_value_${seedToken}`,
+        seedToken,
+        prompt: `In the number ${n.toLocaleString()}, what is the value of the digit ${chosenTarget.digit}?`,
+        options: shuffled.map(o => o.text),
+        answerKey: answerKey !== -1 ? answerKey : 0,
+        misconceptions: shuffled.map(o => o.misc),
+        hint: `Identify the column where ${chosenTarget.digit} sits: Ten-thousands, Thousands, Hundreds, Tens, or Ones.`,
+        explanation: `In ${n.toLocaleString()}, the digit ${chosenTarget.digit} is in the ${chosenTarget.name} column, so its value is ${correct}.`,
+        socraticFollowUp: `What is the difference between a digit's face value and its place value?`,
+      };
     }
   }
 }

@@ -350,7 +350,7 @@ export class LessonSequencer {
             stageBadge: 'Socratic Decoupler',
             stepLabel: 'Misconception Resolution',
             pedagogicalIntent: 'Expose why the common trap fails through targeted counter-inquiry.',
-            prompt: `⚖️ [Diagnostic Counter-Proof] ${socraticPivot}`,
+            prompt: `⚖️ [Diagnostic Counter-Proof] ${bankQ.prompt}`,
             options: [...bankQ.options],
             answerKey: bankQ.answerKey,
             hint: bankQ.hint || safeKnowledge?.scaffoldHints.level1 || 'Imagine what would go wrong if the misconception were true.',
@@ -370,10 +370,19 @@ export class LessonSequencer {
         }
 
         const pivotStem = `⚖️ [Diagnostic Counter-Proof] ${socraticPivot}`;
-        const pivotCorrect = `Because ${coreAxiom}`;
-        const distractor1 = `Because ${cognitiveTrap}`;
-        const distractor2 = `Both outcomes are identical, so the distinction does not matter.`;
-        const distractor3 = `Because physical laws depend on personal perspective.`;
+        const isMathSubject = subject.toLowerCase().includes('math') || subject.toLowerCase().includes('arithmetic') || subject.toLowerCase().includes('numeracy');
+        const pivotCorrect = isMathSubject
+          ? `Because the decisive place-value column determines whether to round up (5-9) or round down (0-4).`
+          : `Because ${coreAxiom}`;
+        const distractor1 = isMathSubject
+          ? `Because even numbers always round up and odd numbers round down.`
+          : `Because ${cognitiveTrap}`;
+        const distractor2 = isMathSubject
+          ? `Because rounding rules only apply to numbers that already end in 0.`
+          : `Both outcomes are identical, so the distinction does not matter.`;
+        const distractor3 = isMathSubject
+          ? `Because numbers with more digits automatically take priority regardless of place value.`
+          : `Outcomes are arbitrary and do not follow regular curriculum rules.`;
 
         const options = [pivotCorrect, distractor1, distractor2, distractor3];
         const shuffled = prng.shuffle(options.map((opt, i) => ({ opt, originalIndex: i })));
