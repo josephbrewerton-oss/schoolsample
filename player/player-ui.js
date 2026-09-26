@@ -638,9 +638,21 @@
       // 3D Reset / Orbit Toggle Button
       if (el.btn3DOrbit) {
         el.btn3DOrbit.addEventListener('click', () => {
-          this.engine.resetCamera();
-          this.playChime(659.25, 'triangle');
-          this.showToast('🌐 3D Camera Reset');
+          const isModified = Boolean(
+            this.engine.cameraOrbit &&
+            (this.engine.cameraOrbit.yawOffset !== 0 ||
+             this.engine.cameraOrbit.pitchOffset !== 0 ||
+             this.engine.cameraOrbit.distanceScale !== 1.0)
+          );
+          if (isModified) {
+            this.engine.resetCamera();
+            this.playChime(659.25, 'triangle');
+            this.showToast('🌐 3D Camera Reset');
+          } else {
+            this.engine.rotateCamera(45, 18);
+            this.playChime(587.33, 'triangle');
+            this.showToast('🌐 3D Perspective Orbit (+45°)');
+          }
           this.update3DStatus();
         });
       }
@@ -753,32 +765,32 @@
             const camType = btn.getAttribute('data-cam');
             if (camType === 'entrance') {
               this.engine.cameraOrbit.yawOffset = 0;
-              this.engine.cameraOrbit.pitchOffset = 0;
-              this.engine.cameraOrbit.distanceScale = 1.0;
+              this.engine.cameraOrbit.pitchOffset = 18;
+              this.engine.cameraOrbit.distanceScale = 1.05;
               this.engine.seek(0.05);
-              this.showToast('⛪ Nave Entrance View');
+              this.showToast('⛪ Nave Entrance 3D Perspective');
             } else if (camType === 'altar') {
               this.engine.cameraOrbit.yawOffset = 0;
-              this.engine.cameraOrbit.pitchOffset = -5;
-              this.engine.cameraOrbit.distanceScale = 0.65;
+              this.engine.cameraOrbit.pitchOffset = 26;
+              this.engine.cameraOrbit.distanceScale = 1.45;
               this.engine.seek(0.60);
-              this.showToast('✨ High Altar Focus');
+              this.showToast('✨ High Altar Focus (3D Zoom)');
             } else if (camType === 'tabernacle') {
-              this.engine.cameraOrbit.yawOffset = 0;
-              this.engine.cameraOrbit.pitchOffset = -8;
-              this.engine.cameraOrbit.distanceScale = 0.50;
+              this.engine.cameraOrbit.yawOffset = 14;
+              this.engine.cameraOrbit.pitchOffset = 28;
+              this.engine.cameraOrbit.distanceScale = 1.70;
               this.engine.seek(0.80);
               this.showToast('🕯️ Golden Tabernacle Focus');
             } else if (camType === 'ambo') {
-              this.engine.cameraOrbit.yawOffset = -22;
-              this.engine.cameraOrbit.pitchOffset = -3;
-              this.engine.cameraOrbit.distanceScale = 0.70;
+              this.engine.cameraOrbit.yawOffset = -24;
+              this.engine.cameraOrbit.pitchOffset = 22;
+              this.engine.cameraOrbit.distanceScale = 1.45;
               this.engine.seek(0.40);
               this.showToast('📖 Ambo (Table of the Word)');
             } else if (camType === 'overhead') {
               this.engine.cameraOrbit.yawOffset = 0;
-              this.engine.cameraOrbit.pitchOffset = 52;
-              this.engine.cameraOrbit.distanceScale = 1.35;
+              this.engine.cameraOrbit.pitchOffset = 58;
+              this.engine.cameraOrbit.distanceScale = 1.25;
               this.showToast('🦅 Bird\'s-Eye 3D Perspective');
             } else if (camType === 'orbit') {
               this.engine.rotateCamera(45, 0);
