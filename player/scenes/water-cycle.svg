@@ -1,3 +1,20 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-<path d="M 0 340 Q 200 320, 450 350 L 800 350 L 800 480 L 0 480 Z" fill="#1d4ed8" /><path d="M 0 340 Q 200 240, 400 310 L 400 480 L 0 480 Z" fill="#334155" /><circle cx="700" cy="90" r="38" fill="url(#grad-sun)" filter="url(#glow)" /><circle cx="520" cy="330" r="4" fill="#93c5fd" opacity="0.6" /><circle cx="555" cy="303.3333333333333" r="4" fill="#93c5fd" opacity="0.6" /><circle cx="590" cy="276.6666666666667" r="4" fill="#93c5fd" opacity="0.6" /><circle cx="625" cy="250" r="4" fill="#93c5fd" opacity="0.6" /><circle cx="660" cy="223.33333333333337" r="4" fill="#93c5fd" opacity="0.6" /><circle cx="695" cy="196.66666666666663" r="4" fill="#93c5fd" opacity="0.6" /><path d="M 280 140 Q 320 100, 380 130 Q 420 90, 480 130 Q 520 110, 550 140 Q 560 170, 520 180 L 310 180 Z" fill="#e2e8f0" opacity="0.9" /><line x1="320" y1="255" x2="317" y2="263" stroke="#60a5fa" stroke-width="2" /><line x1="345" y1="271.25" x2="342" y2="279.25" stroke="#60a5fa" stroke-width="2" /><line x1="370" y1="287.5" x2="367" y2="295.5" stroke="#60a5fa" stroke-width="2" /><line x1="395" y1="303.75" x2="392" y2="311.75" stroke="#60a5fa" stroke-width="2" /><line x1="420" y1="190" x2="417" y2="198" stroke="#60a5fa" stroke-width="2" /><line x1="445" y1="206.25" x2="442" y2="214.25" stroke="#60a5fa" stroke-width="2" /><line x1="470" y1="222.5" x2="467" y2="230.5" stroke="#60a5fa" stroke-width="2" /><line x1="495" y1="238.75" x2="492" y2="246.75" stroke="#60a5fa" stroke-width="2" />
+  <path d="M 0 340 Q 200 320, 450 350 L 800 350 L 800 480 L 0 480 Z" fill="#1d4ed8" />
+  <path d="M 0 340 Q 200 240, 400 310 L 400 480 L 0 480 Z" fill="#334155" />
+  <circle cx="700" cy="90" r="38" fill="url(#grad-sun)" filter="url(#glow)" />
+  <circle id="wc-vapor-0" cx="520" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
+  <circle id="wc-vapor-1" cx="555" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
+  <circle id="wc-vapor-2" cx="590" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
+  <circle id="wc-vapor-3" cx="625" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
+  <circle id="wc-vapor-4" cx="660" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
+  <circle id="wc-vapor-5" cx="695" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
+  <path d="M 280 140 Q 320 100, 380 130 Q 420 90, 480 130 Q 520 110, 550 140 Q 560 170, 520 180 L 310 180 Z" fill="#e2e8f0" opacity="0.9" />
+  <line id="wc-rain-0" x1="320" y1="190" x2="317" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-1" x1="345" y1="190" x2="342" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-2" x1="370" y1="190" x2="367" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-3" x1="395" y1="190" x2="392" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-4" x1="420" y1="190" x2="417" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-5" x1="445" y1="190" x2="442" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-6" x1="470" y1="190" x2="467" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <line id="wc-rain-7" x1="495" y1="190" x2="492" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
 </svg>

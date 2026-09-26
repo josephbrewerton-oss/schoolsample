@@ -1,0 +1,28 @@
+(:scene :id "fractions" :title "Fractions: Why Common Denominators Rule" :stage "KS2 MATHS" :duration 12.0
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "Look at 1/2 and 1/4: they are completely different sizes! We cannot count them yet." :es "Mira 1/2 y 1/4: ¡tienen tamaños diferentes! No podemos sumarlas todavía.")
+    (:start 0.35 :end 0.70 :en "Watch the laser slice cut 1/2 into two equal quarters (2/4). The area stays the exact same!" :es "Mira cómo la línea corta 1/2 en dos cuartos (2/4). ¡El área es exactamente igual!")
+    (:start 0.70 :end 1.00 :en "Now they share a common denominator! 2 quarters + 1 quarter equals exactly 3 quarters." :es "¡Ahora comparten el mismo denominador! 2 cuartos + 1 cuarto son 3 cuartos.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Step 1: Unequal Slices" :rule "You cannot count slices of different sizes (1/2 + 1/4)!")
+    (:t 0.35 :title "Step 2: The Equivalence Cut" :rule "Cut 1/2 in half: (1×2)/(2×2) = 2/4. Same area, new denominator!")
+    (:t 0.70 :title "Step 3: Vector Fusion" :rule "Keep denominator 4 and add numerators: 2/4 + 1/4 = 3/4.")
+    (:t 1.00 :title "Step 4: Solved Proof" :rule "3/4 of the whole! Remember: NEVER add denominators (not 2/6).")
+  ))
+  (:bindings (
+    (:target "#frac-slice1" :attr "opacity" :expr "t < 0.35 ? 0.8 : 0")
+    (:target "#frac-slice1-txt" :attr "opacity" :expr "t < 0.35 ? 1 : 0")
+    (:target "#frac-qa" :attr "opacity" :expr "t >= 0.35 ? 1 : 0")
+    (:target "#frac-qa-txt" :attr "opacity" :expr "t >= 0.35 ? 1 : 0")
+    (:target "#frac-qb" :attr "opacity" :expr "t >= 0.35 ? 1 : 0")
+    (:target "#frac-qb-txt" :attr "opacity" :expr "t >= 0.35 ? 1 : 0")
+    (:target "#frac-laser-line" :attr "opacity" :expr "(t >= 0.35 && t < 0.68) ? 1 : 0")
+    (:target "#frac-laser-line" :attr "x2" :expr "400 + Math.min(1, (t - 0.35) / 0.30) * 140")
+    (:target "#frac-laser-dot" :attr "opacity" :expr "(t >= 0.35 && t < 0.68) ? 1 : 0")
+    (:target "#frac-laser-dot" :attr "cx" :expr "400 + Math.min(1, (t - 0.35) / 0.30) * 140")
+    (:target "#frac-qgreen" :attr "transform" :expr "'translate(' + (Math.min(1, Math.max(0, (t - 0.70) / 0.30)) * 180) + ', 0)'")
+    (:target "#frac-qgreen-txt" :attr "transform" :expr "'translate(' + (Math.min(1, Math.max(0, (t - 0.70) / 0.30)) * 180) + ', 0)'")
+    (:target "#frac-math-txt" :attr "textContent" :expr "t < 0.35 ? '1/2 + 1/4 = ?' : (t < 0.70 ? '(1×2)/(2×2) + 1/4 = 2/4 + 1/4' : '2/4 + 1/4 = 3/4 (Solved!)')")
+  ))
+)

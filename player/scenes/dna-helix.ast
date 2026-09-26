@@ -1,0 +1,88 @@
+(:scene :id "dna-helix" :title "Genetics: DNA Base Pairing & Transcription" :stage "KS3 GENETICS" :duration 12.0
+  (:camera :distance 440 :pitch 18 :yaw "t * 180" :fov 60)
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "DNA contains hereditary code structured as an anti-parallel double helix spiraling in 3D." :es "El ADN contiene el código genético estructurado como una doble hélice en 3D.")
+    (:start 0.35 :end 0.70 :en "Complementary base rule: Adenine (Red) pairs with Thymine (Green); Cytosine (Blue) with Guanine (Gold)." :es "Regla complementaria: Adenina se une a Timina; Citosina se une a Guanina.")
+    (:start 0.70 :end 1.00 :en "Hydrogen bonds hold the rungs together. Drag anywhere on stage to orbit this DNA helix in 3D!" :es "Los puentes de hidrógeno unen las bases. ¡Arrastra para rotar la hélice en 3D!")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Double Helix Geometry" :rule "Anti-parallel sugar-phosphate backbones spiraling in 3D.")
+    (:t 0.35 :title "Watson-Crick Base Pairs" :rule "Adenine (A) always pairs with Thymine (T) via 2 hydrogen bonds.")
+    (:t 0.70 :title "Cytosine-Guanine Pairs" :rule "Cytosine (C) pairs with Guanine (G) via 3 hydrogen bonds.")
+    (:t 1.00 :title "Replication Fork Unzip" :rule "Helicase enzyme unzips hydrogen bonds for semi-conservative replication.")
+  ))
+  (:bindings (
+    (:target "#dna-line-0" :type "3d-line"
+      :x1 "-110 * Math.cos((0/18)*Math.PI*3)" :y1 "(0/18)*360 - 180" :z1 "-110 * Math.sin((0/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((0/18)*Math.PI*3)" :y2 "(0/18)*360 - 180" :z2 "110 * Math.sin((0/18)*Math.PI*3)"
+      :cap1 "#dna-ca-0" :cap2 "#dna-cb-0" :base-r 8)
+    (:target "#dna-line-1" :type "3d-line"
+      :x1 "-110 * Math.cos((1/18)*Math.PI*3)" :y1 "(1/18)*360 - 180" :z1 "-110 * Math.sin((1/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((1/18)*Math.PI*3)" :y2 "(1/18)*360 - 180" :z2 "110 * Math.sin((1/18)*Math.PI*3)"
+      :cap1 "#dna-ca-1" :cap2 "#dna-cb-1" :base-r 8)
+    (:target "#dna-line-2" :type "3d-line"
+      :x1 "-110 * Math.cos((2/18)*Math.PI*3)" :y1 "(2/18)*360 - 180" :z1 "-110 * Math.sin((2/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((2/18)*Math.PI*3)" :y2 "(2/18)*360 - 180" :z2 "110 * Math.sin((2/18)*Math.PI*3)"
+      :cap1 "#dna-ca-2" :cap2 "#dna-cb-2" :base-r 8)
+    (:target "#dna-line-3" :type "3d-line"
+      :x1 "-110 * Math.cos((3/18)*Math.PI*3)" :y1 "(3/18)*360 - 180" :z1 "-110 * Math.sin((3/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((3/18)*Math.PI*3)" :y2 "(3/18)*360 - 180" :z2 "110 * Math.sin((3/18)*Math.PI*3)"
+      :cap1 "#dna-ca-3" :cap2 "#dna-cb-3" :base-r 8)
+    (:target "#dna-line-4" :type "3d-line"
+      :x1 "-110 * Math.cos((4/18)*Math.PI*3)" :y1 "(4/18)*360 - 180" :z1 "-110 * Math.sin((4/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((4/18)*Math.PI*3)" :y2 "(4/18)*360 - 180" :z2 "110 * Math.sin((4/18)*Math.PI*3)"
+      :cap1 "#dna-ca-4" :cap2 "#dna-cb-4" :base-r 8)
+    (:target "#dna-line-5" :type "3d-line"
+      :x1 "-110 * Math.cos((5/18)*Math.PI*3)" :y1 "(5/18)*360 - 180" :z1 "-110 * Math.sin((5/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((5/18)*Math.PI*3)" :y2 "(5/18)*360 - 180" :z2 "110 * Math.sin((5/18)*Math.PI*3)"
+      :cap1 "#dna-ca-5" :cap2 "#dna-cb-5" :base-r 8)
+    (:target "#dna-line-6" :type "3d-line"
+      :x1 "-110 * Math.cos((6/18)*Math.PI*3)" :y1 "(6/18)*360 - 180" :z1 "-110 * Math.sin((6/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((6/18)*Math.PI*3)" :y2 "(6/18)*360 - 180" :z2 "110 * Math.sin((6/18)*Math.PI*3)"
+      :cap1 "#dna-ca-6" :cap2 "#dna-cb-6" :base-r 8)
+    (:target "#dna-line-7" :type "3d-line"
+      :x1 "-110 * Math.cos((7/18)*Math.PI*3)" :y1 "(7/18)*360 - 180" :z1 "-110 * Math.sin((7/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((7/18)*Math.PI*3)" :y2 "(7/18)*360 - 180" :z2 "110 * Math.sin((7/18)*Math.PI*3)"
+      :cap1 "#dna-ca-7" :cap2 "#dna-cb-7" :base-r 8)
+    (:target "#dna-line-8" :type "3d-line"
+      :x1 "-110 * Math.cos((8/18)*Math.PI*3)" :y1 "(8/18)*360 - 180" :z1 "-110 * Math.sin((8/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((8/18)*Math.PI*3)" :y2 "(8/18)*360 - 180" :z2 "110 * Math.sin((8/18)*Math.PI*3)"
+      :cap1 "#dna-ca-8" :cap2 "#dna-cb-8" :base-r 8)
+    (:target "#dna-line-9" :type "3d-line"
+      :x1 "-110 * Math.cos((9/18)*Math.PI*3)" :y1 "(9/18)*360 - 180" :z1 "-110 * Math.sin((9/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((9/18)*Math.PI*3)" :y2 "(9/18)*360 - 180" :z2 "110 * Math.sin((9/18)*Math.PI*3)"
+      :cap1 "#dna-ca-9" :cap2 "#dna-cb-9" :base-r 8)
+    (:target "#dna-line-10" :type "3d-line"
+      :x1 "-110 * Math.cos((10/18)*Math.PI*3)" :y1 "(10/18)*360 - 180" :z1 "-110 * Math.sin((10/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((10/18)*Math.PI*3)" :y2 "(10/18)*360 - 180" :z2 "110 * Math.sin((10/18)*Math.PI*3)"
+      :cap1 "#dna-ca-10" :cap2 "#dna-cb-10" :base-r 8)
+    (:target "#dna-line-11" :type "3d-line"
+      :x1 "-110 * Math.cos((11/18)*Math.PI*3)" :y1 "(11/18)*360 - 180" :z1 "-110 * Math.sin((11/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((11/18)*Math.PI*3)" :y2 "(11/18)*360 - 180" :z2 "110 * Math.sin((11/18)*Math.PI*3)"
+      :cap1 "#dna-ca-11" :cap2 "#dna-cb-11" :base-r 8)
+    (:target "#dna-line-12" :type "3d-line"
+      :x1 "-110 * Math.cos((12/18)*Math.PI*3)" :y1 "(12/18)*360 - 180" :z1 "-110 * Math.sin((12/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((12/18)*Math.PI*3)" :y2 "(12/18)*360 - 180" :z2 "110 * Math.sin((12/18)*Math.PI*3)"
+      :cap1 "#dna-ca-12" :cap2 "#dna-cb-12" :base-r 8)
+    (:target "#dna-line-13" :type "3d-line"
+      :x1 "-110 * Math.cos((13/18)*Math.PI*3)" :y1 "(13/18)*360 - 180" :z1 "-110 * Math.sin((13/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((13/18)*Math.PI*3)" :y2 "(13/18)*360 - 180" :z2 "110 * Math.sin((13/18)*Math.PI*3)"
+      :cap1 "#dna-ca-13" :cap2 "#dna-cb-13" :base-r 8)
+    (:target "#dna-line-14" :type "3d-line"
+      :x1 "-110 * Math.cos((14/18)*Math.PI*3)" :y1 "(14/18)*360 - 180" :z1 "-110 * Math.sin((14/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((14/18)*Math.PI*3)" :y2 "(14/18)*360 - 180" :z2 "110 * Math.sin((14/18)*Math.PI*3)"
+      :cap1 "#dna-ca-14" :cap2 "#dna-cb-14" :base-r 8)
+    (:target "#dna-line-15" :type "3d-line"
+      :x1 "-110 * Math.cos((15/18)*Math.PI*3)" :y1 "(15/18)*360 - 180" :z1 "-110 * Math.sin((15/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((15/18)*Math.PI*3)" :y2 "(15/18)*360 - 180" :z2 "110 * Math.sin((15/18)*Math.PI*3)"
+      :cap1 "#dna-ca-15" :cap2 "#dna-cb-15" :base-r 8)
+    (:target "#dna-line-16" :type "3d-line"
+      :x1 "-110 * Math.cos((16/18)*Math.PI*3)" :y1 "(16/18)*360 - 180" :z1 "-110 * Math.sin((16/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((16/18)*Math.PI*3)" :y2 "(16/18)*360 - 180" :z2 "110 * Math.sin((16/18)*Math.PI*3)"
+      :cap1 "#dna-ca-16" :cap2 "#dna-cb-16" :base-r 8)
+    (:target "#dna-line-17" :type "3d-line"
+      :x1 "-110 * Math.cos((17/18)*Math.PI*3)" :y1 "(17/18)*360 - 180" :z1 "-110 * Math.sin((17/18)*Math.PI*3)"
+      :x2 "110 * Math.cos((17/18)*Math.PI*3)" :y2 "(17/18)*360 - 180" :z2 "110 * Math.sin((17/18)*Math.PI*3)"
+      :cap1 "#dna-ca-17" :cap2 "#dna-cb-17" :base-r 8)
+  ))
+)

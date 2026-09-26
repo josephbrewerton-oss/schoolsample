@@ -4,20 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AST Vector Media Player — Decoupled Motion Suite</title>
-  <link rel="stylesheet" href="./player.css">
+  <link rel="stylesheet" href="./player.css?v=2.5.0">
 </head>
 <body data-theme="dark">
 
   <!-- Top Header Bar -->
   <header>
     <div class="header-left">
-      <span class="badge" id="badge-stage">CURRICULUM</span>
+      <span class="badge" id="badge-stage">CATHOLIC LIFE</span>
       <select id="preset-selector" title="Select Curriculum Vector Preset">
         <!-- Injected dynamically from ASTSceneRegistry -->
       </select>
     </div>
 
     <div class="header-actions">
+      <button type="button" id="btn-3d-orbit" class="hidden" title="3D Scene: Drag stage to orbit / Click to reset camera">🌐 <span class="btn-label">3D Orbit</span></button>
       <button type="button" id="btn-interactive" title="Toggle Interactive Questions & Hotspots">🎯 <span class="btn-label">Interactive</span></button>
       <button type="button" id="btn-print" title="Generate A4 Classroom Worksheet">🖨️ <span class="btn-label">Print</span></button>
       <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
@@ -28,7 +29,7 @@
 
   <!-- Main Vector Canvas Stage -->
   <main id="player-stage">
-    <svg id="stage-svg" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+    <svg id="stage-svg" viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <!-- Gradients & Glow Filters -->
         <linearGradient id="grad-sun" x1="0" y1="0" x2="1" y2="1">
@@ -50,6 +51,38 @@
 
     <!-- Synchronized Subtitle Overlay -->
     <div id="subtitle-overlay">Loading AST Vector Scene...</div>
+
+    <!-- 3D Scene Interactive Orbit Hint -->
+    <div id="orbit-hint" class="orbit-hint hidden">🌐 Drag to orbit in 3D · Scroll to zoom · Double-click to reset</div>
+
+    <!-- 3D Camera Controls & Viewpoint Presets Toolbar -->
+    <div id="camera-controls-bar" class="camera-controls-bar hidden" style="display: none;">
+      <span class="cam-badge">🌐 3D SPATIAL</span>
+      <!-- Church-specific viewpoints: strictly ONLY displayed for church-tour scene -->
+      <span id="church-cam-buttons" class="church-cam-buttons hidden" style="display: none;">
+        <button type="button" class="cam-btn" data-cam="entrance" title="View from Nave Entrance">⛪ Nave</button>
+        <button type="button" class="cam-btn" data-cam="altar" title="Close-up on High Altar">✨ Altar</button>
+        <button type="button" class="cam-btn" data-cam="tabernacle" title="Focus on Tabernacle &amp; Sanctuary Lamp">🕯️ Tabernacle</button>
+        <button type="button" class="cam-btn" data-cam="ambo" title="Focus on Ambo (Lectern)">📖 Ambo</button>
+        <button type="button" class="cam-btn" data-cam="overhead" title="Overhead Perspective">🦅 Bird's-Eye</button>
+        <button type="button" id="btn-quest-mode" class="cam-btn quest-btn hidden" style="display: none;" title="Play 3D Pilgrim Quest Educational Game">🎮 3D Quest</button>
+      </span>
+      <!-- Standard 3D controls available for any 3D model -->
+      <button type="button" class="cam-btn" data-cam="orbit" title="Orbit +45°">🔄 Orbit +45°</button>
+      <button type="button" class="cam-btn" data-cam="reset" title="Reset Camera">⏪ Reset</button>
+    </div>
+
+    <!-- 3D Pilgrim Quest Game Drawer -->
+    <div id="quest-drawer" class="quest-drawer hidden">
+      <div class="quest-header">
+        <div class="quest-header-left">
+          <span class="quest-badge">🎮 3D PILGRIM QUEST</span>
+          <span id="quest-score" class="quest-score">⭐ 0/6 Stars • 0 Pts</span>
+        </div>
+        <button type="button" id="quest-close" class="interactive-close">&times;</button>
+      </div>
+      <div id="quest-body" class="quest-body"></div>
+    </div>
 
     <!-- Interactive Checkpoint Question / Hotspot Drawer -->
     <div id="interactive-card" class="interactive-card hidden">
@@ -81,7 +114,7 @@
         <button type="button" id="btn-prev" title="Step Back 5% (Left Arrow)">⏮</button>
         <button type="button" id="btn-next" title="Step Forward 5% (Right Arrow)">⏭</button>
         <button type="button" id="btn-reset" title="Rewind to Beginning">↺</button>
-        <span class="time-readout" id="time-readout">00:00 / 00:10 (0%)</span>
+        <span class="time-readout" id="time-readout">00:00 / 00:16 (0%)</span>
       </div>
 
       <div class="controls-right">
@@ -113,10 +146,10 @@
     </div>
   </footer>
 
-  <!-- Modular Scripts -->
-  <script src="./ast-scenes.js"></script>
-  <script src="./ast-engine.js"></script>
-  <script src="./player-ui.js"></script>
+  <!-- Modular Scripts with Cache-Busting Version -->
+  <script src="./ast-scenes.js?v=2.5.0"></script>
+  <script src="./ast-engine.js?v=2.5.0"></script>
+  <script src="./player-ui.js?v=2.5.0"></script>
   <script>
     (function () {
       'use strict';
@@ -127,23 +160,30 @@
       const autoplay = params.get('autoplay') === '1';
       const theme = params.get('theme') || 'dark';
 
-      // 1. Initialize Engine
+      const stageRoot = document.getElementById('scene-root');
+
+      // 1. Initialize Engine with mounted container
       const engine = new window.ASTVectorPlayerEngine({
         preset: preset,
         lang: lang,
         speed: speed,
         autoplay: autoplay,
+        container: stageRoot,
       });
 
       // 2. Initialize UI Controller
       const ui = new window.ASTPlayerUI(engine);
       ui.setTheme(theme);
 
-      // 3. Load scenes config if available
+      // 3. Load scenes manifest if available
       if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
-        window.ASTSceneRegistry.loadConfig('./scenes-config.json').then(() => {
+        window.ASTSceneRegistry.loadConfig('./scenes.manifest.json?v=2.5.0').then(() => {
           ui.populatePresets();
-        }).catch(() => {});
+        }).catch(() => {
+          window.ASTSceneRegistry.loadConfig('./scenes-config.json?v=2.5.0').then(() => {
+            ui.populatePresets();
+          }).catch(() => {});
+        });
       }
 
       // 4. Setup postMessage bridge for parent iframe communication

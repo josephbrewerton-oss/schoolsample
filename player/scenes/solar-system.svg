@@ -1,3 +1,40 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-<circle cx="0" cy="0" r="1" fill="#ffffff" opacity="0.50" /><circle cx="97" cy="71" r="1" fill="#ffffff" opacity="0.50" /><circle cx="194" cy="142" r="1" fill="#ffffff" opacity="0.50" /><circle cx="291" cy="213" r="1" fill="#ffffff" opacity="0.50" /><circle cx="388" cy="284" r="1" fill="#ffffff" opacity="0.50" /><circle cx="485" cy="355" r="1" fill="#ffffff" opacity="0.50" /><circle cx="582" cy="426" r="1" fill="#ffffff" opacity="0.50" /><circle cx="679" cy="17" r="1" fill="#ffffff" opacity="0.50" /><circle cx="776" cy="88" r="1" fill="#ffffff" opacity="0.50" /><circle cx="73" cy="159" r="1" fill="#ffffff" opacity="0.50" /><circle cx="170" cy="230" r="1" fill="#ffffff" opacity="0.50" /><circle cx="267" cy="301" r="1" fill="#ffffff" opacity="0.50" /><circle cx="364" cy="372" r="1" fill="#ffffff" opacity="0.50" /><circle cx="461" cy="443" r="1" fill="#ffffff" opacity="0.50" /><circle cx="558" cy="34" r="1" fill="#ffffff" opacity="0.50" /><circle cx="655" cy="105" r="1" fill="#ffffff" opacity="0.50" /><circle cx="752" cy="176" r="1" fill="#ffffff" opacity="0.50" /><circle cx="49" cy="247" r="1" fill="#ffffff" opacity="0.50" /><circle cx="146" cy="318" r="1" fill="#ffffff" opacity="0.50" /><circle cx="243" cy="389" r="1" fill="#ffffff" opacity="0.50" /><circle cx="340" cy="460" r="1" fill="#ffffff" opacity="0.50" /><circle cx="437" cy="51" r="1" fill="#ffffff" opacity="0.50" /><circle cx="534" cy="122" r="1" fill="#ffffff" opacity="0.50" /><circle cx="631" cy="193" r="1" fill="#ffffff" opacity="0.50" /><circle cx="728" cy="264" r="1" fill="#ffffff" opacity="0.50" /><circle cx="25" cy="335" r="1" fill="#ffffff" opacity="0.50" /><circle cx="122" cy="406" r="1" fill="#ffffff" opacity="0.50" /><circle cx="219" cy="477" r="1" fill="#ffffff" opacity="0.50" /><circle cx="316" cy="68" r="1" fill="#ffffff" opacity="0.50" /><circle cx="413" cy="139" r="1" fill="#ffffff" opacity="0.50" /><circle cx="510" cy="210" r="1" fill="#ffffff" opacity="0.50" /><circle cx="607" cy="281" r="1" fill="#ffffff" opacity="0.50" /><circle cx="704" cy="352" r="1" fill="#ffffff" opacity="0.50" /><circle cx="1" cy="423" r="1" fill="#ffffff" opacity="0.50" /><circle cx="98" cy="14" r="1" fill="#ffffff" opacity="0.50" /><circle cx="195" cy="85" r="1" fill="#ffffff" opacity="0.50" /><circle cx="292" cy="156" r="1" fill="#ffffff" opacity="0.50" /><circle cx="389" cy="227" r="1" fill="#ffffff" opacity="0.50" /><circle cx="486" cy="298" r="1" fill="#ffffff" opacity="0.50" /><circle cx="583" cy="369" r="1" fill="#ffffff" opacity="0.50" /><circle cx="400" cy="240" r="32" fill="url(#grad-sun)" filter="url(#glow)" /><circle cx="400" cy="240" r="26" fill="#f59e0b" /><circle cx="400" cy="240" r="65" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" /><circle cx="457.9" cy="269.5" r="5" fill="#94a3b8" /><text x="457.9" y="287.5" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Mercury</text><circle cx="400" cy="240" r="105" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" /><circle cx="438.7" cy="142.4" r="8" fill="#fde047" /><text x="438.7" y="163.4" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Venus</text><circle cx="400" cy="240" r="155" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" /><circle cx="245.0" cy="240.0" r="9" fill="#38bdf8" /><text x="245.0" y="262.0" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Earth</text><circle cx="263.0" cy="240.0" r="2.5" fill="#f8fafc" /><circle cx="400" cy="240" r="205" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" /><circle cx="380.7" cy="444.1" r="6" fill="#ef4444" /><text x="380.7" y="463.1" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Mars</text>
+  <defs>
+    <radialGradient id="sun-rad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbeb" />
+      <stop offset="40%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background space grid -->
+  <rect x="0" y="0" width="800" height="480" fill="#030712" />
+  <!-- Central Sun -->
+  <circle id="sun-corona" cx="400" cy="240" r="38" fill="url(#sun-rad)" opacity="0.4" filter="url(#glow)" />
+  <circle id="sun-body" cx="400" cy="240" r="26" fill="url(#sun-rad)" />
+  <!-- Dynamic 3D Planetary Orbits -->
+  <path id="orbit-mercury" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path id="orbit-venus" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path id="orbit-earth" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path id="orbit-mars" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path id="orbit-jupiter" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path id="orbit-saturn" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <!-- Planets -->
+  <circle id="planet-mercury" cx="465" cy="240" r="5" fill="#94a3b8" />
+  <text id="label-mercury" x="465" y="258" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Mercury</text>
+  <circle id="planet-venus" cx="505" cy="240" r="8" fill="#fde047" />
+  <text id="label-venus" x="505" y="261" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Venus</text>
+  <circle id="planet-earth" cx="555" cy="240" r="9" fill="#38bdf8" />
+  <text id="label-earth" x="555" y="262" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Earth</text>
+  <circle id="moon-earth" cx="573" cy="240" r="2.5" fill="#f8fafc" />
+  <circle id="planet-mars" cx="605" cy="240" r="6" fill="#ef4444" />
+  <text id="label-mars" x="605" y="259" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Mars</text>
+  <circle id="planet-jupiter" cx="660" cy="240" r="14" fill="#fed7aa" stroke="#ea580c" stroke-width="1" />
+  <text id="label-jupiter" x="660" y="266" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Jupiter</text>
+  <path id="saturn-ring" fill="none" stroke="#fde047" stroke-width="2.5" opacity="0.85" />
+  <circle id="planet-saturn" cx="720" cy="240" r="11" fill="#fef08a" stroke="#ca8a04" stroke-width="1" />
+  <text id="label-saturn" x="720" y="264" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">Saturn</text>
 </svg>

@@ -1,0 +1,20 @@
+(:scene :id "velocity" :title "Kinematics: Velocity & Distance-Time Vectors" :stage "KS3 PHYSICS" :duration 10.0
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "Watch the particle accelerate from rest along the vector track." :es "Observa cómo la partícula acelera desde el reposo en la pista vectorial.")
+    (:start 0.35 :end 0.70 :en "The slope on the distance-time graph represents instant velocity: steep slope = fast speed." :es "La pendiente de la gráfica representa la velocidad instantánea: pendiente empinada = alta velocidad.")
+    (:start 0.70 :end 1.00 :en "Braking applies negative acceleration, flattening the velocity graph to zero." :es "El frenado aplica aceleración negativa, aplanando la gráfica a cero.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "At Rest" :rule "Position s = 0m, Velocity v = 0 m/s.")
+    (:t 0.35 :title "Constant Acceleration" :rule "Slope of Distance-Time curve steepens (v = u + at).")
+    (:t 0.70 :title "Constant High Velocity" :rule "Straight steep line represents high uniform speed.")
+    (:t 1.00 :title "Deceleration to Stop" :rule "Negative acceleration flattens curve back to zero velocity.")
+  ))
+  (:bindings (
+    (:target "#vel-particle" :attr "cx" :expr "120 + t * 560")
+    (:target "#vel-arrow-line" :attr "x1" :expr "120 + t * 560")
+    (:target "#vel-arrow-line" :attr "x2" :expr "120 + t * 560 + (Math.sin(t * Math.PI) * 40 + 15)")
+    (:target "#vel-graph-dot" :attr "cx" :expr "240 + t * 340")
+    (:target "#vel-graph-dot" :attr "cy" :expr "380 - Math.pow(t, 1.6) * 120")
+  ))
+)

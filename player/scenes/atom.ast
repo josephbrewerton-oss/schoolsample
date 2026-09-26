@@ -1,0 +1,63 @@
+(:scene :id "atom" :title "Atomic Structure: Bohr Electron Shells" :stage "KS3 CHEMISTRY" :duration 12.0
+  (:camera :distance 460 :pitch 22 :yaw "t * 120" :fov 60)
+  (:subtitles (
+    (:start 0.00 :end 0.33 :en "At the center is the dense nucleus made of positively charged protons and neutral neutrons." :es "En el centro está el núcleo denso con protones positivos y neutrones neutros.")
+    (:start 0.33 :end 0.66 :en "Electrons orbit in quantized 3D shells. The first shell (K) holds 2 electrons; outer shell (L) holds 4." :es "Los electrones orbitan en capas cuánticas 3D. La primera capa (K) contiene 2; la externa (L) contiene 4.")
+    (:start 0.66 :end 1.00 :en "Carbon has 6 protons, 6 neutrons, and 6 electrons. Drag anywhere to orbit this atom in 3D!" :es "El carbono tiene 6 protones, 6 neutrones y 6 electrones. ¡Arrastra para rotar este átomo en 3D!")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Dense Nucleus" :rule "Protons (+) and Neutrons (0) tightly bound in the atomic core.")
+    (:t 0.33 :title "Inner K-Shell (n=1)" :rule "Holds a maximum of 2 electrons in the lowest ground energy state.")
+    (:t 0.66 :title "Outer L-Shell (n=2)" :rule "Holds up to 8 electrons (Carbon has 4 valence electrons).")
+    (:t 1.00 :title "Chemical Valence" :rule "Valence electrons dictate bonding affinity with other elements.")
+  ))
+  (:bindings (
+    (:target "#atom-ring-k" :type "3d-ring" :r "75" :tilt-x "20" :depth-fog true)
+    (:target "#atom-ring-l1" :type "3d-ring" :r "145" :tilt-x "-40" :tilt-z "30" :depth-fog true)
+    (:target "#atom-ring-l2" :type "3d-ring" :r "145" :tilt-x "45" :tilt-z "-25" :depth-fog true)
+
+    (:target "#nucleus-p1" :type "3d-node" :x "7" :y "5" :z "4" :base-r 10 :depth-fog true)
+    (:target "#nucleus-n1" :type "3d-node" :x "-6" :y "-5" :z "5" :base-r 10 :depth-fog true)
+    (:target "#nucleus-p2" :type "3d-node" :x "-5" :y "6" :z "-5" :base-r 10 :depth-fog true)
+    (:target "#nucleus-n2" :type "3d-node" :x "6" :y "-4" :z "-6" :base-r 10 :depth-fog true)
+    (:target "#nucleus-p3" :type "3d-node" :x "0" :y "-7" :z "6" :base-r 10 :depth-fog true)
+    (:target "#nucleus-n3" :type "3d-node" :x "0" :y "7" :z "-5" :base-r 10 :depth-fog true)
+
+    (:target "#atom-e1" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 3) * 75"
+      :y "Math.sin(t * Math.PI * 2 * 3) * 35"
+      :z "Math.sin(t * Math.PI * 2 * 3) * 75"
+      :base-r 6
+    )
+    (:target "#atom-e2" :type "3d-node"
+      :x "-Math.cos(t * Math.PI * 2 * 3) * 75"
+      :y "-Math.sin(t * Math.PI * 2 * 3) * 35"
+      :z "-Math.sin(t * Math.PI * 2 * 3) * 75"
+      :base-r 6
+    )
+    (:target "#atom-oe-0" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 1.2 + 0 * Math.PI / 2) * 145"
+      :y "Math.sin(t * Math.PI * 2 * 1.2 + 0 * Math.PI / 2) * 80"
+      :z "Math.sin(t * Math.PI * 2 * 1.2 + 0 * Math.PI / 2) * 145"
+      :base-r 6
+    )
+    (:target "#atom-oe-1" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 1.2 + 1 * Math.PI / 2) * 145"
+      :y "Math.sin(t * Math.PI * 2 * 1.2 + 1 * Math.PI / 2) * 80"
+      :z "Math.sin(t * Math.PI * 2 * 1.2 + 1 * Math.PI / 2) * 145"
+      :base-r 6
+    )
+    (:target "#atom-oe-2" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 1.2 + 2 * Math.PI / 2) * 145"
+      :y "Math.sin(t * Math.PI * 2 * 1.2 + 2 * Math.PI / 2) * 80"
+      :z "Math.sin(t * Math.PI * 2 * 1.2 + 2 * Math.PI / 2) * 145"
+      :base-r 6
+    )
+    (:target "#atom-oe-3" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 1.2 + 3 * Math.PI / 2) * 145"
+      :y "Math.sin(t * Math.PI * 2 * 1.2 + 3 * Math.PI / 2) * 80"
+      :z "Math.sin(t * Math.PI * 2 * 1.2 + 3 * Math.PI / 2) * 145"
+      :base-r 6
+    )
+  ))
+)

@@ -9,6 +9,7 @@
       "title": "Fractions: Why Common Denominators Rule",
       "duration": 12,
       "svgFile": "scenes/fractions.svg",
+      "astFile": "scenes/fractions.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -60,6 +61,7 @@
       "title": "Solar System: Heliocentric Planetary Motion",
       "duration": 14,
       "svgFile": "scenes/solar-system.svg",
+      "astFile": "scenes/solar-system.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -111,6 +113,7 @@
       "title": "Photosynthesis: The Green Solar Engine",
       "duration": 10,
       "svgFile": "scenes/photosynthesis.svg",
+      "astFile": "scenes/photosynthesis.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -162,6 +165,7 @@
       "title": "Pythagoras Theorem: Area Conservation",
       "duration": 11,
       "svgFile": "scenes/pythagoras.svg",
+      "astFile": "scenes/pythagoras.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -213,6 +217,7 @@
       "title": "Water Cycle: Continuous Earth Cycle",
       "duration": 10,
       "svgFile": "scenes/water-cycle.svg",
+      "astFile": "scenes/water-cycle.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -264,6 +269,7 @@
       "title": "Atomic Structure: Bohr Electron Shells",
       "duration": 12,
       "svgFile": "scenes/atom.svg",
+      "astFile": "scenes/atom.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -315,6 +321,7 @@
       "title": "Kinematics: Velocity & Distance-Time Vectors",
       "duration": 10,
       "svgFile": "scenes/velocity.svg",
+      "astFile": "scenes/velocity.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -366,6 +373,7 @@
       "title": "Genetics: DNA Base Pairing & Transcription",
       "duration": 12,
       "svgFile": "scenes/dna-helix.svg",
+      "astFile": "scenes/dna-helix.ast",
       "keyframesCount": 4,
       "keyframes": [
         {
@@ -417,6 +425,7 @@
       "title": "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces",
       "duration": 16,
       "svgFile": "scenes/church-tour.svg",
+      "astFile": "scenes/church-tour.ast",
       "keyframesCount": 6,
       "keyframes": [
         {

@@ -3,8 +3,8 @@
  * Ultra-lightweight AST-Guided Vector Media Player Web Component (< 5 KB)
  * 
  * Usage:
- *   <script src="/player/micro-vector-player.js"></script>
- *   <micro-vector-player src="orbit.ast"></micro-vector-player>
+ *   <script src="./micro-vector-player.js"></script>
+ *   <micro-vector-player src="./examples/orbit.json"></micro-vector-player>
  *   <micro-vector-player preset="fractions" autoplay></micro-vector-player>
  */
 (function () {
@@ -310,10 +310,118 @@
     }
 
     loadPreset(presetId) {
-      if (window.ASTSceneRegistry && window.ASTSceneRegistry.has(presetId)) {
-        this.setScene(window.ASTSceneRegistry.get(presetId));
+      const clean = String(presetId || '').trim().toLowerCase().replace(/\.(ast|json|svg)$/, '');
+      if (window.ASTSceneRegistry && (window.ASTSceneRegistry.has(clean) || window.ASTSceneRegistry.has(presetId))) {
+        this.setScene(window.ASTSceneRegistry.get(clean));
         return;
       }
+
+      if (clean === 'church-tour' || clean === 'church' || clean === 'church_tour' || clean === 'churchtour') {
+        this.setScene({
+          id: 'church-tour',
+          title: 'Tour of a Catholic Church: Sacred Architecture & Sacred Spaces',
+          stage: 'CATHOLIC LIFE',
+          duration: 16.0,
+          interactive: {
+            hotspots: [
+              { id: 'narthex', label: '1. Narthex & Holy Water Stoup', targetT: 0.00 },
+              { id: 'nave', label: '2. Nave & Central Aisle', targetT: 0.20 },
+              { id: 'ambo', label: '3. The Ambo (Lectern)', targetT: 0.40 },
+              { id: 'altar', label: '4. Altar of Sacrifice', targetT: 0.60 },
+              { id: 'tabernacle', label: '5. Tabernacle & Sanctuary Lamp', targetT: 0.80 },
+              { id: 'lady-chapel', label: '6. Lady Chapel & Baptismal Font', targetT: 1.00 }
+            ]
+          },
+          keyframes: [
+            { t: 0.00, title: '1. Narthex & Holy Water Stoup', rule: 'Vestibulum: We bless ourselves with Holy Water to recall our Baptism.' },
+            { t: 0.20, title: '2. Nave & Central Aisle', rule: 'Navis: The Pilgrim People of God; we genuflect towards the Tabernacle before entering our pew.' },
+            { t: 0.40, title: '3. Ambo (Lectern)', rule: 'Mensa Verbi: The Table of the Word from which the Holy Gospel is proclaimed.' },
+            { t: 0.60, title: '4. Altar of Sacrifice', rule: 'Altare Christi: Represents Christ Himself and the Holy Sacrifice of the Mass.' },
+            { t: 0.80, title: '5. Tabernacle & Sanctuary Lamp', rule: "Tabernaculum: Houses the Blessed Sacrament; red lamp indicates Christ's Real Presence." },
+            { t: 1.00, title: '6. Lady Chapel & Baptismal Font', rule: 'Fons & Sacellum: Devotional side chapel of Our Lady and the waters of new birth.' }
+          ],
+          subtitles: [
+            { start: 0.0, end: 0.20, en: "We enter through the Narthex, blessing ourselves with Holy Water in the Name of the Father, Son, and Holy Spirit.", es: "Entramos por el Nártex, bendiciéndonos con Agua Bendita en el Nombre del Padre, del Hijo y del Espíritu Santo." },
+            { start: 0.20, end: 0.40, en: "Walking up the central aisle of the Nave, we genuflect on our right knee toward the Tabernacle before entering our pew.", es: "Por el pasillo de la Nave, hacemos una genuflexión con la rodilla derecha hacia el Sagrario antes de sentarnos." },
+            { start: 0.40, end: 0.60, en: "The Ambo is the Table of the Word, where the Holy Gospel and readings of Sacred Scripture are proclaimed.", es: "El Ambón es la Mesa de la Palabra, donde se proclaman las lecturas de la Sagrada Escritura y el Evangelio." },
+            { start: 0.60, end: 0.80, en: "The Altar is the sacred center representing Christ Himself, where the bread and wine become His Body and Blood.", es: "El Altar es el centro sagrado que representa a Cristo, donde el pan y el vino se convierten en Su Cuerpo y Sangre." },
+            { start: 0.80, end: 1.00, en: "The golden Tabernacle holds the Real Presence of Christ in the Eucharist, watched over by the burning red Sanctuary Lamp.", es: "El Sagrario dorado guarda la Presencia Real de Jesús en la Eucaristía, acompañado por la lámpara roja del Santuario." }
+          ],
+          render: (t) => {
+            let camX = 400, camY = 430;
+            let stationTitle = "1. NARTHEX & HOLY WATER STOUP";
+            if (t >= 0.20 && t < 0.40) {
+              const f = (t - 0.20) / 0.20;
+              camX = 400; camY = 430 - f * 150;
+              stationTitle = "2. THE NAVE & PEWS";
+            } else if (t >= 0.40 && t < 0.60) {
+              const f = (t - 0.40) / 0.20;
+              camX = 400 - f * 59; camY = 280 - f * 140;
+              stationTitle = "3. THE AMBO (LECTERN)";
+            } else if (t >= 0.60 && t < 0.80) {
+              const f = (t - 0.60) / 0.20;
+              camX = 341 + f * 59; camY = 140 - f * 12;
+              stationTitle = "4. THE ALTAR OF SACRIFICE";
+            } else if (t >= 0.80 && t < 0.92) {
+              const f = (t - 0.80) / 0.12;
+              camX = 400; camY = 128 - f * 56;
+              stationTitle = "5. THE TABERNACLE & SANCTUARY LAMP";
+            } else if (t >= 0.92) {
+              const f = (t - 0.92) / 0.08;
+              camX = 400 - Math.cos(f * Math.PI) * 180; camY = 190;
+              stationTitle = "6. LADY CHAPEL & BAPTISMAL FONT";
+            }
+
+            return `
+              <path d="M 310 440 L 310 240 L 160 240 L 160 160 L 310 160 L 310 50 Q 400 30, 490 50 L 490 160 L 640 160 L 640 240 L 490 240 L 490 440 Z" fill="#0b1120" stroke="#334155" stroke-width="3" />
+              <rect x="375" y="180" width="50" height="260" fill="#7f1d1d" opacity="0.8" rx="2" />
+              <rect x="360" y="115" width="80" height="34" rx="4" fill="#e2e8f0" stroke="#f8fafc" stroke-width="2" />
+              <text x="400" y="138" fill="#0f172a" font-size="9" font-weight="900" text-anchor="middle">ALTAR</text>
+              <rect x="382" y="58" width="36" height="28" rx="3" fill="#eab308" stroke="#fef08a" stroke-width="2" />
+              <circle cx="432" cy="72" r="6" fill="#ef4444" opacity="0.9" filter="url(#mvp-glow)" />
+              <rect x="330" y="125" width="22" height="24" rx="2" fill="#3b82f6" stroke="#60a5fa" stroke-width="1.5" />
+              <text x="341" y="145" fill="#ffffff" font-size="7" font-weight="800" text-anchor="middle">AMBO</text>
+              <circle cx="${camX.toFixed(1)}" cy="${camY.toFixed(1)}" r="38" fill="rgba(56, 189, 248, 0.15)" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 3" filter="url(#mvp-glow)" />
+              <circle cx="${camX.toFixed(1)}" cy="${camY.toFixed(1)}" r="7" fill="#38bdf8" />
+              <rect x="160" y="18" width="480" height="36" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5" />
+              <text x="175" y="41" fill="#38bdf8" font-size="12" font-weight="800">⛪ ${stationTitle}</text>
+            `;
+          }
+        });
+        return;
+      }
+
+      if (clean === 'fractions' || clean === 'fraction') {
+        this.setScene({
+          id: 'fractions',
+          stage: 'KS2 MATHS',
+          title: 'Fractions: Why Common Denominators Rule',
+          duration: 12.0,
+          keyframes: [
+            { t: 0.00, title: 'Step 1: Unequal Slices', rule: 'You cannot count slices of different sizes (1/2 + 1/4)!' },
+            { t: 0.35, title: 'Step 2: The Equivalence Cut', rule: 'Cut 1/2 in half: (1×2)/(2×2) = 2/4. Same area, new denominator!' },
+            { t: 0.70, title: 'Step 3: Vector Fusion', rule: 'Keep denominator 4 and add numerators: 2/4 + 1/4 = 3/4.' },
+            { t: 1.00, title: 'Step 4: Solved Proof', rule: '3/4 of the whole! Remember: NEVER add denominators (not 2/6).' }
+          ],
+          subtitles: [
+            { start: 0.0, end: 0.35, en: "Look at 1/2 and 1/4: they are completely different sizes! We cannot count them yet.", es: "Mira 1/2 y 1/4: ¡tienen tamaños diferentes! No podemos sumarlas todavía." },
+            { start: 0.35, end: 0.70, en: "Watch the laser slice cut 1/2 into two equal quarters (2/4). The area stays the exact same!", es: "Mira cómo la línea corta 1/2 en dos cuartos (2/4). ¡El área es exactamente igual!" },
+            { start: 0.70, end: 1.00, en: "Now they share a common denominator! 2 quarters + 1 quarter equals exactly 3 quarters.", es: "¡Ahora comparten el mismo denominador! 2 cuartos + 1 cuarto son 3 cuartos." }
+          ],
+          render: (t) => {
+            const cx = 400, cy = 240, r = 130;
+            return `
+              <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="6 6" />
+              <path d="M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} Z" fill="#3b82f6" fill-opacity="0.8" stroke="#60a5fa" stroke-width="3" />
+              <text x="${cx + 50}" y="${cy + 8}" fill="#ffffff" font-size="22" font-weight="bold" text-anchor="middle">1/2</text>
+              <rect x="250" y="24" width="300" height="42" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+              <text x="400" y="51" fill="#38bdf8" font-size="17" font-weight="bold" text-anchor="middle">${t < 0.35 ? '1/2 + 1/4 = ?' : '2/4 + 1/4 = 3/4'}</text>
+            `;
+          }
+        });
+        return;
+      }
+
       // Built-in fallback orbit scene
       this.setScene({
         id: 'orbit',

@@ -1,0 +1,20 @@
+(:scene :id "pythagoras" :title "Pythagoras Theorem: Area Conservation" :stage "KS3 GEOMETRY" :duration 11.0
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "In any right-angled triangle, squares formed on the legs equal the square on the hypotenuse." :es "En un triángulo rectángulo, los cuadrados sobre los catetos equivalen al cuadrado de la hipotenusa.")
+    (:start 0.35 :end 0.70 :en "Side 'a' produces a square of 9 units. Side 'b' produces a square of 16 units." :es "El lado 'a' produce un cuadrado de 9 unidades. El lado 'b' produce un cuadrado de 16 unidades.")
+    (:start 0.70 :end 1.00 :en "Together they sum to 25 units! The hypotenuse 'c' must be exactly 5. a² + b² = c²." :es "¡Juntos suman 25 unidades! La hipotenusa 'c' mide exactamente 5. a² + b² = c².")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Step 1: The 3-4-5 Triangle" :rule "A right-angled triangle with sides a = 3, b = 4, and hypotenuse c.")
+    (:t 0.35 :title "Step 2: Square a² and b²" :rule "Square of side 3 has area 9; square of side 4 has area 16.")
+    (:t 0.70 :title "Step 3: Vector Area Sum" :rule "Total area = 9 + 16 = 25 square units.")
+    (:t 1.00 :title "Step 4: Hypotenuse Square c²" :rule "c² = 25 ➔ c = √25 = 5. Q.E.D.")
+  ))
+  (:bindings (
+    (:target "#pyth-rect-b" :attr "height" :expr "120 * Math.min(1, t / 0.50)")
+    (:target "#pyth-txt-b" :attr "opacity" :expr "t > 0.25 ? 1 : 0")
+    (:target "#pyth-rect-a" :attr "x" :expr "360 - 90 * Math.min(1, Math.max(0, (t - 0.25) / 0.50))")
+    (:target "#pyth-rect-a" :attr "width" :expr "90 * Math.min(1, Math.max(0, (t - 0.25) / 0.50))")
+    (:target "#pyth-txt-a" :attr "opacity" :expr "t > 0.50 ? 1 : 0")
+  ))
+)

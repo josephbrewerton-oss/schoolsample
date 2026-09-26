@@ -40,14 +40,126 @@
         speedSelector: document.getElementById('speed-selector'),
         langSelector: document.getElementById('lang-selector'),
         badgeStage: document.getElementById('badge-stage'),
+        btn3DOrbit: document.getElementById('btn-3d-orbit'),
+        orbitHint: document.getElementById('orbit-hint'),
+        playerStage: document.getElementById('player-stage'),
+        cameraControlsBar: document.getElementById('camera-controls-bar'),
+        churchCamButtons: document.getElementById('church-cam-buttons'),
+        btnQuestMode: document.getElementById('btn-quest-mode'),
+        questDrawer: document.getElementById('quest-drawer'),
+        questScore: document.getElementById('quest-score'),
+        questBody: document.getElementById('quest-body'),
+        questClose: document.getElementById('quest-close'),
       }, elements);
 
       this.isDragging = false;
+      this.isOrbitDragging = false;
       this.theme = document.body.getAttribute('data-theme') || 'dark';
       this.interactiveMode = true;
       this.completedCheckpoints = new Set();
       this.activeCheckpoint = null;
       this.toastTimeout = null;
+      this._orbitHintTimeout = null;
+
+      this.questState = {
+        active: false,
+        missionIndex: 0,
+        score: 0,
+        completedMissions: new Set()
+      };
+
+      this.questMissions = [
+        {
+          id: 'narthex',
+          targetT: 0.00,
+          cam: { yaw: 0, pitch: 12, scale: 1.0 },
+          title: 'Mission 1: The Narthex & Holy Water Stoup',
+          desc: 'Find where Christians first enter the sacred space and bless themselves with Holy Water.',
+          question: 'Why do we bless ourselves with Holy Water upon entering the church?',
+          options: [
+            'To wash physical dust off our hands',
+            'To recall our Holy Baptism and bless ourselves in the Name of the Father, Son, and Holy Spirit',
+            'As an ancient medieval heating custom'
+          ],
+          correct: 1,
+          explanation: 'Blessing ourselves with Holy Water at the Narthex stoup reminds us of our Baptism, cleansing our thoughts as we enter God\'s holy house.'
+        },
+        {
+          id: 'nave',
+          targetT: 0.20,
+          cam: { yaw: 0, pitch: 10, scale: 0.9 },
+          title: 'Mission 2: The Nave Colonnade & Central Aisle',
+          desc: 'Walk down the central aisle where the pilgrim people of God gather.',
+          question: 'Why do Catholics genuflect on the right knee toward the Tabernacle before entering the pew?',
+          options: [
+            'To show formal etiquette to fellow parishioners',
+            'To adore Jesus Christ truly and bodily present in the Eucharist inside the Tabernacle',
+            'To stretch after the long walk'
+          ],
+          correct: 1,
+          explanation: 'Genuflection is a sacred posture of royal adoration before Christ our Lord truly present in the Blessed Sacrament.'
+        },
+        {
+          id: 'ambo',
+          targetT: 0.40,
+          cam: { yaw: -22, pitch: 8, scale: 0.7 },
+          title: 'Mission 3: The Ambo (Table of the Word)',
+          desc: 'Locate the sacred pulpit from which Sacred Scripture is read.',
+          question: 'What sacred proclamation takes place at the Ambo?',
+          options: [
+            'Weekly parish notices only',
+            'The Holy Gospel and the Word of God for the Liturgy of the Word',
+            'Organ choir practice'
+          ],
+          correct: 1,
+          explanation: 'The Ambo is the Table of the Word, dignified and consecrated for the proclamation of Sacred Scripture and the Holy Gospel.'
+        },
+        {
+          id: 'altar',
+          targetT: 0.60,
+          cam: { yaw: 0, pitch: 8, scale: 0.65 },
+          title: 'Mission 4: The High Altar of Sacrifice',
+          desc: 'Examine the sacred focal center of the Catholic basilica.',
+          question: 'What does the High Altar represent and what occurs upon it?',
+          options: [
+            'It is a dining table for parish meetings',
+            'It represents Christ Himself; upon it the Holy Sacrifice of the Mass is offered',
+            'It is purely an architectural stone decoration'
+          ],
+          correct: 1,
+          explanation: 'The altar is Christ! During Mass, bread and wine become Christ\'s real Body and Blood in the Holy Eucharist.'
+        },
+        {
+          id: 'tabernacle',
+          targetT: 0.80,
+          cam: { yaw: 0, pitch: 6, scale: 0.5 },
+          title: 'Mission 5: The Golden Tabernacle & Sanctuary Lamp',
+          desc: 'Locate the golden ark in the apse and note the burning red lamp.',
+          question: 'Why does the red Sanctuary Lamp burn day and night beside the Tabernacle?',
+          options: [
+            'To provide emergency fire exit lighting',
+            'To indicate the Real Presence of Christ reserved in the Blessed Sacrament',
+            'To illuminate the priest\'s books'
+          ],
+          correct: 1,
+          explanation: 'The sanctuary lamp is an undying beacon signaling to all pilgrims that Christ is truly present in the Tabernacle.'
+        },
+        {
+          id: 'lady-and-font',
+          targetT: 1.00,
+          cam: { yaw: 22, pitch: 10, scale: 0.75 },
+          title: 'Mission 6: The Lady Chapel & Baptismal Font',
+          desc: 'Explore the devotional side chapel of Our Lady and the Baptismal Font.',
+          question: 'Which Sacrament of Initiation is received at the Baptismal Font?',
+          options: [
+            'Holy Baptism, which washes away original sin and welcomes us into God\'s family',
+            'Holy Orders',
+            'Anointing of the Sick'
+          ],
+          correct: 0,
+          explanation: 'At the Baptismal Font, the holy waters of regeneration give new spiritual life in Christ, washing away original sin.'
+        }
+      ];
 
       this.init();
     }
@@ -177,12 +289,94 @@
       });
     }
 
+    update3DStatus() {
+      const is3D = Boolean(this.engine && this.engine.has3D());
+      const isChurchScene = Boolean(
+        this.engine &&
+        (this.engine.activePresetId === 'church-tour' ||
+         (this.engine.scene && this.engine.scene.id === 'church-tour'))
+      );
+
+      if (this.elements.btn3DOrbit) {
+        if (is3D) {
+          this.elements.btn3DOrbit.classList.remove('hidden');
+          this.elements.btn3DOrbit.style.display = '';
+          const isModified = Boolean(
+            this.engine.cameraOrbit &&
+            (this.engine.cameraOrbit.yawOffset !== 0 ||
+             this.engine.cameraOrbit.pitchOffset !== 0 ||
+             this.engine.cameraOrbit.distanceScale !== 1.0)
+          );
+          this.elements.btn3DOrbit.classList.toggle('active', isModified);
+          this.elements.btn3DOrbit.title = isModified
+            ? 'Reset 3D Camera to Scene Default'
+            : '3D Scene: Drag stage to orbit / Scroll to zoom / Click to reset';
+        } else {
+          this.elements.btn3DOrbit.classList.add('hidden');
+          this.elements.btn3DOrbit.style.display = 'none';
+        }
+      }
+
+      const stage = this.elements.playerStage || this.elements.stageSvg;
+      if (stage) {
+        stage.classList.toggle('has-3d-scene', is3D);
+      }
+
+      // Camera controls toolbar is only displayed for true 3D spatial scenes
+      if (this.elements.cameraControlsBar) {
+        this.elements.cameraControlsBar.classList.toggle('hidden', !is3D);
+        this.elements.cameraControlsBar.style.display = is3D ? 'flex' : 'none';
+      }
+
+      // Church-specific buttons (Nave, Altar, Tabernacle, Ambo, Quest) strictly ONLY displayed for church-tour scene
+      if (this.elements.churchCamButtons) {
+        this.elements.churchCamButtons.classList.toggle('hidden', !isChurchScene);
+        this.elements.churchCamButtons.style.display = isChurchScene ? 'inline-flex' : 'none';
+      }
+
+      if (this.elements.btnQuestMode) {
+        this.elements.btnQuestMode.classList.toggle('hidden', !isChurchScene);
+        this.elements.btnQuestMode.style.display = isChurchScene ? '' : 'none';
+      }
+
+      if (is3D && this.elements.orbitHint) {
+        this.elements.orbitHint.classList.remove('hidden');
+        this.elements.orbitHint.classList.remove('fade-out');
+        this.elements.orbitHint.style.display = '';
+        if (this._orbitHintTimeout) clearTimeout(this._orbitHintTimeout);
+        this._orbitHintTimeout = setTimeout(() => {
+          if (this.elements.orbitHint) {
+            this.elements.orbitHint.classList.add('fade-out');
+            setTimeout(() => {
+              if (this.elements.orbitHint && this.elements.orbitHint.classList.contains('fade-out')) {
+                this.elements.orbitHint.classList.add('hidden');
+                this.elements.orbitHint.style.display = 'none';
+              }
+            }, 350);
+          }
+        }, 3200);
+      } else if (this.elements.orbitHint) {
+        this.elements.orbitHint.classList.add('hidden');
+        this.elements.orbitHint.style.display = 'none';
+      }
+    }
+
     init() {
+      if (this.elements.sceneRoot) {
+        this.engine.container = this.elements.sceneRoot;
+      }
       this.populatePresets();
       this.bindDOMEvents();
       this.bindEngineEvents();
       this.setupKeyframeMarkers();
+      this.update3DStatus();
       this.updateView();
+
+      // Ensure immediate render of initial scene onto stage
+      if (this.engine && this.engine.scene && this.engine.container) {
+        this.engine.mountSceneAsset(this.engine.scene, this.engine.container);
+        this.engine.applyBindings(this.engine.progress);
+      }
     }
 
     formatTime(seconds) {
@@ -191,21 +385,45 @@
       return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
-    populatePresets() {
-      if (!this.elements.presetSelector || !global.ASTSceneRegistry) return;
-      const list = global.ASTSceneRegistry.list();
+    async populatePresets() {
+      if (!this.elements.presetSelector || this._isPopulating) return;
+      this._isPopulating = true;
+      let list = [];
+      try {
+        let res = await fetch('./scenes.manifest.json?v=2.5.0').catch(() => null);
+        if (!res || !res.ok) {
+          res = await fetch('./scenes-config.json?v=2.5.0').catch(() => null);
+        }
+        if (res && res.ok) {
+          const manifest = await res.json();
+          if (manifest && Array.isArray(manifest.scenes)) {
+            list = manifest.scenes;
+          }
+        }
+      } catch (err) {
+        console.warn('[Player UI] Manifest load fallback:', err);
+      }
+
+      if (!list.length && global.ASTSceneRegistry) {
+        list = global.ASTSceneRegistry.list();
+      }
+
+      const activeId = this.engine.activePresetId || 'church-tour';
       this.elements.presetSelector.innerHTML = '';
       list.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
         opt.textContent = `${item.title} (${item.stage})`;
-        if (item.id === this.engine.activePresetId) {
+        if (item.id === activeId) {
           opt.selected = true;
         }
         this.elements.presetSelector.appendChild(opt);
       });
       // Explicitly sync the select value to the engine's active preset
-      this.elements.presetSelector.value = this.engine.activePresetId;
+      if (activeId) {
+        this.elements.presetSelector.value = activeId;
+      }
+      this._isPopulating = false;
     }
 
     setupKeyframeMarkers() {
@@ -236,9 +454,9 @@
         this.elements.badgeStage.textContent = scene.stage || 'CURRICULUM';
       }
 
-      // Render vector SVG
+      // Render vector SVG via direct element attribute patching (zero DOM thrashing, 60 FPS)
       if (this.elements.sceneRoot) {
-        this.elements.sceneRoot.innerHTML = this.engine.renderCurrentVector();
+        this.engine.renderCurrentVector(this.elements.sceneRoot);
       }
 
       // Subtitles
@@ -353,6 +571,7 @@
 
       if (el.presetSelector) {
         el.presetSelector.addEventListener('change', (e) => {
+          if (this._isPopulating) return;
           if (e.target.value && e.target.value !== this.engine.activePresetId) {
             this.engine.setPreset(e.target.value, true);
           }
@@ -416,11 +635,175 @@
         });
       }
 
+      // 3D Reset / Orbit Toggle Button
+      if (el.btn3DOrbit) {
+        el.btn3DOrbit.addEventListener('click', () => {
+          this.engine.resetCamera();
+          this.playChime(659.25, 'triangle');
+          this.showToast('🌐 3D Camera Reset');
+          this.update3DStatus();
+        });
+      }
+
+      // Interactive 3D Orbit Gestures on Viewport Stage (Mouse, Touch, Wheel, Double Click)
+      const stage = el.playerStage || el.stageSvg;
+      let startOrbitX = 0;
+      let startOrbitY = 0;
+      let initialPinchDist = 0;
+
+      if (stage) {
+        stage.addEventListener('mousedown', (e) => {
+          if (e.target.closest('button') || e.target.closest('select') || e.target.closest('.interactive-card')) return;
+          if (this.engine.has3D()) {
+            this.isOrbitDragging = true;
+            startOrbitX = e.clientX;
+            startOrbitY = e.clientY;
+            stage.classList.add('is-orbiting');
+          }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (this.isOrbitDragging && this.engine.has3D()) {
+            const dx = e.clientX - startOrbitX;
+            const dy = e.clientY - startOrbitY;
+            startOrbitX = e.clientX;
+            startOrbitY = e.clientY;
+            this.engine.rotateCamera(dx * 0.45, -dy * 0.45);
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (this.isOrbitDragging) {
+            this.isOrbitDragging = false;
+            if (stage) stage.classList.remove('is-orbiting');
+          }
+        });
+
+        // Touch gestures for iPad and mobile devices
+        stage.addEventListener('touchstart', (e) => {
+          if (e.target.closest('button') || e.target.closest('select') || e.target.closest('.interactive-card')) return;
+          if (this.engine.has3D()) {
+            if (e.touches.length === 1) {
+              this.isOrbitDragging = true;
+              startOrbitX = e.touches[0].clientX;
+              startOrbitY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+              const dx = e.touches[0].clientX - e.touches[1].clientX;
+              const dy = e.touches[0].clientY - e.touches[1].clientY;
+              initialPinchDist = Math.hypot(dx, dy);
+            }
+          }
+        }, { passive: true });
+
+        stage.addEventListener('touchmove', (e) => {
+          if (this.isOrbitDragging && e.touches.length === 1 && this.engine.has3D()) {
+            const dx = e.touches[0].clientX - startOrbitX;
+            const dy = e.touches[0].clientY - startOrbitY;
+            startOrbitX = e.touches[0].clientX;
+            startOrbitY = e.touches[0].clientY;
+            this.engine.rotateCamera(dx * 0.55, -dy * 0.55);
+          } else if (e.touches.length === 2 && this.engine.has3D()) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const dist = Math.hypot(dx, dy);
+            if (initialPinchDist > 0) {
+              const pinchDelta = (dist - initialPinchDist) / initialPinchDist;
+              this.engine.zoomCamera(pinchDelta * 0.1);
+              initialPinchDist = dist;
+            }
+          }
+        }, { passive: true });
+
+        stage.addEventListener('touchend', () => {
+          this.isOrbitDragging = false;
+          initialPinchDist = 0;
+        });
+
+        // Scroll wheel to zoom
+        stage.addEventListener('wheel', (e) => {
+          if (this.engine.has3D()) {
+            e.preventDefault();
+            this.engine.zoomCamera(-e.deltaY * 0.0015);
+          }
+        }, { passive: false });
+
+        // Double click to reset orientation
+        stage.addEventListener('dblclick', (e) => {
+          if (e.target.closest('button') || e.target.closest('select')) return;
+          if (this.engine.has3D()) {
+            this.engine.resetCamera();
+            this.playChime(659.25, 'triangle');
+            this.showToast('🌐 3D Camera Reset');
+          }
+        });
+      }
+
       // Interactive Card Close Button
       if (el.interactiveClose) {
         el.interactiveClose.addEventListener('click', () => {
           this.closeInteractiveCard();
           this.engine.play();
+        });
+      }
+
+      // 3D Camera Viewpoints Presets Toolbar
+      if (el.cameraControlsBar) {
+        el.cameraControlsBar.querySelectorAll('.cam-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const camType = btn.getAttribute('data-cam');
+            if (camType === 'entrance') {
+              this.engine.cameraOrbit.yawOffset = 0;
+              this.engine.cameraOrbit.pitchOffset = 0;
+              this.engine.cameraOrbit.distanceScale = 1.0;
+              this.engine.seek(0.05);
+              this.showToast('⛪ Nave Entrance View');
+            } else if (camType === 'altar') {
+              this.engine.cameraOrbit.yawOffset = 0;
+              this.engine.cameraOrbit.pitchOffset = -5;
+              this.engine.cameraOrbit.distanceScale = 0.65;
+              this.engine.seek(0.60);
+              this.showToast('✨ High Altar Focus');
+            } else if (camType === 'tabernacle') {
+              this.engine.cameraOrbit.yawOffset = 0;
+              this.engine.cameraOrbit.pitchOffset = -8;
+              this.engine.cameraOrbit.distanceScale = 0.50;
+              this.engine.seek(0.80);
+              this.showToast('🕯️ Golden Tabernacle Focus');
+            } else if (camType === 'ambo') {
+              this.engine.cameraOrbit.yawOffset = -22;
+              this.engine.cameraOrbit.pitchOffset = -3;
+              this.engine.cameraOrbit.distanceScale = 0.70;
+              this.engine.seek(0.40);
+              this.showToast('📖 Ambo (Table of the Word)');
+            } else if (camType === 'overhead') {
+              this.engine.cameraOrbit.yawOffset = 0;
+              this.engine.cameraOrbit.pitchOffset = 52;
+              this.engine.cameraOrbit.distanceScale = 1.35;
+              this.showToast('🦅 Bird\'s-Eye 3D Perspective');
+            } else if (camType === 'orbit') {
+              this.engine.rotateCamera(45, 0);
+              this.showToast('🔄 Orbiting +45° in 3D');
+            } else if (camType === 'reset') {
+              this.engine.resetCamera();
+              this.showToast('🌐 3D Camera Reset');
+            }
+            this.engine.applyBindings(this.engine.progress);
+            this.playChime(587.33, 'triangle');
+            this.update3DStatus();
+          });
+        });
+      }
+
+      // 3D Pilgrim Quest Mode Button
+      if (el.btnQuestMode) {
+        el.btnQuestMode.addEventListener('click', () => {
+          this.startQuestMode();
+        });
+      }
+
+      if (el.questClose) {
+        el.questClose.addEventListener('click', () => {
+          this.closeQuestMode();
         });
       }
 
@@ -482,13 +865,19 @@
         }
       });
 
+      this.engine.on('camerachange', () => {
+        this.update3DStatus();
+      });
+
       this.engine.on('presetchange', (data) => {
         if (this.elements.presetSelector) {
           this.elements.presetSelector.value = data.preset;
         }
         this.completedCheckpoints.clear();
         this.closeInteractiveCard();
+        this.closeQuestMode();
         this.setupKeyframeMarkers();
+        this.update3DStatus();
         this.updateView();
       });
 
@@ -498,6 +887,145 @@
         }
         this.updateView();
       });
+    }
+
+    startQuestMode() {
+      if (!this.elements.questDrawer) return;
+      this.questState.active = true;
+      this.elements.questDrawer.classList.remove('hidden');
+      this.engine.pause();
+      this.showToast('🎮 3D Pilgrim Quest: Sacred Space Explorer Started!');
+      this.playChime(659.25, 'triangle');
+      this.renderCurrentMission();
+    }
+
+    renderCurrentMission() {
+      if (!this.elements.questBody || !this.elements.questScore) return;
+      const idx = this.questState.missionIndex;
+      const total = this.questMissions.length;
+
+      this.elements.questScore.textContent = `⭐ ${this.questState.completedMissions.size}/${total} Stars • ${this.questState.score} Pts`;
+
+      if (idx >= total) {
+        this.elements.questBody.innerHTML = `
+          <div style="text-align: center; padding: 12px 6px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">🏆 ⛪ ⭐</div>
+            <div class="quest-mission-title" style="color: #facc15; font-size: 15px;">PILGRIM MASTER OF SACRED ARCHITECTURE!</div>
+            <div class="quest-mission-desc" style="margin: 8px 0 14px 0;">
+              Congratulations! You have explored all 6 sacred spaces in full 3D, mastering the Narthex, Nave Colonnade, Ambo, High Altar, Golden Tabernacle, Lady Chapel, and Baptismal Font!
+            </div>
+            <div style="display: flex; justify-content: center; gap: 8px;">
+              <button type="button" class="quest-action-btn" id="quest-replay-btn">🔄 Play Again</button>
+              <button type="button" class="quest-action-btn" id="quest-finish-btn" style="background:#059669; border-color:#10b981;">✓ Complete Tour</button>
+            </div>
+          </div>
+        `;
+        const replayBtn = document.getElementById('quest-replay-btn');
+        if (replayBtn) {
+          replayBtn.addEventListener('click', () => {
+            this.questState.missionIndex = 0;
+            this.questState.score = 0;
+            this.questState.completedMissions.clear();
+            this.renderCurrentMission();
+          });
+        }
+        const finishBtn = document.getElementById('quest-finish-btn');
+        if (finishBtn) finishBtn.addEventListener('click', () => this.closeQuestMode());
+        return;
+      }
+
+      const m = this.questMissions[idx];
+
+      if (m.cam) {
+        this.engine.cameraOrbit.yawOffset = m.cam.yaw;
+        this.engine.cameraOrbit.pitchOffset = m.cam.pitch;
+        this.engine.cameraOrbit.distanceScale = m.cam.scale;
+        this.engine.seek(m.targetT);
+        this.engine.applyBindings(m.targetT);
+        this.update3DStatus();
+      }
+
+      let html = `
+        <div class="quest-mission-title">${m.title}</div>
+        <div class="quest-mission-desc">${m.desc}</div>
+        <div style="font-weight: 700; font-size: 12px; color: #f8fafc; margin-bottom: 6px;">${m.question}</div>
+        <div class="quest-options-grid">
+      `;
+
+      m.options.forEach((opt, optIdx) => {
+        html += `<button type="button" class="quest-option-btn" data-opt="${optIdx}">${opt}</button>`;
+      });
+
+      html += `</div>`;
+      this.elements.questBody.innerHTML = html;
+
+      const optionBtns = this.elements.questBody.querySelectorAll('.quest-option-btn');
+      optionBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const optIdx = parseInt(e.currentTarget.getAttribute('data-opt'), 10);
+          this.checkMissionAnswer(m, optIdx, optionBtns);
+        });
+      });
+    }
+
+    checkMissionAnswer(mission, selectedIdx, optionBtns) {
+      const isCorrect = selectedIdx === mission.correct;
+      optionBtns.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === mission.correct) {
+          btn.classList.add('correct');
+        } else if (i === selectedIdx) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      if (isCorrect) {
+        this.playChime(784, 'triangle');
+        if (!this.questState.completedMissions.has(mission.id)) {
+          this.questState.score += 100;
+          this.questState.completedMissions.add(mission.id);
+        }
+        this.showToast(`⭐ Correct! +100 Pilgrim Points`);
+      } else {
+        this.playChime(220, 'sawtooth');
+        this.showToast(`Notice: Review the sacred symbolism`);
+      }
+
+      this.elements.questScore.textContent = `⭐ ${this.questState.completedMissions.size}/${this.questMissions.length} Stars • ${this.questState.score} Pts`;
+
+      const feedbackDiv = document.createElement('div');
+      feedbackDiv.style.marginTop = '10px';
+      feedbackDiv.style.padding = '8px 12px';
+      feedbackDiv.style.borderRadius = '8px';
+      feedbackDiv.style.background = isCorrect ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      feedbackDiv.style.border = isCorrect ? '1px solid #10b981' : '1px solid #ef4444';
+      feedbackDiv.style.fontSize = '11px';
+      feedbackDiv.style.lineHeight = '1.4';
+      feedbackDiv.innerHTML = `
+        <div style="font-weight: 700; color: ${isCorrect ? '#34d399' : '#f87171'}; margin-bottom: 4px;">
+          ${isCorrect ? '✓ Well answered, Pilgrim!' : 'Catechetical Insight:'}
+        </div>
+        <div style="color: #e2e8f0; margin-bottom: 8px;">${mission.explanation}</div>
+        <button type="button" class="quest-action-btn" id="btn-next-mission">
+          ${this.questState.missionIndex + 1 < this.questMissions.length ? 'Next Sacred Station ➜' : 'View Master Results 🏆'}
+        </button>
+      `;
+      this.elements.questBody.appendChild(feedbackDiv);
+
+      const nextBtn = document.getElementById('btn-next-mission');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          this.questState.missionIndex++;
+          this.renderCurrentMission();
+        });
+      }
+    }
+
+    closeQuestMode() {
+      if (this.elements.questDrawer) {
+        this.elements.questDrawer.classList.add('hidden');
+      }
+      this.questState.active = false;
     }
   }
 

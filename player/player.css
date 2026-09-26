@@ -15,6 +15,18 @@
   --radius: 8px;
 }
 
+/* Universal Hidden Utility */
+.hidden,
+.camera-controls-bar.hidden,
+.church-cam-buttons.hidden,
+.quest-drawer.hidden,
+.orbit-hint.hidden,
+#btn-3d-orbit.hidden,
+#btn-quest-mode.hidden,
+.interactive-card.hidden {
+  display: none !important;
+}
+
 [data-theme="light"] {
   --bg: #f8fafc;
   --surface: #ffffff;
@@ -98,13 +110,16 @@ header {
 
 /* Main Viewport Stage */
 main {
-  flex: 1;
+  flex: 1 1 0%;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, var(--bg) 100%);
   overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
 }
 
 #stage-svg {
@@ -113,6 +128,7 @@ main {
   max-width: 100%;
   max-height: 100%;
   display: block;
+  object-fit: contain;
 }
 
 /* Subtitles Banner Overlay */
@@ -135,6 +151,234 @@ main {
   box-shadow: 0 4px 14px rgba(0,0,0,0.4);
   pointer-events: none;
   transition: opacity 0.2s ease;
+}
+
+/* 3D Scene Interactive Orbit Hint */
+.orbit-hint {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  backdrop-filter: blur(8px);
+  padding: 5px 14px;
+  border-radius: 9999px;
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  z-index: 20;
+}
+
+.orbit-hint.fade-out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+/* 3D Orbit Stage Cursor */
+.has-3d-scene {
+  cursor: grab;
+}
+
+.has-3d-scene.is-orbiting {
+  cursor: grabbing;
+}
+
+/* 3D Camera Viewpoints Toolbar */
+.camera-controls-bar {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  backdrop-filter: blur(8px);
+  padding: 4px 8px;
+  border-radius: 8px;
+  z-index: 25;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.church-cam-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cam-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+  padding-right: 4px;
+  border-right: 1px solid rgba(56, 189, 248, 0.25);
+  margin-right: 2px;
+}
+
+.cam-btn {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cam-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.cam-btn.quest-btn {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
+  color: #fef08a;
+  animation: pulse-gold 2.5s infinite;
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(234, 179, 8, 0); }
+}
+
+/* 3D Pilgrim Quest Drawer */
+.quest-drawer {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 620px;
+  background: rgba(11, 17, 32, 0.95);
+  border: 1.5px solid #eab308;
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 12px 16px;
+  z-index: 30;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(234, 179, 8, 0.2);
+  color: #f8fafc;
+}
+
+.quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(234, 179, 8, 0.3);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.quest-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quest-badge {
+  background: #eab308;
+  color: #000000;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.quest-score {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fef08a;
+}
+
+.quest-mission-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.quest-mission-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.quest-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quest-action-btn {
+  background: #2563eb;
+  border: 1px solid #3b82f6;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quest-action-btn:hover {
+  background: #1d4ed8;
+}
+
+.quest-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.quest-option-btn {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  color: #f1f5f9;
+  font-size: 11px;
+  text-align: left;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quest-option-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+}
+
+.quest-option-btn.correct {
+  background: rgba(16, 185, 129, 0.3) !important;
+  border-color: #10b981 !important;
+  color: #6ee7b7 !important;
+}
+
+.quest-option-btn.incorrect {
+  background: rgba(239, 68, 68, 0.3) !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+/* 3D Orbit Header Button Active State */
+#btn-3d-orbit.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 
 /* Bottom Player Chrome */
@@ -273,24 +517,33 @@ select {
 @media (max-width: 640px) {
   header {
     height: auto;
-    padding: 6px 8px;
+    padding: 4px 6px;
     flex-wrap: wrap;
+    gap: 4px;
   }
   .header-actions button span.btn-label {
     display: none;
   }
   select {
-    max-width: 140px;
+    max-width: 130px;
     font-size: 11px;
-    padding: 3px 5px;
+    padding: 2px 4px;
   }
   .controls-row {
     justify-content: center;
+    gap: 4px;
+  }
+  footer {
+    padding: 4px 8px 6px 8px;
+    gap: 4px;
+  }
+  .time-readout {
+    font-size: 10px;
   }
   #subtitle-overlay {
     font-size: 11px;
-    padding: 6px 10px;
-    bottom: 8px;
+    padding: 4px 8px;
+    bottom: 6px;
     max-width: 95%;
   }
 }
