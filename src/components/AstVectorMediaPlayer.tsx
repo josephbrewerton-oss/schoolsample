@@ -293,7 +293,9 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 
           {has3D && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-              <span
+              <button
+                type="button"
+                onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 10 })}
                 style={{
                   fontSize: '0.72rem',
                   fontWeight: 800,
@@ -305,11 +307,13 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
                 }}
-                title="3D Spatial Engine: Click & drag stage to orbit 360°, scroll wheel to zoom"
+                title="3D Spatial Engine: Click to orbit +45°, or click & drag canvas to orbit 360°"
               >
                 🌐 3D Mode
-              </span>
+              </button>
 
               {/* Church-specific viewpoints only shown when Church Tour is active */}
               {selectedPreset === 'church-tour' && (
@@ -317,7 +321,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 0, distanceScale: 1.0 });
+                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 18, distanceScale: 1.05 });
                       postToPlayer({ type: 'SEEK', progress: 0.05 });
                     }}
                     style={{
@@ -338,7 +342,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: -5, distanceScale: 0.65 });
+                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 26, distanceScale: 1.45 });
                       postToPlayer({ type: 'SEEK', progress: 0.60 });
                     }}
                     style={{
@@ -359,7 +363,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: -8, distanceScale: 0.50 });
+                      postToPlayer({ type: 'SET_CAMERA', yaw: 14, pitch: 28, distanceScale: 1.70 });
                       postToPlayer({ type: 'SEEK', progress: 0.80 });
                     }}
                     style={{

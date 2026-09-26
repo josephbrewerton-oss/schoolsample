@@ -163,6 +163,7 @@
      */
     has3D() {
       if (this.scene && this.scene.has3D) return true;
+      if (this.activePresetId === 'church-tour' || this.activePresetId === 'solar-system' || this.activePresetId === 'atom') return true;
       if (this.active3DItems && this.active3DItems.length > 0) return true;
       if (this.active3DNodes && this.active3DNodes.length > 0) return true;
       if (this.active3DLines && this.active3DLines.length > 0) return true;
@@ -922,6 +923,26 @@
           const pitchFn = new Function('t', 'Math', `"use strict"; return (${camera.pitch});`);
           camera.pitch = pitchFn(t, Math);
         } catch {}
+      }
+
+      // Calculate combined camera orientation and distance scaling
+      const yawBase = typeof camera.yaw === 'number' ? camera.yaw : 0;
+      const pitchBase = typeof camera.pitch === 'number' ? camera.pitch : 0;
+      const totalYaw = yawBase + (this.cameraOrbit ? this.cameraOrbit.yawOffset : 0);
+      const totalPitch = Math.max(-85, Math.min(85, pitchBase + (this.cameraOrbit ? this.cameraOrbit.pitchOffset : 0)));
+      const totalScale = Math.max(0.2, Math.min(4.0, (this.cameraOrbit ? this.cameraOrbit.distanceScale : 1.0)));
+
+      // Apply hardware-accelerated 3D spatial transformation to the scene stage container
+      if (this._container) {
+        if (this.has3D() || (this.cameraOrbit && (this.cameraOrbit.yawOffset !== 0 || this.cameraOrbit.pitchOffset !== 0 || this.cameraOrbit.distanceScale !== 1.0))) {
+          this._container.style.transformOrigin = '400px 240px';
+          this._container.style.transformBox = 'view-box';
+          this._container.style.transform = `perspective(800px) rotateX(${totalPitch.toFixed(1)}deg) rotateY(${totalYaw.toFixed(1)}deg) scale(${totalScale.toFixed(2)})`;
+          this._container.style.transition = this.isOrbitDragging ? 'none' : 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)';
+        } else {
+          this._container.style.transform = '';
+          this._container.style.transition = '';
+        }
       }
 
       // 1. Process 3D Items (Nodes, Lines, Rings, Polygons)

@@ -129,6 +129,14 @@ main {
   max-height: 100%;
   display: block;
   object-fit: contain;
+  perspective: 900px;
+}
+
+#scene-root {
+  transform-origin: 400px 240px;
+  transform-box: view-box;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 /* Subtitles Banner Overlay */
