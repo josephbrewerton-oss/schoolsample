@@ -53,19 +53,25 @@
   <div class="container">
     <h1>&lt;micro-vector-player&gt; Web Component</h1>
     <p>Zero-bloat, sandboxed AST vector player packaged into a single &lt; 5 KB script. Drop it into any page:</p>
-    <code>&lt;micro-vector-player src="/player/examples/orbit.json" autoplay voice&gt;&lt;/micro-vector-player&gt;</code>
+    <code>&lt;micro-vector-player src="./examples/orbit.json" autoplay voice&gt;&lt;/micro-vector-player&gt;</code>
 
     <div class="demo-grid">
       <!-- Demo 1: Loading from JSON AST file -->
       <div>
         <h3>1. Loading from <code>orbit.json</code> with Autoplay:</h3>
-        <micro-vector-player src="/player/examples/orbit.json" autoplay></micro-vector-player>
+        <micro-vector-player src="./examples/orbit.json" autoplay></micro-vector-player>
       </div>
 
-      <!-- Demo 2: Loading from Built-in Preset -->
+      <!-- Demo 2: Loading from Built-in Preset fractions -->
       <div>
         <h3>2. Loading Built-in Preset <code>fractions</code>:</h3>
         <micro-vector-player preset="fractions"></micro-vector-player>
+      </div>
+
+      <!-- Demo 3: Loading Built-in Preset church-tour -->
+      <div>
+        <h3>3. Loading Built-in Preset <code>church-tour</code>:</h3>
+        <micro-vector-player preset="church-tour" autoplay voice></micro-vector-player>
       </div>
     </div>
   </div>

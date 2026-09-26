@@ -13,6 +13,7 @@ const FirstCommunionMasteryLab = React.lazy(() => import('../components/FirstCom
 const ConceptConstellation = React.lazy(() => import('../components/ConceptConstellation'));
 const ZeroBloatVectorStudio = React.lazy(() => import('../components/ZeroBloatVectorStudio'));
 const AstVectorMediaPlayer = React.lazy(() => import('../components/AstVectorMediaPlayer'));
+import { openPlayerModal, resolvePresetForTopic } from '../services/playerLauncher';
 import { hypervisor } from '../engine/hypervisor';
 import {
   SUPPORTED_LANGUAGES,
@@ -840,13 +841,35 @@ export default function LearningZonePage() {
                 }
               >
                 <AstVectorMediaPlayer
-                  preset={
-                    selectedSubject.toLowerCase().includes('math')
-                      ? 'fractions'
-                      : selectedSubject.toLowerCase().includes('science') || selectedUnit.toLowerCase().includes('space')
-                      ? 'solar-system'
-                      : 'fractions'
-                  }
+                  preset={(() => {
+                    const s = selectedSubject.toLowerCase();
+                    const u = selectedUnit.toLowerCase();
+                    if (s.includes('relig') || s.includes('catholic') || u.includes('church') || u.includes('sanctuary')) {
+                      return 'church-tour';
+                    }
+                    if (u.includes('photo') || u.includes('plant') || u.includes('leaf') || u.includes('botan')) {
+                      return 'photosynthesis';
+                    }
+                    if (u.includes('pythag') || u.includes('triangle') || u.includes('geometry') || u.includes('theorem')) {
+                      return 'pythagoras';
+                    }
+                    if (u.includes('atom') || u.includes('bohr') || u.includes('electron') || u.includes('chem')) {
+                      return 'atom';
+                    }
+                    if (u.includes('mitosis') || u.includes('cell') || u.includes('division')) {
+                      return 'cell-mitosis';
+                    }
+                    if (u.includes('velocity') || u.includes('speed') || u.includes('vector') || u.includes('physic')) {
+                      return 'velocity';
+                    }
+                    if (u.includes('dna') || u.includes('helix') || u.includes('genet')) {
+                      return 'dna-helix';
+                    }
+                    if (s.includes('science') || u.includes('space') || u.includes('solar') || u.includes('planet')) {
+                      return 'solar-system';
+                    }
+                    return 'fractions';
+                  })()}
                   allowPresetSwitch={true}
                   autoPlay={true}
                   height="540px"
@@ -1100,6 +1123,38 @@ export default function LearningZonePage() {
                       <span>{audioSpeaking ? 'Playing Echo...' : `Echo (EN ➔ ${currentLangMeta.code.toUpperCase()})`}</span>
                     </button>
                   )}
+
+                  {/* Launch Interactive Motion Player for Current Lesson */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const resolvedPreset = resolvePresetForTopic(selectedSubject, selectedUnit, effectiveLesson.title);
+                      openPlayerModal({
+                        preset: resolvedPreset,
+                        title: `${effectiveLesson.title || selectedUnit} — Visual Motion Model`,
+                        lang: currentLang,
+                        autoPlay: true,
+                      });
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      border: '1px solid #0284c7',
+                      color: '#ffffff',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+                    }}
+                    title="Launch interactive AST Vector Animation Player for this lesson"
+                  >
+                    <span>🎬</span>
+                    <span>Motion Player</span>
+                  </button>
 
                   <button
                     type="button"

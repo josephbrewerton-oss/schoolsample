@@ -9,6 +9,7 @@ import CreedExplorer from '../components/CreedExplorer';
 import CommandmentsMoralGuide from '../components/CommandmentsMoralGuide';
 import RosaryMysteryWalk from '../components/RosaryMysteryWalk';
 import AstVectorMediaPlayer from '../components/AstVectorMediaPlayer';
+import SanctuaryPilgrimQuest from '../components/SanctuaryPilgrimQuest';
 import { speakInLanguage, cancelSpeech } from '../engine/translationService';
 import { playSuccessChime, triggerHapticSuccess } from '../services/soundHaptics';
 
@@ -1108,222 +1109,7 @@ export default function CatholicLifePage(): React.JSX.Element {
 
             {activeTab === 'church-tour' && (
               <div style={{ marginBottom: '2.5rem' }}>
-                {/* Header Banner */}
-                <div
-                  style={{
-                    background: '#0f172a',
-                    color: '#f8fafc',
-                    borderRadius: '14px',
-                    padding: '1.5rem',
-                    marginBottom: '1.5rem',
-                    border: '1px solid #1e293b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '1rem',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '1.4rem' }}>⛪</span>
-                      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>
-                        Interactive Tour of a Catholic Church
-                      </h2>
-                      <span
-                        style={{
-                          background: 'rgba(56, 189, 248, 0.15)',
-                          color: '#38bdf8',
-                          border: '1px solid rgba(56, 189, 248, 0.3)',
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        AST Vector Tour &bull; &lt; 4 KB
-                      </span>
-                    </div>
-                    <p style={{ margin: 0, fontSize: '0.86rem', color: '#94a3b8', maxWidth: '780px' }}>
-                      Step through the sacred Latin-cross floorplan: from the Narthex and Holy Water font, up the Nave, to the Ambo, the Altar of Sacrifice, the Tabernacle, and the devotional Lady Chapel. Continuous vector motion with on-device bilingual narration.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleTabChange('sacred-objects')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        background: '#1e293b',
-                        border: '1px solid #334155',
-                        color: '#cbd5e1',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      🏺 Sacred Vessels Quiz &rarr;
-                    </button>
-                  </div>
-                </div>
-
-                {/* Embedded AST Vector Media Player */}
-                <div style={{ marginBottom: '2rem' }}>
-                  <AstVectorMediaPlayer
-                    preset="church-tour"
-                    autoPlay={true}
-                    height="500px"
-                    allowPresetSwitch={true}
-                  />
-                </div>
-
-                {/* 6 Sanctuary Stations Cards */}
-                <div style={{ marginBottom: '2.5rem' }}>
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>
-                    The 6 Sacred Stations of Catholic Church Architecture
-                  </h3>
-                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>
-                    Every part of a Catholic church has a theological and liturgical purpose pointing our hearts toward Heaven.
-                  </p>
-
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                      gap: '1rem',
-                    }}
-                  >
-                    {[
-                      {
-                        num: '1',
-                        title: 'The Narthex & Holy Water Stoup',
-                        latin: 'Vestibulum & Aqua Benedicta',
-                        icon: '🚪',
-                        color: '#0284c7',
-                        bg: '#f0f9ff',
-                        summary: 'The entrance vestibule connecting the outside secular world with the sacred temple of God.',
-                        action: 'We bless ourselves with Holy Water making the Sign of the Cross: "In the Name of the Father, and of the Son, and of the Holy Spirit" to recall our baptismal promises.',
-                        scripture: 'Psalm 100:4 — "Enter His gates with thanksgiving and His courts with praise."',
-                      },
-                      {
-                        num: '2',
-                        title: 'The Nave & Central Aisle',
-                        latin: 'Navis Ecclesiae',
-                        icon: '⛵',
-                        color: '#7c3aed',
-                        bg: '#f5f3ff',
-                        summary: 'Named from the Latin "navis" (ship), the Nave represents the Barque of Peter carrying the pilgrim People of God across the waters of life.',
-                        action: 'Before entering our pew, we turn towards the Tabernacle and genuflect on our right knee down to the floor, honoring Jesus truly present in the Blessed Sacrament.',
-                        scripture: 'Philippians 2:10 — "At the name of Jesus every knee should bend, in heaven and on earth."',
-                      },
-                      {
-                        num: '3',
-                        title: 'The Ambo (Lectern)',
-                        latin: 'Mensa Verbi Dei',
-                        icon: '📖',
-                        color: '#2563eb',
-                        bg: '#eff6ff',
-                        summary: 'The elevated pulpit known as the "Table of the Word", matching the Altar (the "Table of the Eucharist").',
-                        action: 'From the Ambo, the Lector reads the Old Testament and Epistle, the Cantor sings the Responsorial Psalm, and the Priest or Deacon proclaims the Holy Gospel.',
-                        scripture: 'Hebrews 4:12 — "For the word of God is living and active, sharper than any two-edged sword."',
-                      },
-                      {
-                        num: '4',
-                        title: 'The Altar of Sacrifice',
-                        latin: 'Altare Christi',
-                        icon: '🕯️',
-                        color: '#d97706',
-                        bg: '#fffbeb',
-                        summary: 'The sacred heart of the sanctuary representing Christ Himself. It is both an altar of sacrifice and the table of the Eucharistic banquet.',
-                        action: 'The priest kisses the altar out of veneration for Christ. During the Eucharistic Prayer, bread and wine become the Real Body and Blood of Jesus.',
-                        scripture: '1 Corinthians 10:21 — "You partake of the table of the Lord."',
-                      },
-                      {
-                        num: '5',
-                        title: 'The Tabernacle & Sanctuary Lamp',
-                        latin: 'Tabernaculum Domini',
-                        icon: '✨',
-                        color: '#dc2626',
-                        bg: '#fef2f2',
-                        summary: 'The golden dwelling place where consecrated Eucharistic Hosts are reserved for Communion to the sick and for adoration.',
-                        action: 'A red Sanctuary Lamp burns constantly beside the Tabernacle, telling everyone entering the church: "Jesus is here!"',
-                        scripture: 'John 6:51 — "I am the living bread that came down from heaven. Whoever eats this bread will live forever."',
-                      },
-                      {
-                        num: '6',
-                        title: 'The Lady Chapel & Baptismal Font',
-                        latin: 'Sacellum Marianum & Fons',
-                        icon: '🕊️',
-                        color: '#16a34a',
-                        bg: '#f0fdf4',
-                        summary: 'Devotional transepts for prayer with Our Lady and St Joseph, alongside the Baptismal font where original sin is washed away.',
-                        action: 'We light votive candles asking Our Lady (Mater Ecclesiae) to intercede for our families, school, and sick parish friends.',
-                        scripture: 'John 19:27 — "Jesus said to the disciple: Behold, your mother."',
-                      },
-                    ].map((station) => (
-                      <div
-                        key={station.num}
-                        style={{
-                          background: '#ffffff',
-                          borderRadius: '12px',
-                          border: '1px solid #e2e8f0',
-                          padding: '1.25rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span
-                            style={{
-                              background: station.bg,
-                              color: station.color,
-                              border: `1px solid ${station.color}40`,
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 800,
-                            }}
-                          >
-                            Station {station.num} &bull; {station.icon}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', fontStyle: 'italic', color: '#64748b' }}>
-                            {station.latin}
-                          </span>
-                        </div>
-
-                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a', margin: '4px 0 2px 0' }}>
-                          {station.title}
-                        </h4>
-
-                        <p style={{ fontSize: '0.84rem', color: '#334155', margin: 0, lineHeight: 1.45 }}>
-                          {station.summary}
-                        </p>
-
-                        <div
-                          style={{
-                            background: '#f8fafc',
-                            borderLeft: `3px solid ${station.color}`,
-                            padding: '6px 10px',
-                            borderRadius: '0 6px 6px 0',
-                            fontSize: '0.78rem',
-                            color: '#475569',
-                            marginTop: '4px',
-                          }}
-                        >
-                          <strong>What we do:</strong> {station.action}
-                        </div>
-
-                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic', marginTop: 'auto' }}>
-                          {station.scripture}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <SanctuaryPilgrimQuest />
 
                 {/* Liturgical Architecture FAQ */}
                 <div
@@ -1332,6 +1118,7 @@ export default function CatholicLifePage(): React.JSX.Element {
                     borderRadius: '12px',
                     border: '1px solid #e2e8f0',
                     padding: '1.25rem 1.5rem',
+                    marginTop: '2rem',
                   }}
                 >
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>

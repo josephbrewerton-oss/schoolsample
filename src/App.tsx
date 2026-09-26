@@ -41,6 +41,7 @@ const PrivacyPage = lazyRetry(() => import('./pages/privacy'));
 const ChildSafetyPage = lazyRetry(() => import('./pages/child-safety'));
 const LicensingPage = lazyRetry(() => import('./pages/licensing'));
 const TeacherBeaconPage = lazyRetry(() => import('./pages/teacher-beacon'));
+const MediaPlayerPage = lazyRetry(() => import('./pages/media-player'));
 const NotFoundPage = lazyRetry(() => import('./pages/not-found'));
 
 export default function App(): React.JSX.Element {
@@ -54,6 +55,8 @@ export default function App(): React.JSX.Element {
             <Route path="first-communion" element={<CatholicLifePage />} />
             <Route path="practice-lab" element={<PracticeLabPage />} />
             <Route path="learning-zone" element={<LearningZonePage />} />
+            <Route path="player" element={<MediaPlayerPage />} />
+            <Route path="media-player" element={<MediaPlayerPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="curriculum-studio" element={<CurriculumStudioPage />} />
             <Route path="settings" element={<SettingsPage />} />

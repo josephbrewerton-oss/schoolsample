@@ -1,13 +1,26 @@
 # ast-sexpr.gbnf
-# GGML BNF Grammar for Constraining Local LLMs to Token-Efficient S-Expression ASTs
-# Produces valid Lisp-like (scene ...) structures parsed directly by micro-vector-player.
+# GGML BNF Grammar for Constraining Local LLMs to Token-Efficient S-Expression ASTs with 3D Node Subsystem
+# Produces valid Lisp-like (scene ...) structures parsed directly by AST Vector Player.
 
-root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws ("(:easing" ws easing ")" ws)? "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ")"
+root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ")"
+
+camera ::= "(:camera" ws ":distance" ws number ws ":pitch" ws number ws ":yaw" ws (string | number) ws ":fov" ws number ")"
 
 keyframe ::= "(:t" ws fraction ws ":title" ws string ws ":rule" ws string ")"
 
-subtitle ::= "(:start" ws fraction ws ":end" ws fraction ws ":en" ws string (ws ":es" ws string)? ")"
+subtitle ::= "(:start" ws fraction ws ":end" ws fraction ws ":en" ws string (ws ":es" ws string)? (ws ":la" ws string)? ")"
 
+binding ::= node3d | line3d | ring3d | attr2d
+
+node3d ::= "(:target" ws string ws ":type" ws "\"3d-node\"" ws ":x" ws string ws ":y" ws string ws ":z" ws string (ws ":base-r" ws number)? (ws ":label" ws string)? (ws ":depth-fog" ws boolean)? ")"
+
+line3d ::= "(:target" ws string ws ":type" ws "\"3d-line\"" ws ":x1" ws string ws ":y1" ws string ws ":z1" ws string ws ":x2" ws string ws ":y2" ws string ws ":z2" ws string (ws ":cap1" ws string)? (ws ":cap2" ws string)? (ws ":base-r" ws number)? ")"
+
+ring3d ::= "(:target" ws string ws ":type" ws "\"3d-ring\"" ws ":r" ws string (ws ":cx" ws string)? (ws ":cy" ws string)? (ws ":cz" ws string)? (ws ":tilt-x" ws string)? (ws ":tilt-z" ws string)? (ws ":depth-fog" ws boolean)? ")"
+
+attr2d ::= "(:target" ws string ws ":attr" ws string ws ":expr" ws string ")"
+
+boolean ::= "true" | "false"
 easing ::= "\"linear\"" | "\"easeInQuad\"" | "\"easeOutQuad\"" | "\"easeInOutQuad\"" | "\"cubic\""
 
 fraction ::= "0." [0-9] [0-9]? | "1.0" | "0.0" | "1" | "0"

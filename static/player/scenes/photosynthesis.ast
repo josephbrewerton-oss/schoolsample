@@ -1,0 +1,21 @@
+(:scene :id "photosynthesis" :title "Photosynthesis: The Green Solar Engine" :stage "KS3 BIOLOGY" :duration 10.0
+  (:subtitles (
+    (:start 0.00 :end 0.40 :en "The plant leaf absorbs sunlight, water from veins, and carbon dioxide from air." :es "La hoja de la planta absorbe luz solar, agua de las venas y dióxido de carbono del aire.")
+    (:start 0.40 :end 0.75 :en "Inside chloroplasts, chlorophyll traps light photons to power the chemical synthesis." :es "Dentro de los cloroplastos, la clorofila atrapa fotones para impulsar la síntesis química.")
+    (:start 0.75 :end 1.00 :en "The equation: 6CO2 + 6H2O + Light makes Glucose (energy) and releases Oxygen!" :es "Ecuación: 6CO2 + 6H2O + Luz produce Glucosa (energía) y libera Oxígeno.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Phase 1: Reactant Influx" :rule "Leaves absorb Water (H2O) through roots and Carbon Dioxide (CO2) through stomata.")
+    (:t 0.40 :title "Phase 2: Light Absorption" :rule "Chlorophyll in chloroplasts absorbs light energy to split water molecules.")
+    (:t 0.75 :title "Phase 3: Glucose Synthesis" :rule "Chemical rearrangement produces Glucose (C6H12O6) for plant food.")
+    (:t 1.00 :title "Phase 4: Oxygen Release" :rule "Oxygen (O2) is released as a vital by-product through stomatal pores.")
+  ))
+  (:bindings (
+    (:target "#ps-photon-0" :attr "cy" :expr "30 + ((t * 2 + 0/6) % 1) * 180")
+    (:target "#ps-photon-1" :attr "cy" :expr "30 + ((t * 2 + 1/6) % 1) * 180")
+    (:target "#ps-photon-2" :attr "cy" :expr "30 + ((t * 2 + 2/6) % 1) * 180")
+    (:target "#ps-photon-3" :attr "cy" :expr "30 + ((t * 2 + 3/6) % 1) * 180")
+    (:target "#ps-photon-4" :attr "cy" :expr "30 + ((t * 2 + 4/6) % 1) * 180")
+    (:target "#ps-photon-5" :attr "cy" :expr "30 + ((t * 2 + 5/6) % 1) * 180")
+  ))
+)

@@ -1,0 +1,83 @@
+(:scene :id "solar-system" :title "Solar System: Heliocentric Planetary Motion" :stage "KS3 SCIENCE" :duration 14.0
+  (:camera :distance 450 :pitch 28 :yaw "t * 60" :fov 55)
+  (:subtitles (
+    (:start 0.00 :end 0.33 :en "At the center sits our Sun. Watch how Mercury speeds around much faster than Earth." :es "En el centro se encuentra el Sol. Observa cómo Mercurio gira mucho más rápido que la Tierra.")
+    (:start 0.33 :end 0.66 :en "Kepler's Law: The closer a planet is to the Sun, the faster it travels in its orbit." :es "Ley de Kepler: Cuanto más cerca está un planeta del Sol, más rápido orbita.")
+    (:start 0.66 :end 1.00 :en "Outer gas giants Jupiter and Saturn glide on immense orbits. Drag stage to orbit in 3D!" :es "Los gigantes gaseosos Júpiter y Saturno siguen órbitas inmensas. ¡Arrastra para rotar en 3D!")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Heliocentric Sun" :rule "The Sun sits at the focal center, providing gravitational attraction.")
+    (:t 0.33 :title "Planetary Orbits" :rule "Inner planets orbit faster than outer planets (Kepler's 3rd Law).")
+    (:t 0.66 :title "Earth Axial Tilt" :rule "Earth's 23.5° tilt causes seasonal changes, not distance from the Sun!")
+    (:t 1.00 :title "Harmonic Alignment" :rule "Deterministic orbital resonance across the solar system.")
+  ))
+  (:bindings (
+    (:target "#sun-body" :type "3d-node" :x "0" :y "0" :z "0" :base-r 26 :depth-fog false)
+    (:target "#sun-corona" :type "3d-node" :x "0" :y "0" :z "0" :base-r 38 :depth-fog false)
+    
+    (:target "#orbit-mercury" :type "3d-ring" :r "65" :depth-fog true)
+    (:target "#orbit-venus" :type "3d-ring" :r "105" :depth-fog true)
+    (:target "#orbit-earth" :type "3d-ring" :r "155" :depth-fog true)
+    (:target "#orbit-mars" :type "3d-ring" :r "205" :depth-fog true)
+    (:target "#orbit-jupiter" :type "3d-ring" :r "265" :depth-fog true)
+    (:target "#orbit-saturn" :type "3d-ring" :r "330" :depth-fog true)
+
+    (:target "#planet-mercury" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 4.15) * 65"
+      :y "Math.sin(t * Math.PI * 2 * 4.15 * 0.12) * 12"
+      :z "Math.sin(t * Math.PI * 2 * 4.15) * 65"
+      :base-r 5
+      :label "#label-mercury"
+    )
+    (:target "#planet-venus" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 1.62) * 105"
+      :y "Math.sin(t * Math.PI * 2 * 1.62 * 0.15) * 16"
+      :z "Math.sin(t * Math.PI * 2 * 1.62) * 105"
+      :base-r 8
+      :label "#label-venus"
+    )
+    (:target "#planet-earth" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 1.00) * 155"
+      :y "Math.sin(t * Math.PI * 2 * 1.00 * 0.10) * 18"
+      :z "Math.sin(t * Math.PI * 2 * 1.00) * 155"
+      :base-r 9
+      :label "#label-earth"
+    )
+    (:target "#moon-earth" :type "3d-node"
+      :x "(Math.cos(t * Math.PI * 2 * 1.00) * 155) + Math.cos(t * Math.PI * 2 * 12) * 20"
+      :y "(Math.sin(t * Math.PI * 2 * 1.00 * 0.10) * 18) + Math.sin(t * Math.PI * 2 * 12) * 6"
+      :z "(Math.sin(t * Math.PI * 2 * 1.00) * 155) + Math.sin(t * Math.PI * 2 * 12) * 20"
+      :base-r 2.5
+    )
+    (:target "#planet-mars" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 0.53) * 205"
+      :y "Math.sin(t * Math.PI * 2 * 0.53 * 0.18) * 22"
+      :z "Math.sin(t * Math.PI * 2 * 0.53) * 205"
+      :base-r 6
+      :label "#label-mars"
+    )
+    (:target "#planet-jupiter" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 0.24) * 265"
+      :y "Math.sin(t * Math.PI * 2 * 0.24 * 0.08) * 24"
+      :z "Math.sin(t * Math.PI * 2 * 0.24) * 265"
+      :base-r 14
+      :label "#label-jupiter"
+    )
+    (:target "#planet-saturn" :type "3d-node"
+      :x "Math.cos(t * Math.PI * 2 * 0.10) * 330"
+      :y "Math.sin(t * Math.PI * 2 * 0.10 * 0.06) * 28"
+      :z "Math.sin(t * Math.PI * 2 * 0.10) * 330"
+      :base-r 11
+      :label "#label-saturn"
+    )
+    (:target "#saturn-ring" :type "3d-ring"
+      :cx "Math.cos(t * Math.PI * 2 * 0.10) * 330"
+      :cy "Math.sin(t * Math.PI * 2 * 0.10 * 0.06) * 28"
+      :cz "Math.sin(t * Math.PI * 2 * 0.10) * 330"
+      :r "22"
+      :tilt-x "25"
+      :tilt-z "15"
+      :depth-fog true
+    )
+  ))
+)

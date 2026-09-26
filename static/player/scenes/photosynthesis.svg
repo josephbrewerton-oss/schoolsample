@@ -1,3 +1,12 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-<path d="M 120 240 C 200 80, 600 80, 680 240 C 600 400, 200 400, 120 240 Z" fill="url(#grad-leaf)" stroke="#4ade80" stroke-width="3" /><path d="M 120 240 L 680 240 M 260 240 L 340 160 M 380 240 L 460 160 M 260 240 L 340 320 M 380 240 L 460 320" stroke="#86efac" stroke-width="2" fill="none" opacity="0.6" /><circle cx="200" cy="30" r="4" fill="#facc15" filter="url(#glow)" /><circle cx="270" cy="60.000000000000014" r="4" fill="#facc15" filter="url(#glow)" /><circle cx="340" cy="89.99999999999999" r="4" fill="#facc15" filter="url(#glow)" /><circle cx="410" cy="120" r="4" fill="#facc15" filter="url(#glow)" /><circle cx="480" cy="149.99999999999997" r="4" fill="#facc15" filter="url(#glow)" /><circle cx="550" cy="180.00000000000003" r="4" fill="#facc15" filter="url(#glow)" /><rect x="180" y="24" width="440" height="38" rx="8" fill="#1e293b" stroke="#334155" /><text x="400" y="48" fill="#4ade80" font-size="16" font-weight="bold" text-anchor="middle">6CO₂ + 6H₂O + Light ➔ C₆H₁₂O₆ + 6O₂</text>
+  <path id="ps-leaf" d="M 120 240 C 200 80, 600 80, 680 240 C 600 400, 200 400, 120 240 Z" fill="url(#grad-leaf)" stroke="#4ade80" stroke-width="3" />
+  <path id="ps-veins" d="M 120 240 L 680 240 M 260 240 L 340 160 M 380 240 L 460 160 M 260 240 L 340 320 M 380 240 L 460 320" stroke="#86efac" stroke-width="2" fill="none" opacity="0.6" />
+  <circle id="ps-photon-0" cx="200" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
+  <circle id="ps-photon-1" cx="270" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
+  <circle id="ps-photon-2" cx="340" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
+  <circle id="ps-photon-3" cx="410" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
+  <circle id="ps-photon-4" cx="480" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
+  <circle id="ps-photon-5" cx="550" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
+  <rect x="180" y="24" width="440" height="38" rx="8" fill="#1e293b" stroke="#334155" />
+  <text id="ps-formula-txt" x="400" y="48" fill="#4ade80" font-size="16" font-weight="bold" text-anchor="middle">6CO₂ + 6H₂O + Light ➔ C₆H₁₂O₆ + 6O₂</text>
 </svg>

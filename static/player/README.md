@@ -111,7 +111,23 @@ window.addEventListener('message', (event) => {
 });
 ```
 
-## How to Split Off into an Independent Repository
-1. Copy the entire `static/player/` folder to a new repository.
-2. Run `npm publish --access public` (or host it as a static micro-frontend on Cloudflare Pages, Vercel, or GitHub Pages).
-3. The player has **zero external runtime dependencies** (pure vanilla JS, SVG, Web Speech, and CSS variables).
+## 100% Standalone & Portable ("Drop-in Anywhere")
+The `player/` folder is **completely decoupled** and self-contained:
+- **Zero parent dependencies**: No imports from the parent application or `src/`.
+- **Zero npm dependencies**: Pure vanilla web standards (HTML5, SVG, Web Speech API, CSS variables).
+- **100% relative paths**: Works whether deployed at domain root (`/`), subfolder (`/assets/player/`), static CDN, LMS upload, or locally (`file:///`).
+- **Offline & Zero-Egress**: Computes animations procedural in real-time with zero cloud calls and no analytics trackers.
+
+### How to use this folder on ANY other website:
+1. **Copy the folder**: Simply copy the `player` folder into your other project (e.g. `public/player/` or `assets/player/`).
+2. **Option A: Embed as an iframe**:
+   ```html
+   <iframe src="./player/index.html?preset=solar-system&lang=en" width="100%" height="500" style="border:none; border-radius:12px;"></iframe>
+   ```
+3. **Option B: Use the `<micro-vector-player>` Web Component**:
+   ```html
+   <script src="./player/micro-vector-player.js"></script>
+   <micro-vector-player src="./player/examples/orbit.json" autoplay voice></micro-vector-player>
+   ```
+4. **Option C: Direct Headless or Full-Page**:
+   Point your web server (Nginx, Apache, GitHub Pages, Cloudflare Pages, S3 bucket) directly at the `player` directory. Opening `index.html` loads the complete player suite with full UI controls, 3D orbit, voice narration, and A4 print worksheet generators out-of-the-box.

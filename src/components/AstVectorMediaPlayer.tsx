@@ -66,8 +66,11 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(preset);
   const selectedPresetRef = useRef(preset);
+  const lastSentPresetRef = useRef(preset);
   const autoPlayRef = useRef(autoPlay);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [has3D, setHas3D] = useState(false);
+  const [hasInteractive, setHasInteractive] = useState(false);
   const [activeKeyframe, setActiveKeyframe] = useState<{ title: string; rule: string } | null>(null);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [showEmbedCode, setShowEmbedCode] = useState(false);
@@ -77,6 +80,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   useEffect(() => {
     setSelectedPreset(preset);
     selectedPresetRef.current = preset;
+    lastSentPresetRef.current = preset;
   }, [preset]);
 
   useEffect(() => {
@@ -112,9 +116,12 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
     return unsub;
   }, [lang, postToPlayer]);
 
-  // Sync preset changes
+  // Sync preset changes safely without loop
   useEffect(() => {
-    postToPlayer({ type: 'SET_PRESET', preset: selectedPreset });
+    if (selectedPreset !== lastSentPresetRef.current) {
+      lastSentPresetRef.current = selectedPreset;
+      postToPlayer({ type: 'SET_PRESET', preset: selectedPreset });
+    }
   }, [selectedPreset, postToPlayer]);
 
   // Sync theme changes
@@ -125,13 +132,27 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   // Listen for telemetry and events from the iframe player
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // Validate event source directly to safely support sandboxed and preview environments
+      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
+
       const data = event.data;
       if (!data || data.source !== 'ast-vector-player') return;
 
       switch (data.type) {
         case 'PLAYER_READY':
           setIsPlayerReady(true);
+          if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
+          if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
           postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
+          break;
+        case 'PRESETCHANGE':
+          if (data.preset && data.preset !== selectedPresetRef.current) {
+            selectedPresetRef.current = data.preset;
+            lastSentPresetRef.current = data.preset;
+            setSelectedPreset(data.preset);
+          }
+          if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
+          if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
           break;
         case 'TIME_UPDATE':
           setCurrentProgress(data.progress || 0);
@@ -155,7 +176,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 
   const rawBase = import.meta.env.BASE_URL || '/';
   const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}`;
+  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&v=2.5.0`;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
@@ -269,6 +290,152 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           >
             ▶ / ⏸ Play
           </button>
+
+          {has3D && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  background: 'rgba(56, 189, 248, 0.2)',
+                  color: '#38bdf8',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                title="3D Spatial Engine: Click & drag stage to orbit 360°, scroll wheel to zoom"
+              >
+                🌐 3D Mode
+              </span>
+
+              {/* Church-specific viewpoints only shown when Church Tour is active */}
+              {selectedPreset === 'church-tour' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 0, distanceScale: 1.0 });
+                      postToPlayer({ type: 'SEEK', progress: 0.05 });
+                    }}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: '6px',
+                      background: 'rgba(30, 41, 59, 0.8)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#e0f2fe',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                    title="View from Nave Entrance"
+                  >
+                    ⛪ Nave
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: -5, distanceScale: 0.65 });
+                      postToPlayer({ type: 'SEEK', progress: 0.60 });
+                    }}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: '6px',
+                      background: 'rgba(30, 41, 59, 0.8)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#e0f2fe',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                    title="Focus on High Altar"
+                  >
+                    ✨ Altar
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: -8, distanceScale: 0.50 });
+                      postToPlayer({ type: 'SEEK', progress: 0.80 });
+                    }}
+                    style={{
+                      padding: '3px 7px',
+                      borderRadius: '6px',
+                      background: 'rgba(30, 41, 59, 0.8)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#e0f2fe',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                    title="Focus on Tabernacle & Sanctuary Lamp"
+                  >
+                    🕯️ Tabernacle
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 0 })}
+                style={{
+                  padding: '3px 7px',
+                  borderRadius: '6px',
+                  background: 'rgba(30, 41, 59, 0.8)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  color: '#e0f2fe',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+                title="Orbit 3D Camera 45°"
+              >
+                🔄 Orbit +45°
+              </button>
+
+              <button
+                type="button"
+                onClick={() => postToPlayer({ type: 'RESET_3D' })}
+                style={{
+                  padding: '3px 7px',
+                  borderRadius: '6px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  color: '#38bdf8',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+                title="Reset 3D Camera to Scene Orientation"
+              >
+                ⏪ Reset
+              </button>
+            </div>
+          )}
+
+          {hasInteractive && (
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '2px 7px',
+                borderRadius: '9999px',
+                background: 'rgba(52, 211, 153, 0.15)',
+                color: '#34d399',
+                border: '1px solid rgba(52, 211, 153, 0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Interactive Checkpoint Challenges: Active recall quizzes trigger automatically during playback"
+            >
+              🎯 Checkpoint Quizzes
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -367,6 +534,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
       {/* Sandboxed iFrame Element */}
       <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height }}>
         <iframe
+          key={`${selectedPreset}-${currentLang}`}
           ref={iframeRef}
           src={playerSrc}
           title="St Joseph's AST Vector Media Player"
@@ -377,7 +545,6 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
             display: 'block',
           }}
           allow="fullscreen"
-          loading="lazy"
         />
       </div>
 

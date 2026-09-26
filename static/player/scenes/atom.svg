@@ -1,3 +1,30 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-<circle cx="400" cy="240" r="75" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" /><circle cx="400" cy="240" r="145" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" /><circle cx="395" cy="235" r="11" fill="#ef4444" /><circle cx="406" cy="236" r="11" fill="#94a3b8" /><circle cx="400" cy="246" r="11" fill="#ef4444" /><text x="400" y="244" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">+ 0</text><circle cx="325.0" cy="240.0" r="6" fill="#38bdf8" filter="url(#glow)" /><circle cx="475.0" cy="240.0" r="6" fill="#38bdf8" filter="url(#glow)" /><circle cx="282.7" cy="154.8" r="6" fill="#38bdf8" filter="url(#glow)" /><circle cx="485.2" cy="122.7" r="6" fill="#38bdf8" filter="url(#glow)" /><circle cx="517.3" cy="325.2" r="6" fill="#38bdf8" filter="url(#glow)" /><circle cx="314.8" cy="357.3" r="6" fill="#38bdf8" filter="url(#glow)" />
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="800" height="480" fill="#030712" />
+
+  <!-- 3D Inclined Bohr Electron Shells -->
+  <path id="atom-ring-k" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" />
+  <path id="atom-ring-l1" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+  <path id="atom-ring-l2" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />
+
+  <!-- 3D Dense Central Nucleus Particles -->
+  <circle id="nucleus-p1" cx="400" cy="240" r="10" fill="#ef4444" stroke="#f87171" stroke-width="1" />
+  <circle id="nucleus-n1" cx="400" cy="240" r="10" fill="#64748b" stroke="#94a3b8" stroke-width="1" />
+  <circle id="nucleus-p2" cx="400" cy="240" r="10" fill="#ef4444" stroke="#f87171" stroke-width="1" />
+  <circle id="nucleus-n2" cx="400" cy="240" r="10" fill="#64748b" stroke="#94a3b8" stroke-width="1" />
+  <circle id="nucleus-p3" cx="400" cy="240" r="10" fill="#ef4444" stroke="#f87171" stroke-width="1" />
+  <circle id="nucleus-n3" cx="400" cy="240" r="10" fill="#64748b" stroke="#94a3b8" stroke-width="1" />
+
+  <!-- Orbiting 3D Electrons -->
+  <circle id="atom-e1" cx="400" cy="240" r="6" fill="#38bdf8" filter="url(#glow)" />
+  <circle id="atom-e2" cx="400" cy="240" r="6" fill="#38bdf8" filter="url(#glow)" />
+  <circle id="atom-oe-0" cx="400" cy="240" r="6" fill="#38bdf8" filter="url(#glow)" />
+  <circle id="atom-oe-1" cx="400" cy="240" r="6" fill="#38bdf8" filter="url(#glow)" />
+  <circle id="atom-oe-2" cx="400" cy="240" r="6" fill="#38bdf8" filter="url(#glow)" />
+  <circle id="atom-oe-3" cx="400" cy="240" r="6" fill="#38bdf8" filter="url(#glow)" />
 </svg>

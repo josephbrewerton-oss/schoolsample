@@ -227,10 +227,10 @@ export default function PersistentNavbar(): React.JSX.Element {
       desc: 'Logseq-style in-memory prerequisite knowledge graph & NATO CSNs',
     },
     {
-      to: '/learning-zone?tab=vector-motion',
-      icon: '📐',
-      title: '0-Bloat Vector Motion & Printables',
-      desc: 'Parametric SVG motion, synchronized narration & A4 print-offs',
+      to: '/player',
+      icon: '🎬',
+      title: 'AST Vector Media Player',
+      desc: 'Parametric curriculum SVG motion, synchronized narration & 3D models',
     },
     {
       to: '/practice-lab',
@@ -902,6 +902,38 @@ export default function PersistentNavbar(): React.JSX.Element {
               <span>Install</span>
             </button>
           )}
+
+          {/* Standalone Player Quick Launcher */}
+          <NavLink
+            to="/player"
+            id="navbar-player-btn"
+            title="Launch Interactive AST Vector Media Player"
+            style={({ isActive }) => ({
+              background: isActive
+                ? colorMode === 'dark' ? '#0369a1' : '#e0f2fe'
+                : colorMode === 'dark' ? 'rgba(30, 41, 59, 0.7)' : '#f8fafc',
+              color: isActive
+                ? colorMode === 'dark' ? '#ffffff' : '#0369a1'
+                : colorMode === 'dark' ? '#38bdf8' : '#0284c7',
+              border: `1px solid ${
+                isActive
+                  ? '#0284c7'
+                  : colorMode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(2, 132, 199, 0.3)'
+              }`,
+              borderRadius: '6px',
+              padding: '0.35rem 0.6rem',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.15s ease',
+            })}
+          >
+            <span>🎬</span>
+            <span className="navbar-action-desktop-only">Player</span>
+          </NavLink>
 
           {/* Standalone Settings Button (Separated from Admin) */}
           <NavLink
