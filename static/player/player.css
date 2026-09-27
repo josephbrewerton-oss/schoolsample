@@ -1047,3 +1047,418 @@ main#player-stage.dev-mode-active #scene-root * {
   line-height: 1.3;
 }
 
+/* ==========================================================================
+   OBS WEBSOCKET BROADCAST STUDIO CONTROLS
+   ========================================================================== */
+
+.obs-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+.obs-status-dot.disconnected {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+.obs-status-dot.connected {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+
+.obs-status-dot.recording {
+  background: #f43f5e;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.9);
+  animation: obsRecordPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes obsRecordPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* OBS Broadcast Studio Drawer */
+.obs-drawer {
+  position: absolute;
+  top: 48px;
+  right: 14px;
+  width: 360px;
+  max-width: calc(100vw - 28px);
+  max-height: calc(100vh - 120px);
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid #334155;
+  border-top: 2px solid #8b5cf6;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(16px);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeInDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.obs-drawer.hidden {
+  display: none !important;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.obs-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #0b1120;
+  border-bottom: 1px solid #1e293b;
+}
+
+.obs-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.obs-drawer-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.obs-drawer-badge.disconnected {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.obs-drawer-badge.connected {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.obs-drawer-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+.obs-drawer-close:hover {
+  color: #f8fafc;
+  background: #1e293b;
+}
+
+.obs-drawer-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.obs-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.obs-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+}
+
+.obs-input {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.obs-input:focus {
+  border-color: #8b5cf6;
+}
+
+.obs-btn-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.obs-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.obs-btn.primary {
+  background: #8b5cf6;
+  color: #ffffff;
+}
+.obs-btn.primary:hover {
+  background: #7c3aed;
+}
+
+.obs-btn.danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+.obs-btn.danger:hover {
+  background: #dc2626;
+}
+
+.obs-btn.secondary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+.obs-btn.secondary:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.obs-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.obs-toggle-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.obs-toggle-desc {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.obs-toggle-input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #8b5cf6;
+}
+
+.obs-hint-box {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px dashed #334155;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* OBS Browser Source Transparent Overlay Mode */
+body.obs-transparent,
+body.obs-transparent #player-stage,
+body.obs-transparent #stage-svg {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+body.obs-transparent header {
+  background: rgba(11, 15, 25, 0.4) !important;
+  backdrop-filter: blur(4px);
+}
+
+body.obs-transparent footer {
+  background: rgba(11, 15, 25, 0.5) !important;
+}
+
+/* Display & Controls Settings Drawer */
+.settings-drawer {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  backdrop-filter: blur(14px);
+  border-radius: 12px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-drawer.hidden {
+  display: none !important;
+}
+
+@keyframes slideInDown {
+  0% { transform: translateY(-8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.settings-drawer-header {
+  padding: 10px 14px;
+  background: rgba(30, 41, 59, 0.75);
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #f8fafc;
+}
+
+.settings-mode-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.settings-drawer-body {
+  padding: 12px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 80px);
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mode-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.mode-card:hover {
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.mode-card.active {
+  border-color: #38bdf8;
+  background: rgba(2, 132, 199, 0.15);
+  box-shadow: 0 0 0 1px #38bdf8;
+}
+
+.mode-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #f8fafc;
+}
+
+.mode-card-desc {
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.config-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.config-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+.config-toggle-label {
+  font-size: 11px;
+  color: #e2e8f0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-toggle-input {
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+  accent-color: #0284c7;
+}
+
+.settings-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid #334155;
+  gap: 8px;
+}
+
+

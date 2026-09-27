@@ -22,8 +22,11 @@
       <button type="button" id="btn-interactive" title="Toggle Interactive Questions & Hotspots">🎯 <span class="btn-label">Interactive</span></button>
       <button type="button" id="btn-dev-mode" title="Toggle Point-and-Click SVG Element Inspector">🛠️ <span class="btn-label">Inspect</span></button>
       <button type="button" id="btn-dev-studio" title="Open Live SVG & AST Code Studio">💻 <span class="btn-label">Studio</span></button>
+      <button type="button" id="btn-header-export-spa" title="Export Autonomous Offline SVG Single Page Applet">🚀 <span class="btn-label">Standalone SPA</span></button>
+      <button type="button" id="btn-obs-link" title="OBS Studio WebSocket Broadcast Controls">📡 <span class="btn-label">OBS</span><span id="obs-status-dot" class="obs-status-dot disconnected"></span></button>
       <button type="button" id="btn-print" title="Generate A4 Classroom Worksheet">🖨️ <span class="btn-label">Print</span></button>
       <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
+      <button type="button" id="btn-settings" title="Player Display & Controls Settings (Classroom, Student, Broadcast, Dev)">⚙️ <span class="btn-label" id="settings-label">Settings</span></button>
       <button type="button" id="btn-theme" title="Toggle Dark/Light Mode">☀️</button>
       <button type="button" id="btn-fullscreen" title="Toggle Fullscreen">⛶</button>
     </div>
@@ -131,7 +134,8 @@
         <div style="display:flex; align-items:center; gap:6px;">
           <button type="button" class="dev-btn primary" id="btn-studio-run">⚡ Run / Hot Reload</button>
           <button type="button" class="dev-btn" id="btn-studio-reset">↺ Reset Preset</button>
-          <button type="button" class="dev-btn" id="btn-studio-export">💾 Export</button>
+          <button type="button" class="dev-btn" id="btn-studio-export" title="Export clean raw SVG geometry">💾 Clean SVG</button>
+          <button type="button" class="dev-btn primary" id="btn-studio-export-spa" title="Export Autonomous Offline SVG Single Page Applet">🚀 Standalone SPA</button>
           <button type="button" id="dev-studio-close" class="dev-drawer-close" title="Close Code Studio">&times;</button>
         </div>
       </div>
@@ -192,6 +196,182 @@
       <div id="interactive-body"></div>
     </div>
 
+    <!-- OBS Studio Broadcast Drawer -->
+    <div id="obs-drawer" class="obs-drawer hidden">
+      <div class="obs-drawer-header">
+        <div class="obs-drawer-title">
+          <span>📡 OBS Studio Broadcast Link</span>
+          <span id="obs-drawer-badge" class="obs-drawer-badge disconnected">DISCONNECTED</span>
+        </div>
+        <button type="button" id="obs-drawer-close" class="obs-drawer-close" title="Close OBS Panel">&times;</button>
+      </div>
+
+      <div class="obs-drawer-body">
+        <div class="obs-field-group">
+          <label class="obs-field-label" for="obs-input-url">WebSocket Server URL <span id="obs-latency" style="color:#64748b; font-weight:400;">(Local RPC v5)</span></label>
+          <input type="text" id="obs-input-url" class="obs-input" value="ws://127.0.0.1:4455" placeholder="ws://127.0.0.1:4455" />
+        </div>
+
+        <div class="obs-field-group">
+          <label class="obs-field-label" for="obs-input-password">Server Password <span style="color:#64748b; font-weight:400;">(Optional)</span></label>
+          <input type="password" id="obs-input-password" class="obs-input" placeholder="Leave blank if unauthenticated" />
+        </div>
+
+        <div class="obs-btn-row">
+          <button type="button" id="btn-obs-connect" class="obs-btn primary">Connect</button>
+          <button type="button" id="btn-obs-disconnect" class="obs-btn secondary">Disconnect</button>
+        </div>
+
+        <div style="border-top: 1px solid #1e293b; padding-top: 8px;">
+          <div class="obs-toggle-row">
+            <div>
+              <div class="obs-toggle-label">Sync Recording</div>
+              <div class="obs-toggle-desc">Auto start/stop OBS recording on play/pause</div>
+            </div>
+            <input type="checkbox" id="obs-toggle-record" class="obs-toggle-input" checked />
+          </div>
+
+          <div class="obs-toggle-row">
+            <div>
+              <div class="obs-toggle-label">Stream Subtitles to OBS</div>
+              <div class="obs-toggle-desc">Push live captions into OBS Text Source</div>
+            </div>
+            <input type="checkbox" id="obs-toggle-subtitles" class="obs-toggle-input" checked />
+          </div>
+
+          <div class="obs-field-group" style="margin-top: 6px;">
+            <label class="obs-field-label" for="obs-input-source">OBS Text Source Name</label>
+            <input type="text" id="obs-input-source" class="obs-input" value="LessonSubtitles" placeholder="e.g. LessonSubtitles" />
+          </div>
+
+          <div class="obs-toggle-row" style="margin-top: 6px;">
+            <div>
+              <div class="obs-toggle-label">Transparent Backdrop</div>
+              <div class="obs-toggle-desc">Render with transparent alpha for OBS Browser Source</div>
+            </div>
+            <input type="checkbox" id="obs-toggle-transparent" class="obs-toggle-input" />
+          </div>
+        </div>
+
+        <div id="obs-live-controls" style="border-top: 1px solid #1e293b; padding-top: 8px; display: none;">
+          <div class="obs-field-group">
+            <label class="obs-field-label" for="obs-select-scene">Active Program Scene</label>
+            <select id="obs-select-scene" class="obs-input">
+              <option value="">(Loading scenes...)</option>
+            </select>
+          </div>
+
+          <div class="obs-btn-row" style="margin-top: 8px;">
+            <button type="button" id="btn-obs-record-toggle" class="obs-btn danger">⏺ Start OBS Recording</button>
+          </div>
+        </div>
+
+        <div class="obs-hint-box">
+          💡 <strong>OBS Browser Source Tip:</strong> Add a Browser Source in OBS with URL: <code>http://localhost:3000/player/index.html?preset=fractions&amp;transparent=true</code> to float 60 FPS vector diagrams directly over your camera feed.
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Display & Controls Configuration Drawer -->
+    <div id="settings-drawer" class="settings-drawer hidden">
+      <div class="settings-drawer-header">
+        <div class="settings-drawer-title">
+          <span>⚙️ Player Settings &amp; Display</span>
+          <span id="settings-badge" class="settings-mode-badge">CLASSROOM</span>
+        </div>
+        <button type="button" id="settings-drawer-close" class="obs-drawer-close" title="Close Settings">&times;</button>
+      </div>
+
+      <div class="settings-drawer-body">
+        <div class="config-section-title">
+          <span>Profile Preset</span>
+          <span style="font-size:10px; color:#38bdf8; text-transform:none; font-weight:400;">1-Click Mode</span>
+        </div>
+
+        <div class="mode-grid">
+          <div class="mode-card active" data-mode="classroom" id="mode-card-classroom">
+            <div class="mode-card-header">🎓 Classroom</div>
+            <div class="mode-card-desc">Teacher &amp; whiteboard clean view. Hides dev &amp; stream tools.</div>
+          </div>
+          <div class="mode-card" data-mode="student" id="mode-card-student">
+            <div class="mode-card-header">🎒 Student Focus</div>
+            <div class="mode-card-desc">Distraction-free learner mode with quizzes &amp; narration.</div>
+          </div>
+          <div class="mode-card" data-mode="broadcast" id="mode-card-broadcast">
+            <div class="mode-card-header">📡 OBS Studio</div>
+            <div class="mode-card-desc">Flipped video recording with OBS WebSocket sync.</div>
+          </div>
+          <div class="mode-card" data-mode="developer" id="mode-card-developer">
+            <div class="mode-card-header">🛠️ Developer</div>
+            <div class="mode-card-desc">All authoring tools: Inspector, Studio &amp; SPA export.</div>
+          </div>
+        </div>
+
+        <div class="config-section-title" style="margin-top: 6px;">
+          <span>Granular Control Toggles</span>
+          <span id="config-custom-indicator" style="font-size:9px; color:#64748b; font-weight:400;">Customize what to show</span>
+        </div>
+
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🎯 Checkpoint Quizzes</span>
+          <input type="checkbox" id="cfg-checkpoints" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🌐 3D Spatial &amp; Camera Toolbar</span>
+          <input type="checkbox" id="cfg-3d" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🛠️ SVG Element Inspector</span>
+          <input type="checkbox" id="cfg-inspect" class="config-toggle-input" />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">💻 Live SVG/AST Code Studio</span>
+          <input type="checkbox" id="cfg-studio" class="config-toggle-input" />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🚀 Standalone SVG SPA Export</span>
+          <input type="checkbox" id="cfg-export-spa" class="config-toggle-input" />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">📡 OBS Broadcast Controller</span>
+          <input type="checkbox" id="cfg-obs" class="config-toggle-input" />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🖨️ A4 Classroom Worksheet</span>
+          <input type="checkbox" id="cfg-print" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">📋 Copy Raw SVG Geometry</span>
+          <input type="checkbox" id="cfg-copy-svg" class="config-toggle-input" />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🔊 Voice Speech Narration</span>
+          <input type="checkbox" id="cfg-voice" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">💬 Synchronized Subtitles Banner</span>
+          <input type="checkbox" id="cfg-subtitles" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">⏱️ Timeline Scrubber Track</span>
+          <input type="checkbox" id="cfg-scrubber" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">⏩ Playback Speed Selector</span>
+          <input type="checkbox" id="cfg-speed" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🌍 Multi-Language Selector</span>
+          <input type="checkbox" id="cfg-lang" class="config-toggle-input" checked />
+        </div>
+
+        <div class="settings-footer-actions">
+          <button type="button" id="btn-reset-config" class="dev-btn" style="font-size:11px;">↺ Reset to Classroom</button>
+          <span style="font-size:10px; color:#10b981;">✔ Autosaved</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Subtle Toast Notification -->
     <div id="ast-toast" class="ast-toast">Station Selected</div>
   </main>
@@ -248,6 +428,7 @@
   <!-- Modular Scripts with Cache-Busting Version -->
   <script src="./ast-scenes.js?v=2.5.0"></script>
   <script src="./ast-engine.js?v=2.5.0"></script>
+  <script src="./obs-controller.js?v=2.5.0"></script>
   <script src="./player-ui.js?v=2.5.0"></script>
   <script>
     (function () {

@@ -79,9 +79,50 @@
         btnStudioRun: document.getElementById('btn-studio-run'),
         btnStudioReset: document.getElementById('btn-studio-reset'),
         btnStudioExport: document.getElementById('btn-studio-export'),
+        btnStudioExportSpa: document.getElementById('btn-studio-export-spa'),
+        btnHeaderExportSpa: document.getElementById('btn-header-export-spa'),
         devEditorSvg: document.getElementById('dev-editor-svg'),
         devEditorAst: document.getElementById('dev-editor-ast'),
         devTemplateTab: document.getElementById('dev-template-tab'),
+        btnObsLink: document.getElementById('btn-obs-link'),
+        obsStatusDot: document.getElementById('obs-status-dot'),
+        obsDrawer: document.getElementById('obs-drawer'),
+        obsDrawerBadge: document.getElementById('obs-drawer-badge'),
+        obsDrawerClose: document.getElementById('obs-drawer-close'),
+        obsInputUrl: document.getElementById('obs-input-url'),
+        obsInputPassword: document.getElementById('obs-input-password'),
+        btnObsConnect: document.getElementById('btn-obs-connect'),
+        btnObsDisconnect: document.getElementById('btn-obs-disconnect'),
+        obsToggleRecord: document.getElementById('obs-toggle-record'),
+        obsToggleSubtitles: document.getElementById('obs-toggle-subtitles'),
+        obsInputSource: document.getElementById('obs-input-source'),
+        obsToggleTransparent: document.getElementById('obs-toggle-transparent'),
+        obsLiveControls: document.getElementById('obs-live-controls'),
+        obsSelectScene: document.getElementById('obs-select-scene'),
+        btnObsRecordToggle: document.getElementById('btn-obs-record-toggle'),
+        btnSettings: document.getElementById('btn-settings'),
+        settingsLabel: document.getElementById('settings-label'),
+        settingsDrawer: document.getElementById('settings-drawer'),
+        settingsDrawerClose: document.getElementById('settings-drawer-close'),
+        settingsBadge: document.getElementById('settings-badge'),
+        btnResetConfig: document.getElementById('btn-reset-config'),
+        modeCardClassroom: document.getElementById('mode-card-classroom'),
+        modeCardStudent: document.getElementById('mode-card-student'),
+        modeCardBroadcast: document.getElementById('mode-card-broadcast'),
+        modeCardDeveloper: document.getElementById('mode-card-developer'),
+        cfgCheckpoints: document.getElementById('cfg-checkpoints'),
+        cfg3D: document.getElementById('cfg-3d'),
+        cfgInspect: document.getElementById('cfg-inspect'),
+        cfgStudio: document.getElementById('cfg-studio'),
+        cfgExportSpa: document.getElementById('cfg-export-spa'),
+        cfgObs: document.getElementById('cfg-obs'),
+        cfgPrint: document.getElementById('cfg-print'),
+        cfgCopySvg: document.getElementById('cfg-copy-svg'),
+        cfgVoice: document.getElementById('cfg-voice'),
+        cfgSubtitles: document.getElementById('cfg-subtitles'),
+        cfgScrubber: document.getElementById('cfg-scrubber'),
+        cfgSpeed: document.getElementById('cfg-speed'),
+        cfgLang: document.getElementById('cfg-lang'),
       }, elements);
 
       this.isDragging = false;
@@ -92,6 +133,7 @@
       this.activeCheckpoint = null;
       this.toastTimeout = null;
       this._orbitHintTimeout = null;
+      this.displayConfig = this.initDisplayConfig();
 
       // Developer Mode & SVG Inspector State
       this.devModeActive = false;
@@ -432,6 +474,8 @@
       this.bindEngineEvents();
       this.setupKeyframeMarkers();
       this.update3DStatus();
+      this.initObsBroadcast();
+      this.applyDisplayConfig(this.displayConfig);
       this.updateView();
 
       // Ensure immediate render of initial scene onto stage
@@ -527,6 +571,10 @@
         if (sub) {
           this.elements.subtitleOverlay.style.opacity = '1';
           this.elements.subtitleOverlay.textContent = sub;
+          if (this.obs && this.obs.isConnected && this.obs.settings.syncSubtitles && sub !== this._lastSentObsSubtitle) {
+            this._lastSentObsSubtitle = sub;
+            this.obs.updateTextSource(this.obs.settings.subtitleSource, sub);
+          }
         } else {
           this.elements.subtitleOverlay.style.opacity = '0.7';
           this.elements.subtitleOverlay.textContent = scene.title || 'AST Vector Media Player';
@@ -1096,6 +1144,156 @@
         });
       }
 
+      if (el.btnStudioExportSpa) {
+        el.btnStudioExportSpa.addEventListener('click', () => {
+          this.downloadStandaloneSvgApplet();
+        });
+      }
+
+      if (el.btnHeaderExportSpa) {
+        el.btnHeaderExportSpa.addEventListener('click', () => {
+          this.downloadStandaloneSvgApplet();
+        });
+      }
+
+      if (el.btnObsLink) {
+        el.btnObsLink.addEventListener('click', () => {
+          this.toggleObsDrawer();
+        });
+      }
+
+      if (el.obsDrawerClose) {
+        el.obsDrawerClose.addEventListener('click', () => {
+          this.closeObsDrawer();
+        });
+      }
+
+      if (el.btnObsConnect) {
+        el.btnObsConnect.addEventListener('click', () => {
+          if (!this.obs) return;
+          const url = el.obsInputUrl ? el.obsInputUrl.value.trim() : 'ws://127.0.0.1:4455';
+          const pass = el.obsInputPassword ? el.obsInputPassword.value : '';
+          this.obs.saveSettings({ url, password: pass });
+          this.obs.connect(url, pass);
+        });
+      }
+
+      if (el.btnObsDisconnect) {
+        el.btnObsDisconnect.addEventListener('click', () => {
+          if (this.obs) this.obs.disconnect();
+          this.updateObsStatusUI(false, false);
+          this.showToast('OBS Disconnected');
+        });
+      }
+
+      if (el.obsToggleRecord) {
+        el.obsToggleRecord.addEventListener('change', (e) => {
+          if (this.obs) this.obs.saveSettings({ syncRecording: e.target.checked });
+        });
+      }
+
+      if (el.obsToggleSubtitles) {
+        el.obsToggleSubtitles.addEventListener('change', (e) => {
+          if (this.obs) this.obs.saveSettings({ syncSubtitles: e.target.checked });
+        });
+      }
+
+      if (el.obsInputSource) {
+        el.obsInputSource.addEventListener('change', (e) => {
+          if (this.obs) this.obs.saveSettings({ subtitleSource: e.target.value.trim() });
+        });
+      }
+
+      if (el.obsToggleTransparent) {
+        el.obsToggleTransparent.addEventListener('change', (e) => {
+          const isTransparent = e.target.checked;
+          document.body.classList.toggle('obs-transparent', isTransparent);
+          if (this.obs) this.obs.saveSettings({ transparent: isTransparent });
+          this.showToast(isTransparent ? 'Transparent Backdrop (OBS Mode) Active' : 'Standard Backdrop Restored');
+        });
+      }
+
+      if (el.obsSelectScene) {
+        el.obsSelectScene.addEventListener('change', (e) => {
+          if (this.obs && e.target.value) {
+            this.obs.switchScene(e.target.value);
+          }
+        });
+      }
+
+      if (el.btnObsRecordToggle) {
+        el.btnObsRecordToggle.addEventListener('click', () => {
+          if (!this.obs) return;
+          if (this.obs.isRecording) {
+            this.obs.stopRecord();
+          } else {
+            this.obs.startRecord();
+          }
+        });
+      }
+
+      // Display & Controls Settings Drawer
+      if (el.btnSettings) {
+        el.btnSettings.addEventListener('click', () => {
+          this.toggleSettingsDrawer();
+        });
+      }
+
+      if (el.settingsDrawerClose) {
+        el.settingsDrawerClose.addEventListener('click', () => {
+          this.closeSettingsDrawer();
+        });
+      }
+
+      if (el.btnResetConfig) {
+        el.btnResetConfig.addEventListener('click', () => {
+          this.setDisplayMode('classroom');
+          this.showToast('Reset to Classroom Mode (Clean Whiteboard)');
+        });
+      }
+
+      const modeCards = [
+        { el: el.modeCardClassroom, mode: 'classroom' },
+        { el: el.modeCardStudent, mode: 'student' },
+        { el: el.modeCardBroadcast, mode: 'broadcast' },
+        { el: el.modeCardDeveloper, mode: 'developer' },
+      ];
+
+      modeCards.forEach(({ el: cardEl, mode }) => {
+        if (cardEl) {
+          cardEl.addEventListener('click', () => {
+            this.setDisplayMode(mode);
+          });
+        }
+      });
+
+      const configInputs = [
+        { el: el.cfgCheckpoints, key: 'showInteractiveCheckpoints' },
+        { el: el.cfg3D, key: 'show3DControls' },
+        { el: el.cfgInspect, key: 'showDevInspect' },
+        { el: el.cfgStudio, key: 'showDevStudio' },
+        { el: el.cfgExportSpa, key: 'showExportSpa' },
+        { el: el.cfgObs, key: 'showObsLink' },
+        { el: el.cfgPrint, key: 'showPrintWorksheet' },
+        { el: el.cfgCopySvg, key: 'showCopySvg' },
+        { el: el.cfgVoice, key: 'showVoiceNarration' },
+        { el: el.cfgSubtitles, key: 'showSubtitles' },
+        { el: el.cfgScrubber, key: 'showTimelineScrubber' },
+        { el: el.cfgSpeed, key: 'showSpeedSelector' },
+        { el: el.cfgLang, key: 'showLanguageSelector' },
+      ];
+
+      configInputs.forEach(({ el: inputEl, key }) => {
+        if (inputEl) {
+          inputEl.addEventListener('change', () => {
+            this.displayConfig.mode = 'custom';
+            this.displayConfig[key] = inputEl.checked;
+            this.applyDisplayConfig(this.displayConfig);
+            this.saveDisplayConfig(this.displayConfig);
+          });
+        }
+      });
+
       // Keyboard navigation
       window.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
@@ -1115,13 +1313,225 @@
           e.preventDefault();
           this.toggleDevMode();
         } else if (e.code === 'Escape') {
-          if (this.elements.devInspectorDrawer && !this.elements.devInspectorDrawer.classList.contains('hidden')) {
+          if (this.elements.settingsDrawer && !this.elements.settingsDrawer.classList.contains('hidden')) {
+            this.closeSettingsDrawer();
+          } else if (this.elements.devInspectorDrawer && !this.elements.devInspectorDrawer.classList.contains('hidden')) {
             this.closeInspectorDrawer();
           } else if (this.elements.devStudioDrawer && !this.elements.devStudioDrawer.classList.contains('hidden')) {
             this.closeDevStudio();
+          } else if (this.elements.obsDrawer && !this.elements.obsDrawer.classList.contains('hidden')) {
+            this.closeObsDrawer();
           }
         }
       });
+    }
+
+    initDisplayConfig() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlMode = urlParams.get('mode');
+      if (urlMode && ['classroom', 'student', 'broadcast', 'developer'].includes(urlMode)) {
+        return this.getPresetProfile(urlMode);
+      }
+      if (urlParams.get('clean') === '1') {
+        return this.getPresetProfile('classroom');
+      }
+
+      try {
+        const raw = localStorage.getItem('stj_player_display_config');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            const base = parsed.mode ? this.getPresetProfile(parsed.mode) : this.getPresetProfile('classroom');
+            return Object.assign({}, base, parsed);
+          }
+        }
+      } catch (err) {
+        console.warn('[AST-PlayerUI] Error reading saved display config:', err);
+      }
+
+      return this.getPresetProfile('classroom');
+    }
+
+    getPresetProfile(mode) {
+      const base = {
+        mode: mode || 'classroom',
+        showPresetSelector: true,
+        showStageBadge: true,
+        showInteractiveCheckpoints: true,
+        show3DControls: true,
+        showDevInspect: false,
+        showDevStudio: false,
+        showExportSpa: false,
+        showStandaloneLink: true,
+        showObsLink: false,
+        showLmsEmbed: false,
+        showPrintWorksheet: true,
+        showCopySvg: false,
+        showThemeToggle: true,
+        showFullscreen: true,
+        showTimelineScrubber: true,
+        showPlaybackControls: true,
+        showSpeedSelector: true,
+        showVoiceNarration: true,
+        showLanguageSelector: true,
+        showSubtitles: true,
+      };
+
+      if (mode === 'student') {
+        base.showPrintWorksheet = false;
+        base.showStandaloneLink = false;
+      } else if (mode === 'broadcast') {
+        base.showObsLink = true;
+        base.showPrintWorksheet = false;
+      } else if (mode === 'developer') {
+        base.showDevInspect = true;
+        base.showDevStudio = true;
+        base.showExportSpa = true;
+        base.showObsLink = true;
+        base.showLmsEmbed = true;
+        base.showCopySvg = true;
+      }
+
+      return base;
+    }
+
+    setDisplayMode(mode) {
+      this.displayConfig = this.getPresetProfile(mode);
+      this.saveDisplayConfig(this.displayConfig);
+      this.applyDisplayConfig(this.displayConfig);
+      this.showToast(`Switched to ${mode.toUpperCase()} Mode`);
+    }
+
+    saveDisplayConfig(config) {
+      try {
+        localStorage.setItem('stj_player_display_config', JSON.stringify(config));
+      } catch (e) {}
+    }
+
+    applyDisplayConfig(config) {
+      if (!config || typeof config !== 'object') return;
+      this.displayConfig = Object.assign({}, this.displayConfig, config);
+      const c = this.displayConfig;
+      const el = this.elements;
+
+      // Top action buttons
+      if (el.presetSelector) el.presetSelector.style.display = c.showPresetSelector !== false ? '' : 'none';
+      if (el.badgeStage) el.badgeStage.style.display = c.showStageBadge !== false ? '' : 'none';
+      if (el.btnInteractive) el.btnInteractive.style.display = c.showInteractiveCheckpoints !== false ? '' : 'none';
+      
+      if (el.btn3DOrbit) {
+        if (c.show3DControls === false) {
+          el.btn3DOrbit.classList.add('hidden');
+        } else if (this.engine && this.engine.has3D()) {
+          el.btn3DOrbit.classList.remove('hidden');
+        }
+      }
+
+      if (el.cameraControlsBar) {
+        if (c.show3DControls === false) {
+          el.cameraControlsBar.classList.add('hidden');
+          el.cameraControlsBar.style.display = 'none';
+        } else if (this.engine && this.engine.has3D()) {
+          el.cameraControlsBar.classList.remove('hidden');
+          el.cameraControlsBar.style.display = 'flex';
+        }
+      }
+
+      if (el.btnDevMode) el.btnDevMode.style.display = c.showDevInspect ? '' : 'none';
+      if (el.btnDevStudio) el.btnDevStudio.style.display = c.showDevStudio ? '' : 'none';
+      if (el.btnHeaderExportSpa) el.btnHeaderExportSpa.style.display = c.showExportSpa ? '' : 'none';
+      if (el.btnObsLink) el.btnObsLink.style.display = c.showObsLink ? '' : 'none';
+      if (el.btnPrint) el.btnPrint.style.display = c.showPrintWorksheet !== false ? '' : 'none';
+      if (el.btnCopySvg) el.btnCopySvg.style.display = c.showCopySvg ? '' : 'none';
+      if (el.btnTheme) el.btnTheme.style.display = c.showThemeToggle !== false ? '' : 'none';
+      if (el.btnFullscreen) el.btnFullscreen.style.display = c.showFullscreen !== false ? '' : 'none';
+
+      // Bottom playback bar & overlays
+      if (el.scrubberBox) el.scrubberBox.style.display = c.showTimelineScrubber !== false ? '' : 'none';
+      if (el.btnPlay) el.btnPlay.style.display = c.showPlaybackControls !== false ? '' : 'none';
+      if (el.btnPrev) el.btnPrev.style.display = c.showPlaybackControls !== false ? '' : 'none';
+      if (el.btnNext) el.btnNext.style.display = c.showPlaybackControls !== false ? '' : 'none';
+      if (el.btnReset) el.btnReset.style.display = c.showPlaybackControls !== false ? '' : 'none';
+      if (el.timeReadout) el.timeReadout.style.display = c.showPlaybackControls !== false ? '' : 'none';
+      if (el.speedSelector) el.speedSelector.style.display = c.showSpeedSelector !== false ? '' : 'none';
+      if (el.btnNarrate) el.btnNarrate.style.display = c.showVoiceNarration !== false ? '' : 'none';
+      if (el.langSelector) el.langSelector.style.display = c.showLanguageSelector !== false ? '' : 'none';
+      if (el.subtitleOverlay) el.subtitleOverlay.style.display = c.showSubtitles !== false ? '' : 'none';
+
+      this.syncSettingsDrawerUI();
+
+      // Notify parent wrapper of active configuration
+      if (this.engine && typeof this.engine.notifyParent === 'function') {
+        this.engine.notifyParent({
+          type: 'DISPLAY_CONFIG_CHANGED',
+          config: this.displayConfig
+        });
+      }
+    }
+
+    syncSettingsDrawerUI() {
+      const c = this.displayConfig;
+      const el = this.elements;
+      if (!c) return;
+
+      const mode = c.mode || 'classroom';
+      if (el.settingsBadge) {
+        el.settingsBadge.textContent = mode.toUpperCase();
+      }
+
+      if (el.settingsLabel) {
+        const modeIcons = { classroom: '🎓 Classroom', student: '🎒 Student', broadcast: '📡 Broadcast', developer: '🛠️ Dev', custom: '🎛️ Custom' };
+        el.settingsLabel.textContent = modeIcons[mode] || 'Settings';
+      }
+
+      const cards = [
+        { el: el.modeCardClassroom, mode: 'classroom' },
+        { el: el.modeCardStudent, mode: 'student' },
+        { el: el.modeCardBroadcast, mode: 'broadcast' },
+        { el: el.modeCardDeveloper, mode: 'developer' },
+      ];
+
+      cards.forEach(({ el: cardEl, mode: m }) => {
+        if (cardEl) cardEl.classList.toggle('active', mode === m);
+      });
+
+      const inputs = [
+        { el: el.cfgCheckpoints, val: c.showInteractiveCheckpoints },
+        { el: el.cfg3D, val: c.show3DControls },
+        { el: el.cfgInspect, val: c.showDevInspect },
+        { el: el.cfgStudio, val: c.showDevStudio },
+        { el: el.cfgExportSpa, val: c.showExportSpa },
+        { el: el.cfgObs, val: c.showObsLink },
+        { el: el.cfgPrint, val: c.showPrintWorksheet },
+        { el: el.cfgCopySvg, val: c.showCopySvg },
+        { el: el.cfgVoice, val: c.showVoiceNarration },
+        { el: el.cfgSubtitles, val: c.showSubtitles },
+        { el: el.cfgScrubber, val: c.showTimelineScrubber },
+        { el: el.cfgSpeed, val: c.showSpeedSelector },
+        { el: el.cfgLang, val: c.showLanguageSelector },
+      ];
+
+      inputs.forEach(({ el: inp, val }) => {
+        if (inp) inp.checked = Boolean(val);
+      });
+    }
+
+    toggleSettingsDrawer(force) {
+      if (!this.elements.settingsDrawer) return;
+      const willOpen = force !== undefined ? Boolean(force) : this.elements.settingsDrawer.classList.contains('hidden');
+      if (willOpen) {
+        this.closeDevStudio();
+        this.closeInspectorDrawer();
+        this.closeObsDrawer();
+        this.elements.settingsDrawer.classList.remove('hidden');
+        this.syncSettingsDrawerUI();
+      } else {
+        this.elements.settingsDrawer.classList.add('hidden');
+      }
+    }
+
+    closeSettingsDrawer() {
+      this.toggleSettingsDrawer(false);
     }
 
     bindEngineEvents() {
@@ -1138,6 +1548,22 @@
         if (this.elements.btnPlay) {
           this.elements.btnPlay.textContent = data.isPlaying ? '⏸ Pause' : '▶ Play';
           this.elements.btnPlay.classList.toggle('active', data.isPlaying);
+        }
+        if (this.obs && this.obs.isConnected && this.obs.settings.syncRecording) {
+          if (data.isPlaying) {
+            this.obs.startRecord();
+          } else {
+            this.obs.stopRecord();
+          }
+        }
+      });
+
+      this.engine.on('keyframe', (kf) => {
+        if (this.obs && this.obs.isConnected) {
+          this.obs.bookmarkChapter(kf.title, this.engine.progress);
+          if (this.obs.settings.syncScenes && kf.sceneName) {
+            this.obs.switchScene(kf.sceneName);
+          }
         }
       });
 
@@ -1537,6 +1963,30 @@
       if (el.devTemplateTab) el.devTemplateTab.style.display = tabName === 'templates' ? 'grid' : 'none';
     }
 
+    downloadStandaloneSvgApplet() {
+      try {
+        const appletSvg = this.engine.compileAutonomousSvgApplet();
+        if (!appletSvg) {
+          this.showToast('⚠️ Could not compile standalone SVG');
+          return;
+        }
+        const blob = new Blob([appletSvg], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.engine.activePresetId || 'scene'}-standalone-applet.svg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        this.playChime(880, 'sine');
+        this.showToast('🚀 Autonomous SVG SPA Exported!');
+      } catch (err) {
+        console.error('Failed to export standalone SVG applet:', err);
+        this.showToast('⚠️ Export failed');
+      }
+    }
+
     renderStarterTemplates() {
       const el = this.elements;
       if (!el.devTemplateTab) return;
@@ -1565,6 +2015,125 @@
           }
         });
       });
+    }
+
+    initObsBroadcast() {
+      if (typeof window === 'undefined' || !window.OBSBroadcastController) return;
+      this.obs = new window.OBSBroadcastController();
+      const el = this.elements;
+      if (!el.obsDrawer) return;
+
+      // Populate form with saved settings
+      if (el.obsInputUrl) el.obsInputUrl.value = this.obs.settings.url || 'ws://127.0.0.1:4455';
+      if (el.obsInputPassword) el.obsInputPassword.value = this.obs.settings.password || '';
+      if (el.obsToggleRecord) el.obsToggleRecord.checked = Boolean(this.obs.settings.syncRecording);
+      if (el.obsToggleSubtitles) el.obsToggleSubtitles.checked = Boolean(this.obs.settings.syncSubtitles);
+      if (el.obsInputSource) el.obsInputSource.value = this.obs.settings.subtitleSource || 'LessonSubtitles';
+      if (el.obsToggleTransparent) el.obsToggleTransparent.checked = Boolean(this.obs.settings.transparent);
+
+      // Check transparent URL param or setting
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('transparent') === '1' || params.get('transparent') === 'true' || params.get('obs') === '1' || this.obs.settings.transparent) {
+        document.body.classList.add('obs-transparent');
+        if (el.obsToggleTransparent) el.obsToggleTransparent.checked = true;
+      }
+
+      // OBS Event Listeners
+      this.obs.on('connected', (info) => {
+        this.updateObsStatusUI(true, false, info.version);
+        this.showToast(`📡 OBS Studio Connected (${info.version || 'v5'})`);
+        this.playChime(659, 'sine');
+      });
+
+      this.obs.on('disconnected', () => {
+        this.updateObsStatusUI(false, false);
+      });
+
+      this.obs.on('recordingChanged', (data) => {
+        this.updateObsStatusUI(this.obs.isConnected, data.isRecording);
+      });
+
+      this.obs.on('scenesListReceived', (data) => {
+        if (!el.obsSelectScene) return;
+        el.obsSelectScene.innerHTML = '';
+        (data.scenes || []).forEach(sc => {
+          const opt = document.createElement('option');
+          opt.value = sc;
+          opt.textContent = sc;
+          if (sc === data.currentScene) opt.selected = true;
+          el.obsSelectScene.appendChild(opt);
+        });
+      });
+
+      this.obs.on('sceneChanged', (sceneName) => {
+        if (el.obsSelectScene) el.obsSelectScene.value = sceneName;
+      });
+
+      this.obs.on('remoteCommand', (cmd, payload) => {
+        switch (cmd) {
+          case 'play':
+            this.engine.play();
+            break;
+          case 'pause':
+            this.engine.pause();
+            break;
+          case 'togglePlay':
+            this.engine.isPlaying ? this.engine.pause() : this.engine.play();
+            break;
+          case 'seek':
+            if (typeof payload?.progress === 'number') this.engine.seek(payload.progress);
+            break;
+          case 'next':
+            this.engine.step(0.05);
+            break;
+          case 'prev':
+            this.engine.step(-0.05);
+            break;
+          case 'reset':
+            this.engine.seek(0);
+            break;
+          case 'quiz':
+            if (el.btnInteractive) el.btnInteractive.click();
+            break;
+        }
+      });
+    }
+
+    updateObsStatusUI(isConnected, isRecording, version) {
+      const el = this.elements;
+      if (el.obsStatusDot) {
+        el.obsStatusDot.className = 'obs-status-dot ' + (isRecording ? 'recording' : (isConnected ? 'connected' : 'disconnected'));
+      }
+      if (el.obsDrawerBadge) {
+        el.obsDrawerBadge.className = 'obs-drawer-badge ' + (isConnected ? 'connected' : 'disconnected');
+        el.obsDrawerBadge.textContent = isConnected ? `CONNECTED ${version || ''}` : 'DISCONNECTED';
+      }
+      if (el.obsLiveControls) {
+        el.obsLiveControls.style.display = isConnected ? 'block' : 'none';
+      }
+      if (el.btnObsRecordToggle) {
+        el.btnObsRecordToggle.textContent = isRecording ? '⏹ Stop OBS Recording' : '⏺ Start OBS Recording';
+        el.btnObsRecordToggle.className = 'obs-btn ' + (isRecording ? 'danger' : 'primary');
+      }
+    }
+
+    toggleObsDrawer() {
+      const el = this.elements;
+      if (!el.obsDrawer) return;
+      const isHidden = el.obsDrawer.classList.contains('hidden');
+      if (isHidden) {
+        el.obsDrawer.classList.remove('hidden');
+        if (el.btnObsLink) el.btnObsLink.classList.add('active');
+        if (this.obs && this.obs.isConnected) this.obs.refreshScenes();
+      } else {
+        this.closeObsDrawer();
+      }
+    }
+
+    closeObsDrawer() {
+      const el = this.elements;
+      if (el.obsDrawer) el.obsDrawer.classList.add('hidden');
+      if (el.btnObsLink) el.btnObsLink.classList.remove('active');
     }
   }
 

@@ -1326,6 +1326,591 @@
       ast += `)\n`;
       return ast;
     }
+
+    /**
+     * Curriculum-aligned Socratic Checkpoints for interactive active recall
+     */
+    getDefaultCheckpoints(presetId) {
+      const pid = (presetId || '').toLowerCase();
+      if (pid.includes('frac')) {
+        return [
+          {
+            t: 0.35,
+            question: "Why does the laser slice 1/2 into two quarters (2/4) before adding?",
+            options: [
+              "To establish a common denominator so all pieces are equal size",
+              "To make the total fraction twice as large as the original",
+              "Because 1 + 2 = 3 in standard addition"
+            ],
+            answerKey: 0,
+            hint: "Look at the slices: can you count parts that are different sizes?",
+            explanation: "Fractions cannot be added until they share a common denominator representing identical part sizes."
+          }
+        ];
+      }
+      if (pid.includes('pythag')) {
+        return [
+          {
+            t: 0.50,
+            question: "In Pythagoras' theorem (a² + b² = c²), what does 'c' represent?",
+            options: [
+              "The hypotenuse (the longest side opposite the right angle)",
+              "The shortest horizontal leg of the triangle",
+              "The total geometric perimeter of the three squares"
+            ],
+            answerKey: 0,
+            hint: "It is always the side facing the 90° right angle.",
+            explanation: "c is the hypotenuse; its square equals the combined areas of the squares on the other two orthogonal sides."
+          }
+        ];
+      }
+      if (pid.includes('photo')) {
+        return [
+          {
+            t: 0.40,
+            question: "What is the primary role of chlorophyll during photosynthesis?",
+            options: [
+              "To absorb sunlight energy to drive the conversion of CO₂ and water into glucose",
+              "To absorb nitrogen gas directly from atmospheric air",
+              "To block sunlight to keep the leaf from drying out"
+            ],
+            answerKey: 0,
+            hint: "Think of solar panels capturing photon energy.",
+            explanation: "Chlorophyll pigments absorb light energy, powering the chemical synthesis of glucose and releasing oxygen."
+          }
+        ];
+      }
+      if (pid.includes('solar')) {
+        return [
+          {
+            t: 0.35,
+            question: "According to Kepler's orbital laws, which planet travels fastest in its orbit?",
+            options: [
+              "Mercury (closest to the Sun's gravitational field)",
+              "Neptune (furthest from the central star)",
+              "All planets orbit at exactly the same linear speed"
+            ],
+            answerKey: 0,
+            hint: "Gravitational pull is strongest nearest to the massive central star.",
+            explanation: "Inner planets orbit faster because gravity is strongest nearer the Sun, requiring higher velocities for orbital equilibrium."
+          }
+        ];
+      }
+      if (pid.includes('church') || pid.includes('sanctuary')) {
+        return [
+          {
+            t: 0.50,
+            question: "In Catholic basilica architecture, what is the golden Tabernacle reserved for?",
+            options: [
+              "The Real Presence of Christ in the consecrated Blessed Sacrament",
+              "Archiving historic parish parchment documents",
+              "A decorative candlestick holder"
+            ],
+            answerKey: 0,
+            hint: "Think of Eucharistic adoration and the Sanctuary Lamp burning nearby.",
+            explanation: "The Tabernacle is the sacred dwelling place reserved for the consecrated Eucharist (the Body of Christ) (CCC 1379)."
+          }
+        ];
+      }
+      if (pid.includes('atom')) {
+        return [
+          {
+            t: 0.45,
+            question: "What subatomic particles make up the central nucleus of an atom?",
+            options: [
+              "Protons and Neutrons bound by the strong nuclear force",
+              "Electrons and Photons orbiting empty space",
+              "Pure energy with no mass or electrical charge"
+            ],
+            answerKey: 0,
+            hint: "Electrons orbit on the outside shells; the dense core is inside.",
+            explanation: "The nucleus contains positively charged protons and neutral neutrons, surrounded by electron orbitals."
+          }
+        ];
+      }
+      // Generic fallback checkpoint
+      return [
+        {
+          t: 0.50,
+          question: `What primary invariant rule is demonstrated at this milestone in ${this.scene?.title || 'this lesson'}?`,
+          options: [
+            "The foundational principle defined by the active AST bindings",
+            "An inverted contradictory outcome violating physical laws",
+            "A static decorative effect with no mathematical relationship"
+          ],
+          answerKey: 0,
+          hint: "Observe how the vector variables transform continuously across time.",
+          explanation: "The continuous mathematical rules preserve structural, geometric, and physical invariants."
+        }
+      ];
+    }
+
+    /**
+     * Compiles an Autonomous, Self-Contained Single Page Application (SPA) in a single .svg file
+     * Contains vector visuals, embedded HUD controls, audio speech synthesis, and Socratic checkpoint quizzes.
+     * Can be opened directly in any browser (file:///... or downloaded) with zero dependencies.
+     */
+    compileAutonomousSvgApplet() {
+      if (typeof document === 'undefined') return '';
+      const stage = document.getElementById('stage-svg');
+      if (!stage) return '';
+
+      const clone = stage.cloneNode(true);
+      const devOverlay = clone.querySelector('#dev-overlay-root');
+      if (devOverlay) devOverlay.remove();
+
+      // Extract inner visual SVG elements
+      const innerSvg = clone.innerHTML;
+      const sceneId = this.scene?.id || this.activePresetId || 'scene';
+      const sceneTitle = this.scene?.title || 'Interactive Vector Lesson';
+      const sceneStage = this.scene?.stage || 'UK CURRICULUM';
+      const duration = this.durationSec || 10.0;
+      const subtitles = this.scene?.subtitles || [];
+      const keyframes = this.scene?.keyframes || [];
+      const rawBindings = this.scene?.rawBindings || [];
+      const has3D = this.has3D();
+      const camera = this.scene?.camera || { yaw: 0, pitch: 0, distance: 1.0 };
+      const checkpoints = (this.scene && this.scene.checkpoints && this.scene.checkpoints.length)
+        ? this.scene.checkpoints
+        : this.getDefaultCheckpoints(sceneId);
+
+      const manifestData = {
+        id: sceneId,
+        title: sceneTitle,
+        stage: sceneStage,
+        duration: duration,
+        subtitles: subtitles,
+        keyframes: keyframes,
+        bindings: rawBindings,
+        has3D: has3D,
+        camera: camera,
+        checkpoints: checkpoints
+      };
+
+      const manifestJson = JSON.stringify(manifestData).replace(/<\/script>/gi, '<\\/script>');
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 800 560" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <filter id="hud-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="hud-card-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.65" />
+    </filter>
+    <linearGradient id="hud-bg-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#090d16" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="hud-bar-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    <![CDATA[
+    * { box-sizing: border-box; }
+    text { user-select: none; -webkit-user-select: none; }
+    .hud-btn { cursor: pointer; transition: transform 0.15s ease, filter 0.15s ease; }
+    .hud-btn:hover { filter: brightness(1.25); transform: translateY(-1px); }
+    .hud-btn:active { transform: translateY(1px); }
+    .quiz-btn { cursor: pointer; transition: filter 0.15s ease; }
+    .quiz-btn:hover { filter: brightness(1.2); }
+    ]]>
+  </style>
+
+  <!-- Canvas Background -->
+  <rect width="800" height="560" fill="url(#hud-bg-grad)" />
+
+  <!-- Top Title Bar -->
+  <g id="hud-top-bar">
+    <rect x="0" y="0" width="800" height="34" fill="#0b1120e6" stroke="#1e293b" stroke-width="1" />
+    <text x="18" y="22" fill="#38bdf8" font-size="12" font-weight="800" font-family="system-ui, -apple-system, sans-serif">${sceneStage} • ${sceneTitle}</text>
+    <text x="782" y="22" fill="#64748b" font-size="10" font-weight="700" text-anchor="end" font-family="system-ui, -apple-system, sans-serif">⚡ AUTONOMOUS SVG SPA • ST JOSEPH'S</text>
+  </g>
+
+  <!-- Vector Scene Stage Viewport (480px height) -->
+  <g id="scene-stage" transform="translate(0, 30)">
+    ${innerSvg}
+  </g>
+
+  <!-- Synchronized Subtitle Overlay -->
+  <g id="hud-subtitle-group" transform="translate(400, 470)">
+    <rect id="sub-bg" x="-360" y="-18" width="720" height="36" rx="8" fill="#0f172af0" stroke="#38bdf850" stroke-width="1" />
+    <text id="sub-text" x="0" y="5" fill="#f8fafc" font-size="13" font-weight="600" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">Loading lesson...</text>
+  </g>
+
+  <!-- Integrated Bottom HUD Control Bar -->
+  <g id="hud-control-bar">
+    <rect x="0" y="490" width="800" height="70" fill="url(#hud-bar-grad)" stroke="#1e293b" stroke-width="1.5" />
+    
+    <!-- Scrubber Progress Track -->
+    <rect id="track-bg" x="20" y="500" width="760" height="6" rx="3" fill="#334155" cursor="pointer" />
+    <rect id="track-fill" x="20" y="500" width="0" height="6" rx="3" fill="#38bdf8" pointer-events="none" />
+    <circle id="track-thumb" cx="20" cy="503" r="6" fill="#ffffff" stroke="#0284c7" stroke-width="2" cursor="pointer" />
+
+    <!-- Play/Pause Button -->
+    <g id="btn-play" class="hud-btn" transform="translate(20, 516)">
+      <rect width="76" height="30" rx="6" fill="#2563eb" />
+      <text id="txt-play" x="38" y="20" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">▶ Play</text>
+    </g>
+
+    <!-- Reset Button -->
+    <g id="btn-reset" class="hud-btn" transform="translate(104, 516)">
+      <rect width="64" height="30" rx="6" fill="#334155" />
+      <text x="32" y="20" fill="#e2e8f0" font-size="12" font-weight="600" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">↺ Reset</text>
+    </g>
+
+    <!-- Step Back & Forward -->
+    <g id="btn-prev" class="hud-btn" transform="translate(176, 516)">
+      <rect width="32" height="30" rx="6" fill="#1e293b" stroke="#475569" />
+      <text x="16" y="20" fill="#cbd5e1" font-size="12" font-weight="700" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">◀</text>
+    </g>
+    <g id="btn-next" class="hud-btn" transform="translate(214, 516)">
+      <rect width="32" height="30" rx="6" fill="#1e293b" stroke="#475569" />
+      <text x="16" y="20" fill="#cbd5e1" font-size="12" font-weight="700" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">▶</text>
+    </g>
+
+    <!-- Time Readout -->
+    <text id="txt-time" x="260" y="536" fill="#94a3b8" font-size="12" font-family="ui-monospace, monospace" font-weight="600">00:00 / 00:10</text>
+
+    <!-- Speed Cycle Button -->
+    <g id="btn-speed" class="hud-btn" transform="translate(370, 516)">
+      <rect width="48" height="30" rx="6" fill="#1e293b" stroke="#475569" />
+      <text id="txt-speed" x="24" y="20" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">1.0x</text>
+    </g>
+
+    <!-- Voice Narration Button (Web Speech) -->
+    <g id="btn-voice" class="hud-btn" transform="translate(426, 516)">
+      <rect id="bg-voice" width="86" height="30" rx="6" fill="#1e293b" stroke="#475569" />
+      <text id="txt-voice" x="43" y="20" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">🎙️ Voice</text>
+    </g>
+
+    <!-- Socratic Quiz Trigger Button -->
+    <g id="btn-quiz" class="hud-btn" transform="translate(520, 516)">
+      <rect width="78" height="30" rx="6" fill="#047857" />
+      <text x="39" y="20" fill="#ecfdf5" font-size="11" font-weight="700" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">🎯 Quiz</text>
+    </g>
+
+    <!-- Autonomous Status Indicator -->
+    <circle cx="700" cy="531" r="4" fill="#22c55e" />
+    <text x="710" y="535" fill="#22c55e" font-size="10" font-weight="700" font-family="system-ui, -apple-system, sans-serif">OFFLINE SPA</text>
+  </g>
+
+  <!-- Interactive Socratic Checkpoint Modal Card -->
+  <g id="quiz-modal" style="display:none;" transform="translate(100, 70)">
+    <rect width="600" height="360" rx="16" fill="#0f172af5" stroke="#38bdf8" stroke-width="2" filter="url(#hud-card-shadow)" />
+    
+    <!-- Modal Header -->
+    <rect x="0" y="0" width="600" height="50" rx="16" fill="#1e293b" />
+    <text x="24" y="32" fill="#38bdf8" font-size="16" font-weight="800" font-family="system-ui, -apple-system, sans-serif">🎯 Socratic Checkpoint</text>
+    <text x="576" y="32" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="end" font-family="system-ui, -apple-system, sans-serif">Formative Check</text>
+
+    <!-- Question Prompt -->
+    <text id="quiz-question-txt" x="24" y="85" fill="#f8fafc" font-size="13" font-weight="700" font-family="system-ui, -apple-system, sans-serif">Loading challenge...</text>
+
+    <!-- Options A, B, C -->
+    <g id="quiz-opt-0" class="quiz-btn" transform="translate(24, 110)">
+      <rect width="552" height="42" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+      <text id="quiz-opt-txt-0" x="16" y="26" fill="#e2e8f0" font-size="12" font-family="system-ui, -apple-system, sans-serif">Option A</text>
+    </g>
+    <g id="quiz-opt-1" class="quiz-btn" transform="translate(24, 160)">
+      <rect width="552" height="42" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+      <text id="quiz-opt-txt-1" x="16" y="26" fill="#e2e8f0" font-size="12" font-family="system-ui, -apple-system, sans-serif">Option B</text>
+    </g>
+    <g id="quiz-opt-2" class="quiz-btn" transform="translate(24, 210)">
+      <rect width="552" height="42" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+      <text id="quiz-opt-txt-2" x="16" y="26" fill="#e2e8f0" font-size="12" font-family="system-ui, -apple-system, sans-serif">Option C</text>
+    </g>
+
+    <!-- Diagnostic Feedback Message -->
+    <text id="quiz-feedback-txt" x="24" y="282" fill="#94a3b8" font-size="12" font-weight="600" font-family="system-ui, -apple-system, sans-serif">Select an option to evaluate your understanding.</text>
+
+    <!-- Bottom Action Controls -->
+    <g id="btn-quiz-resume" class="quiz-btn" style="display:none;" transform="translate(456, 305)">
+      <rect width="120" height="34" rx="6" fill="#2563eb" />
+      <text x="60" y="22" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">Resume ▶</text>
+    </g>
+    <g id="btn-quiz-dismiss" class="quiz-btn" transform="translate(24, 305)">
+      <rect width="80" height="34" rx="6" fill="#334155" />
+      <text x="40" y="22" fill="#cbd5e1" font-size="12" font-weight="600" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">Close ✕</text>
+    </g>
+  </g>
+
+  <!-- Autonomous Micro-Player Execution Engine -->
+  <script type="text/javascript">
+    <![CDATA[
+    (function () {
+      'use strict';
+      const data = ${manifestJson};
+      let isPlaying = false;
+      let progress = 0.0;
+      let speed = 1.0;
+      let voiceEnabled = false;
+      let lastTimestamp = null;
+      let animId = null;
+      let lastSpokenIndex = -1;
+      const duration = data.duration || 10.0;
+
+      // DOM references
+      const elTrackBg = document.getElementById('track-bg');
+      const elTrackFill = document.getElementById('track-fill');
+      const elTrackThumb = document.getElementById('track-thumb');
+      const elBtnPlay = document.getElementById('btn-play');
+      const elTxtPlay = document.getElementById('txt-play');
+      const elBtnReset = document.getElementById('btn-reset');
+      const elBtnPrev = document.getElementById('btn-prev');
+      const elBtnNext = document.getElementById('btn-next');
+      const elTxtTime = document.getElementById('txt-time');
+      const elBtnSpeed = document.getElementById('btn-speed');
+      const elTxtSpeed = document.getElementById('txt-speed');
+      const elBtnVoice = document.getElementById('btn-voice');
+      const elTxtVoice = document.getElementById('txt-voice');
+      const elBtnQuiz = document.getElementById('btn-quiz');
+      const elSubText = document.getElementById('sub-text');
+
+      const elQuizModal = document.getElementById('quiz-modal');
+      const elQuizPrompt = document.getElementById('quiz-question-txt');
+      const elQuizFeedback = document.getElementById('quiz-feedback-txt');
+      const elBtnQuizResume = document.getElementById('btn-quiz-resume');
+      const elBtnQuizDismiss = document.getElementById('btn-quiz-dismiss');
+
+      let activeCheckpoint = null;
+      const triggeredCheckpoints = {};
+
+      // Compile continuous mathematical AST expressions
+      const compiledBindings = (data.bindings || []).map(b => {
+        if (!b.expr) return null;
+        try {
+          return {
+            target: b.target,
+            attr: b.attr,
+            fn: new Function('t', 'Math', 'return (' + b.expr + ');')
+          };
+        } catch (e) {
+          return null;
+        }
+      }).filter(Boolean);
+
+      function applyBindings(t) {
+        for (let i = 0; i < compiledBindings.length; i++) {
+          const b = compiledBindings[i];
+          const nodes = document.querySelectorAll(b.target);
+          if (!nodes || !nodes.length) continue;
+          try {
+            const val = b.fn(t, Math);
+            for (let j = 0; j < nodes.length; j++) {
+              const n = nodes[j];
+              if (b.attr === 'textContent') {
+                n.textContent = String(val);
+              } else if (b.attr === 'style' || b.attr.startsWith('style.')) {
+                const prop = b.attr.replace(/^style\\./, '');
+                n.style[prop] = val;
+              } else {
+                n.setAttribute(b.attr, String(val));
+              }
+            }
+          } catch (err) {}
+        }
+
+        // Subtitles
+        const curSec = t * duration;
+        let foundSub = null;
+        let subIdx = -1;
+        if (data.subtitles) {
+          for (let s = 0; s < data.subtitles.length; s++) {
+            const sub = data.subtitles[s];
+            if (t >= sub.start && t < sub.end) {
+              foundSub = sub.en || sub.text;
+              subIdx = s;
+              break;
+            }
+          }
+        }
+        if (elSubText) elSubText.textContent = foundSub || (data.title + ' • Step ' + Math.ceil(t * 4));
+
+        // On-Device Web Speech Synthesis
+        if (voiceEnabled && 'speechSynthesis' in window && subIdx >= 0 && subIdx !== lastSpokenIndex && foundSub) {
+          lastSpokenIndex = subIdx;
+          try {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(foundSub);
+            u.rate = 1.0;
+            window.speechSynthesis.speak(u);
+          } catch (e) {}
+        }
+
+        // Formative Socratic Checkpoint Trigger
+        if (isPlaying && data.checkpoints && data.checkpoints.length) {
+          for (let c = 0; c < data.checkpoints.length; c++) {
+            const cp = data.checkpoints[c];
+            if (Math.abs(t - cp.t) < 0.025 && !triggeredCheckpoints[c]) {
+              triggeredCheckpoints[c] = true;
+              showQuizCheckpoint(cp);
+              pause();
+              break;
+            }
+          }
+        }
+
+        // Scrubber HUD updates
+        const trackWidth = 760;
+        const fillW = Math.max(0, Math.min(trackWidth, t * trackWidth));
+        if (elTrackFill) elTrackFill.setAttribute('width', fillW);
+        if (elTrackThumb) elTrackThumb.setAttribute('cx', 20 + fillW);
+
+        const sSec = Math.floor(curSec % 60).toString().padStart(2, '0');
+        const sMin = Math.floor(curSec / 60).toString().padStart(2, '0');
+        const tSec = Math.floor(duration % 60).toString().padStart(2, '0');
+        const tMin = Math.floor(duration / 60).toString().padStart(2, '0');
+        if (elTxtTime) elTxtTime.textContent = sMin + ':' + sSec + ' / ' + tMin + ':' + tSec;
+      }
+
+      function tick(ts) {
+        if (!lastTimestamp) lastTimestamp = ts;
+        const dt = Math.min(0.1, (ts - lastTimestamp) / 1000);
+        lastTimestamp = ts;
+
+        if (isPlaying) {
+          progress += (dt * speed) / duration;
+          if (progress >= 1.0) {
+            progress = 1.0;
+            pause();
+          }
+          applyBindings(progress);
+        }
+        if (isPlaying) {
+          animId = requestAnimationFrame(tick);
+        }
+      }
+
+      function play() {
+        if (progress >= 1.0) progress = 0.0;
+        isPlaying = true;
+        lastTimestamp = null;
+        if (elTxtPlay) elTxtPlay.textContent = '⏸ Pause';
+        if (animId) cancelAnimationFrame(animId);
+        animId = requestAnimationFrame(tick);
+      }
+
+      function pause() {
+        isPlaying = false;
+        lastTimestamp = null;
+        if (elTxtPlay) elTxtPlay.textContent = '▶ Play';
+        if (animId) cancelAnimationFrame(animId);
+      }
+
+      function seek(p) {
+        progress = Math.max(0.0, Math.min(1.0, p));
+        applyBindings(progress);
+      }
+
+      function showQuizCheckpoint(cp) {
+        activeCheckpoint = cp;
+        if (!elQuizModal) return;
+        elQuizModal.style.display = 'block';
+        if (elQuizPrompt) elQuizPrompt.textContent = cp.question;
+        if (elQuizFeedback) {
+          elQuizFeedback.textContent = '💡 ' + (cp.hint || 'Select an option to evaluate your understanding.');
+          elQuizFeedback.setAttribute('fill', '#94a3b8');
+        }
+        if (elBtnQuizResume) elBtnQuizResume.style.display = 'none';
+
+        (cp.options || []).forEach((opt, idx) => {
+          const g = document.getElementById('quiz-opt-' + idx);
+          const txt = document.getElementById('quiz-opt-txt-' + idx);
+          if (g && txt) {
+            g.style.display = 'block';
+            txt.textContent = String.fromCharCode(65 + idx) + ') ' + opt;
+            const rect = g.querySelector('rect');
+            if (rect) {
+              rect.setAttribute('fill', '#1e293b');
+              rect.setAttribute('stroke', '#334155');
+            }
+            g.onclick = function () {
+              const isCorrect = (idx === cp.answerKey);
+              if (rect) {
+                rect.setAttribute('fill', isCorrect ? '#064e3b' : '#7f1d1d');
+                rect.setAttribute('stroke', isCorrect ? '#10b981' : '#ef4444');
+              }
+              if (elQuizFeedback) {
+                elQuizFeedback.textContent = isCorrect
+                  ? '✔ Correct! ' + (cp.explanation || 'Mastery confirmed.')
+                  : '✘ Misconception: ' + (cp.explanation || 'Review core rule.');
+                elQuizFeedback.setAttribute('fill', isCorrect ? '#34d399' : '#f87171');
+              }
+              if (elBtnQuizResume) elBtnQuizResume.style.display = 'block';
+            };
+          }
+        });
+      }
+
+      // Event Listeners
+      if (elBtnPlay) elBtnPlay.onclick = function () { isPlaying ? pause() : play(); };
+      if (elBtnReset) elBtnReset.onclick = function () {
+        pause();
+        for (let k in triggeredCheckpoints) delete triggeredCheckpoints[k];
+        seek(0.0);
+      };
+      if (elBtnPrev) elBtnPrev.onclick = function () { seek(progress - 0.1); };
+      if (elBtnNext) elBtnNext.onclick = function () { seek(progress + 0.1); };
+      if (elBtnSpeed) elBtnSpeed.onclick = function () {
+        const speeds = [0.5, 1.0, 1.5, 2.0];
+        const curIdx = speeds.indexOf(speed);
+        speed = speeds[(curIdx + 1) % speeds.length];
+        if (elTxtSpeed) elTxtSpeed.textContent = speed.toFixed(1) + 'x';
+      };
+      if (elBtnVoice) elBtnVoice.onclick = function () {
+        voiceEnabled = !voiceEnabled;
+        const bg = document.getElementById('bg-voice');
+        if (bg) bg.setAttribute('fill', voiceEnabled ? '#0284c7' : '#1e293b');
+        if (elTxtVoice) elTxtVoice.textContent = voiceEnabled ? '🔊 Voice ON' : '🎙️ Voice';
+      };
+      if (elBtnQuiz) elBtnQuiz.onclick = function () {
+        const cp = (data.checkpoints && data.checkpoints[0]) || {
+          question: "What core rule governs this concept?",
+          options: ["The primary invariant definition", "Reversed condition", "Unrelated property"],
+          answerKey: 0,
+          explanation: "Observe the vector coordinates and mathematical bindings."
+        };
+        pause();
+        showQuizCheckpoint(cp);
+      };
+      if (elBtnQuizResume) elBtnQuizResume.onclick = function () {
+        if (elQuizModal) elQuizModal.style.display = 'none';
+        play();
+      };
+      if (elBtnQuizDismiss) elBtnQuizDismiss.onclick = function () {
+        if (elQuizModal) elQuizModal.style.display = 'none';
+      };
+
+      if (elTrackBg) {
+        elTrackBg.onclick = function (e) {
+          const rect = elTrackBg.getBoundingClientRect();
+          const p = (e.clientX - rect.left) / rect.width;
+          seek(p);
+        };
+      }
+
+      // Keyboard Controls
+      window.addEventListener('keydown', function (e) {
+        if (e.code === 'Space') { e.preventDefault(); isPlaying ? pause() : play(); }
+        else if (e.code === 'ArrowLeft') { e.preventDefault(); seek(progress - 0.05); }
+        else if (e.code === 'ArrowRight') { e.preventDefault(); seek(progress + 0.05); }
+      });
+
+      // Initial Frame
+      applyBindings(0.0);
+    })();
+    ]]>
+  </script>
+</svg>`;
+    }
   }
 
   // Setup postMessage Gateway with Origin Validation
@@ -1461,8 +2046,53 @@
             preset: engine.activePresetId
           });
           break;
+        case 'EXPORT_STANDALONE_APPLET':
+        case 'GET_STANDALONE_SVG': {
+          const appletSvg = engine.compileAutonomousSvgApplet();
+          const filename = `${engine.activePresetId || 'scene'}-standalone-applet.svg`;
+          engine.notifyParent({
+            type: 'STANDALONE_APPLET_COMPILED',
+            svg: appletSvg,
+            filename: filename,
+            preset: engine.activePresetId
+          });
+          if (uiController && typeof uiController.showToast === 'function') {
+            uiController.showToast('🚀 Standalone SVG SPA Compiled');
+          }
+          break;
+        }
         case 'PING':
           engine.notifyParent({ type: 'PONG', ready: true, version: '2.5.0', has3D: engine.has3D() });
+          break;
+        case 'TOGGLE_OBS_DRAWER':
+          if (uiController && typeof uiController.toggleObsDrawer === 'function') {
+            uiController.toggleObsDrawer();
+          }
+          break;
+        case 'CONNECT_OBS':
+          if (uiController && uiController.obs) {
+            uiController.obs.connect(data.url, data.password);
+          }
+          break;
+        case 'DISCONNECT_OBS':
+          if (uiController && uiController.obs) {
+            uiController.obs.disconnect();
+          }
+          break;
+        case 'SET_OBS_RECORDING':
+          if (uiController && uiController.obs) {
+            data.record ? uiController.obs.startRecord() : uiController.obs.stopRecord();
+          }
+          break;
+        case 'SET_DISPLAY_CONFIG':
+          if (data.config && uiController && typeof uiController.applyDisplayConfig === 'function') {
+            uiController.applyDisplayConfig(data.config);
+          }
+          break;
+        case 'TOGGLE_SETTINGS_DRAWER':
+          if (uiController && typeof uiController.toggleSettingsDrawer === 'function') {
+            uiController.toggleSettingsDrawer();
+          }
           break;
       }
     });

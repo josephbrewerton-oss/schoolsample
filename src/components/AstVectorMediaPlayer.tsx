@@ -15,6 +15,14 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
+import {
+  PlayerDisplayMode,
+  PlayerDisplayConfig,
+  loadSavedPlayerConfig,
+  savePlayerConfig,
+  getPresetConfig,
+  MODE_METADATA,
+} from '../types/playerConfig';
 
 export type VectorPresetType =
   | 'fractions'
@@ -36,8 +44,11 @@ export interface AstVectorMediaPlayerProps {
   height?: string | number;
   className?: string;
   allowPresetSwitch?: boolean;
+  defaultMode?: PlayerDisplayMode;
+  initialConfig?: Partial<PlayerDisplayConfig>;
   onKeyframeReached?: (keyframe: { title: string; rule: string; progress: number }) => void;
   onTimeUpdate?: (progress: number) => void;
+  onConfigChange?: (config: PlayerDisplayConfig) => void;
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
@@ -60,8 +71,11 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   height = '520px',
   className = '',
   allowPresetSwitch = true,
+  defaultMode,
+  initialConfig,
   onKeyframeReached,
   onTimeUpdate,
+  onConfigChange,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(preset);
@@ -75,6 +89,17 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   const [currentProgress, setCurrentProgress] = useState(0);
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
+  const [embedTargetMode, setEmbedTargetMode] = useState<PlayerDisplayMode>('classroom');
+
+  // Display Configuration & Profile Mode State
+  const [displayConfig, setDisplayConfig] = useState<PlayerDisplayConfig>(() => {
+    const saved = loadSavedPlayerConfig();
+    if (defaultMode) {
+      return { ...getPresetConfig(defaultMode), ...initialConfig };
+    }
+    return initialConfig ? { ...saved, ...initialConfig } : saved;
+  });
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Developer Mode & Code Studio State
   const [isDevMode, setIsDevMode] = useState(false);
@@ -90,6 +115,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   const [customSvgCode, setCustomSvgCode] = useState('');
   const [customAstCode, setCustomAstCode] = useState('');
   const [hotReloadFlash, setHotReloadFlash] = useState(false);
+  const [exportSuccessNotice, setExportSuccessNotice] = useState(false);
 
   // Sync internal selected preset if external preset prop changes
   useEffect(() => {
@@ -203,6 +229,28 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           setHotReloadFlash(true);
           setTimeout(() => setHotReloadFlash(false), 2000);
           break;
+        case 'STANDALONE_APPLET_COMPILED':
+          if (typeof data.svg === 'string') {
+            const blob = new Blob([data.svg], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = data.filename || `${selectedPresetRef.current || 'scene'}-standalone-applet.svg`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            setExportSuccessNotice(true);
+            setTimeout(() => setExportSuccessNotice(false), 3500);
+          }
+          break;
+        case 'DISPLAY_CONFIG_CHANGED':
+          if (data.config && typeof data.config === 'object') {
+            setDisplayConfig((prev) => ({ ...prev, ...data.config }));
+            savePlayerConfig(data.config);
+            if (onConfigChange) onConfigChange(data.config);
+          }
+          break;
         default:
           break;
       }
@@ -210,14 +258,21 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onKeyframeReached, onTimeUpdate, postToPlayer]);
+  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange]);
+
+  // Sync display config changes to player iframe
+  useEffect(() => {
+    postToPlayer({ type: 'SET_DISPLAY_CONFIG', config: displayConfig });
+    savePlayerConfig(displayConfig);
+    if (onConfigChange) onConfigChange(displayConfig);
+  }, [displayConfig, postToPlayer, onConfigChange]);
 
   const rawBase = import.meta.env.BASE_URL || '/';
   const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&v=2.5.0`;
+  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&v=2.5.0`;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
+  const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&mode=${encodeURIComponent(embedTargetMode)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
 
   const copyEmbedCode = () => {
     navigator.clipboard.writeText(embedCode).then(() => {
@@ -270,7 +325,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
             Sandboxed iFrame &bull; 0% Main Thread
           </span>
 
-          {allowPresetSwitch && (
+          {allowPresetSwitch && displayConfig.showPresetSelector && (
             <select
               value={selectedPreset}
               onChange={(e) => {
@@ -312,7 +367,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
             ▶ / ⏸ Play
           </button>
 
-          {has3D && (
+          {has3D && displayConfig.show3DControls && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -441,7 +496,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
             </div>
           )}
 
-          {hasInteractive && (
+          {hasInteractive && displayConfig.showInteractiveCheckpoints && (
             <span
               className="stj-badge stj-badge-success stj-pill"
               style={{ fontSize: '0.72rem' }}
@@ -453,75 +508,344 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Display & Mode Settings Button */}
           <button
             type="button"
-            onClick={() => {
-              const next = !isDevMode;
-              setIsDevMode(next);
-              postToPlayer({ type: 'SET_DEV_MODE', enabled: next });
-            }}
-            className={`stj-btn ${isDevMode ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            onClick={() => setShowSettingsModal((prev) => !prev)}
+            className={`stj-btn ${showSettingsModal ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
             style={{
               padding: '4px 10px',
               minHeight: '32px',
               fontSize: '0.76rem',
               fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
-            title="Toggle Point-and-Click SVG Element Inspector"
+            title="Configure player view mode and hide/show links"
           >
-            <span>🛠️ Inspect {isDevMode ? 'ON' : ''}</span>
+            <span>⚙️ {MODE_METADATA[displayConfig.mode]?.icon || '⚙️'} {MODE_METADATA[displayConfig.mode]?.label || 'Settings'}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              const next = !showDevStudio;
-              setShowDevStudio(next);
-              if (next) {
-                postToPlayer({ type: 'GET_STAGE_SVG' });
-              }
-            }}
-            className={`stj-btn ${showDevStudio ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-            }}
-            title="Open Live SVG & AST Developer Studio"
-          >
-            <span>💻 Studio</span>
-          </button>
+          {displayConfig.showDevInspect && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = !isDevMode;
+                setIsDevMode(next);
+                postToPlayer({ type: 'SET_DEV_MODE', enabled: next });
+              }}
+              className={`stj-btn ${isDevMode ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+              }}
+              title="Toggle Point-and-Click SVG Element Inspector"
+            >
+              <span>🛠️ Inspect {isDevMode ? 'ON' : ''}</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={openStandalone}
-            className="stj-btn stj-btn-secondary stj-btn-sm"
-            style={{
-              padding: '4px 9px',
-              minHeight: '32px',
-              fontSize: '0.75rem',
-            }}
-            title="Open Player in Standalone Window"
-          >
-            <span>↗ Standalone</span>
-          </button>
+          {displayConfig.showDevStudio && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showDevStudio;
+                setShowDevStudio(next);
+                if (next) {
+                  postToPlayer({ type: 'GET_STAGE_SVG' });
+                }
+              }}
+              className={`stj-btn ${showDevStudio ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+              }}
+              title="Open Live SVG & AST Developer Studio"
+            >
+              <span>💻 Studio</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => setShowEmbedCode(!showEmbedCode)}
-            className="stj-btn stj-btn-secondary stj-btn-sm"
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-            }}
-            title="Get standalone embed code for Canvas, Google Classroom, Moodle"
-          >
-            <span>🔗 Embed in LMS</span>
-          </button>
+          {displayConfig.showExportSpa && (
+            <button
+              type="button"
+              onClick={() => {
+                postToPlayer({ type: 'EXPORT_STANDALONE_APPLET' });
+              }}
+              className={`stj-btn ${exportSuccessNotice ? 'stj-btn-success' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                color: exportSuccessNotice ? '#10b981' : undefined,
+                borderColor: exportSuccessNotice ? '#10b981' : undefined,
+              }}
+              title="Export as an Autonomous, Offline-Executable Single Page Application in a single .svg file"
+            >
+              <span>{exportSuccessNotice ? '✔ Exported SPA!' : '🚀 Standalone SPA'}</span>
+            </button>
+          )}
+
+          {displayConfig.showStandaloneLink && (
+            <button
+              type="button"
+              onClick={openStandalone}
+              className="stj-btn stj-btn-secondary stj-btn-sm"
+              style={{
+                padding: '4px 9px',
+                minHeight: '32px',
+                fontSize: '0.75rem',
+              }}
+              title="Open Player in Standalone Window"
+            >
+              <span>↗ Standalone</span>
+            </button>
+          )}
+
+          {displayConfig.showObsLink && (
+            <button
+              type="button"
+              onClick={() => {
+                postToPlayer({ type: 'TOGGLE_OBS_DRAWER' });
+              }}
+              className="stj-btn stj-btn-secondary stj-btn-sm"
+              style={{
+                padding: '4px 9px',
+                minHeight: '32px',
+                fontSize: '0.75rem',
+              }}
+              title="Open OBS Studio WebSocket Broadcast Controller (ws://127.0.0.1:4455)"
+            >
+              <span>📡 OBS Link</span>
+            </button>
+          )}
+
+          {displayConfig.showLmsEmbed && (
+            <button
+              type="button"
+              onClick={() => setShowEmbedCode(!showEmbedCode)}
+              className="stj-btn stj-btn-secondary stj-btn-sm"
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+              }}
+              title="Get standalone embed code for Canvas, Google Classroom, Moodle"
+            >
+              <span>🔗 Embed in LMS</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Settings & Display Configuration Drawer */}
+      {showSettingsModal && (
+        <div
+          style={{
+            background: 'var(--stj-surface-raised)',
+            borderBottom: '1px solid var(--stj-border)',
+            padding: '16px 20px',
+            color: 'var(--stj-text)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            animation: 'fadeIn 0.15s ease',
+          }}
+        >
+          {/* Settings Drawer Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚙️</span>
+                <strong style={{ fontSize: '0.95rem' }}>Player Display &amp; Controls Configuration</strong>
+                <span
+                  className="stj-badge stj-badge-primary stj-pill"
+                  style={{ fontSize: '0.68rem', textTransform: 'uppercase' }}
+                >
+                  {displayConfig.mode} MODE
+                </span>
+              </div>
+              <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'var(--stj-text-muted)' }}>
+                Select a profile preset or customize individual links so only required controls are shown.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const def = getPresetConfig('classroom');
+                  setDisplayConfig(def);
+                  savePlayerConfig(def);
+                  postToPlayer({ type: 'SET_DISPLAY_CONFIG', config: def });
+                }}
+                className="stj-btn stj-btn-ghost stj-btn-sm"
+                style={{ fontSize: '0.74rem' }}
+                title="Reset all settings to Classroom Mode default"
+              >
+                ↺ Reset to Classroom Mode
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSettingsModal(false)}
+                className="stj-btn stj-btn-secondary stj-btn-sm"
+                style={{ fontSize: '0.74rem', minWidth: '32px' }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Preset Mode Cards */}
+          <div>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--stj-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>
+              Select Teaching &amp; Viewing Profile
+            </span>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '10px',
+              }}
+            >
+              {(['classroom', 'student', 'broadcast', 'developer'] as PlayerDisplayMode[]).map((m) => {
+                const meta = MODE_METADATA[m];
+                const isActive = displayConfig.mode === m;
+                return (
+                  <div
+                    key={m}
+                    onClick={() => {
+                      const newCfg = getPresetConfig(m);
+                      setDisplayConfig(newCfg);
+                      savePlayerConfig(newCfg);
+                      postToPlayer({ type: 'SET_DISPLAY_CONFIG', config: newCfg });
+                    }}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      border: isActive ? '2px solid var(--stj-primary)' : '1px solid var(--stj-border)',
+                      background: isActive ? 'var(--stj-primary-surface)' : 'var(--stj-surface)',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <strong style={{ fontSize: '0.84rem', color: isActive ? 'var(--stj-primary)' : 'var(--stj-text)' }}>
+                        {meta.icon} {meta.label}
+                      </strong>
+                      {isActive && <span style={{ fontSize: '0.72rem', color: 'var(--stj-primary)', fontWeight: 800 }}>✓ ACTIVE</span>}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.66rem',
+                        fontWeight: 700,
+                        color: 'var(--stj-text-muted)',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {meta.tag}
+                    </span>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--stj-text-muted)', lineHeight: 1.35 }}>
+                      {meta.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Granular Control Toggles Accordion */}
+          <div style={{ borderTop: '1px solid var(--stj-border)', paddingTop: '10px' }}>
+            <details style={{ cursor: 'pointer' }}>
+              <summary style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--stj-primary)', marginBottom: '8px' }}>
+                🎛️ Granular Control Toggles (Customize individual links &amp; buttons)
+              </summary>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginTop: '10px' }}>
+                <div>
+                  <strong style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--stj-text-muted)', display: 'block', marginBottom: '8px' }}>
+                    Header &amp; Action Links
+                  </strong>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                      { key: 'showPresetSelector', label: 'Curriculum Preset Selector' },
+                      { key: 'showDevInspect', label: '🛠️ SVG Element Inspector' },
+                      { key: 'showDevStudio', label: '💻 Live Code Studio' },
+                      { key: 'showExportSpa', label: '🚀 Standalone SVG SPA Export' },
+                      { key: 'showStandaloneLink', label: '↗ Standalone Window Button' },
+                      { key: 'showObsLink', label: '📡 OBS Broadcast WebSocket Link' },
+                      { key: 'showLmsEmbed', label: '🔗 LMS Embed Code Generator' },
+                      { key: 'showPrintWorksheet', label: '🖨️ A4 Classroom Worksheet' },
+                      { key: 'showCopySvg', label: '📋 Copy Raw SVG Geometry' },
+                    ].map(({ key, label }) => (
+                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(displayConfig[key as keyof PlayerDisplayConfig])}
+                          onChange={(e) => {
+                            const updated: PlayerDisplayConfig = {
+                              ...displayConfig,
+                              mode: 'custom',
+                              [key]: e.target.checked,
+                            };
+                            setDisplayConfig(updated);
+                            savePlayerConfig(updated);
+                            postToPlayer({ type: 'SET_DISPLAY_CONFIG', config: updated });
+                          }}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <strong style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: 'var(--stj-text-muted)', display: 'block', marginBottom: '8px' }}>
+                    Learning, 3D &amp; Playback Features
+                  </strong>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {[
+                      { key: 'showInteractiveCheckpoints', label: '🎯 Checkpoint Active Recall Quizzes' },
+                      { key: 'show3DControls', label: '🌐 3D Spatial Orbit & Camera Toolbar' },
+                      { key: 'showSubtitles', label: '💬 Synchronized Subtitles Overlay' },
+                      { key: 'showVoiceNarration', label: '🔊 Voice Narration (Web Speech)' },
+                      { key: 'showTimelineScrubber', label: '⏱️ Timeline Scrubber Track' },
+                      { key: 'showSpeedSelector', label: '⏩ Playback Speed Selector' },
+                      { key: 'showLanguageSelector', label: '🌍 Multi-Language Selector' },
+                    ].map(({ key, label }) => (
+                      <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(displayConfig[key as keyof PlayerDisplayConfig])}
+                          onChange={(e) => {
+                            const updated: PlayerDisplayConfig = {
+                              ...displayConfig,
+                              mode: 'custom',
+                              [key]: e.target.checked,
+                            };
+                            setDisplayConfig(updated);
+                            savePlayerConfig(updated);
+                            postToPlayer({ type: 'SET_DISPLAY_CONFIG', config: updated });
+                          }}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+      )}
 
       {/* Embed Code Drawer */}
       {showEmbedCode && (
@@ -529,13 +853,28 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           style={{
             background: 'var(--stj-surface-raised)',
             borderBottom: '1px solid var(--stj-border)',
-            padding: '10px 14px',
+            padding: '12px 16px',
             fontSize: '0.82rem',
             color: 'var(--stj-text)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
-            <span>Copy this embed snippet into Canvas, Moodle, or Google Classroom:</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 600 }}>Embed for Canvas, Moodle, or Google Classroom:</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)' }}>Target Audience:</span>
+                <select
+                  value={embedTargetMode}
+                  onChange={(e) => setEmbedTargetMode(e.target.value as PlayerDisplayMode)}
+                  className="stj-select"
+                  style={{ padding: '2px 6px', fontSize: '0.74rem', minHeight: '26px' }}
+                >
+                  <option value="classroom">🎓 Classroom (Clean Whiteboard)</option>
+                  <option value="student">🎒 Student Focus (Distraction-Free)</option>
+                  <option value="developer">🛠️ Developer (Full Suite)</option>
+                </select>
+              </div>
+            </div>
             <button
               type="button"
               onClick={copyEmbedCode}

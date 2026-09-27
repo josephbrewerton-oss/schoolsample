@@ -314,6 +314,30 @@ export default function MediaPlayerPage(): React.JSX.Element {
               One-click starters for Keplerian orbits, harmonic sine waves, and kinetic pendulums ready for export.
             </span>
           </div>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: '#8b5cf6', display: 'block', marginBottom: '2px' }}>
+              💾 Autonomous SVG SPA
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              1-click export of an entire self-contained Single Page Application into a single .svg file. Runs offline in any browser forever.
+            </span>
+          </div>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: '#ec4899', display: 'block', marginBottom: '2px' }}>
+              📡 OBS Studio Broadcast Link
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              Direct local WebSocket v5 link: synchronized recording, live text overlays, automated scene switching, and transparent camera browser source.
+            </span>
+          </div>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: '#0284c7', display: 'block', marginBottom: '2px' }}>
+              ⚙️ Display Profiles &amp; Clean Settings
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              1-click switch between 🎓 Classroom (clean whiteboard), 🎒 Student Focus (distraction-free), 📡 Broadcast, or 🛠️ Developer Mode so you only show what you need.
+            </span>
+          </div>
         </div>
       </div>
 
