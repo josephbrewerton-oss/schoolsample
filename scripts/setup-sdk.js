@@ -97,40 +97,25 @@ export interface EngineOptions {
 
 // 6. AST Parser & Validator (src/core/AstCompiler.ts)
 const astCompilerCode = `import { ParsedAstNode } from "../types";
+import { parseAstNode, tokenize, parseSExpr, stripSExprComments } from "../../../../src/utils/sexprParser";
+
+export { tokenize, parseSExpr, stripSExprComments, parseAstNode };
 
 export class AstCompiler {
+  /**
+   * Parses S-Expression into ParsedAstNode using robust recursive tokenizer from src/utils/sexprParser.ts.
+   * Legacy brittle regex matchers are deprecated.
+   */
   static parse(sExpr: string): ParsedAstNode {
-    const routeMatch = sExpr.match(/:route\\s+"([^"]+)"/);
-    const calcMatch = sExpr.match(/:calc\\s+"([^"]+)"/);
-    const promptMatch = sExpr.match(/:prompt\\s+"([^"]+)"/);
-    const answerKeyMatch = sExpr.match(/:answer-key\\s+(\\d+)/);
-    const optionsMatch = sExpr.match(/:options\\s+\\((?:list\\s+)?([\\s\\S]*?)\\)(?:\\s*\\)|\\s*:)/);
-
-    if (!promptMatch) {
-      throw new Error("Invalid AST: Missing :prompt tag");
-    }
-
-    const options: string[] = [];
-    if (optionsMatch) {
-      const optRegex = /"([^"]+)"/g;
-      let m: RegExpExecArray | null;
-      while ((m = optRegex.exec(optionsMatch[1])) !== null) {
-        options.push(m[1]);
-      }
-    }
-
-    return {
-      route: routeMatch ? routeMatch[1] : "quiz:mcq",
-      calc: calcMatch ? calcMatch[1] : undefined,
-      prompt: promptMatch[1],
-      options: options.length > 0 ? options : ["Option A", "Option B", "Option C", "Option D"],
-      answerKey: answerKeyMatch ? parseInt(answerKeyMatch[1], 10) : 0
-    };
+    return parseAstNode(sExpr);
   }
 
   static validate(node: ParsedAstNode): boolean {
     return Boolean(
+      node &&
+      node.prompt &&
       node.prompt.length > 0 &&
+      Array.isArray(node.options) &&
       node.options.length >= 2 &&
       node.answerKey >= 0 &&
       node.answerKey < node.options.length
@@ -201,7 +186,7 @@ export class EdgeCognitiveEngine {
 
 // 8. Main Entry (src/index.ts)
 const indexCode = `export { EdgeCognitiveEngine } from "./core/Engine";
-export { AstCompiler } from "./core/AstCompiler";
+export { AstCompiler, parseAstNode, tokenize, parseSExpr, stripSExprComments } from "./core/AstCompiler";
 export * from "./types";
 `;
 

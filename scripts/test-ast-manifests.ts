@@ -10,7 +10,8 @@
 import fs from 'fs';
 import path from 'path';
 import assert from 'assert';
-import { parseSExpr, stripSExprComments } from '../src/utils/sexprParser';
+import { parseSExpr, stripSExprComments, tokenize, parseAstNode, AstParser } from '../src/utils/sexprParser';
+import { AstCompiler } from '../packages/edge-runtime/src/core/AstCompiler';
 import { VFS_CURRICULUM_SEEDS } from '../src/manifests/vfsSeedModules';
 import { SCHOOL_MANIFEST } from '../src/manifests/school';
 import { COMMUNION_MANIFEST } from '../src/manifests/communion';
@@ -401,6 +402,75 @@ try {
   stats.suitesFailed++;
   stats.unhandledExceptions++;
   console.error(`${RED}Suite 6 Failed:${RESET}`, err.message);
+}
+
+// -----------------------------------------------------------------------------
+// SUITE 7: Edge Runtime Tokenizer & AstCompiler Verification
+// -----------------------------------------------------------------------------
+try {
+  console.log(`${BOLD}Suite 7: Recursive Tokenizer AstCompiler & AstParser Verification${RESET}`);
+
+  // Test 1: Escaped double-quotes inside :prompt
+  const escapedPromptExpr = '(:route "quiz:mcq" :prompt "What does \\"F = ma\\" describe in physics?" :options ("Newton\'s 2nd Law" "Ohm\'s Law") :answer-key 0)';
+  const parsed1 = AstCompiler.parse(escapedPromptExpr);
+  assert.strictEqual(parsed1.prompt, 'What does "F = ma" describe in physics?', 'AstCompiler failed to preserve escaped quotes in :prompt');
+  assert.strictEqual(parsed1.options.length, 2, 'AstCompiler failed to extract options array');
+  assert.strictEqual(AstCompiler.validate(parsed1), true, 'AstCompiler validation failed on valid node');
+  console.log(`  ${GREEN}✓${RESET} Escaped quotation marks preserved without truncation`);
+
+  // Test 2: Nested parentheses in options
+  const nestedParenExpr = '(:route "quiz:mcq" :prompt "Which is kinetic energy?" :options (list "(1/2) * m * v^2" "(3/2) * k * T" "m * g * h") :answer-key 0)';
+  const parsed2 = AstCompiler.parse(nestedParenExpr);
+  assert.strictEqual(parsed2.options[0], '(1/2) * m * v^2', 'AstCompiler failed on nested parentheses inside options');
+  assert.strictEqual(parsed2.options.length, 3, 'AstCompiler missed nested-paren option');
+  console.log(`  ${GREEN}✓${RESET} Nested parentheses within options parsed cleanly`);
+
+  // Test 3: Multi-line S-Expression with comments
+  const multilineCommentExpr = `
+    ;; Preceding comment
+    (:route "physics:forces"
+     :prompt "A spacecraft moves at constant velocity in deep space.\\nWhat happens when all engine thrust stops?"
+     :options (list
+       "It continues moving at constant velocity"
+       "It slows to a halt immediately"
+       "It changes direction"
+     )
+     :answer-key 0
+    )
+  `;
+  const parsed3 = AstCompiler.parse(multilineCommentExpr);
+  assert(parsed3.prompt.includes('\n'), 'AstCompiler failed to preserve newline in multi-line prompt');
+  assert.strictEqual(parsed3.route, 'physics:forces');
+  assert.strictEqual(parsed3.options.length, 3);
+  console.log(`  ${GREEN}✓${RESET} Multi-line strings and Lisp comments parsed cleanly`);
+
+  // Test 4: Dual implementation parity (AstCompiler vs AstParser vs parseAstNode)
+  const astParserResult = AstParser.parse(escapedPromptExpr);
+  const directResult = parseAstNode(escapedPromptExpr);
+  assert.deepStrictEqual(parsed1, astParserResult, 'AstCompiler and AstParser diverged');
+  assert.deepStrictEqual(parsed1, directResult, 'AstCompiler and parseAstNode diverged');
+  console.log(`  ${GREEN}✓${RESET} Dual implementation parity confirmed (AstCompiler === AstParser === parseAstNode)`);
+
+  // Test 5: Missing prompt throws expected error
+  assert.throws(
+    () => AstCompiler.parse('(:route "quiz:mcq" :options ("A" "B") :answer-key 0)'),
+    /Missing :prompt token/,
+    'AstCompiler failed to throw on missing :prompt'
+  );
+  console.log(`  ${GREEN}✓${RESET} Missing prompt raises explicit syntax error`);
+
+  // Test 6: Validation rejects invalid question structures
+  assert.strictEqual(AstCompiler.validate({ route: 'quiz:mcq', prompt: '', options: ['A', 'B'], answerKey: 0 }), false);
+  assert.strictEqual(AstCompiler.validate({ route: 'quiz:mcq', prompt: 'Valid', options: ['A'], answerKey: 0 }), false);
+  assert.strictEqual(AstCompiler.validate({ route: 'quiz:mcq', prompt: 'Valid', options: ['A', 'B'], answerKey: 5 }), false);
+  console.log(`  ${GREEN}✓${RESET} AstCompiler.validate enforces strict enterprise invariants`);
+
+  stats.suitesPassed++;
+  console.log(`${GREEN}Suite 7 Passed!${RESET}\n`);
+} catch (err: any) {
+  stats.suitesFailed++;
+  stats.unhandledExceptions++;
+  console.error(`${RED}Suite 7 Failed:${RESET}`, err.message);
 }
 
 // -----------------------------------------------------------------------------

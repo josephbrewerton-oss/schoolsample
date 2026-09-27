@@ -7,13 +7,12 @@ build/
 dist-public-release/
 .cache-loader
 
-# Environment & local overrides
+# Environment & local overrides (secrets must NEVER be stored in static/ or dist/)
 .env
 .env.local
 local-key.json
 *.key
 *.key.json
-static/internal-key.json
 
 # Editor & OS temporary files
 *.bak

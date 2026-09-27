@@ -7,7 +7,7 @@
  *
  * Features:
  * - 100% on-device execution (Zero cloud auth, zero telemetry)
- * - Auto-detects local keys from .env.local (VITE_INTERNAL_KEY) or gitignored /internal-key.json
+ * - Auto-detects local keys from .env.local (VITE_INTERNAL_KEY) or in-memory file selection
  * - Supports physical local .key file drag-and-drop / upload
  * - Cryptographic key derivation via W3C crypto.subtle (PBKDF2-SHA256)
  * - Session-scoped unlock state (cleared immediately when the tab closes)
@@ -63,33 +63,18 @@ export default function LocalKeyGuard({
   };
 
   // 1. AUTO-DETECTION ON MOUNT
-  // Checks if a local key was provided via .env.local (VITE_INTERNAL_KEY) or gitignored /internal-key.json
+  // Checks if a local key was provided via .env.local (VITE_INTERNAL_KEY)
   useEffect(() => {
     if (isUnlocked) return;
 
     let isMounted = true;
 
     async function checkLocalKeyFiles() {
-      // Check 1: Vite environment variable (from gitignored .env.local)
+      // Check: Vite environment variable (from gitignored .env.local, kept out of static/dist)
       const envKey = (import.meta as any).env?.VITE_INTERNAL_KEY;
       if (envKey && typeof envKey === 'string') {
         const ok = await verifyAndUnlock(envKey, '.env.local key');
         if (ok && isMounted) return;
-      }
-
-      // Check 2: Gitignored local file static/internal-key.json
-      try {
-        const res = await fetch('/internal-key.json');
-        if (res.ok) {
-          const data = await res.json();
-          const candidate = data.key || data.passphrase || data.secret;
-          if (candidate && typeof candidate === 'string') {
-            const ok = await verifyAndUnlock(candidate, 'local-key.json');
-            if (ok && isMounted) return;
-          }
-        }
-      } catch {
-        // file doesn't exist on public deploy, silent fallback
       }
     }
 
@@ -348,10 +333,10 @@ export default function LocalKeyGuard({
       >
         <div style={{ fontWeight: 700, color: '#334155' }}>💡 Zero-Cloud Key File Workflow:</div>
         <div>
-          • Place your local key file at <code>static/internal-key.json</code> or in <code>.env.local</code>.
+          • Provide your local key in <code>.env.local</code> as <code>VITE_INTERNAL_KEY=&lt;key&gt;</code>, or load a local <code>.key</code> / <code>.json</code> file using the file selector above.
         </div>
         <div>
-          • Because these files are listed in <code>.gitignore</code>, Git will never commit them, protecting your IP while allowing instant local unlocking.
+          • Keys are kept strictly in-memory or in your local gitignored environment, never stored or bundled in <code>static/</code> or <code>dist/</code>.
         </div>
       </div>
     </div>

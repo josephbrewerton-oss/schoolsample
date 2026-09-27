@@ -264,6 +264,59 @@ export default function MediaPlayerPage(): React.JSX.Element {
         />
       </div>
 
+      {/* Interactive SVG Developer Workstation Quick Guide */}
+      <div
+        className="stj-card"
+        style={{
+          padding: '1.25rem 1.5rem',
+          marginBottom: '2rem',
+          background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.06) 0%, rgba(15, 23, 42, 0.02) 100%)',
+          border: '1px solid var(--stj-border)',
+          borderRadius: '12px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🛠️</span>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--stj-text)' }}>
+              Interactive SVG Developer &amp; Manipulative Sandbox Suite
+            </h3>
+          </div>
+          <span className="stj-badge stj-badge-primary stj-pill" style={{ fontSize: '0.72rem' }}>
+            60 FPS &bull; Zero Cloud Egress
+          </span>
+        </div>
+        <p style={{ margin: '0 0 12px', fontSize: '0.84rem', color: 'var(--stj-text-muted)', lineHeight: 1.5 }}>
+          Turn any curriculum model into an interactive SVG manipulative. Click <strong>🛠️ Inspect</strong> to select stage elements, view bounding geometry, and tweak CSS/SVG attributes in real-time. Use <strong>💻 Studio</strong> to live-code raw SVG nodes and compile continuous AST mathematical bindings with zero layout shift.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: 'var(--stj-primary)', display: 'block', marginBottom: '2px' }}>
+              🎯 Point-and-Click Inspector
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              Hover over SVG vectors to view bounding boxes and IDs. Click to live-tweak fill, stroke, and copy selectors.
+            </span>
+          </div>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: 'var(--stj-success)', display: 'block', marginBottom: '2px' }}>
+              ⚡ Real-Time Hot Reload
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              Edit raw &lt;svg&gt; XML or AST S-expression bindings with instant on-canvas execution without losing playback state.
+            </span>
+          </div>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: 'var(--stj-warning)', display: 'block', marginBottom: '2px' }}>
+              🚀 Starter Scratchpad
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              One-click starters for Keplerian orbits, harmonic sine waves, and kinetic pendulums ready for export.
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Preset Library & Caller Section */}
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>

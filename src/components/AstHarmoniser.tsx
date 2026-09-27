@@ -349,23 +349,24 @@ function AstHarmoniserClient(): React.JSX.Element {
     >
       {/* Header Banner */}
       <div
+        className="stj-card"
         style={{
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-          color: '#ffffff',
+          background: 'linear-gradient(135deg, var(--stj-surface-raised) 0%, var(--stj-surface) 100%)',
+          color: 'var(--stj-text)',
           padding: '2rem',
-          borderRadius: '16px',
-          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.2)',
+          borderRadius: 'var(--stj-radius-lg)',
+          boxShadow: 'var(--stj-shadow-lg)',
           marginBottom: '2rem',
-          border: '1px solid #334155',
+          border: '1px solid var(--stj-border)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <span style={{ fontSize: '2rem' }}>🛡️</span>
           <div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: '#f8fafc' }}>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--stj-text)' }}>
               Route Harmonised via Curriculum AST
             </h1>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.95rem' }}>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--stj-text-muted)', fontSize: '0.95rem' }}>
               Zero-404 Sovereign Router • Every path is reconciled with the National Curriculum knowledge tree
             </p>
           </div>
@@ -375,9 +376,9 @@ function AstHarmoniserClient(): React.JSX.Element {
         <div
           style={{
             marginTop: '1.25rem',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderRadius: '12px',
+            background: 'var(--stj-canvas)',
+            border: '1px solid var(--stj-border)',
+            borderRadius: 'var(--stj-radius-md)',
             padding: '0.85rem 1.25rem',
             display: 'flex',
             alignItems: 'center',
@@ -389,17 +390,17 @@ function AstHarmoniserClient(): React.JSX.Element {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '1.2rem' }}>⏳</span>
             <div>
-              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#e2e8f0' }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--stj-text)' }}>
                 {isPaused ? (
-                  <span style={{ color: '#f59e0b' }}>Auto-redirection paused</span>
+                  <span style={{ color: 'var(--stj-warning)' }}>Auto-redirection paused</span>
                 ) : (
                   <span>
-                    Auto-routing in <strong style={{ color: '#38bdf8', fontSize: '1.1rem' }}>{countdown}</strong> seconds...
+                    Auto-routing in <strong style={{ color: 'var(--stj-primary)', fontSize: '1.1rem' }}>{countdown}</strong> seconds...
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                Heading to: <strong>{resolution.targetLabel}</strong>
+              <div style={{ fontSize: '0.8rem', color: 'var(--stj-text-muted)' }}>
+                Heading to: <strong style={{ color: 'var(--stj-text)' }}>{resolution.targetLabel}</strong>
               </div>
             </div>
           </div>
@@ -408,34 +409,14 @@ function AstHarmoniserClient(): React.JSX.Element {
             <button
               type="button"
               onClick={() => setIsPaused(!isPaused)}
-              style={{
-                background: isPaused ? '#2563eb' : 'rgba(255, 255, 255, 0.15)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className={`stj-btn ${isPaused ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
             >
               {isPaused ? '▶ Resume' : '⏸ Pause'}
             </button>
             <Link
               to={resolution.targetPath}
-              style={{
-                background: '#22c55e',
-                color: '#ffffff',
-                border: 'none',
-                padding: '6px 16px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
+              className="stj-btn stj-btn-success stj-btn-sm"
+              style={{ textDecoration: 'none' }}
             >
               🚀 Go Now ➔
             </Link>
@@ -446,22 +427,14 @@ function AstHarmoniserClient(): React.JSX.Element {
       {/* Render Synthesized AST via SExprViewRenderer */}
       <section style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: '#1e293b' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--stj-text)' }}>
             Synthesized AST Node Representation
           </h2>
           <button
             type="button"
             onClick={() => setShowAstSource(!showAstSource)}
-            style={{
-              background: 'transparent',
-              border: '1px solid #cbd5e1',
-              color: '#475569',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            className="stj-btn stj-btn-ghost stj-btn-sm"
+            style={{ border: '1px solid var(--stj-border)' }}
           >
             {showAstSource ? 'Hide S-Expression Code' : 'Inspect S-Expression Code'}
           </button>
@@ -470,10 +443,11 @@ function AstHarmoniserClient(): React.JSX.Element {
         {showAstSource && (
           <pre
             style={{
-              background: '#0f172a',
-              color: '#38bdf8',
+              background: 'var(--stj-canvas)',
+              color: 'var(--stj-primary)',
+              border: '1px solid var(--stj-border)',
               padding: '1rem',
-              borderRadius: '10px',
+              borderRadius: 'var(--stj-radius-md)',
               fontSize: '0.82rem',
               overflowX: 'auto',
               marginBottom: '1rem',
@@ -490,22 +464,18 @@ function AstHarmoniserClient(): React.JSX.Element {
 
       {/* Instant Interactive Diagnostic Challenge */}
       <section
+        className="stj-card"
         style={{
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #e2e8f0',
-          padding: '1.5rem',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
           marginBottom: '2.5rem',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <span style={{ fontSize: '1.3rem' }}>💡</span>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--stj-text)' }}>
             Quick Diagnostic: While You Wait, Test an AST Concept
           </h3>
         </div>
-        <p style={{ fontSize: '0.92rem', color: '#475569', margin: '0 0 1rem 0' }}>
+        <p style={{ fontSize: '0.92rem', color: 'var(--stj-text-muted)', margin: '0 0 1rem 0' }}>
           In deterministic offline architectures, why are <strong>Abstract Syntax Trees (ASTs)</strong> used to govern curriculum routing?
         </p>
 
@@ -518,19 +488,19 @@ function AstHarmoniserClient(): React.JSX.Element {
           ].map((option, idx) => {
             const isSelected = diagnosticAnswer === idx;
             const isCorrect = idx === 1;
-            let btnBg = '#f8fafc';
-            let btnBorder = '#cbd5e1';
-            let btnColor = '#1e293b';
+            let btnBg = 'var(--stj-canvas)';
+            let btnBorder = 'var(--stj-border)';
+            let btnColor = 'var(--stj-text)';
 
             if (isSelected) {
               if (isCorrect) {
-                btnBg = '#dcfce7';
-                btnBorder = '#22c55e';
-                btnColor = '#15803d';
+                btnBg = 'var(--stj-success-surface)';
+                btnBorder = 'var(--stj-success)';
+                btnColor = 'var(--stj-success)';
               } else {
-                btnBg = '#fee2e2';
-                btnBorder = '#ef4444';
-                btnColor = '#b91c1c';
+                btnBg = 'var(--stj-danger-surface)';
+                btnBorder = 'var(--stj-danger)';
+                btnColor = 'var(--stj-danger)';
               }
             }
 
@@ -542,7 +512,7 @@ function AstHarmoniserClient(): React.JSX.Element {
                 style={{
                   textAlign: 'left',
                   padding: '10px 14px',
-                  borderRadius: '8px',
+                  borderRadius: 'var(--stj-radius-md)',
                   background: btnBg,
                   border: `1px solid ${btnBorder}`,
                   color: btnColor,
@@ -563,10 +533,10 @@ function AstHarmoniserClient(): React.JSX.Element {
             style={{
               marginTop: '1rem',
               padding: '0.75rem 1rem',
-              borderRadius: '8px',
-              background: diagnosticAnswer === 1 ? '#f0fdf4' : '#fef2f2',
-              border: `1px solid ${diagnosticAnswer === 1 ? '#86efac' : '#fca5a5'}`,
-              color: diagnosticAnswer === 1 ? '#166534' : '#991b1b',
+              borderRadius: 'var(--stj-radius-md)',
+              background: diagnosticAnswer === 1 ? 'var(--stj-success-surface)' : 'var(--stj-danger-surface)',
+              border: `1px solid ${diagnosticAnswer === 1 ? 'var(--stj-success)' : 'var(--stj-danger)'}`,
+              color: diagnosticAnswer === 1 ? 'var(--stj-success)' : 'var(--stj-danger)',
               fontSize: '0.88rem',
               fontWeight: 600,
             }}
@@ -585,7 +555,7 @@ function AstHarmoniserClient(): React.JSX.Element {
 function DirectoryGrid(): React.JSX.Element {
   return (
     <section>
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>
+      <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--stj-text)', marginBottom: '1rem' }}>
         National Curriculum Navigation Directory
       </h2>
 
@@ -598,114 +568,90 @@ function DirectoryGrid(): React.JSX.Element {
       >
         <Link
           to="/practice-lab"
+          className="stj-card stj-card-interactive"
           style={{
             display: 'block',
             textDecoration: 'none',
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '6px' }}>⚡</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>Interactive Practice Arena</div>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--stj-text)' }}>Interactive Practice Arena</div>
+          <p style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Key Stage 1–4 diagnostic challenges with local Socratic Super Teacher Nano assistance.
           </p>
         </Link>
 
         <Link
           to="/learning-zone"
+          className="stj-card stj-card-interactive"
           style={{
             display: 'block',
             textDecoration: 'none',
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '6px' }}>📖</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>Curriculum Lessons</div>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--stj-text)' }}>Curriculum Lessons</div>
+          <p style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Step-by-step S-Expression units spanning Academic, Faith Formation, and CPD streams.
           </p>
         </Link>
 
         <Link
           to="/curriculum-studio"
+          className="stj-card stj-card-interactive"
           style={{
             display: 'block',
             textDecoration: 'none',
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '6px' }}>🌍</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>Curriculum Studio</div>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--stj-text)' }}>Curriculum Studio</div>
+          <p style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Import custom CSV spreadsheets or activate national syllabi (Kenya, India, Ghana, Philippines).
           </p>
         </Link>
 
         <Link
           to="/profile"
+          className="stj-card stj-card-interactive"
           style={{
             display: 'block',
             textDecoration: 'none',
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '6px' }}>⭐</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>My Progress & Passport</div>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--stj-text)' }}>My Progress & Passport</div>
+          <p style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Local mastery breakdown, offline certificate generation, and GDPR-safe data control.
           </p>
         </Link>
 
         <Link
           to="/settings"
+          className="stj-card stj-card-interactive"
           style={{
             display: 'block',
             textDecoration: 'none',
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '6px' }}>⚙️</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>Portal Settings</div>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--stj-text)' }}>Portal Settings</div>
+          <p style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Configure local Ollama WebRTC models, OpenDyslexic fonts, and high-contrast themes.
           </p>
         </Link>
 
         <Link
           to="/blog"
+          className="stj-card stj-card-interactive"
           style={{
             display: 'block',
             textDecoration: 'none',
-            background: '#ffffff',
-            borderRadius: '12px',
-            padding: '1.25rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
           }}
         >
           <div style={{ fontSize: '1.75rem', marginBottom: '6px' }}>📰</div>
-          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>School News</div>
-          <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--stj-text)' }}>School News</div>
+          <p style={{ fontSize: '0.84rem', color: 'var(--stj-text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
             Technical dispatches and updates from St Joseph&apos;s Fishponds AI engineering team.
           </p>
         </Link>
@@ -718,18 +664,19 @@ function AstHarmoniserStaticFallback(): React.JSX.Element {
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 1rem 4rem 1rem' }}>
       <div
+        className="stj-card"
         style={{
-          background: '#1e293b',
-          color: '#ffffff',
+          background: 'linear-gradient(135deg, var(--stj-surface-raised) 0%, var(--stj-surface) 100%)',
+          color: 'var(--stj-text)',
           padding: '2rem',
-          borderRadius: '16px',
+          borderRadius: 'var(--stj-radius-lg)',
           marginBottom: '2rem',
         }}
       >
-        <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0 }}>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--stj-text)' }}>
           Route Harmonised via Curriculum AST
         </h1>
-        <p style={{ margin: '8px 0 0 0', color: '#94a3b8' }}>
+        <p style={{ margin: '8px 0 0 0', color: 'var(--stj-text-muted)' }}>
           Zero-404 Sovereign Router • Reconciling your navigation with the National Curriculum knowledge tree...
         </p>
       </div>

@@ -76,6 +76,21 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
 
+  // Developer Mode & Code Studio State
+  const [isDevMode, setIsDevMode] = useState(false);
+  const [showDevStudio, setShowDevStudio] = useState(false);
+  const [studioTab, setStudioTab] = useState<'inspector' | 'svg' | 'ast' | 'templates'>('inspector');
+  const [inspectedElement, setInspectedElement] = useState<{
+    selector: string;
+    tag: string;
+    id: string;
+    bbox: { x: number; y: number; width: number; height: number };
+    attributes: { fill?: string; stroke?: string; strokeWidth?: string; opacity?: string; transform?: string };
+  } | null>(null);
+  const [customSvgCode, setCustomSvgCode] = useState('');
+  const [customAstCode, setCustomAstCode] = useState('');
+  const [hotReloadFlash, setHotReloadFlash] = useState(false);
+
   // Sync internal selected preset if external preset prop changes
   useEffect(() => {
     setSelectedPreset(preset);
@@ -165,6 +180,29 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
         case 'HOTSPOT_SELECTED':
           setActiveKeyframe({ title: data.label || 'Station Selected', rule: `Interactively inspected station at ${(data.targetT * 100).toFixed(0)}%` });
           break;
+        case 'DEV_MODE_CHANGED':
+          setIsDevMode(Boolean(data.enabled));
+          break;
+        case 'DEV_ELEMENT_SELECTED':
+          setInspectedElement({
+            selector: data.selector,
+            tag: data.tag,
+            id: data.id,
+            bbox: data.bbox,
+            attributes: data.attributes || {}
+          });
+          break;
+        case 'STAGE_SVG_SNAPSHOT':
+          if (typeof data.svg === 'string') setCustomSvgCode(data.svg);
+          if (typeof data.ast === 'string') setCustomAstCode(data.ast);
+          break;
+        case 'AST_SOURCE_SNAPSHOT':
+          if (typeof data.ast === 'string') setCustomAstCode(data.ast);
+          break;
+        case 'DEV_HOT_RELOAD_SUCCESS':
+          setHotReloadFlash(true);
+          setTimeout(() => setHotReloadFlash(false), 2000);
+          break;
         default:
           break;
       }
@@ -196,17 +234,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 
   return (
     <div
-      className={`ast-vector-media-player-container ${className}`}
+      className={`ast-vector-media-player-container stj-card ${className}`}
       style={{
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
         maxWidth: '100%',
-        background: '#090d16',
-        borderRadius: '14px',
-        border: '1px solid #1e293b',
+        padding: 0,
         overflow: 'hidden',
-        boxShadow: '0 8px 24px -4px rgba(0, 0, 0, 0.35)',
+        boxShadow: 'var(--stj-shadow-lg)',
       }}
     >
       {/* Top Banner Toolbar */}
@@ -216,27 +252,20 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '8px 14px',
-          background: '#0f172a',
-          borderBottom: '1px solid #1e293b',
+          background: 'var(--stj-surface-raised)',
+          borderBottom: '1px solid var(--stj-border)',
           flexWrap: 'wrap',
           gap: '8px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '1.05rem' }}>🎬</span>
-          <strong style={{ color: '#f8fafc', fontSize: '0.85rem' }}>
+          <strong style={{ color: 'var(--stj-text)', fontSize: '0.85rem' }}>
             AST Vector Motion Suite
           </strong>
           <span
-            style={{
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              padding: '2px 7px',
-              borderRadius: '9999px',
-              background: 'rgba(56, 189, 248, 0.15)',
-              color: '#38bdf8',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-            }}
+            className="stj-badge stj-badge-primary stj-pill"
+            style={{ fontSize: '0.72rem' }}
           >
             Sandboxed iFrame &bull; 0% Main Thread
           </span>
@@ -249,15 +278,12 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                 setSelectedPreset(nextPreset);
                 postToPlayer({ type: 'SET_PRESET', preset: nextPreset, play: true });
               }}
+              className="stj-select"
               style={{
-                background: '#1e293b',
-                color: '#f8fafc',
-                border: '1px solid #334155',
-                borderRadius: '6px',
                 padding: '3px 8px',
+                minHeight: '32px',
                 fontSize: '0.76rem',
                 fontWeight: 600,
-                outline: 'none',
                 cursor: 'pointer',
               }}
               title="Switch Curriculum Scene"
@@ -273,15 +299,10 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           <button
             type="button"
             onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
+            className="stj-btn stj-btn-primary stj-btn-sm"
             style={{
               padding: '3px 8px',
-              borderRadius: '6px',
-              background: '#2563eb',
-              border: '1px solid #3b82f6',
-              color: '#ffffff',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
+              minHeight: '32px',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
@@ -296,19 +317,18 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 10 })}
+                className="stj-btn stj-btn-secondary stj-btn-sm stj-pill"
                 style={{
                   fontSize: '0.72rem',
                   fontWeight: 800,
                   padding: '2px 8px',
-                  borderRadius: '9999px',
-                  background: 'rgba(56, 189, 248, 0.2)',
-                  color: '#38bdf8',
-                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  minHeight: '28px',
+                  color: 'var(--stj-primary)',
+                  borderColor: 'var(--stj-primary)',
+                  background: 'var(--stj-primary-surface)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
                 }}
                 title="3D Spatial Engine: Click to orbit +45°, or click & drag canvas to orbit 360°"
               >
@@ -324,15 +344,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                       postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 18, distanceScale: 1.05 });
                       postToPlayer({ type: 'SEEK', progress: 0.05 });
                     }}
+                    className="stj-btn stj-btn-ghost stj-btn-sm"
                     style={{
                       padding: '3px 7px',
-                      borderRadius: '6px',
-                      background: 'rgba(30, 41, 59, 0.8)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#e0f2fe',
+                      minHeight: '28px',
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      border: '1px solid var(--stj-border)',
+                      background: 'var(--stj-canvas)',
+                      color: 'var(--stj-text)',
                     }}
                     title="View from Nave Entrance"
                   >
@@ -345,15 +365,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                       postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 26, distanceScale: 1.45 });
                       postToPlayer({ type: 'SEEK', progress: 0.60 });
                     }}
+                    className="stj-btn stj-btn-ghost stj-btn-sm"
                     style={{
                       padding: '3px 7px',
-                      borderRadius: '6px',
-                      background: 'rgba(30, 41, 59, 0.8)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#e0f2fe',
+                      minHeight: '28px',
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      border: '1px solid var(--stj-border)',
+                      background: 'var(--stj-canvas)',
+                      color: 'var(--stj-text)',
                     }}
                     title="Focus on High Altar"
                   >
@@ -366,15 +386,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
                       postToPlayer({ type: 'SET_CAMERA', yaw: 14, pitch: 28, distanceScale: 1.70 });
                       postToPlayer({ type: 'SEEK', progress: 0.80 });
                     }}
+                    className="stj-btn stj-btn-ghost stj-btn-sm"
                     style={{
                       padding: '3px 7px',
-                      borderRadius: '6px',
-                      background: 'rgba(30, 41, 59, 0.8)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#e0f2fe',
+                      minHeight: '28px',
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      border: '1px solid var(--stj-border)',
+                      background: 'var(--stj-canvas)',
+                      color: 'var(--stj-text)',
                     }}
                     title="Focus on Tabernacle & Sanctuary Lamp"
                   >
@@ -386,15 +406,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 0 })}
+                className="stj-btn stj-btn-ghost stj-btn-sm"
                 style={{
                   padding: '3px 7px',
-                  borderRadius: '6px',
-                  background: 'rgba(30, 41, 59, 0.8)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  color: '#e0f2fe',
+                  minHeight: '28px',
                   fontSize: '0.72rem',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  border: '1px solid var(--stj-border)',
+                  background: 'var(--stj-canvas)',
+                  color: 'var(--stj-text)',
                 }}
                 title="Orbit 3D Camera 45°"
               >
@@ -404,15 +424,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => postToPlayer({ type: 'RESET_3D' })}
+                className="stj-btn stj-btn-secondary stj-btn-sm"
                 style={{
                   padding: '3px 7px',
-                  borderRadius: '6px',
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  border: '1px solid rgba(56, 189, 248, 0.35)',
-                  color: '#38bdf8',
+                  minHeight: '28px',
                   fontSize: '0.72rem',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  color: 'var(--stj-primary)',
+                  borderColor: 'var(--stj-primary)',
+                  background: 'var(--stj-primary-surface)',
                 }}
                 title="Reset 3D Camera to Scene Orientation"
               >
@@ -423,18 +443,8 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
 
           {hasInteractive && (
             <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '2px 7px',
-                borderRadius: '9999px',
-                background: 'rgba(52, 211, 153, 0.15)',
-                color: '#34d399',
-                border: '1px solid rgba(52, 211, 153, 0.3)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
+              className="stj-badge stj-badge-success stj-pill"
+              style={{ fontSize: '0.72rem' }}
               title="Interactive Checkpoint Challenges: Active recall quizzes trigger automatically during playback"
             >
               🎯 Checkpoint Quizzes
@@ -442,22 +452,55 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => {
+              const next = !isDevMode;
+              setIsDevMode(next);
+              postToPlayer({ type: 'SET_DEV_MODE', enabled: next });
+            }}
+            className={`stj-btn ${isDevMode ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+            }}
+            title="Toggle Point-and-Click SVG Element Inspector"
+          >
+            <span>🛠️ Inspect {isDevMode ? 'ON' : ''}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const next = !showDevStudio;
+              setShowDevStudio(next);
+              if (next) {
+                postToPlayer({ type: 'GET_STAGE_SVG' });
+              }
+            }}
+            className={`stj-btn ${showDevStudio ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+            }}
+            title="Open Live SVG & AST Developer Studio"
+          >
+            <span>💻 Studio</span>
+          </button>
+
           <button
             type="button"
             onClick={openStandalone}
+            className="stj-btn stj-btn-secondary stj-btn-sm"
             style={{
               padding: '4px 9px',
-              borderRadius: '6px',
-              background: '#1e293b',
-              border: '1px solid #334155',
-              color: '#94a3b8',
+              minHeight: '32px',
               fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
             }}
             title="Open Player in Standalone Window"
           >
@@ -467,18 +510,11 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           <button
             type="button"
             onClick={() => setShowEmbedCode(!showEmbedCode)}
+            className="stj-btn stj-btn-secondary stj-btn-sm"
             style={{
               padding: '4px 10px',
-              borderRadius: '6px',
-              background: '#1e293b',
-              border: '1px solid #334155',
-              color: '#cbd5e1',
+              minHeight: '32px',
               fontSize: '0.76rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
             }}
             title="Get standalone embed code for Canvas, Google Classroom, Moodle"
           >
@@ -491,11 +527,11 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
       {showEmbedCode && (
         <div
           style={{
-            background: '#1e293b',
-            borderBottom: '1px solid #334155',
+            background: 'var(--stj-surface-raised)',
+            borderBottom: '1px solid var(--stj-border)',
             padding: '10px 14px',
             fontSize: '0.82rem',
-            color: '#e2e8f0',
+            color: 'var(--stj-text)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
@@ -503,16 +539,8 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
             <button
               type="button"
               onClick={copyEmbedCode}
-              style={{
-                padding: '3px 9px',
-                borderRadius: '4px',
-                background: copiedEmbed ? '#059669' : '#2563eb',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-              }}
+              className={`stj-btn ${copiedEmbed ? 'stj-btn-success' : 'stj-btn-primary'} stj-btn-sm`}
+              style={{ minHeight: '28px', padding: '3px 9px' }}
             >
               {copiedEmbed ? '✓ Copied!' : 'Copy Code'}
             </button>
@@ -520,11 +548,12 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           <code
             style={{
               display: 'block',
-              background: '#0f172a',
+              background: 'var(--stj-canvas)',
+              border: '1px solid var(--stj-border)',
               padding: '8px',
-              borderRadius: '6px',
+              borderRadius: 'var(--stj-radius-sm)',
               fontSize: '0.74rem',
-              color: '#38bdf8',
+              color: 'var(--stj-primary)',
               overflowX: 'auto',
               wordBreak: 'break-all',
               fontFamily: 'monospace',
@@ -556,8 +585,8 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
       {activeKeyframe && (
         <div
           style={{
-            background: '#090d16',
-            borderTop: '1px solid #1e293b',
+            background: 'var(--stj-surface-raised)',
+            borderTop: '1px solid var(--stj-border)',
             padding: '8px 14px',
             display: 'flex',
             alignItems: 'center',
@@ -568,14 +597,479 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: '#f59e0b', fontWeight: 700 }}>💡 Milestone:</span>
-            <span style={{ color: '#f8fafc', fontWeight: 600 }}>{activeKeyframe.title}</span>
-            <span style={{ color: '#64748b' }}>&bull;</span>
-            <span style={{ color: '#94a3b8' }}>{activeKeyframe.rule}</span>
+            <span style={{ color: 'var(--stj-warning)', fontWeight: 700 }}>💡 Milestone:</span>
+            <span style={{ color: 'var(--stj-text)', fontWeight: 600 }}>{activeKeyframe.title}</span>
+            <span style={{ color: 'var(--stj-text-muted)' }}>&bull;</span>
+            <span style={{ color: 'var(--stj-text-muted)' }}>{activeKeyframe.rule}</span>
           </div>
-          <span style={{ color: '#38bdf8', fontWeight: 700 }}>
+          <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
             {Math.round(currentProgress * 100)}% Complete
           </span>
+        </div>
+      )}
+
+      {/* Developer Studio & Interactive SVG Sandbox Panel */}
+      {showDevStudio && (
+        <div
+          style={{
+            background: 'var(--stj-surface-raised)',
+            borderTop: '2px solid var(--stj-primary)',
+            padding: '14px',
+            color: 'var(--stj-text)',
+            fontSize: '0.82rem',
+          }}
+        >
+          {/* Studio Header & Tab Bar */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '12px',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setStudioTab('inspector')}
+                className={`stj-btn ${studioTab === 'inspector' ? 'stj-btn-primary' : 'stj-btn-ghost'} stj-btn-sm`}
+                style={{ fontSize: '0.76rem' }}
+              >
+                🎯 Live Inspector
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudioTab('svg')}
+                className={`stj-btn ${studioTab === 'svg' ? 'stj-btn-primary' : 'stj-btn-ghost'} stj-btn-sm`}
+                style={{ fontSize: '0.76rem' }}
+              >
+                🎨 Raw SVG Source
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudioTab('ast')}
+                className={`stj-btn ${studioTab === 'ast' ? 'stj-btn-primary' : 'stj-btn-ghost'} stj-btn-sm`}
+                style={{ fontSize: '0.76rem' }}
+              >
+                ⚡ AST Expressions
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudioTab('templates')}
+                className={`stj-btn ${studioTab === 'templates' ? 'stj-btn-primary' : 'stj-btn-ghost'} stj-btn-sm`}
+                style={{ fontSize: '0.76rem' }}
+              >
+                🚀 Scratchpad Templates
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {hotReloadFlash && (
+                <span
+                  className="stj-badge stj-badge-success stj-pill"
+                  style={{ fontSize: '0.72rem' }}
+                >
+                  ✓ Hot-Reloaded!
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (studioTab === 'svg') {
+                    postToPlayer({ type: 'HOT_RELOAD_SVG', svg: customSvgCode });
+                  } else if (studioTab === 'ast') {
+                    postToPlayer({ type: 'HOT_RELOAD_AST', ast: customAstCode });
+                  } else {
+                    postToPlayer({ type: 'HOT_RELOAD_SVG', svg: customSvgCode });
+                    postToPlayer({ type: 'HOT_RELOAD_AST', ast: customAstCode });
+                  }
+                }}
+                className="stj-btn stj-btn-primary stj-btn-sm"
+                style={{ fontSize: '0.76rem', fontWeight: 700 }}
+              >
+                ⚡ Run / Hot Reload
+              </button>
+
+              <button
+                type="button"
+                onClick={() => postToPlayer({ type: 'GET_STAGE_SVG' })}
+                className="stj-btn stj-btn-secondary stj-btn-sm"
+                style={{ fontSize: '0.76rem' }}
+                title="Sync current stage SVG and AST source from player"
+              >
+                ↺ Pull from Stage
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowDevStudio(false)}
+                className="stj-btn stj-btn-ghost stj-btn-sm"
+                style={{ fontSize: '0.76rem' }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+
+          {/* Tab 1: Live Inspector */}
+          {studioTab === 'inspector' && (
+            <div
+              style={{
+                background: 'var(--stj-canvas)',
+                border: '1px solid var(--stj-border)',
+                borderRadius: 'var(--stj-radius-sm)',
+                padding: '12px',
+              }}
+            >
+              {inspectedElement ? (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="stj-badge stj-badge-primary">&lt;{inspectedElement.tag}&gt;</span>
+                      <code style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>{inspectedElement.selector}</code>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)' }}>
+                      Bounds: {Math.round(inspectedElement.bbox.width)}×{Math.round(inspectedElement.bbox.height)} px
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '10px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)', display: 'block', marginBottom: '3px' }}>
+                        Fill Color
+                      </label>
+                      <input
+                        type="text"
+                        value={inspectedElement.attributes.fill || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setInspectedElement({
+                            ...inspectedElement,
+                            attributes: { ...inspectedElement.attributes, fill: val }
+                          });
+                          postToPlayer({ type: 'UPDATE_ELEMENT_ATTR', selector: inspectedElement.selector, attr: 'fill', value: val });
+                        }}
+                        className="stj-input"
+                        style={{ width: '100%', fontSize: '0.76rem', padding: '4px 8px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)', display: 'block', marginBottom: '3px' }}>
+                        Stroke Color
+                      </label>
+                      <input
+                        type="text"
+                        value={inspectedElement.attributes.stroke || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setInspectedElement({
+                            ...inspectedElement,
+                            attributes: { ...inspectedElement.attributes, stroke: val }
+                          });
+                          postToPlayer({ type: 'UPDATE_ELEMENT_ATTR', selector: inspectedElement.selector, attr: 'stroke', value: val });
+                        }}
+                        className="stj-input"
+                        style={{ width: '100%', fontSize: '0.76rem', padding: '4px 8px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)', display: 'block', marginBottom: '3px' }}>
+                        Stroke Width
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={inspectedElement.attributes.strokeWidth || '1'}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setInspectedElement({
+                            ...inspectedElement,
+                            attributes: { ...inspectedElement.attributes, strokeWidth: val }
+                          });
+                          postToPlayer({ type: 'UPDATE_ELEMENT_ATTR', selector: inspectedElement.selector, attr: 'stroke-width', value: val });
+                        }}
+                        className="stj-input"
+                        style={{ width: '100%', fontSize: '0.76rem', padding: '4px 8px' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)', display: 'block', marginBottom: '3px' }}>
+                        Transform Expr
+                      </label>
+                      <input
+                        type="text"
+                        value={inspectedElement.attributes.transform || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setInspectedElement({
+                            ...inspectedElement,
+                            attributes: { ...inspectedElement.attributes, transform: val }
+                          });
+                          postToPlayer({ type: 'UPDATE_ELEMENT_ATTR', selector: inspectedElement.selector, attr: 'transform', value: val });
+                        }}
+                        className="stj-input"
+                        placeholder="e.g. translate(20, 10)"
+                        style={{ width: '100%', fontSize: '0.76rem', padding: '4px 8px' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(inspectedElement.selector);
+                      }}
+                      className="stj-btn stj-btn-secondary stj-btn-sm"
+                      style={{ fontSize: '0.74rem' }}
+                    >
+                      📋 Copy Selector
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const rule = `(:target "${inspectedElement.selector}" :attr "transform" :expr "'rotate(' + (t * 360) + ')'")`;
+                        navigator.clipboard.writeText(rule);
+                      }}
+                      className="stj-btn stj-btn-primary stj-btn-sm"
+                      style={{ fontSize: '0.74rem' }}
+                    >
+                      ⚡ Copy AST Rule Snippet
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '16px', color: 'var(--stj-text-muted)' }}>
+                  <div style={{ fontSize: '1.4rem', marginBottom: '6px' }}>🎯</div>
+                  <strong>No Element Selected</strong>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.78rem' }}>
+                    Turn on <strong>🛠️ Inspect</strong> above and click any element on the vector stage to inspect its selector, bounding box, and live styling!
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 2: Raw SVG Markup */}
+          {studioTab === 'svg' && (
+            <div>
+              <textarea
+                value={customSvgCode}
+                onChange={(e) => setCustomSvgCode(e.target.value)}
+                placeholder="Click '↺ Pull from Stage' or paste SVG markup here..."
+                style={{
+                  width: '100%',
+                  height: '180px',
+                  background: 'var(--stj-canvas)',
+                  color: 'var(--stj-text)',
+                  border: '1px solid var(--stj-border)',
+                  borderRadius: 'var(--stj-radius-sm)',
+                  padding: '10px',
+                  fontSize: '0.76rem',
+                  fontFamily: 'monospace',
+                  lineHeight: '1.4',
+                  resize: 'vertical',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)' }}>
+                  Edit raw SVG elements directly. Click 'Run / Hot Reload' to apply instantly without reloading.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(customSvgCode);
+                  }}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ fontSize: '0.72rem' }}
+                >
+                  📋 Copy SVG
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: AST S-Expressions */}
+          {studioTab === 'ast' && (
+            <div>
+              <textarea
+                value={customAstCode}
+                onChange={(e) => setCustomAstCode(e.target.value)}
+                placeholder="Click '↺ Pull from Stage' or write AST S-expressions here..."
+                style={{
+                  width: '100%',
+                  height: '180px',
+                  background: 'var(--stj-canvas)',
+                  color: 'var(--stj-primary)',
+                  border: '1px solid var(--stj-border)',
+                  borderRadius: 'var(--stj-radius-sm)',
+                  padding: '10px',
+                  fontSize: '0.76rem',
+                  fontFamily: 'monospace',
+                  lineHeight: '1.4',
+                  resize: 'vertical',
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)' }}>
+                  Defines continuous mathematical bindings: (:target &quot;#id&quot; :attr &quot;transform&quot; :expr &quot;Math.sin(t * Math.PI * 2)&quot;)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(customAstCode);
+                  }}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ fontSize: '0.72rem' }}
+                >
+                  📋 Copy AST
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: Starter Templates */}
+          {studioTab === 'templates' && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '10px',
+              }}
+            >
+              <div
+                style={{
+                  background: 'var(--stj-canvas)',
+                  border: '1px solid var(--stj-border)',
+                  padding: '12px',
+                  borderRadius: 'var(--stj-radius-sm)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <h5 style={{ margin: '0 0 4px', fontSize: '0.85rem', color: 'var(--stj-text)' }}>
+                    🪐 Planetary Orbit
+                  </h5>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--stj-text-muted)' }}>
+                    Parametric heliocentric revolution using cos(t) and sin(t) trigonometry.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    postToPlayer({
+                      type: 'HOT_RELOAD_SVG',
+                      svg: `<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg"><circle cx="400" cy="240" r="140" fill="none" stroke="#334155" stroke-dasharray="4 4" /><circle id="star-sun" cx="400" cy="240" r="32" fill="#f59e0b" filter="url(#glow)" /><circle id="planet-earth" cx="540" cy="240" r="14" fill="#38bdf8" /><text id="orbit-txt" x="400" y="440" fill="#94a3b8" font-size="16" text-anchor="middle">Planetary Orbit Period: 1.0 Cycle</text></svg>`
+                    });
+                    postToPlayer({
+                      type: 'HOT_RELOAD_AST',
+                      ast: `(:scene :id "simple-orbit" :title "Simple Planetary Orbit" :stage "KS3 SCIENCE" :duration 6.0 (:keyframes ((:t 0.00 :title "Perihelion" :rule "Planet starts at 0 rad") (:t 0.50 :title "Aphelion" :rule "Planet reaches opposite orbital pole"))) (:bindings ((:target "#planet-earth" :attr "cx" :expr "400 + Math.cos(t * Math.PI * 2) * 140") (:target "#planet-earth" :attr "cy" :expr "240 + Math.sin(t * Math.PI * 2) * 140") (:target "#orbit-txt" :attr "textContent" :expr "'Orbit Angle: ' + Math.round(t * 360) + '°'"))))`
+                    });
+                    setHotReloadFlash(true);
+                    setTimeout(() => setHotReloadFlash(false), 2000);
+                  }}
+                  className="stj-btn stj-btn-primary stj-btn-sm"
+                  style={{ marginTop: '10px', fontSize: '0.74rem' }}
+                >
+                  Load Template ➜
+                </button>
+              </div>
+
+              <div
+                style={{
+                  background: 'var(--stj-canvas)',
+                  border: '1px solid var(--stj-border)',
+                  padding: '12px',
+                  borderRadius: 'var(--stj-radius-sm)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <h5 style={{ margin: '0 0 4px', fontSize: '0.85rem', color: 'var(--stj-text)' }}>
+                    🌊 Harmonic Wave
+                  </h5>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--stj-text-muted)' }}>
+                    Continuous wave motion demonstrating frequency, amplitude, and crests.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    postToPlayer({
+                      type: 'HOT_RELOAD_SVG',
+                      svg: `<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg"><line x1="100" y1="240" x2="700" y2="240" stroke="#334155" stroke-width="2" /><path id="harmonic-wave" d="M 100 240 Q 250 140 400 240 T 700 240" fill="none" stroke="#38bdf8" stroke-width="4" /><circle id="wave-tracer" cx="400" cy="240" r="10" fill="#f43f5e" filter="url(#glow)" /><text id="wave-label" x="400" y="80" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">y = A · sin(ωt + φ)</text></svg>`
+                    });
+                    postToPlayer({
+                      type: 'HOT_RELOAD_AST',
+                      ast: `(:scene :id "sine-wave" :title "Harmonic Sine Wave" :stage "KS4 PHYSICS" :duration 4.0 (:keyframes ((:t 0.00 :title "Initial Phase" :rule "Zero displacement at origin") (:t 0.25 :title "Crest Amplitude" :rule "Maximum positive displacement +A"))) (:bindings ((:target "#wave-tracer" :attr "cy" :expr "240 - Math.sin(t * Math.PI * 2) * 90") (:target "#wave-tracer" :attr "cx" :expr "100 + (t * 600)") (:target "#wave-label" :attr "textContent" :expr "'Displacement y = ' + (Math.sin(t * Math.PI * 2) * 10).toFixed(1) + ' cm'"))))`
+                    });
+                    setHotReloadFlash(true);
+                    setTimeout(() => setHotReloadFlash(false), 2000);
+                  }}
+                  className="stj-btn stj-btn-primary stj-btn-sm"
+                  style={{ marginTop: '10px', fontSize: '0.74rem' }}
+                >
+                  Load Template ➜
+                </button>
+              </div>
+
+              <div
+                style={{
+                  background: 'var(--stj-canvas)',
+                  border: '1px solid var(--stj-border)',
+                  padding: '12px',
+                  borderRadius: 'var(--stj-radius-sm)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div>
+                  <h5 style={{ margin: '0 0 4px', fontSize: '0.85rem', color: 'var(--stj-text)' }}>
+                    ⏱️ Harmonic Pendulum
+                  </h5>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--stj-text-muted)' }}>
+                    Conservation of energy demonstrating kinetic vs potential oscillation.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    postToPlayer({
+                      type: 'HOT_RELOAD_SVG',
+                      svg: `<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg"><circle cx="400" cy="80" r="6" fill="#64748b" /><line id="pendulum-rod" x1="400" y1="80" x2="400" y2="340" stroke="#94a3b8" stroke-width="3" /><circle id="pendulum-bob" cx="400" cy="340" r="28" fill="#10b981" stroke="#34d399" stroke-width="2" /><text id="energy-txt" x="400" y="420" fill="#34d399" font-size="16" font-weight="bold" text-anchor="middle">E = Ep + Ek</text></svg>`
+                    });
+                    postToPlayer({
+                      type: 'HOT_RELOAD_AST',
+                      ast: `(:scene :id "physics-pendulum" :title "Harmonic Pendulum" :stage "KS3 PHYSICS" :duration 3.0 (:keyframes ((:t 0.00 :title "Max Left Amplitude" :rule "Ep is maximal, Ek = 0") (:t 0.25 :title "Equilibrium Pass" :rule "Ek is maximal at center, Ep is minimum"))) (:bindings ((:target "#pendulum-rod" :attr "transform" :expr "'rotate(' + (Math.sin(t * Math.PI * 2) * 40) + ' 400 80)'") (:target "#pendulum-bob" :attr "transform" :expr "'rotate(' + (Math.sin(t * Math.PI * 2) * 40) + ' 400 80)'") (:target "#energy-txt" :attr "textContent" :expr "'Potential Energy: ' + (Math.abs(Math.sin(t * Math.PI * 2)) * 100).toFixed(0) + '% | Kinetic: ' + ((1 - Math.abs(Math.sin(t * Math.PI * 2))) * 100).toFixed(0) + '%'"))))`
+                    });
+                    setHotReloadFlash(true);
+                    setTimeout(() => setHotReloadFlash(false), 2000);
+                  }}
+                  className="stj-btn stj-btn-primary stj-btn-sm"
+                  style={{ marginTop: '10px', fontSize: '0.74rem' }}
+                >
+                  Load Template ➜
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

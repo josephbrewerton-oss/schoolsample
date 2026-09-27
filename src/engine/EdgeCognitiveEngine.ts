@@ -18,14 +18,9 @@ import {
 } from '../services/dbStore';
 import { resolveSeedCoordinate } from '../../static/promptStrategies';
 import { healSExprString } from '../utils/astQuestionExtractor';
+import { parseAstNode, type ParsedAstNode } from '../utils/sexprParser';
 
-export interface ParsedAstNode {
-  route: string;
-  calc?: string;
-  prompt: string;
-  options: string[];
-  answerKey: number;
-}
+export type { ParsedAstNode };
 
 export interface EngineExecutionResult {
   output: string;
@@ -35,33 +30,12 @@ export interface EngineExecutionResult {
 }
 
 export class AstParser {
+  /**
+   * Parses S-Expression into ParsedAstNode using robust recursive tokenizer.
+   * Replaces legacy brittle regex matchers.
+   */
   static parse(sExpr: string): ParsedAstNode {
-    const routeMatch = sExpr.match(/:route\s+"([^"]+)"/);
-    const calcMatch = sExpr.match(/:calc\s+"([^"]+)"/);
-    const promptMatch = sExpr.match(/:(?:prompt|question|q)\s+"([^"]+)"/);
-    const answerKeyMatch = sExpr.match(/:answer-key\s+(\d+)/);
-    const optionsMatch = sExpr.match(/:(?:options|opts|choices)\s+\((?:list\s+)?([\s\S]*?)\)(?:\s*\)|\s*:)/);
-
-    if (!promptMatch) {
-      throw new Error('Invalid AST: Missing :prompt token');
-    }
-
-    const options: string[] = [];
-    if (optionsMatch) {
-      const optRegex = /"([^"]+)"/g;
-      let m: RegExpExecArray | null;
-      while ((m = optRegex.exec(optionsMatch[1])) !== null) {
-        options.push(m[1]);
-      }
-    }
-
-    return {
-      route: routeMatch ? routeMatch[1] : 'quiz:mcq',
-      calc: calcMatch ? calcMatch[1] : undefined,
-      prompt: promptMatch[1],
-      options: options.length > 0 ? options : ['Option A', 'Option B', 'Option C', 'Option D'],
-      answerKey: answerKeyMatch ? parseInt(answerKeyMatch[1], 10) : 0,
-    };
+    return parseAstNode(sExpr);
   }
 }
 

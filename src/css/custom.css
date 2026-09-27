@@ -112,7 +112,8 @@ html[data-font-size="xlarge"] {
 }
 
 /* Accessibility: High Contrast Mode */
-html.high-contrast-mode {
+html.high-contrast-mode,
+html[data-high-contrast="true"] {
   --ifm-color-emphasis-100: #e0e0e0;
   --ifm-color-emphasis-200: #000000;
   --ifm-color-emphasis-300: #000000;
@@ -120,9 +121,30 @@ html.high-contrast-mode {
   --ifm-font-color-base: #000000;
   --ifm-background-color: #ffffff;
   --ifm-card-background-color: #ffffff;
+
+  --stj-border: #000000;
+  --stj-text: #000000;
+  --stj-text-muted: #262626;
+  --stj-canvas: #ffffff;
+  --stj-surface: #ffffff;
+  --stj-surface-raised: #f5f5f5;
+  --stj-primary: #0000c8;
+  --stj-primary-hover: #000088;
+  --stj-primary-surface: #edf2ff;
+  --stj-success: #006600;
+  --stj-success-hover: #004d00;
+  --stj-success-surface: #e6ffe6;
+  --stj-warning: #804000;
+  --stj-warning-hover: #603000;
+  --stj-warning-surface: #fff0d4;
+  --stj-danger: #b30000;
+  --stj-danger-hover: #800000;
+  --stj-danger-surface: #ffe6e6;
 }
 
-[data-theme='dark'] html.high-contrast-mode {
+[data-theme='dark'] html.high-contrast-mode,
+[data-theme='dark'] html[data-high-contrast="true"],
+html[data-high-contrast="true"][data-theme='dark'] {
   --ifm-color-emphasis-100: #222222;
   --ifm-color-emphasis-200: #ffffff;
   --ifm-color-emphasis-300: #ffffff;
@@ -130,12 +152,68 @@ html.high-contrast-mode {
   --ifm-font-color-base: #ffffff;
   --ifm-background-color: #000000;
   --ifm-card-background-color: #000000;
+
+  --stj-border: #ffffff;
+  --stj-text: #ffffff;
+  --stj-text-muted: #e5e5e5;
+  --stj-canvas: #000000;
+  --stj-surface: #0a0a0a;
+  --stj-surface-raised: #171717;
+  --stj-primary: #38bdf8;
+  --stj-primary-hover: #7dd3fc;
+  --stj-primary-surface: #002233;
+  --stj-success: #22c55e;
+  --stj-success-hover: #4ade80;
+  --stj-success-surface: #002a10;
+  --stj-warning: #facc15;
+  --stj-warning-hover: #fde047;
+  --stj-warning-surface: #2b2200;
+  --stj-danger: #f87171;
+  --stj-danger-hover: #fca5a5;
+  --stj-danger-surface: #2f0707;
 }
 
 html.high-contrast-mode .card,
-html.high-contrast-mode section {
+html.high-contrast-mode section,
+html[data-high-contrast="true"] .stj-card {
   border-width: 2px !important;
   border-color: currentColor !important;
+}
+
+/* Accessibility: Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: var(--stj-primary);
+  color: #ffffff;
+  border-radius: var(--stj-radius-sm);
+  z-index: 100;
+}
+
+/* Accessible focus styling for SVG interactive elements */
+svg [role="button"]:focus-visible,
+svg g:focus-visible {
+  outline: 2px solid var(--stj-primary);
+  outline-offset: 4px;
 }
 
 /* Persistent AST Viewport & Zero-CLS Transition */
@@ -278,6 +356,35 @@ html[data-data-saver="true"] .ast-viewport-stage {
   color: var(--stj-text);
 }
 
+.stj-btn-warning {
+  background-color: var(--stj-warning);
+  color: #ffffff;
+  border-color: var(--stj-warning);
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
+}
+.stj-btn-warning:hover:not(:disabled) {
+  background-color: var(--stj-warning-hover);
+  border-color: var(--stj-warning-hover);
+}
+
+.stj-btn-danger {
+  background-color: var(--stj-danger);
+  color: #ffffff;
+  border-color: var(--stj-danger);
+  box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2);
+}
+.stj-btn-danger:hover:not(:disabled) {
+  background-color: var(--stj-danger-hover);
+  border-color: var(--stj-danger-hover);
+}
+
+.stj-btn-sm {
+  min-height: 32px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  border-radius: var(--stj-radius-sm);
+}
+
 /* 3. Badges & Pills */
 .stj-badge {
   display: inline-flex;
@@ -301,6 +408,24 @@ html[data-data-saver="true"] .ast-viewport-stage {
   background-color: var(--stj-success-surface);
   color: var(--stj-success);
   border: 1px solid var(--stj-success);
+}
+
+.stj-badge-warning {
+  background-color: var(--stj-warning-surface);
+  color: var(--stj-warning);
+  border: 1px solid var(--stj-warning);
+}
+
+.stj-badge-danger {
+  background-color: var(--stj-danger-surface);
+  color: var(--stj-danger);
+  border: 1px solid var(--stj-danger);
+}
+
+.stj-badge-neutral {
+  background-color: var(--stj-canvas);
+  color: var(--stj-text-muted);
+  border: 1px solid var(--stj-border);
 }
 
 .stj-pill {

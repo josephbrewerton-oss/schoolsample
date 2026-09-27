@@ -32,6 +32,7 @@ export default function ConceptConstellation({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [focusedNodeCsn, setFocusedNodeCsn] = useState<string | null>(null);
   const dragStartRef = useRef({ x: 0, y: 0 });
 
   // Load graph state from in-memory engine and IndexedDB records
@@ -137,26 +138,25 @@ export default function ConceptConstellation({
 
   // Node color mapping
   const getNodeColor = (status: ConceptGraphNode['status'], isSacramental: boolean) => {
-    if (status === 'mastered') return '#10b981'; // Emerald
-    if (status === 'remediation_needed') return '#ef4444'; // Red pulse
-    if (status === 'in_progress') return '#3b82f6'; // Blue
-    if (status === 'locked') return '#475569'; // Muted Slate
-    return isSacramental ? '#d97706' : '#8b5cf6'; // Gold for sacramental, purple for standard
+    if (status === 'mastered') return 'var(--stj-success)';
+    if (status === 'remediation_needed') return 'var(--stj-danger)';
+    if (status === 'in_progress') return 'var(--stj-primary)';
+    if (status === 'locked') return 'var(--stj-text-muted)';
+    return isSacramental ? 'var(--stj-warning)' : 'var(--stj-primary)';
   };
 
   return (
     <div
+      className="stj-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
         height: compact ? '480px' : '720px',
-        background: '#0a0e17',
-        borderRadius: '16px',
+        padding: 0,
         overflow: 'hidden',
-        border: '1px solid #1e293b',
-        boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)',
+        boxShadow: 'var(--stj-shadow-lg)',
         position: 'relative',
-        color: '#f8fafc',
+        color: 'var(--stj-text)',
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
@@ -168,9 +168,8 @@ export default function ConceptConstellation({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 18px',
-          background: 'rgba(15, 23, 42, 0.85)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: '1px solid #1e293b',
+          background: 'var(--stj-surface-raised)',
+          borderBottom: '1px solid var(--stj-border)',
           zIndex: 10,
           gap: '12px',
         }}
@@ -178,10 +177,10 @@ export default function ConceptConstellation({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '1.25rem' }}>✨</span>
           <div>
-            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.02em' }}>
+            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.02em', color: 'var(--stj-text)' }}>
               Concept Constellation Graph
             </h3>
-            <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
+            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--stj-text-muted)' }}>
               In-Memory AST Knowledge Web • NATO Stock Number Routing
             </p>
           </div>
@@ -194,14 +193,11 @@ export default function ConceptConstellation({
             placeholder="Search concepts or CSN..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="stj-input"
             style={{
-              padding: '6px 12px',
+              padding: '4px 10px',
+              minHeight: '32px',
               fontSize: '0.78rem',
-              borderRadius: '8px',
-              border: '1px solid #334155',
-              background: '#0f172a',
-              color: '#f8fafc',
-              outline: 'none',
               width: '180px',
             }}
           />
@@ -209,13 +205,11 @@ export default function ConceptConstellation({
           <select
             value={selectedStage}
             onChange={(e) => setSelectedStage(e.target.value)}
+            className="stj-select"
             style={{
-              padding: '6px 10px',
+              padding: '4px 8px',
+              minHeight: '32px',
               fontSize: '0.78rem',
-              borderRadius: '8px',
-              border: '1px solid #334155',
-              background: '#0f172a',
-              color: '#f8fafc',
               cursor: 'pointer',
             }}
           >
@@ -229,13 +223,11 @@ export default function ConceptConstellation({
           <select
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
+            className="stj-select"
             style={{
-              padding: '6px 10px',
+              padding: '4px 8px',
+              minHeight: '32px',
               fontSize: '0.78rem',
-              borderRadius: '8px',
-              border: '1px solid #334155',
-              background: '#0f172a',
-              color: '#f8fafc',
               cursor: 'pointer',
             }}
           >
@@ -251,30 +243,16 @@ export default function ConceptConstellation({
           <div style={{ display: 'flex', gap: '4px' }}>
             <button
               onClick={() => setZoomLevel((z) => Math.min(z + 0.2, 2.5))}
-              style={{
-                background: '#1e293b',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-              }}
+              className="stj-btn stj-btn-secondary stj-btn-sm"
+              style={{ minHeight: '30px', padding: '2px 8px' }}
               title="Zoom In"
             >
               +
             </button>
             <button
               onClick={() => setZoomLevel((z) => Math.max(z - 0.2, 0.5))}
-              style={{
-                background: '#1e293b',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-              }}
+              className="stj-btn stj-btn-secondary stj-btn-sm"
+              style={{ minHeight: '30px', padding: '2px 8px' }}
               title="Zoom Out"
             >
               -
@@ -284,15 +262,8 @@ export default function ConceptConstellation({
                 setZoomLevel(1);
                 setPanOffset({ x: 0, y: 0 });
               }}
-              style={{
-                background: '#1e293b',
-                color: '#94a3b8',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '4px 8px',
-                cursor: 'pointer',
-                fontSize: '0.72rem',
-              }}
+              className="stj-btn stj-btn-ghost stj-btn-sm"
+              style={{ minHeight: '30px', padding: '2px 8px', fontSize: '0.72rem', border: '1px solid var(--stj-border)' }}
               title="Reset View"
             >
               Reset
@@ -308,13 +279,15 @@ export default function ConceptConstellation({
           position: 'relative',
           cursor: isDragging ? 'grabbing' : 'grab',
           overflow: 'hidden',
-          background: 'radial-gradient(circle at 50% 50%, #111827 0%, #030712 100%)',
+          background: 'var(--stj-canvas)',
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
         <svg
+          role="region"
+          aria-label="Curriculum Concept Constellation Graph"
           width="100%"
           height="100%"
           viewBox="0 0 1000 700"
@@ -327,8 +300,8 @@ export default function ConceptConstellation({
             {/* Grid & Background Constellation Starfield */}
             <defs>
               <radialGradient id="starGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                <stop offset="0%" stopColor="var(--stj-primary)" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="var(--stj-primary)" stopOpacity="0" />
               </radialGradient>
               <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
@@ -345,9 +318,9 @@ export default function ConceptConstellation({
               const isSacramental = edge.relation === 'sacramental_progression';
               const strokeColor = edge.isActive
                 ? isSacramental
-                  ? '#f59e0b'
-                  : '#38bdf8'
-                : 'rgba(71, 85, 105, 0.4)';
+                  ? 'var(--stj-warning)'
+                  : 'var(--stj-primary)'
+                : 'var(--stj-border)';
               const strokeWidth = edge.isActive ? 2.5 : 1.2;
               const strokeDasharray = edge.isActive ? 'none' : '4,4';
 
@@ -369,7 +342,7 @@ export default function ConceptConstellation({
                       cx={(fromPos.x + toPos.x) / 2}
                       cy={(fromPos.y + toPos.y) / 2}
                       r="2.5"
-                      fill={isSacramental ? '#fbbf24' : '#7dd3fc'}
+                      fill={isSacramental ? 'var(--stj-warning)' : 'var(--stj-primary)'}
                     />
                   )}
                 </g>
@@ -387,22 +360,48 @@ export default function ConceptConstellation({
               const nodeColor = getNodeColor(node.status, isSacramental);
               const radius = isSelected ? 12 : node.tier === 1 ? 8 : node.tier === 2 ? 10 : 12;
 
+              const isFocused = focusedNodeCsn === node.csn;
+
               return (
                 <g
                   key={node.csn}
                   transform={`translate(${pos.x}, ${pos.y})`}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={node.topicTitle}
+                  aria-pressed={isSelected}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleNodeClick(node);
                   }}
-                  style={{ cursor: 'pointer' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleNodeClick(node);
+                    }
+                  }}
+                  onFocus={() => setFocusedNodeCsn(node.csn)}
+                  onBlur={() => setFocusedNodeCsn((curr) => (curr === node.csn ? null : curr))}
+                  style={{ cursor: 'pointer', outline: 'none' }}
                 >
+                  {/* Keyboard Visible Focus Ring */}
+                  {isFocused && (
+                    <circle
+                      r={radius + 7}
+                      fill="none"
+                      stroke="var(--stj-primary)"
+                      strokeWidth="2.5"
+                      strokeDasharray="4,3"
+                    />
+                  )}
+
                   {/* Outer pulse ring for Remediation or Mastered */}
                   {node.status === 'remediation_needed' && (
                     <circle
                       r={radius + 8}
                       fill="none"
-                      stroke="#ef4444"
+                      stroke="var(--stj-danger)"
                       strokeWidth="2"
                       opacity="0.75"
                     >
@@ -425,7 +424,7 @@ export default function ConceptConstellation({
                     <circle
                       r={radius + 5}
                       fill="none"
-                      stroke="#10b981"
+                      stroke="var(--stj-success)"
                       strokeWidth="1.5"
                       opacity="0.6"
                     />
@@ -435,8 +434,8 @@ export default function ConceptConstellation({
                   <circle
                     r={radius}
                     fill={nodeColor}
-                    stroke={isSelected ? '#ffffff' : '#0f172a'}
-                    strokeWidth={isSelected ? 3 : 1.5}
+                    stroke={isSelected ? 'var(--stj-primary)' : isFocused ? 'var(--stj-primary)' : 'var(--stj-surface)'}
+                    strokeWidth={isSelected || isFocused ? 3 : 1.5}
                     filter={isSelected ? 'url(#glowEffect)' : undefined}
                   />
 
@@ -444,13 +443,12 @@ export default function ConceptConstellation({
                   <text
                     y={radius + 14}
                     textAnchor="middle"
-                    fill={isSelected ? '#ffffff' : '#cbd5e1'}
+                    fill={isSelected ? 'var(--stj-primary)' : 'var(--stj-text)'}
                     fontSize={isSelected ? '11px' : '9.5px'}
                     fontWeight={isSelected ? 700 : 500}
                     style={{
                       pointerEvents: 'none',
                       userSelect: 'none',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.8)',
                     }}
                   >
                     {node.topicTitle.length > 24
@@ -462,7 +460,7 @@ export default function ConceptConstellation({
                   <text
                     y={radius + 24}
                     textAnchor="middle"
-                    fill="#64748b"
+                    fill="var(--stj-text-muted)"
                     fontSize="7.5px"
                     fontFamily="monospace"
                     style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -475,45 +473,75 @@ export default function ConceptConstellation({
           </g>
         </svg>
 
+        {/* Full WCAG Screen-Reader DOM Mirror for Concept Dependency Tree */}
+        <div
+          id="sr-constellation-mirror"
+          className="sr-only"
+          role="region"
+          aria-label="Concept Constellation Screen Reader DOM Mirror"
+          aria-live="polite"
+        >
+          <h3>Concept Knowledge Tree Screen-Reader Navigation</h3>
+          <p>
+            Currently displaying {filteredNodes.length} curriculum concepts across {selectedStage === 'all' ? 'all stages' : selectedStage} and {selectedSubject === 'all' ? 'all subjects' : selectedSubject}.
+          </p>
+          {selectedNode ? (
+            <div tabIndex={0} aria-label={`Selected Concept: ${selectedNode.topicTitle}`}>
+              <h4>Selected Concept: {selectedNode.topicTitle} ({selectedNode.csn})</h4>
+              <p>Stage: {selectedNode.stageTitle}, Subject: {selectedNode.subjectTitle}</p>
+              <p>Status: {selectedNode.status.replace(/_/g, ' ')}, Tier: {selectedNode.tier}</p>
+              <p>Invariant Axiom: {selectedNode.axiom}</p>
+              {selectedNode.cognitiveTrap && <p>Cognitive Trap: {selectedNode.cognitiveTrap}</p>}
+              <p>Prerequisites: {selectedNode.prerequisites.length > 0 ? selectedNode.prerequisites.join(', ') : 'Foundational Root (no prerequisites)'}</p>
+            </div>
+          ) : (
+            <p>No concept currently selected. Tab through the nodes and press Enter to inspect.</p>
+          )}
+          <ul>
+            {filteredNodes.map((n) => (
+              <li key={n.csn}>
+                <button
+                  type="button"
+                  onClick={() => handleNodeClick(n)}
+                  aria-label={`${n.topicTitle} (${n.csn}) - Status: ${n.status.replace(/_/g, ' ')}`}
+                >
+                  Inspect {n.topicTitle} ({n.csn}) - Status: {n.status.replace(/_/g, ' ')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Floating Remediation Beacon Alert (if any misconceptions are active) */}
         {remediations.length > 0 && !selectedNode && (
           <div
+            className="stj-card"
             style={{
               position: 'absolute',
               bottom: '16px',
               left: '16px',
               maxWidth: '380px',
-              background: 'rgba(30, 27, 75, 0.95)',
-              border: '1px solid #6366f1',
-              borderRadius: '12px',
+              background: 'var(--stj-surface-raised)',
+              border: '1.5px solid var(--stj-warning)',
+              borderRadius: 'var(--stj-radius-md)',
               padding: '12px 16px',
-              boxShadow: '0 10px 25px -5px rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(8px)',
+              boxShadow: 'var(--stj-shadow-lg)',
               zIndex: 20,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <span style={{ fontSize: '1rem' }}>🧭</span>
-              <strong style={{ fontSize: '0.82rem', color: '#a5b4fc' }}>
+              <strong style={{ fontSize: '0.82rem', color: 'var(--stj-warning)' }}>
                 Logseq Diagnostic Remediation Active
               </strong>
             </div>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#e0e7ff', lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--stj-text)', lineHeight: 1.4 }}>
               {remediations[0].reason}
             </p>
             <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => navigate(remediations[0].remedialPath)}
-                style={{
-                  background: '#4f46e5',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '5px 12px',
-                  fontSize: '0.74rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
+                className="stj-btn stj-btn-primary stj-btn-sm"
               >
                 Launch Remedial Drill
               </button>
@@ -524,17 +552,17 @@ export default function ConceptConstellation({
         {/* Selected Node Inspector Drawer */}
         {selectedNode && (
           <div
+            className="stj-card"
             style={{
               position: 'absolute',
               top: '16px',
               right: '16px',
               width: '320px',
-              background: 'rgba(15, 23, 42, 0.96)',
-              border: '1px solid #334155',
-              borderRadius: '14px',
+              background: 'var(--stj-surface-raised)',
+              border: '1px solid var(--stj-border)',
+              borderRadius: 'var(--stj-radius-md)',
               padding: '16px',
-              boxShadow: '0 15px 35px -5px rgba(0,0,0,0.7)',
-              backdropFilter: 'blur(12px)',
+              boxShadow: 'var(--stj-shadow-lg)',
               zIndex: 20,
             }}
           >
@@ -545,27 +573,30 @@ export default function ConceptConstellation({
                     fontSize: '0.68rem',
                     fontFamily: 'monospace',
                     fontWeight: 700,
-                    background: '#1e293b',
-                    color: '#94a3b8',
+                    background: 'var(--stj-canvas)',
+                    color: 'var(--stj-text-muted)',
+                    border: '1px solid var(--stj-border)',
                     padding: '2px 6px',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--stj-radius-sm)',
                   }}
                 >
                   {selectedNode.csn}
                 </span>
-                <h4 style={{ margin: '6px 0 2px 0', fontSize: '1.05rem', color: '#f8fafc' }}>
+                <h4 style={{ margin: '6px 0 2px 0', fontSize: '1.05rem', color: 'var(--stj-text)' }}>
                   {selectedNode.topicTitle}
                 </h4>
-                <div style={{ fontSize: '0.72rem', color: '#38bdf8', marginBottom: '10px' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--stj-primary)', marginBottom: '10px' }}>
                   {selectedNode.stageTitle} • {selectedNode.subjectTitle}
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedNode(null)}
+                aria-label="Close concept inspector drawer"
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: 'var(--stj-text-muted)',
                   fontSize: '1.2rem',
                   cursor: 'pointer',
                   lineHeight: 1,
@@ -575,19 +606,19 @@ export default function ConceptConstellation({
               </button>
             </div>
 
-            <div style={{ fontSize: '0.76rem', color: '#cbd5e1', marginBottom: '12px', lineHeight: 1.45 }}>
-              <strong style={{ color: '#f1f5f9' }}>Invariant Axiom:</strong> {selectedNode.axiom}
+            <div style={{ fontSize: '0.76rem', color: 'var(--stj-text)', marginBottom: '12px', lineHeight: 1.45 }}>
+              <strong style={{ color: 'var(--stj-text)' }}>Invariant Axiom:</strong> {selectedNode.axiom}
             </div>
 
             {selectedNode.cognitiveTrap && (
               <div
                 style={{
                   fontSize: '0.74rem',
-                  color: '#fca5a5',
-                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: 'var(--stj-danger)',
+                  background: 'var(--stj-danger-surface)',
                   padding: '8px 10px',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderRadius: 'var(--stj-radius-sm)',
+                  border: '1px solid var(--stj-danger)',
                   marginBottom: '12px',
                 }}
               >
@@ -597,16 +628,17 @@ export default function ConceptConstellation({
 
             {/* Prerequisites */}
             <div style={{ marginBottom: '14px' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--stj-text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>
                 Prerequisites ({selectedNode.prerequisites.length})
               </div>
               {selectedNode.prerequisites.length === 0 ? (
-                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Foundational Root (No prior requirements)</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--stj-text-muted)' }}>Foundational Root (No prior requirements)</div>
               ) : (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {selectedNode.prerequisites.map((pCsn) => (
-                    <span
+                    <button
                       key={pCsn}
+                      type="button"
                       onClick={() => {
                         const target = ConceptGraphEngine.findNode(pCsn);
                         if (target) setSelectedNode(target);
@@ -614,16 +646,18 @@ export default function ConceptConstellation({
                       style={{
                         fontSize: '0.68rem',
                         fontFamily: 'monospace',
-                        background: '#1e293b',
-                        color: '#38bdf8',
+                        background: 'var(--stj-canvas)',
+                        color: 'var(--stj-primary)',
                         padding: '2px 8px',
-                        borderRadius: '4px',
+                        minHeight: '26px',
+                        borderRadius: 'var(--stj-radius-sm)',
                         cursor: 'pointer',
-                        border: '1px solid #334155',
+                        border: '1px solid var(--stj-border)',
                       }}
+                      aria-label={`Inspect prerequisite concept ${pCsn}`}
                     >
                       🔗 {pCsn}
-                    </span>
+                    </button>
                   ))}
                 </div>
               )}
@@ -634,17 +668,9 @@ export default function ConceptConstellation({
               onClick={() => {
                 navigate(`/practice-lab?topic=${encodeURIComponent(selectedNode.topicId)}`);
               }}
+              className="stj-btn stj-btn-primary"
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '9px 16px',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
               }}
             >
               ⚡ Enter Topic Practice Lab
@@ -660,28 +686,28 @@ export default function ConceptConstellation({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '8px 18px',
-          background: '#090d16',
-          borderTop: '1px solid #1e293b',
+          background: 'var(--stj-surface-raised)',
+          borderTop: '1px solid var(--stj-border)',
           fontSize: '0.7rem',
-          color: '#64748b',
+          color: 'var(--stj-text-muted)',
           zIndex: 10,
         }}
       >
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--stj-success)' }} />
             Mastered
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--stj-primary)' }} />
             In Progress
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--stj-danger)' }} />
             Remediation Needed
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--stj-warning)' }} />
             Sacramental Progression
           </span>
         </div>

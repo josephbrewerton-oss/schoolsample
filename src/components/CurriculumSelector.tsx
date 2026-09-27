@@ -219,35 +219,27 @@ export const CurriculumSelector: React.FC<Props> = ({
 
   return (
     <div
+      className="stj-card"
       style={{
         display: 'flex',
         flexWrap: 'wrap',
         gap: '14px',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '16px',
         padding: '1rem 1.25rem',
         marginBottom: '1.5rem',
-        boxShadow: '0 2px 8px -2px rgba(15, 23, 42, 0.06)',
       }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', flex: '1 1 auto' }}>
         {/* Key Stage */}
         <select
           aria-label="Select Key Stage"
+          className="stj-select"
           value={safeStage}
           onChange={(e) => handleStageSelect(e.target.value)}
           style={{
-            minHeight: '42px',
-            padding: '0.5rem 0.85rem',
-            borderRadius: '10px',
-            border: '1.5px solid #cbd5e1',
             fontWeight: 700,
-            color: '#1e3a8a',
-            background: '#f8fafc',
-            fontSize: '0.9rem',
+            color: 'var(--stj-primary)',
             cursor: 'pointer',
           }}
         >
@@ -261,17 +253,11 @@ export const CurriculumSelector: React.FC<Props> = ({
         {/* Subject */}
         <select
           aria-label="Select Subject"
+          className="stj-select"
           value={safeSubject}
           onChange={(e) => handleSubjectSelect(e.target.value)}
           style={{
-            minHeight: '42px',
-            padding: '0.5rem 0.85rem',
-            borderRadius: '10px',
-            border: '1.5px solid #cbd5e1',
             fontWeight: 700,
-            color: '#0f172a',
-            background: '#f8fafc',
-            fontSize: '0.9rem',
             cursor: 'pointer',
           }}
         >
@@ -285,17 +271,11 @@ export const CurriculumSelector: React.FC<Props> = ({
         {/* Unit */}
         <select
           aria-label="Select Unit or Topic"
+          className="stj-select"
           value={safeUnit}
           onChange={(e) => onUnitChange(e.target.value)}
           style={{
-            minHeight: '42px',
-            padding: '0.5rem 0.85rem',
-            borderRadius: '10px',
-            border: '1.5px solid #cbd5e1',
-            color: '#334155',
-            background: '#f8fafc',
             maxWidth: '300px',
-            fontSize: '0.9rem',
             fontWeight: 600,
             cursor: 'pointer',
           }}
@@ -311,17 +291,14 @@ export const CurriculumSelector: React.FC<Props> = ({
         {availableLessons.length > 0 && onLessonChange && (
           <select
             aria-label="Select Oak Lesson"
+            className="stj-select"
             value={safeLesson}
             onChange={(e) => onLessonChange(e.target.value)}
             style={{
-              minHeight: '42px',
-              padding: '0.5rem 0.85rem',
-              borderRadius: '10px',
-              border: '1.5px solid #a7f3d0',
-              color: '#065f46',
-              background: '#f0fdf4',
+              border: '1.5px solid var(--stj-success)',
+              color: 'var(--stj-success)',
+              background: 'var(--stj-success-surface)',
               maxWidth: '300px',
-              fontSize: '0.88rem',
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -339,22 +316,9 @@ export const CurriculumSelector: React.FC<Props> = ({
         <button
           type="button"
           aria-label={buttonLabel}
+          className="stj-btn stj-btn-primary"
           onClick={onNewQuestion}
           disabled={!isReady}
-          style={{
-            minHeight: '42px',
-            background: '#2563eb',
-            color: '#ffffff',
-            fontWeight: 700,
-            border: 'none',
-            borderRadius: '10px',
-            padding: '0.5rem 1.25rem',
-            cursor: isReady ? 'pointer' : 'not-allowed',
-            fontSize: '0.92rem',
-            boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-            opacity: isReady ? 1 : 0.7,
-            transition: 'all 0.15s ease',
-          }}
         >
           {buttonLabel}
         </button>
@@ -364,36 +328,24 @@ export const CurriculumSelector: React.FC<Props> = ({
           <input
             type="text"
             aria-label="Session or Lesson Name"
+            className="stj-input"
             value={sessionId}
             onChange={(e) => onSessionIdChange(e.target.value)}
             placeholder="Class or lesson"
             title="Class or lesson name"
             style={{
-              minHeight: '42px',
-              padding: '0.5rem 0.75rem',
-              borderRadius: '10px',
-              border: '1px solid #cbd5e1',
+              width: '130px',
               fontWeight: 600,
               fontSize: '0.85rem',
-              width: '130px',
-              background: '#f8fafc',
             }}
           />
           <button
             type="button"
             aria-label="Download Diagnostic Summary Report"
+            className="stj-btn stj-btn-secondary"
             onClick={onDownloadReport}
             title="Download Summary Report for Teacher or Pupil"
             style={{
-              minHeight: '42px',
-              background: '#f1f5f9',
-              color: '#334155',
-              border: '1px solid #cbd5e1',
-              borderRadius: '10px',
-              padding: '0.5rem 0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontSize: '0.85rem',
               whiteSpace: 'nowrap',
             }}
           >
@@ -405,18 +357,7 @@ export const CurriculumSelector: React.FC<Props> = ({
       <span
         role="status"
         aria-live="polite"
-        style={{
-          fontSize: '0.82rem',
-          fontWeight: 700,
-          padding: '0.4rem 0.85rem',
-          borderRadius: '9999px',
-          background: isReady ? '#ecfdf5' : '#fef3c7',
-          color: isReady ? '#059669' : '#d97706',
-          border: `1px solid ${isReady ? '#a7f3d0' : '#fde68a'}`,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-        }}
+        className={`stj-badge ${isReady ? 'stj-badge-success' : 'stj-badge-warning'} stj-pill`}
       >
         <span style={{ fontSize: '0.65rem' }}>●</span>
         {isReady ? 'Ready' : 'Thinking...'}
