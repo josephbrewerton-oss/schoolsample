@@ -196,10 +196,10 @@ export function resolveHarmonisedRoute(rawPath: string, search: string = ''): Ro
   // 9. Blog / News / Updates
   if (clean.includes('blog') || clean.includes('news') || clean.includes('breakthrough')) {
     return {
-      targetPath: '/blog',
+      targetPath: '/news',
       targetLabel: 'School News & Technical Dispatches',
       category: 'Dispatches & Announcements',
-      reason: 'Reconciled news inquiry to the School Blog.',
+      reason: 'Reconciled news inquiry to the School Newsroom.',
     };
   }
 
@@ -642,7 +642,7 @@ function DirectoryGrid(): React.JSX.Element {
         </Link>
 
         <Link
-          to="/blog"
+          to="/news"
           className="stj-card stj-card-interactive"
           style={{
             display: 'block',

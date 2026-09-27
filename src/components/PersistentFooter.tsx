@@ -101,8 +101,8 @@ export default function PersistentFooter(): React.JSX.Element {
               </Link>
             </li>
             <li>
-              <Link to="/blog" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
-                📰 Curriculum News & Releases
+              <Link to="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
+                📰 Curriculum News &amp; Releases
               </Link>
             </li>
             <li>

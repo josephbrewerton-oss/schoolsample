@@ -16,24 +16,46 @@ export default function Home() {
         
         {/* Welcome Hero */}
         <section style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 18px',
-            borderRadius: '9999px',
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            color: '#15803d',
-            fontSize: '0.88rem',
-            fontWeight: 700,
-            marginBottom: '1.25rem'
-          }}>
-            <span>🕊️ Education should be free</span>
-            <span>&bull;</span>
-            <span>UK National Curriculum</span>
-            <span>&bull;</span>
-            <span>Works Offline</span>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 18px',
+              borderRadius: '9999px',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              color: '#15803d',
+              fontSize: '0.88rem',
+              fontWeight: 700,
+            }}>
+              <span>🕊️ Education should be free</span>
+              <span>&bull;</span>
+              <span>UK National Curriculum</span>
+              <span>&bull;</span>
+              <span>Works Offline</span>
+            </div>
+
+            <Link
+              to="/news"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 18px',
+                borderRadius: '9999px',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                color: '#1d4ed8',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              <span>📰</span>
+              <span>Latest Release: AST Vector Player &amp; SlideScript</span>
+              <span>➔</span>
+            </Link>
           </div>
 
           <h1 style={{ fontSize: '2.85rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem', letterSpacing: '-0.025em' }}>
@@ -128,6 +150,149 @@ export default function Home() {
 
         {/* Home-Learner Guided Pathway (For Disadvantaged & Out-of-School Children) */}
         <HomeLearnerGuidedCard />
+
+        {/* Latest News & Release Section (September 2026) */}
+        <section
+          style={{
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdfa 100%)',
+            border: '2px solid #86efac',
+            borderRadius: '20px',
+            padding: '2.25rem 2.5rem',
+            marginBottom: '3.5rem',
+            boxShadow: '0 10px 25px -5px rgba(22, 163, 74, 0.08)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                background: '#16a34a',
+                color: '#ffffff',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase'
+              }}>
+                ★ Latest News • September 2026
+              </span>
+              <span style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 600 }}>
+                Major Educational Technology Release
+              </span>
+            </div>
+
+            <Link
+              to="/news"
+              style={{
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                color: '#15803d',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span>View All News &amp; Dispatches</span>
+              <span>➔</span>
+            </Link>
+          </div>
+
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.75rem 0', lineHeight: 1.3 }}>
+            AST Vector Player &amp; SlideScript: 15KB Interactive Simulations Replacing Heavy Video
+          </h2>
+          <p style={{ fontSize: '1.02rem', color: '#334155', lineHeight: 1.6, maxWidth: '820px', margin: '0 0 1.5rem 0' }}>
+            Traditional educational video streams consume 50–100MB per lesson and stall on slow broadband. Our new procedural vector player loads 60 FPS animated SVG lessons in under 15KB, with non-tech SlideScript authoring, presenter clicker step-mode, and OBS live streaming.
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '1rem',
+            marginBottom: '1.75rem',
+          }}>
+            <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '1.4rem', marginBottom: '0.35rem' }}>⚡</div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#14532d', marginBottom: '0.25rem' }}>&lt;15 KB Micro-Vectors</div>
+              <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>Instant loading, zero buffering, and razor sharp at 4K on any school Chromebook.</div>
+            </div>
+            <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '1.4rem', marginBottom: '0.35rem' }}>✍️</div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#14532d', marginBottom: '0.25rem' }}>SlideScript for Teachers</div>
+              <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>Write slides in plain Markdown. Our on-device compiler converts them to interactive ASTs.</div>
+            </div>
+            <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '1.4rem', marginBottom: '0.35rem' }}>👣</div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#14532d', marginBottom: '0.25rem' }}>Clicker Step Mode</div>
+              <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>Control slides with your physical classroom clicker, pausing for turn-and-talk questions.</div>
+            </div>
+            <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '1.4rem', marginBottom: '0.35rem' }}>📡</div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#14532d', marginBottom: '0.25rem' }}>OBS Studio Sync</div>
+              <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>Stream lessons with lower-third overlays and real-time chapter syncing for remote learners.</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
+            <Link
+              to="/media-player"
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '8px',
+                background: '#16a34a',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.25)',
+              }}
+            >
+              <span>🚀 Launch AST Vector Player</span>
+            </Link>
+            <Link
+              to="/news"
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '8px',
+                background: '#ffffff',
+                border: '1px solid #86efac',
+                color: '#15803d',
+                fontWeight: 700,
+                fontSize: '0.92rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>📰 Read Full Technical Dispatch</span>
+            </Link>
+            <a
+              href="/player.html"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '8px',
+                background: '#f8fafc',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
+                fontWeight: 600,
+                fontSize: '0.92rem',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>💻 SlideScript Standalone Studio</span>
+              <span>↗</span>
+            </a>
+          </div>
+        </section>
 
         {/* Developing-Nation Safe Architecture: Works Offline & Tiny Data Banner */}
         <section

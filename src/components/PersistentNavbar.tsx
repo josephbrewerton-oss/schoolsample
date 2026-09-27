@@ -659,26 +659,29 @@ export default function PersistentNavbar(): React.JSX.Element {
 
           {/* 4. News */}
           <NavLink
-            to="/blog"
-            style={({ isActive }) => ({
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              padding: '0.4rem 0.65rem',
-              fontSize: '0.88rem',
-              fontWeight: isActive ? 600 : 500,
-              color: isActive
-                ? '#2563eb'
-                : colorMode === 'dark'
-                ? '#94a3b8'
-                : '#475569',
-              backgroundColor: isActive
-                ? colorMode === 'dark'
-                  ? 'rgba(37, 99, 235, 0.15)'
-                  : '#eff6ff'
-                : 'transparent',
-              borderRadius: '6px',
-              transition: 'all 0.15s ease',
-            })}
+            to="/news"
+            style={() => {
+              const isNewsActive = location.pathname.startsWith('/blog') || location.pathname.startsWith('/news');
+              return {
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                padding: '0.4rem 0.65rem',
+                fontSize: '0.88rem',
+                fontWeight: isNewsActive ? 600 : 500,
+                color: isNewsActive
+                  ? '#2563eb'
+                  : colorMode === 'dark'
+                  ? '#94a3b8'
+                  : '#475569',
+                backgroundColor: isNewsActive
+                  ? colorMode === 'dark'
+                    ? 'rgba(37, 99, 235, 0.15)'
+                    : '#eff6ff'
+                  : 'transparent',
+                borderRadius: '6px',
+                transition: 'all 0.15s ease',
+              };
+            }}
           >
             📰 News
           </NavLink>
@@ -1377,30 +1380,33 @@ export default function PersistentNavbar(): React.JSX.Element {
               📰 Updates
             </div>
             <NavLink
-              to="/blog"
+              to="/news"
               onClick={() => setMobileMenuOpen(false)}
-              style={({ isActive }) => ({
-                textDecoration: 'none',
-                padding: '0.55rem 0.75rem',
-                fontSize: '0.92rem',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive
-                  ? '#2563eb'
-                  : colorMode === 'dark'
-                  ? '#f8fafc'
-                  : '#1e293b',
-                backgroundColor: isActive
-                  ? colorMode === 'dark'
-                    ? 'rgba(37, 99, 235, 0.15)'
-                    : '#eff6ff'
-                  : 'transparent',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              })}
+              style={() => {
+                const isNewsActive = location.pathname.startsWith('/blog') || location.pathname.startsWith('/news');
+                return {
+                  textDecoration: 'none',
+                  padding: '0.55rem 0.75rem',
+                  fontSize: '0.92rem',
+                  fontWeight: isNewsActive ? 600 : 500,
+                  color: isNewsActive
+                    ? '#2563eb'
+                    : colorMode === 'dark'
+                    ? '#f8fafc'
+                    : '#1e293b',
+                  backgroundColor: isNewsActive
+                    ? colorMode === 'dark'
+                      ? 'rgba(37, 99, 235, 0.15)'
+                      : '#eff6ff'
+                    : 'transparent',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                };
+              }}
             >
-              <span>📰</span> News & Curriculum Blog
+              <span>📰</span> News &amp; Curriculum Blog
             </NavLink>
           </div>
 

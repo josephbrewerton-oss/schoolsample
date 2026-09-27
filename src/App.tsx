@@ -64,6 +64,8 @@ export default function App(): React.JSX.Element {
             <Route path="teacher-beacon" element={<TeacherBeaconPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
             <Route path="child-safety" element={<ChildSafetyPage />} />
+            <Route path="news" element={<BlogPage />} />
+            <Route path="news/*" element={<BlogPage />} />
             <Route path="blog" element={<BlogPage />} />
             <Route path="blog/*" element={<BlogPage />} />
             <Route path="*" element={<NotFoundPage />} />
