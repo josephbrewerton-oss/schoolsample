@@ -1,9 +1,18 @@
 User-agent: *
 Allow: /
+Allow: /news
+Allow: /blog
+Allow: /media-player
+Allow: /player.html
+Allow: /catholic-life
+Allow: /practice-lab
+Allow: /learning-zone
+Allow: /curriculum-studio
+Allow: /llms.txt
 
-# Disallow indexing of internal AST schemas and worker scripts
-Disallow: /static/*.ast
+# Disallow indexing of internal raw workers and test fixtures
 Disallow: /worker.html
+Disallow: /scripts/
 
-# Sitemap (optional, replace with your domain if configured)
-# Sitemap: https://josephbrewerton-oss.github.io/sitemap.xml
+# AI and LLM Agent Map
+# See /llms.txt for deterministic AST substrate definitions and API routes
