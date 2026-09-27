@@ -18,6 +18,7 @@
 - Learner Passport & Badges: `/profile` (IndexedDB mastery log, streak tracker, diagnostic reports)
 - Neural Settings: `/settings` (Hardware probe, WebGPU status, Chrome Prompt API toggle)
 - Latest School News & Technical Dispatches: `/news` and `/blog` (Technical dispatches on sovereign AI, procedural vector teaching, and platform releases)
+- Dual-Licensing Charter & Covenant: `/licensing` & `/LICENSE.md` (Track A Humanitarian Commons GNU AGPLv3/OGLv3 vs Track B Enterprise Commercial License)
 
 ## Latest News & Architectural Releases (September 2026)
 - **AST Vector Media Player (`/media-player`, `/player.html`)**: Micro-footprint (<15KB) procedural 2D/3D SVG vector animations replacing heavy 50-100MB video files.

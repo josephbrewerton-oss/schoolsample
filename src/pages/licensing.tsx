@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
 import MatSlaSection from '../components/MatSlaSection';
+import DualLicenseSection from '../components/DualLicenseSection';
 
 export default function LicensingPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<'covenant' | 'sla'>('covenant');
+  const [activeTab, setActiveTab] = useState<'covenant' | 'dual' | 'sla'>('covenant');
   const [selectedOrgType, setSelectedOrgType] = useState<string>('catholic');
   const [institutionName, setInstitutionName] = useState<string>('');
   const [covenantGenerated, setCovenantGenerated] = useState<boolean>(false);
@@ -145,6 +146,28 @@ export default function LicensingPage(): React.JSX.Element {
 
           <button
             type="button"
+            onClick={() => setActiveTab('dual')}
+            style={{
+              padding: '0.65rem 1.25rem',
+              borderRadius: '9999px',
+              border: activeTab === 'dual' ? '2px solid #2563eb' : '1px solid #cbd5e1',
+              background: activeTab === 'dual' ? '#eff6ff' : '#ffffff',
+              color: activeTab === 'dual' ? '#1d4ed8' : '#475569',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>⚖️</span>
+            <span>Dual-Licensing Charter (AGPLv3 &amp; Commercial)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('sla')}
             style={{
               padding: '0.65rem 1.25rem',
@@ -168,6 +191,8 @@ export default function LicensingPage(): React.JSX.Element {
 
         {activeTab === 'sla' ? (
           <MatSlaSection />
+        ) : activeTab === 'dual' ? (
+          <DualLicenseSection />
         ) : (
           <>
             {/* The 3 Core Pillars */}
@@ -526,10 +551,10 @@ export default function LicensingPage(): React.JSX.Element {
 
             <div>
               <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.4rem' }}>
-                Open-Source Software Core
+                Dual-Licensing: GNU AGPLv3 &amp; Commercial
               </h3>
               <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
-                The core client-side Single Page Application, WebRTC supervisor daemon, and S-Expression AST parsers are made freely available for non-commercial educational, pastoral, and community enhancement under permissive open licensing terms.
+                The core client-side Single Page Application, AST Vector Player, and SlideScript Compiler are dual-licensed: 100% free under the <strong>GNU Affero GPL v3.0 (AGPLv3)</strong> for schools, charities, and public education, alongside an Enterprise Commercial License for proprietary software publishers.
               </p>
             </div>
 
