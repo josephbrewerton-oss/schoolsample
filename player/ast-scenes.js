@@ -32,6 +32,34 @@
         { start: 0.35, end: 0.70, en: "Watch the laser slice cut 1/2 into two equal quarters (2/4). The area stays the exact same!", es: "Mira cómo la línea corta 1/2 en dos cuartos (2/4). ¡El área es exactamente igual!" },
         { start: 0.70, end: 1.00, en: "Now they share a common denominator! 2 quarters + 1 quarter equals exactly 3 quarters.", es: "¡Ahora comparten el mismo denominador! 2 cuartos + 1 cuarto son 3 cuartos." }
       ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.32,
+            title: 'Equivalence Cut Challenge',
+            prompt: 'Why must we cut the 1/2 slice before adding it to 1/4?',
+            options: [
+              'Because fractions cannot be added unless they share the same denominator (slice size)',
+              'Because the total area becomes bigger when sliced',
+              'Because 1 + 1 always equals 2'
+            ],
+            answer: 0,
+            explanation: 'You cannot count slices of different unit sizes. Cutting 1/2 into two 1/4 slices gives a common denominator of 4 without changing total area.'
+          },
+          {
+            t: 0.88,
+            title: 'Common Denominator Addition',
+            prompt: 'What is 2/4 + 1/4?',
+            options: [
+              '3/8 (add numerators and denominators)',
+              '3/4 (keep the common denominator, add the numerators)',
+              '2/4 (the fraction stays the same)'
+            ],
+            answer: 1,
+            explanation: 'When adding fractions with a common denominator, KEEP the denominator (4) and ADD the numerators (2 + 1 = 3). NEVER add denominators!'
+          }
+        ]
+      },
       mount(container) {
         const cx = 400, cy = 240, r = 140;
         container.innerHTML = `
@@ -353,6 +381,34 @@
         { start: 0.35, end: 0.70, en: "Side 'a' produces a square of 9 units. Side 'b' produces a square of 16 units.", es: "El lado 'a' produce un cuadrado de 9 unidades. El lado 'b' produce un cuadrado de 16 unidades." },
         { start: 0.70, end: 1.0, en: "Together they sum to 25 units! The hypotenuse 'c' must be exactly 5. a² + b² = c².", es: "¡Juntos suman 25 unidades! La hipotenusa 'c' mide exactamente 5. a² + b² = c²." }
       ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.35,
+            title: 'Area Conservation Check',
+            prompt: 'If side a = 3 has square area 9, and side b = 4 has square area 16, what must the hypotenuse square area c² equal?',
+            options: [
+              '7 (3 + 4)',
+              '25 (9 + 16)',
+              '144 (9 × 16)'
+            ],
+            answer: 1,
+            explanation: 'Pythagoras theorem states that the sum of the areas on the two shorter legs equals the area on the hypotenuse: a² + b² = c² (9 + 16 = 25).'
+          },
+          {
+            t: 0.90,
+            title: 'Hypotenuse Calculation',
+            prompt: 'Given that the area of the hypotenuse square is 25, what is the length of side c?',
+            options: [
+              'c = 5 (since √25 = 5)',
+              'c = 12.5 (since 25 / 2 = 12.5)',
+              'c = 50 (since 25 × 2 = 50)'
+            ],
+            answer: 0,
+            explanation: 'Because the area of a square is length², to find the side length from area 25 we take the square root: c = √25 = 5.'
+          }
+        ]
+      },
       mount(container) {
         const ox = 360, oy = 280, a = 90, b = 120;
         container.innerHTML = `

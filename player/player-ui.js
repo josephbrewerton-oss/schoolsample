@@ -25,6 +25,7 @@
         btnPrev: document.getElementById('btn-prev'),
         btnNext: document.getElementById('btn-next'),
         btnReset: document.getElementById('btn-reset'),
+        btnStepMode: document.getElementById('btn-step-mode'),
         btnNarrate: document.getElementById('btn-narrate'),
         btnTheme: document.getElementById('btn-theme'),
         btnFullscreen: document.getElementById('btn-fullscreen'),
@@ -84,6 +85,18 @@
         devEditorSvg: document.getElementById('dev-editor-svg'),
         devEditorAst: document.getElementById('dev-editor-ast'),
         devTemplateTab: document.getElementById('dev-template-tab'),
+        devCompilerTab: document.getElementById('dev-compiler-tab'),
+        devQuizbuilderTab: document.getElementById('dev-quizbuilder-tab'),
+        devEditorSlideScript: document.getElementById('dev-editor-slidescript'),
+        btnDecompileAst: document.getElementById('btn-decompile-ast'),
+        qbTime: document.getElementById('qb-time'),
+        qbBtnCaptureTime: document.getElementById('qb-btn-capture-time'),
+        qbTimeSeconds: document.getElementById('qb-time-seconds'),
+        qbTitle: document.getElementById('qb-title'),
+        qbPrompt: document.getElementById('qb-prompt'),
+        qbExplanation: document.getElementById('qb-explanation'),
+        qbBtnInsert: document.getElementById('qb-btn-insert'),
+        qbExistingList: document.getElementById('qb-existing-list'),
         btnObsLink: document.getElementById('btn-obs-link'),
         obsStatusDot: document.getElementById('obs-status-dot'),
         obsDrawer: document.getElementById('obs-drawer'),
@@ -131,6 +144,8 @@
       this.interactiveMode = true;
       this.completedCheckpoints = new Set();
       this.activeCheckpoint = null;
+      this.stepMode = false;
+      this.targetStop = null;
       this.toastTimeout = null;
       this._orbitHintTimeout = null;
       this.displayConfig = this.initDisplayConfig();
@@ -139,7 +154,7 @@
       this.devModeActive = false;
       this.selectedElement = null;
       this.selectedElementSelector = '';
-      this.activeStudioTab = 'svg';
+      this.activeStudioTab = 'compiler';
 
       this.starterTemplates = [
         {
@@ -552,6 +567,24 @@
         });
         this.elements.timelineTrack.appendChild(marker);
       });
+
+      if (scene.interactive && Array.isArray(scene.interactive.checkpoints)) {
+        scene.interactive.checkpoints.forEach((cp, idx) => {
+          const marker = document.createElement('div');
+          marker.className = 'keyframe-marker';
+          marker.style.left = `${cp.t * 100}%`;
+          marker.style.background = '#f59e0b';
+          marker.style.width = '6px';
+          marker.style.height = '12px';
+          marker.title = `🎯 Checkpoint: ${cp.title}`;
+          marker.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.engine.seek(cp.t);
+            this.triggerCheckpoint(cp, idx);
+          });
+          this.elements.timelineTrack.appendChild(marker);
+        });
+      }
     }
 
     updateView() {
@@ -653,8 +686,18 @@
       });
 
       // Controls
+      if (el.btnStepMode) {
+        el.btnStepMode.addEventListener('click', () => {
+          this.toggleStepMode();
+        });
+      }
+
       if (el.btnPlay) {
         el.btnPlay.addEventListener('click', () => {
+          if (this.stepMode) {
+            this.stepToNextKeyframe();
+            return;
+          }
           const playing = this.engine.togglePlay();
           el.btnPlay.textContent = playing ? '⏸ Pause' : '▶ Play';
           el.btnPlay.classList.toggle('active', playing);
@@ -662,15 +705,30 @@
       }
 
       if (el.btnPrev) {
-        el.btnPrev.addEventListener('click', () => this.engine.step(-0.05));
+        el.btnPrev.addEventListener('click', () => {
+          if (this.stepMode) {
+            this.stepToPrevKeyframe();
+          } else {
+            this.engine.step(-0.05);
+          }
+        });
       }
 
       if (el.btnNext) {
-        el.btnNext.addEventListener('click', () => this.engine.step(0.05));
+        el.btnNext.addEventListener('click', () => {
+          if (this.stepMode) {
+            this.stepToNextKeyframe();
+          } else {
+            this.engine.step(0.05);
+          }
+        });
       }
 
       if (el.btnReset) {
-        el.btnReset.addEventListener('click', () => this.engine.seek(0));
+        el.btnReset.addEventListener('click', () => {
+          this.targetStop = null;
+          this.engine.seek(0);
+        });
       }
 
       if (el.speedSelector) {
@@ -1100,6 +1158,29 @@
 
       if (el.btnStudioRun) {
         el.btnStudioRun.addEventListener('click', () => {
+          if (this.activeStudioTab === 'compiler') {
+            if (global.ASTSlideScriptCompiler && el.devEditorSlideScript) {
+              const scriptText = el.devEditorSlideScript.value;
+              const currentSvg = this.engine.getStageSvgSnapshot();
+              const result = global.ASTSlideScriptCompiler.compile(scriptText, currentSvg);
+              if (result.errors && result.errors.length > 0) {
+                this.playChime(220, 'sawtooth');
+                this.showToast('⚠️ Compiler Notice: ' + result.errors[0]);
+                return;
+              }
+
+              if (el.devEditorSvg) el.devEditorSvg.value = result.svg;
+              if (el.devEditorAst) el.devEditorAst.value = result.ast;
+
+              this.engine.hotReloadSvg(result.svg);
+              this.engine.hotReloadAst(result.ast);
+              this.engine.seek(0.0);
+              this.playChime(784, 'triangle');
+              this.showToast('🚀 SlideScript Compiled & Playing Live!');
+              return;
+            }
+          }
+
           let svgOk = true, astOk = true;
           if (el.devEditorSvg && el.devEditorSvg.value) {
             svgOk = this.engine.hotReloadSvg(el.devEditorSvg.value);
@@ -1113,6 +1194,119 @@
           } else {
             this.playChime(220, 'sawtooth');
             this.showToast('Notice: Syntax issue in SVG or AST');
+          }
+        });
+      }
+
+      if (el.btnDecompileAst) {
+        el.btnDecompileAst.addEventListener('click', () => {
+          if (global.ASTSlideScriptCompiler && this.engine.scene) {
+            const script = global.ASTSlideScriptCompiler.toSlideScript(this.engine.scene);
+            if (el.devEditorSlideScript) {
+              el.devEditorSlideScript.value = script;
+            }
+            this.switchStudioTab('compiler');
+            this.playChime(659.25, 'triangle');
+            this.showToast('🔄 Scene Converted to Plain SlideScript');
+          }
+        });
+      }
+
+      // SlideScript Compiler Template Buttons
+      const compilerTplBtns = document.querySelectorAll('.compiler-tpl-btn');
+      compilerTplBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tplKey = btn.getAttribute('data-tpl');
+          if (global.ASTSlideScriptCompiler && global.ASTSlideScriptCompiler.TEMPLATES && global.ASTSlideScriptCompiler.TEMPLATES[tplKey]) {
+            const tpl = global.ASTSlideScriptCompiler.TEMPLATES[tplKey];
+            if (el.devEditorSlideScript) {
+              el.devEditorSlideScript.value = tpl.script;
+            }
+            const res = global.ASTSlideScriptCompiler.compile(tpl.script);
+            if (el.devEditorSvg) el.devEditorSvg.value = res.svg;
+            if (el.devEditorAst) el.devEditorAst.value = res.ast;
+            this.engine.hotReloadSvg(res.svg);
+            this.engine.hotReloadAst(res.ast);
+            this.engine.seek(0.0);
+            this.playChime(784, 'triangle');
+            this.showToast(`✨ Loaded & Compiled ${tpl.title}`);
+          }
+        });
+      });
+
+      // Visual Checkpoint Builder Time Capture
+      if (el.qbBtnCaptureTime) {
+        el.qbBtnCaptureTime.addEventListener('click', () => {
+          const curP = Number(this.engine.progress.toFixed(2));
+          if (el.qbTime) el.qbTime.value = curP;
+          const dur = this.engine.durationSec || 10;
+          if (el.qbTimeSeconds) el.qbTimeSeconds.textContent = `(= ${(curP * dur).toFixed(1)}s)`;
+          this.showToast(`📍 Captured t=${curP}`);
+        });
+      }
+
+      if (el.qbTime) {
+        el.qbTime.addEventListener('input', () => {
+          const curP = parseFloat(el.qbTime.value) || 0;
+          const dur = this.engine.durationSec || 10;
+          if (el.qbTimeSeconds) el.qbTimeSeconds.textContent = `(= ${(curP * dur).toFixed(1)}s)`;
+        });
+      }
+
+      // Visual Checkpoint Builder Ingestion
+      if (el.qbBtnInsert) {
+        el.qbBtnInsert.addEventListener('click', () => {
+          const tVal = parseFloat(el.qbTime ? el.qbTime.value : '0.5') || 0.5;
+          const title = (el.qbTitle && el.qbTitle.value.trim()) || 'Concept Check';
+          const prompt = (el.qbPrompt && el.qbPrompt.value.trim()) || '';
+          if (!prompt) {
+            this.showToast('⚠️ Please enter a question prompt');
+            return;
+          }
+
+          const optInputs = [
+            document.getElementById('qb-opt-0'),
+            document.getElementById('qb-opt-1'),
+            document.getElementById('qb-opt-2'),
+            document.getElementById('qb-opt-3'),
+          ];
+          const options = optInputs.map(inp => inp ? inp.value.trim() : '').filter(Boolean);
+          if (options.length < 2) {
+            this.showToast('⚠️ Please enter at least 2 answer options');
+            return;
+          }
+
+          const correctRadio = document.querySelector('input[name="qb-opt-correct"]:checked');
+          const answerIdx = correctRadio ? parseInt(correctRadio.value, 10) : 0;
+          const explanation = (el.qbExplanation && el.qbExplanation.value.trim()) || '';
+
+          const newCp = {
+            t: Math.min(1.0, Math.max(0.0, tVal)),
+            title: title,
+            prompt: prompt,
+            options: options,
+            answer: Math.min(options.length - 1, answerIdx),
+            explanation: explanation
+          };
+
+          if (!this.engine.scene) this.engine.scene = {};
+          if (!this.engine.scene.interactive) {
+            this.engine.scene.interactive = { checkpoints: [], hotspots: [] };
+          }
+          if (!Array.isArray(this.engine.scene.interactive.checkpoints)) {
+            this.engine.scene.interactive.checkpoints = [];
+          }
+
+          this.engine.scene.interactive.checkpoints.push(newCp);
+          this.engine.scene.interactive.checkpoints.sort((a, b) => a.t - b.t);
+
+          this.completedCheckpoints.delete(this.engine.scene.interactive.checkpoints.length - 1);
+          this.renderQuizBuilderExistingList();
+          this.playChime(784, 'triangle');
+          this.showToast(`🎯 Injected Checkpoint at ${(newCp.t * 100).toFixed(0)}%!`);
+
+          if (global.ASTSlideScriptCompiler && el.devEditorSlideScript) {
+            el.devEditorSlideScript.value = global.ASTSlideScriptCompiler.toSlideScript(this.engine.scene);
           }
         });
       }
@@ -1299,13 +1493,28 @@
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
         if (e.code === 'Space') {
           e.preventDefault();
-          if (el.btnPlay) el.btnPlay.click();
-        } else if (e.code === 'ArrowLeft') {
+          if (this.stepMode) {
+            this.stepToNextKeyframe();
+          } else {
+            if (el.btnPlay) el.btnPlay.click();
+          }
+        } else if (e.code === 'ArrowLeft' || e.code === 'PageUp' || e.code === 'KeyP') {
           e.preventDefault();
-          this.engine.step(-0.05);
-        } else if (e.code === 'ArrowRight') {
+          if (this.stepMode) {
+            this.stepToPrevKeyframe();
+          } else {
+            this.engine.step(-0.05);
+          }
+        } else if (e.code === 'ArrowRight' || e.code === 'PageDown' || e.code === 'KeyN') {
           e.preventDefault();
-          this.engine.step(0.05);
+          if (this.stepMode) {
+            this.stepToNextKeyframe();
+          } else {
+            this.engine.step(0.05);
+          }
+        } else if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          this.toggleStepMode();
         } else if (e.code === 'KeyM') {
           e.preventDefault();
           if (el.btnNarrate) el.btnNarrate.click();
@@ -1538,6 +1747,20 @@
       this.engine.on('timeupdate', () => {
         this.updateView();
         this.checkInteractiveCheckpoints();
+
+        // If stepping towards a target stop in Step Mode, stop when reached
+        if (this.targetStop !== null && this.engine.progress >= this.targetStop - 0.008) {
+          const reached = this.targetStop;
+          this.targetStop = null;
+          this.engine.seek(reached);
+          this.engine.pause();
+          if (this.elements.btnPlay) {
+            this.elements.btnPlay.textContent = '▶ Play';
+            this.elements.btnPlay.classList.remove('active');
+          }
+          this.onStopReached(reached);
+        }
+
         // If looped back to start, allow checkpoints to be answered again
         if (this.engine.progress < 0.05 && this.completedCheckpoints.size > 0) {
           this.completedCheckpoints.clear();
@@ -1589,6 +1812,94 @@
         }
         this.updateView();
       });
+    }
+
+    // --- Step-by-Step Didactic Mode & Clicker Navigation Methods ---
+
+    toggleStepMode(force) {
+      this.stepMode = force !== undefined ? Boolean(force) : !this.stepMode;
+      if (this.elements.btnStepMode) {
+        this.elements.btnStepMode.classList.toggle('active', this.stepMode);
+      }
+      if (this.stepMode) {
+        this.targetStop = null;
+        this.engine.pause();
+        if (this.elements.btnPlay) {
+          this.elements.btnPlay.textContent = '▶ Play';
+          this.elements.btnPlay.classList.remove('active');
+        }
+        this.playChime(659.25, 'triangle');
+        this.showToast('👣 Clicker / Step Mode ON (Space / Next / Clicker)');
+      } else {
+        this.targetStop = null;
+        this.showToast('▶ Continuous Playback Mode');
+      }
+    }
+
+    getLessonStops() {
+      const scene = this.engine.scene;
+      if (!scene) return [0, 1];
+      const set = new Set([0]);
+      if (Array.isArray(scene.keyframes)) {
+        scene.keyframes.forEach(kf => set.add(Number(kf.t.toFixed(3))));
+      }
+      if (scene.interactive && Array.isArray(scene.interactive.checkpoints)) {
+        scene.interactive.checkpoints.forEach(cp => set.add(Number(cp.t.toFixed(3))));
+      }
+      set.add(1.0);
+      return Array.from(set).sort((a, b) => a - b);
+    }
+
+    stepToNextKeyframe() {
+      const stops = this.getLessonStops();
+      const curT = this.engine.progress;
+      const nextStop = stops.find(s => s > curT + 0.015);
+      if (nextStop !== undefined) {
+        this.targetStop = nextStop;
+        this.engine.play();
+        if (this.elements.btnPlay) {
+          this.elements.btnPlay.textContent = '⏸ Pause';
+          this.elements.btnPlay.classList.add('active');
+        }
+      } else {
+        this.showToast('🏁 End of Lesson Slide');
+      }
+    }
+
+    stepToPrevKeyframe() {
+      const stops = this.getLessonStops();
+      const curT = this.engine.progress;
+      const prevStops = stops.filter(s => s < curT - 0.02);
+      this.targetStop = null;
+      this.engine.pause();
+      if (this.elements.btnPlay) {
+        this.elements.btnPlay.textContent = '▶ Play';
+        this.elements.btnPlay.classList.remove('active');
+      }
+      if (prevStops.length > 0) {
+        const prevStop = prevStops[prevStops.length - 1];
+        this.engine.seek(prevStop);
+        this.onStopReached(prevStop);
+      } else {
+        this.engine.seek(0);
+        this.onStopReached(0);
+      }
+    }
+
+    onStopReached(t) {
+      const scene = this.engine.scene;
+      if (!scene) return;
+      const kf = (scene.keyframes || []).find(k => Math.abs(k.t - t) < 0.035);
+      const cp = (scene.interactive && scene.interactive.checkpoints || []).find(c => Math.abs(c.t - t) < 0.035);
+
+      this.playChime(784, 'triangle');
+      if (cp) {
+        this.showToast(`🎯 Challenge: ${cp.title}`);
+      } else if (kf) {
+        this.showToast(`📍 ${kf.title}`);
+      } else {
+        this.showToast(`Step at ${Math.round(t * 100)}%`);
+      }
     }
 
     startQuestMode() {
@@ -1913,7 +2224,7 @@
       return path.length ? path.join(' > ') : node.tagName.toLowerCase();
     }
 
-    openDevStudio(tab = 'svg') {
+    openDevStudio(tab = 'compiler') {
       const el = this.elements;
       if (!el.devStudioDrawer) return;
 
@@ -1925,6 +2236,9 @@
       }
       if (el.devEditorAst) {
         el.devEditorAst.value = this.engine.getCurrentAstSource();
+      }
+      if (el.devEditorSlideScript && !el.devEditorSlideScript.value && global.ASTSlideScriptCompiler && this.engine.scene) {
+        el.devEditorSlideScript.value = global.ASTSlideScriptCompiler.toSlideScript(this.engine.scene);
       }
 
       this.renderStarterTemplates();
@@ -1945,7 +2259,7 @@
       if (this.elements.devStudioDrawer && !this.elements.devStudioDrawer.classList.contains('hidden')) {
         this.closeDevStudio();
       } else {
-        this.openDevStudio('svg');
+        this.openDevStudio('compiler');
       }
     }
 
@@ -1958,9 +2272,61 @@
         btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
       });
 
+      if (el.devCompilerTab) el.devCompilerTab.style.display = tabName === 'compiler' ? 'flex' : 'none';
+      if (el.devQuizbuilderTab) {
+        el.devQuizbuilderTab.style.display = tabName === 'quizbuilder' ? 'block' : 'none';
+        if (tabName === 'quizbuilder') this.renderQuizBuilderExistingList();
+      }
       if (el.devEditorSvg) el.devEditorSvg.style.display = tabName === 'svg' ? 'block' : 'none';
       if (el.devEditorAst) el.devEditorAst.style.display = tabName === 'ast' ? 'block' : 'none';
       if (el.devTemplateTab) el.devTemplateTab.style.display = tabName === 'templates' ? 'grid' : 'none';
+    }
+
+    renderQuizBuilderExistingList() {
+      const el = this.elements;
+      if (!el.qbExistingList) return;
+      const scene = this.engine.scene;
+      const checkpoints = (scene && scene.interactive && scene.interactive.checkpoints) || [];
+      if (checkpoints.length === 0) {
+        el.qbExistingList.innerHTML = '<div style="font-size:11px; color:#64748b; font-style:italic; padding:6px 0;">No active checkpoints in this slide yet. Build and inject one above!</div>';
+        return;
+      }
+      const dur = this.engine.durationSec || 10;
+      el.qbExistingList.innerHTML = checkpoints.map((cp, idx) => `
+        <div class="qb-existing-card">
+          <div style="display:flex; flex-direction:column; gap:2px; flex:1; margin-right:12px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-weight:700; color:#38bdf8;">t=${(cp.t).toFixed(2)} (${(cp.t * dur).toFixed(1)}s)</span>
+              <span style="color:#f8fafc; font-weight:600;">${cp.title}</span>
+            </div>
+            <div style="font-size:11px; color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cp.prompt}</div>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="dev-btn qb-test-btn" data-idx="${idx}" style="font-size:10px; padding:3px 8px;">▶ Test</button>
+            <button type="button" class="dev-btn qb-del-btn" data-idx="${idx}" style="font-size:10px; padding:3px 8px; color:#f43f5e;">✕ Remove</button>
+          </div>
+        </div>
+      `).join('');
+
+      el.qbExistingList.querySelectorAll('.qb-test-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          const cp = checkpoints[idx];
+          if (cp) {
+            this.engine.seek(cp.t);
+            this.triggerCheckpoint(cp, idx);
+          }
+        });
+      });
+
+      el.qbExistingList.querySelectorAll('.qb-del-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          checkpoints.splice(idx, 1);
+          this.renderQuizBuilderExistingList();
+          this.showToast('🗑️ Checkpoint removed');
+        });
+      });
     }
 
     downloadStandaloneSvgApplet() {

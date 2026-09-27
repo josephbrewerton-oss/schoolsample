@@ -607,6 +607,41 @@
         }
       });
 
+      // Checkpoints (Interactive Formative Assessment)
+      const checkpoints = [];
+      const cpBlocks = extractSexprBlocks(astContent, ':checkpoints');
+      if (cpBlocks.length > 0) {
+        const cpEntryBlocks = extractSexprBlocks(cpBlocks[0], ':t');
+        cpEntryBlocks.forEach(cpText => {
+          const tMatch = cpText.match(/:t\s+([\d\.]+)/i);
+          const cpTitle = extractSlot.call(null, cpText, /:title\s+"([^"]+)"/i) || 'Checkpoint';
+          const prompt = extractSlot.call(null, cpText, /:prompt\s+"([^"]+)"/i) || '';
+          const ansMatch = cpText.match(/:answer\s+(\d+)/i);
+          const explanation = extractSlot.call(null, cpText, /:explanation\s+"([^"]+)"/i) || '';
+
+          const optBlocks = extractSexprBlocks(cpText, ':options');
+          const options = [];
+          if (optBlocks.length > 0) {
+            const optRegex = /"([^"]+)"/g;
+            let om;
+            while ((om = optRegex.exec(optBlocks[0])) !== null) {
+              options.push(om[1]);
+            }
+          }
+
+          if (tMatch && prompt) {
+            checkpoints.push({
+              t: parseFloat(tMatch[1]),
+              title: cpTitle,
+              prompt: prompt,
+              options: options.length > 0 ? options : ['Correct', 'Incorrect'],
+              answer: ansMatch ? parseInt(ansMatch[1], 10) : 0,
+              explanation: explanation
+            });
+          }
+        });
+      }
+
       const has3D = Boolean(camMatch || bindings.some(b => b.type && b.type.startsWith('3d-')));
 
       return {
@@ -618,7 +653,9 @@
         has3D,
         keyframes,
         subtitles,
-        bindings
+        bindings,
+        checkpoints,
+        interactive: checkpoints.length > 0 ? { checkpoints, hotspots: [] } : null
       };
     }
 
@@ -1252,6 +1289,11 @@
         this.scene.keyframes = parsed.keyframes || [];
         this.scene.subtitles = parsed.subtitles || [];
         this.scene.rawBindings = parsed.bindings || parsed.rawBindings || [];
+        if (parsed.interactive) {
+          this.scene.interactive = parsed.interactive;
+        } else if (parsed.checkpoints && parsed.checkpoints.length > 0) {
+          this.scene.interactive = { checkpoints: parsed.checkpoints, hotspots: [] };
+        }
         if (parsed.camera) this.scene.camera = parsed.camera;
         if (typeof parsed.has3D === 'boolean') this.scene.has3D = parsed.has3D;
         this.scene.astSource = typeof astInput === 'string' ? astInput : null;
