@@ -20,6 +20,8 @@
     <div class="header-actions">
       <button type="button" id="btn-3d-orbit" class="hidden" title="3D Scene: Drag stage to orbit / Click to reset camera">🌐 <span class="btn-label">3D Orbit</span></button>
       <button type="button" id="btn-interactive" title="Toggle Interactive Questions & Hotspots">🎯 <span class="btn-label">Interactive</span></button>
+      <button type="button" id="btn-dev-mode" title="Toggle Point-and-Click SVG Element Inspector">🛠️ <span class="btn-label">Inspect</span></button>
+      <button type="button" id="btn-dev-studio" title="Open Live SVG & AST Code Studio">💻 <span class="btn-label">Studio</span></button>
       <button type="button" id="btn-print" title="Generate A4 Classroom Worksheet">🖨️ <span class="btn-label">Print</span></button>
       <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
       <button type="button" id="btn-theme" title="Toggle Dark/Light Mode">☀️</button>
@@ -47,7 +49,104 @@
       </defs>
       <!-- Dynamic Vector Layer is generated here -->
       <g id="scene-root"></g>
+      <!-- Interactive SVG Developer Overlay Layer -->
+      <g id="dev-overlay-root">
+        <rect id="dev-hover-box" class="dev-overlay-box hover hidden" x="0" y="0" width="0" height="0" />
+        <rect id="dev-select-box" class="dev-overlay-box select hidden" x="0" y="0" width="0" height="0" />
+      </g>
     </svg>
+
+    <!-- Floating Element Inspector Tooltip -->
+    <div id="dev-hover-tooltip" class="dev-hover-tooltip hidden"></div>
+
+    <!-- Interactive Element Inspector Drawer -->
+    <div id="dev-inspector-drawer" class="dev-inspector-drawer hidden">
+      <div class="dev-drawer-header">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:14px;">🛠️</span>
+          <span id="dev-inspected-tag" class="dev-tag-badge">&lt;element&gt;</span>
+        </div>
+        <button type="button" id="dev-inspector-close" class="dev-drawer-close" title="Close Inspector">&times;</button>
+      </div>
+
+      <div style="font-size:11px; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;">
+        <span>Selector:</span>
+        <code id="dev-inspected-sel" style="color:#38bdf8; font-weight:700; user-select:text;">#id</code>
+      </div>
+
+      <div class="dev-prop-grid">
+        <span class="dev-prop-label">BBox (X, Y)</span>
+        <input type="text" id="dev-prop-xy" class="dev-prop-input" readonly />
+
+        <span class="dev-prop-label">BBox (W, H)</span>
+        <input type="text" id="dev-prop-wh" class="dev-prop-input" readonly />
+
+        <span class="dev-prop-label">Fill</span>
+        <div style="display:flex; gap:4px; align-items:center;">
+          <input type="color" id="dev-color-fill" style="width:24px; height:24px; padding:0; border:none; border-radius:4px; cursor:pointer; background:none;" />
+          <input type="text" id="dev-prop-fill" class="dev-prop-input" />
+        </div>
+
+        <span class="dev-prop-label">Stroke</span>
+        <div style="display:flex; gap:4px; align-items:center;">
+          <input type="color" id="dev-color-stroke" style="width:24px; height:24px; padding:0; border:none; border-radius:4px; cursor:pointer; background:none;" />
+          <input type="text" id="dev-prop-stroke" class="dev-prop-input" />
+        </div>
+
+        <span class="dev-prop-label">Stroke W</span>
+        <input type="number" id="dev-prop-strokew" class="dev-prop-input" min="0" max="20" step="0.5" />
+
+        <span class="dev-prop-label">Opacity</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="range" id="dev-range-opacity" min="0" max="1" step="0.05" style="flex:1;" />
+          <span id="dev-val-opacity" style="font-size:11px; width:28px; text-align:right;">1.0</span>
+        </div>
+
+        <span class="dev-prop-label">Transform</span>
+        <input type="text" id="dev-prop-transform" class="dev-prop-input" placeholder="e.g. translate(10, 20)" />
+      </div>
+
+      <div class="dev-action-btn-row">
+        <button type="button" class="dev-btn primary" id="btn-copy-selector">📋 Copy Selector</button>
+        <button type="button" class="dev-btn" id="btn-copy-ast-rule">⚡ Copy AST Rule</button>
+        <button type="button" class="dev-btn" id="btn-copy-node-xml">📄 Copy OuterXML</button>
+      </div>
+
+      <div style="border-top:1px solid #334155; padding-top:8px;">
+        <div style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:4px;">Active AST Bindings</div>
+        <div id="dev-active-bindings" style="font-size:11px; color:#cbd5e1; max-height:80px; overflow-y:auto; line-height:1.4;">
+          None attached
+        </div>
+      </div>
+    </div>
+
+    <!-- Live SVG & AST Code Studio Drawer -->
+    <div id="dev-studio-drawer" class="dev-studio-drawer hidden">
+      <div class="dev-studio-bar">
+        <div class="dev-studio-tabs">
+          <button type="button" class="dev-tab-btn active" data-tab="svg">🎨 Raw SVG Markup</button>
+          <button type="button" class="dev-tab-btn" data-tab="ast">⚡ AST S-Expressions</button>
+          <button type="button" class="dev-tab-btn" data-tab="templates">🚀 Starter Templates</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="dev-btn primary" id="btn-studio-run">⚡ Run / Hot Reload</button>
+          <button type="button" class="dev-btn" id="btn-studio-reset">↺ Reset Preset</button>
+          <button type="button" class="dev-btn" id="btn-studio-export">💾 Export</button>
+          <button type="button" id="dev-studio-close" class="dev-drawer-close" title="Close Code Studio">&times;</button>
+        </div>
+      </div>
+
+      <div class="dev-studio-content">
+        <!-- SVG Code Tab -->
+        <textarea id="dev-editor-svg" class="dev-editor-textarea" spellcheck="false" placeholder="Paste or edit raw &lt;svg&gt; XML nodes here..."></textarea>
+
+        <!-- AST Code Tab -->
+        <textarea id="dev-editor-ast" class="dev-editor-textarea" style="display:none;" spellcheck="false" placeholder="Write or edit AST S-Expressions here (:scene :id ... (:bindings ...))"></textarea>
+
+        <!-- Templates Tab -->
+        <div id="dev-template-tab" class="dev-template-list" style="display:none;"></div>
+      </div>
+    </div>
 
     <!-- Synchronized Subtitle Overlay -->
     <div id="subtitle-overlay">Loading AST Vector Scene...</div>

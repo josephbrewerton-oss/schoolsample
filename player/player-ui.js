@@ -50,6 +50,38 @@
         questScore: document.getElementById('quest-score'),
         questBody: document.getElementById('quest-body'),
         questClose: document.getElementById('quest-close'),
+        btnDevMode: document.getElementById('btn-dev-mode'),
+        btnDevStudio: document.getElementById('btn-dev-studio'),
+        devOverlayRoot: document.getElementById('dev-overlay-root'),
+        devHoverBox: document.getElementById('dev-hover-box'),
+        devSelectBox: document.getElementById('dev-select-box'),
+        devHoverTooltip: document.getElementById('dev-hover-tooltip'),
+        devInspectorDrawer: document.getElementById('dev-inspector-drawer'),
+        devInspectorClose: document.getElementById('dev-inspector-close'),
+        devInspectedTag: document.getElementById('dev-inspected-tag'),
+        devInspectedSel: document.getElementById('dev-inspected-sel'),
+        devPropXy: document.getElementById('dev-prop-xy'),
+        devPropWh: document.getElementById('dev-prop-wh'),
+        devColorFill: document.getElementById('dev-color-fill'),
+        devPropFill: document.getElementById('dev-prop-fill'),
+        devColorStroke: document.getElementById('dev-color-stroke'),
+        devPropStroke: document.getElementById('dev-prop-stroke'),
+        devPropStrokew: document.getElementById('dev-prop-strokew'),
+        devRangeOpacity: document.getElementById('dev-range-opacity'),
+        devValOpacity: document.getElementById('dev-val-opacity'),
+        devPropTransform: document.getElementById('dev-prop-transform'),
+        btnCopySelector: document.getElementById('btn-copy-selector'),
+        btnCopyAstRule: document.getElementById('btn-copy-ast-rule'),
+        btnCopyNodeXml: document.getElementById('btn-copy-node-xml'),
+        devActiveBindings: document.getElementById('dev-active-bindings'),
+        devStudioDrawer: document.getElementById('dev-studio-drawer'),
+        devStudioClose: document.getElementById('dev-studio-close'),
+        btnStudioRun: document.getElementById('btn-studio-run'),
+        btnStudioReset: document.getElementById('btn-studio-reset'),
+        btnStudioExport: document.getElementById('btn-studio-export'),
+        devEditorSvg: document.getElementById('dev-editor-svg'),
+        devEditorAst: document.getElementById('dev-editor-ast'),
+        devTemplateTab: document.getElementById('dev-template-tab'),
       }, elements);
 
       this.isDragging = false;
@@ -60,6 +92,36 @@
       this.activeCheckpoint = null;
       this.toastTimeout = null;
       this._orbitHintTimeout = null;
+
+      // Developer Mode & SVG Inspector State
+      this.devModeActive = false;
+      this.selectedElement = null;
+      this.selectedElementSelector = '';
+      this.activeStudioTab = 'svg';
+
+      this.starterTemplates = [
+        {
+          id: 'simple-orbit',
+          title: '🪐 Simple Planetary Orbit',
+          desc: 'Center star with orbiting planet governed by trigonometry.',
+          svg: `<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">\n  <circle cx="400" cy="240" r="140" fill="none" stroke="#334155" stroke-dasharray="4 4" />\n  <circle id="star-sun" cx="400" cy="240" r="32" fill="#f59e0b" filter="url(#glow)" />\n  <circle id="planet-earth" cx="540" cy="240" r="14" fill="#38bdf8" />\n  <text id="orbit-txt" x="400" y="440" fill="#94a3b8" font-size="16" text-anchor="middle">Planetary Orbit Period: 1.0 Cycle</text>\n</svg>`,
+          ast: `(:scene :id "simple-orbit" :title "Simple Planetary Orbit" :stage "KS3 SCIENCE" :duration 6.0\n  (:keyframes (\n    (:t 0.00 :title "Perihelion" :rule "Planet starts at 0 rad")\n    (:t 0.50 :title "Aphelion" :rule "Planet reaches opposite orbital pole")\n  ))\n  (:bindings (\n    (:target "#planet-earth" :attr "cx" :expr "400 + Math.cos(t * Math.PI * 2) * 140")\n    (:target "#planet-earth" :attr "cy" :expr "240 + Math.sin(t * Math.PI * 2) * 140")\n    (:target "#orbit-txt" :attr "textContent" :expr "'Orbit Angle: ' + Math.round(t * 360) + '°'")\n  ))\n)`
+        },
+        {
+          id: 'sine-wave',
+          title: '🌊 Harmonic Sine Wave',
+          desc: 'Continuous wave oscillation with frequency and amplitude.',
+          svg: `<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">\n  <line x1="100" y1="240" x2="700" y2="240" stroke="#334155" stroke-width="2" />\n  <path id="harmonic-wave" d="M 100 240 Q 250 140 400 240 T 700 240" fill="none" stroke="#38bdf8" stroke-width="4" />\n  <circle id="wave-tracer" cx="400" cy="240" r="10" fill="#f43f5e" filter="url(#glow)" />\n  <text id="wave-label" x="400" y="80" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">y = A · sin(ωt + φ)</text>\n</svg>`,
+          ast: `(:scene :id "sine-wave" :title "Harmonic Sine Wave" :stage "KS4 PHYSICS" :duration 4.0\n  (:keyframes (\n    (:t 0.00 :title "Initial Phase" :rule "Zero displacement at origin")\n    (:t 0.25 :title "Crest Amplitude" :rule "Maximum positive displacement +A")\n    (:t 0.75 :title "Trough Amplitude" :rule "Maximum negative displacement -A")\n  ))\n  (:bindings (\n    (:target "#wave-tracer" :attr "cy" :expr "240 - Math.sin(t * Math.PI * 2) * 90")\n    (:target "#wave-tracer" :attr "cx" :expr "100 + (t * 600)")\n    (:target "#wave-label" :attr "textContent" :expr "'Displacement y = ' + (Math.sin(t * Math.PI * 2) * 10).toFixed(1) + ' cm'")\n  ))\n)`
+        },
+        {
+          id: 'physics-pendulum',
+          title: '⏱️ Physics Harmonic Pendulum',
+          desc: 'Conservation of mechanical energy: kinetic vs potential.',
+          svg: `<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">\n  <circle cx="400" cy="80" r="6" fill="#64748b" />\n  <line id="pendulum-rod" x1="400" y1="80" x2="400" y2="340" stroke="#94a3b8" stroke-width="3" />\n  <circle id="pendulum-bob" cx="400" cy="340" r="28" fill="#10b981" stroke="#34d399" stroke-width="2" />\n  <text id="energy-txt" x="400" y="420" fill="#34d399" font-size="16" font-weight="bold" text-anchor="middle">E = Ep + Ek</text>\n</svg>`,
+          ast: `(:scene :id "physics-pendulum" :title "Harmonic Pendulum" :stage "KS3 PHYSICS" :duration 3.0\n  (:keyframes (\n    (:t 0.00 :title "Max Left Amplitude" :rule "Ep is maximal, Ek = 0")\n    (:t 0.25 :title "Equilibrium Pass" :rule "Ek is maximal at center, Ep is minimum")\n    (:t 0.50 :title "Max Right Amplitude" :rule "Ep is maximal, Ek = 0")\n  ))\n  (:bindings (\n    (:target "#pendulum-rod" :attr "transform" :expr "'rotate(' + (Math.sin(t * Math.PI * 2) * 40) + ' 400 80)'")\n    (:target "#pendulum-bob" :attr "transform" :expr "'rotate(' + (Math.sin(t * Math.PI * 2) * 40) + ' 400 80)'")\n    (:target "#energy-txt" :attr "textContent" :expr "'Potential Energy: ' + (Math.abs(Math.sin(t * Math.PI * 2)) * 100).toFixed(0) + '% | Kinetic: ' + ((1 - Math.abs(Math.sin(t * Math.PI * 2))) * 100).toFixed(0) + '%'")\n  ))\n)`
+        }
+      ];
 
       this.questState = {
         active: false,
@@ -665,7 +727,7 @@
 
       if (stage) {
         stage.addEventListener('mousedown', (e) => {
-          if (e.target.closest('button') || e.target.closest('select') || e.target.closest('.interactive-card')) return;
+          if (this.devModeActive || e.target.closest('button') || e.target.closest('select') || e.target.closest('.interactive-card') || e.target.closest('.dev-inspector-drawer') || e.target.closest('.dev-studio-drawer')) return;
           if (this.engine.has3D()) {
             this.isOrbitDragging = true;
             startOrbitX = e.clientX;
@@ -841,9 +903,202 @@
         });
       }
 
+      // --- Developer Inspector & Live Studio Event Bindings ---
+      if (el.btnDevMode) {
+        el.btnDevMode.addEventListener('click', () => this.toggleDevMode());
+      }
+
+      if (el.btnDevStudio) {
+        el.btnDevStudio.addEventListener('click', () => this.toggleDevStudio());
+      }
+
+      if (stage) {
+        stage.addEventListener('mousemove', (e) => {
+          if (!this.devModeActive || !el.sceneRoot || !el.stageSvg) return;
+          if (e.target.closest('.dev-inspector-drawer') || e.target.closest('.dev-studio-drawer') || e.target.closest('header') || e.target.closest('footer')) {
+            if (el.devHoverBox) el.devHoverBox.classList.add('hidden');
+            if (el.devHoverTooltip) el.devHoverTooltip.classList.add('hidden');
+            return;
+          }
+
+          let target = document.elementFromPoint(e.clientX, e.clientY);
+          if (target && target.closest && target.closest('#scene-root') && target !== el.sceneRoot) {
+            if (target.tagName && target.tagName.toLowerCase() === 'g' && target.children.length === 1) {
+              target = target.children[0];
+            }
+            this.updateDevHover(target, e);
+          } else {
+            if (el.devHoverBox) el.devHoverBox.classList.add('hidden');
+            if (el.devHoverTooltip) el.devHoverTooltip.classList.add('hidden');
+          }
+        });
+
+        stage.addEventListener('mouseleave', () => {
+          if (el.devHoverBox) el.devHoverBox.classList.add('hidden');
+          if (el.devHoverTooltip) el.devHoverTooltip.classList.add('hidden');
+        });
+
+        stage.addEventListener('click', (e) => {
+          if (!this.devModeActive) return;
+          if (e.target.closest('.dev-inspector-drawer') || e.target.closest('.dev-studio-drawer') || e.target.closest('button') || e.target.closest('select')) return;
+
+          let target = document.elementFromPoint(e.clientX, e.clientY);
+          if (target && target.closest && target.closest('#scene-root') && target !== el.sceneRoot) {
+            e.stopPropagation();
+            if (target.tagName && target.tagName.toLowerCase() === 'g' && target.children.length === 1) {
+              target = target.children[0];
+            }
+            this.selectElement(target);
+          }
+        });
+      }
+
+      if (el.devInspectorClose) {
+        el.devInspectorClose.addEventListener('click', () => this.closeInspectorDrawer());
+      }
+
+      const syncAttr = (attr, val) => {
+        if (!this.selectedElement) return;
+        this.selectedElement.setAttribute(attr, val);
+        this.refreshSelectBox();
+        this.engine.notifyParent({
+          type: 'DEV_ELEMENT_UPDATED',
+          selector: this.selectedElementSelector,
+          attr,
+          value: val
+        });
+      };
+
+      if (el.devColorFill && el.devPropFill) {
+        el.devColorFill.addEventListener('input', (e) => {
+          el.devPropFill.value = e.target.value;
+          syncAttr('fill', e.target.value);
+        });
+        el.devPropFill.addEventListener('change', (e) => {
+          el.devColorFill.value = e.target.value.startsWith('#') && e.target.value.length === 7 ? e.target.value : '#000000';
+          syncAttr('fill', e.target.value);
+        });
+      }
+
+      if (el.devColorStroke && el.devPropStroke) {
+        el.devColorStroke.addEventListener('input', (e) => {
+          el.devPropStroke.value = e.target.value;
+          syncAttr('stroke', e.target.value);
+        });
+        el.devPropStroke.addEventListener('change', (e) => {
+          el.devColorStroke.value = e.target.value.startsWith('#') && e.target.value.length === 7 ? e.target.value : '#000000';
+          syncAttr('stroke', e.target.value);
+        });
+      }
+
+      if (el.devPropStrokew) {
+        el.devPropStrokew.addEventListener('input', (e) => {
+          syncAttr('stroke-width', e.target.value);
+        });
+      }
+
+      if (el.devRangeOpacity && el.devValOpacity) {
+        el.devRangeOpacity.addEventListener('input', (e) => {
+          el.devValOpacity.textContent = parseFloat(e.target.value).toFixed(2);
+          syncAttr('opacity', e.target.value);
+        });
+      }
+
+      if (el.devPropTransform) {
+        el.devPropTransform.addEventListener('input', (e) => {
+          syncAttr('transform', e.target.value);
+        });
+      }
+
+      if (el.btnCopySelector) {
+        el.btnCopySelector.addEventListener('click', () => {
+          if (!this.selectedElementSelector) return;
+          navigator.clipboard.writeText(this.selectedElementSelector).then(() => {
+            this.showToast(`✓ Selector copied: ${this.selectedElementSelector}`);
+          });
+        });
+      }
+
+      if (el.btnCopyAstRule) {
+        el.btnCopyAstRule.addEventListener('click', () => {
+          if (!this.selectedElementSelector) return;
+          const snippet = `(:target "${this.selectedElementSelector}" :attr "transform" :expr "'rotate(' + (t * 360) + ')'")`;
+          navigator.clipboard.writeText(snippet).then(() => {
+            this.showToast(`✓ AST rule copied`);
+          });
+        });
+      }
+
+      if (el.btnCopyNodeXml) {
+        el.btnCopyNodeXml.addEventListener('click', () => {
+          if (!this.selectedElement) return;
+          navigator.clipboard.writeText(this.selectedElement.outerHTML).then(() => {
+            this.showToast(`✓ OuterXML copied`);
+          });
+        });
+      }
+
+      if (el.devStudioClose) {
+        el.devStudioClose.addEventListener('click', () => this.closeDevStudio());
+      }
+
+      const studioTabBtns = document.querySelectorAll('.dev-tab-btn');
+      studioTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tab = btn.getAttribute('data-tab');
+          this.switchStudioTab(tab);
+        });
+      });
+
+      if (el.btnStudioRun) {
+        el.btnStudioRun.addEventListener('click', () => {
+          let svgOk = true, astOk = true;
+          if (el.devEditorSvg && el.devEditorSvg.value) {
+            svgOk = this.engine.hotReloadSvg(el.devEditorSvg.value);
+          }
+          if (el.devEditorAst && el.devEditorAst.value) {
+            astOk = this.engine.hotReloadAst(el.devEditorAst.value);
+          }
+          if (svgOk && astOk) {
+            this.playChime(784, 'triangle');
+            this.showToast('⚡ Live Stage Hot-Reloaded!');
+          } else {
+            this.playChime(220, 'sawtooth');
+            this.showToast('Notice: Syntax issue in SVG or AST');
+          }
+        });
+      }
+
+      if (el.btnStudioReset) {
+        el.btnStudioReset.addEventListener('click', () => {
+          this.engine.loadScene(this.engine.activePresetId, this.engine.isPlaying);
+          setTimeout(() => {
+            if (el.devEditorSvg) el.devEditorSvg.value = this.engine.getStageSvgSnapshot();
+            if (el.devEditorAst) el.devEditorAst.value = this.engine.getCurrentAstSource();
+            this.showToast('↺ Preset Reset');
+          }, 150);
+        });
+      }
+
+      if (el.btnStudioExport) {
+        el.btnStudioExport.addEventListener('click', () => {
+          const cleanSvg = this.engine.getStageSvgSnapshot();
+          const blob = new Blob([cleanSvg], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${this.engine.activePresetId || 'scene'}-export.svg`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          this.showToast('💾 Clean Vector SVG Exported');
+        });
+      }
+
       // Keyboard navigation
       window.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
         if (e.code === 'Space') {
           e.preventDefault();
           if (el.btnPlay) el.btnPlay.click();
@@ -856,6 +1111,15 @@
         } else if (e.code === 'KeyM') {
           e.preventDefault();
           if (el.btnNarrate) el.btnNarrate.click();
+        } else if (e.code === 'KeyI' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          this.toggleDevMode();
+        } else if (e.code === 'Escape') {
+          if (this.elements.devInspectorDrawer && !this.elements.devInspectorDrawer.classList.contains('hidden')) {
+            this.closeInspectorDrawer();
+          } else if (this.elements.devStudioDrawer && !this.elements.devStudioDrawer.classList.contains('hidden')) {
+            this.closeDevStudio();
+          }
         }
       });
     }
@@ -1038,6 +1302,269 @@
         this.elements.questDrawer.classList.add('hidden');
       }
       this.questState.active = false;
+    }
+
+    // --- Developer Inspector & Live Studio Methods ---
+
+    setDevMode(enabled) {
+      this.devModeActive = Boolean(enabled);
+      const stage = this.elements.playerStage || this.elements.stageSvg;
+      if (stage) {
+        stage.classList.toggle('dev-mode-active', this.devModeActive);
+      }
+      if (this.elements.btnDevMode) {
+        this.elements.btnDevMode.classList.toggle('active', this.devModeActive);
+      }
+      if (!this.devModeActive) {
+        if (this.elements.devHoverBox) this.elements.devHoverBox.classList.add('hidden');
+        if (this.elements.devHoverTooltip) this.elements.devHoverTooltip.classList.add('hidden');
+        if (this.elements.devSelectBox) this.elements.devSelectBox.classList.add('hidden');
+        this.closeInspectorDrawer();
+      }
+      this.showToast(this.devModeActive ? '🛠️ Inspector Mode: Click SVG node to inspect' : '🛠️ Inspector Mode: OFF');
+      this.engine.notifyParent({
+        type: 'DEV_MODE_CHANGED',
+        enabled: this.devModeActive
+      });
+    }
+
+    toggleDevMode() {
+      this.setDevMode(!this.devModeActive);
+    }
+
+    updateDevHover(targetNode, e) {
+      if (!this.elements.devHoverBox || !this.elements.devHoverTooltip || !this.elements.stageSvg) return;
+      try {
+        const svg = this.elements.stageSvg;
+        const bbox = targetNode.getBBox ? targetNode.getBBox() : targetNode.getBoundingClientRect();
+        
+        this.elements.devHoverBox.setAttribute('x', bbox.x);
+        this.elements.devHoverBox.setAttribute('y', bbox.y);
+        this.elements.devHoverBox.setAttribute('width', Math.max(4, bbox.width));
+        this.elements.devHoverBox.setAttribute('height', Math.max(4, bbox.height));
+        this.elements.devHoverBox.classList.remove('hidden');
+
+        const stageRect = svg.getBoundingClientRect();
+        const tooltipX = Math.min(stageRect.width - 220, Math.max(10, e.clientX - stageRect.left + 14));
+        const tooltipY = Math.min(stageRect.height - 40, Math.max(10, e.clientY - stageRect.top + 14));
+        this.elements.devHoverTooltip.style.left = `${tooltipX}px`;
+        this.elements.devHoverTooltip.style.top = `${tooltipY}px`;
+
+        const tag = targetNode.tagName.toLowerCase();
+        const idStr = targetNode.id ? `#${targetNode.id}` : '';
+        const fill = targetNode.getAttribute('fill') || targetNode.style.fill || '';
+        const stroke = targetNode.getAttribute('stroke') || targetNode.style.stroke || '';
+        this.elements.devHoverTooltip.innerHTML = `<strong>&lt;${tag}${idStr}&gt;</strong> [${Math.round(bbox.width)}×${Math.round(bbox.height)}]${fill ? ' • fill:' + fill : ''}${stroke ? ' • strk:' + stroke : ''}`;
+        this.elements.devHoverTooltip.classList.remove('hidden');
+      } catch (_) {}
+    }
+
+    selectElement(node) {
+      if (!node) return;
+      this.selectedElement = node;
+      this.selectedElementSelector = this.getSelectorForElement(node);
+
+      this.playChime(660, 'triangle');
+      this.refreshSelectBox();
+
+      const el = this.elements;
+      if (el.devInspectedTag) {
+        el.devInspectedTag.textContent = `<${node.tagName.toLowerCase()}${node.id ? ' #' + node.id : ''}>`;
+      }
+      if (el.devInspectedSel) {
+        el.devInspectedSel.textContent = this.selectedElementSelector;
+      }
+
+      let bbox = { x: 0, y: 0, width: 0, height: 0 };
+      try {
+        bbox = node.getBBox ? node.getBBox() : node.getBoundingClientRect();
+      } catch (_) {}
+
+      if (el.devPropXy) el.devPropXy.value = `x: ${Math.round(bbox.x)}, y: ${Math.round(bbox.y)}`;
+      if (el.devPropWh) el.devPropWh.value = `w: ${Math.round(bbox.width)}, h: ${Math.round(bbox.height)}`;
+
+      const curFill = node.getAttribute('fill') || node.style.fill || '#ffffff';
+      const curStroke = node.getAttribute('stroke') || node.style.stroke || 'none';
+      const curStrokeW = node.getAttribute('stroke-width') || node.style.strokeWidth || '1';
+      const curOpacity = node.getAttribute('opacity') || node.style.opacity || '1';
+      const curTransform = node.getAttribute('transform') || '';
+
+      if (el.devPropFill) el.devPropFill.value = curFill;
+      if (el.devColorFill) el.devColorFill.value = curFill.startsWith('#') && curFill.length === 7 ? curFill : '#38bdf8';
+
+      if (el.devPropStroke) el.devPropStroke.value = curStroke;
+      if (el.devColorStroke) el.devColorStroke.value = curStroke.startsWith('#') && curStroke.length === 7 ? curStroke : '#0284c7';
+
+      if (el.devPropStrokew) el.devPropStrokew.value = curStrokeW;
+      if (el.devRangeOpacity) el.devRangeOpacity.value = curOpacity;
+      if (el.devValOpacity) el.devValOpacity.textContent = parseFloat(curOpacity).toFixed(2);
+      if (el.devPropTransform) el.devPropTransform.value = curTransform;
+
+      // Active AST bindings query
+      if (el.devActiveBindings) {
+        const rawBindings = (this.engine.scene && this.engine.scene.rawBindings) || [];
+        const matched = rawBindings.filter(b => {
+          if (!b.target) return false;
+          if (node.id && b.target === `#${node.id}`) return true;
+          return b.target === this.selectedElementSelector;
+        });
+
+        if (matched.length) {
+          el.devActiveBindings.innerHTML = matched.map(m => `
+            <div style="margin-bottom:4px; padding:3px 6px; background:#090d16; border-radius:4px; border:1px solid #1e293b;">
+              <span style="color:#38bdf8; font-weight:700;">:${m.attr || m.type}</span>
+              <span style="color:#94a3b8; font-size:10px;">${m.expr || '(3D projection)'}</span>
+            </div>
+          `).join('');
+        } else {
+          el.devActiveBindings.innerHTML = `<span style="color:#64748b;">No mathematical AST bindings attached.</span>`;
+        }
+      }
+
+      if (el.devInspectorDrawer) {
+        el.devInspectorDrawer.classList.remove('hidden');
+      }
+
+      this.engine.notifyParent({
+        type: 'DEV_ELEMENT_SELECTED',
+        selector: this.selectedElementSelector,
+        tag: node.tagName.toLowerCase(),
+        id: node.id || '',
+        bbox: { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height },
+        attributes: {
+          fill: curFill,
+          stroke: curStroke,
+          strokeWidth: curStrokeW,
+          opacity: curOpacity,
+          transform: curTransform
+        }
+      });
+    }
+
+    refreshSelectBox() {
+      if (!this.selectedElement || !this.elements.devSelectBox) return;
+      try {
+        const bbox = this.selectedElement.getBBox ? this.selectedElement.getBBox() : this.selectedElement.getBoundingClientRect();
+        this.elements.devSelectBox.setAttribute('x', bbox.x);
+        this.elements.devSelectBox.setAttribute('y', bbox.y);
+        this.elements.devSelectBox.setAttribute('width', Math.max(4, bbox.width));
+        this.elements.devSelectBox.setAttribute('height', Math.max(4, bbox.height));
+        this.elements.devSelectBox.classList.remove('hidden');
+      } catch (_) {}
+    }
+
+    closeInspectorDrawer() {
+      if (this.elements.devInspectorDrawer) {
+        this.elements.devInspectorDrawer.classList.add('hidden');
+      }
+      if (this.elements.devSelectBox) {
+        this.elements.devSelectBox.classList.add('hidden');
+      }
+      this.selectedElement = null;
+      this.selectedElementSelector = '';
+    }
+
+    getSelectorForElement(node) {
+      if (node.id) return `#${node.id}`;
+      let path = [];
+      let cur = node;
+      while (cur && cur.id !== 'scene-root' && cur.tagName.toLowerCase() !== 'svg') {
+        let tag = cur.tagName.toLowerCase();
+        if (cur.id) {
+          path.unshift(`#${cur.id}`);
+          break;
+        } else {
+          let siblingIndex = 1;
+          let sib = cur.previousElementSibling;
+          while (sib) {
+            if (sib.tagName === cur.tagName) siblingIndex++;
+            sib = sib.previousElementSibling;
+          }
+          path.unshift(`${tag}:nth-of-type(${siblingIndex})`);
+        }
+        cur = cur.parentElement;
+      }
+      return path.length ? path.join(' > ') : node.tagName.toLowerCase();
+    }
+
+    openDevStudio(tab = 'svg') {
+      const el = this.elements;
+      if (!el.devStudioDrawer) return;
+
+      el.devStudioDrawer.classList.remove('hidden');
+      if (el.btnDevStudio) el.btnDevStudio.classList.add('active');
+
+      if (el.devEditorSvg) {
+        el.devEditorSvg.value = this.engine.getStageSvgSnapshot();
+      }
+      if (el.devEditorAst) {
+        el.devEditorAst.value = this.engine.getCurrentAstSource();
+      }
+
+      this.renderStarterTemplates();
+      this.switchStudioTab(tab);
+      this.showToast('💻 Live SVG & AST Code Studio Ready');
+    }
+
+    closeDevStudio() {
+      if (this.elements.devStudioDrawer) {
+        this.elements.devStudioDrawer.classList.add('hidden');
+      }
+      if (this.elements.btnDevStudio) {
+        this.elements.btnDevStudio.classList.remove('active');
+      }
+    }
+
+    toggleDevStudio() {
+      if (this.elements.devStudioDrawer && !this.elements.devStudioDrawer.classList.contains('hidden')) {
+        this.closeDevStudio();
+      } else {
+        this.openDevStudio('svg');
+      }
+    }
+
+    switchStudioTab(tabName) {
+      this.activeStudioTab = tabName;
+      const el = this.elements;
+
+      const tabBtns = document.querySelectorAll('.dev-tab-btn');
+      tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+      });
+
+      if (el.devEditorSvg) el.devEditorSvg.style.display = tabName === 'svg' ? 'block' : 'none';
+      if (el.devEditorAst) el.devEditorAst.style.display = tabName === 'ast' ? 'block' : 'none';
+      if (el.devTemplateTab) el.devTemplateTab.style.display = tabName === 'templates' ? 'grid' : 'none';
+    }
+
+    renderStarterTemplates() {
+      const el = this.elements;
+      if (!el.devTemplateTab) return;
+      el.devTemplateTab.innerHTML = this.starterTemplates.map(tpl => `
+        <div class="dev-template-card" data-template-id="${tpl.id}">
+          <div class="dev-template-title">${tpl.title}</div>
+          <div class="dev-template-desc">${tpl.desc}</div>
+          <button type="button" class="dev-btn primary" style="margin-top:8px; width:100%; justify-content:center;">
+            Load Starter ➜
+          </button>
+        </div>
+      `).join('');
+
+      el.devTemplateTab.querySelectorAll('.dev-template-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const tplId = card.getAttribute('data-template-id');
+          const tpl = this.starterTemplates.find(t => t.id === tplId);
+          if (tpl) {
+            if (el.devEditorSvg) el.devEditorSvg.value = tpl.svg;
+            if (el.devEditorAst) el.devEditorAst.value = tpl.ast;
+            this.engine.hotReloadSvg(tpl.svg);
+            this.engine.hotReloadAst(tpl.ast);
+            this.switchStudioTab('svg');
+            this.playChime(784, 'triangle');
+            this.showToast(`🚀 Loaded ${tpl.title}`);
+          }
+        });
+      });
     }
   }
 

@@ -1193,6 +1193,139 @@
         this.animationFrameId = requestAnimationFrame(this.tick);
       }
     }
+
+    /**
+     * Hot-reloads raw SVG markup directly onto the stage container
+     * Rebinds active AST expressions without losing clock state or timeline position
+     */
+    hotReloadSvg(svgMarkup) {
+      if (!svgMarkup || typeof svgMarkup !== 'string') return false;
+      try {
+        if (!this.scene) {
+          this.scene = { id: 'custom-scene', title: 'Custom SVG Scene', stage: 'DEVELOPER', duration: 10.0 };
+        }
+        this.scene.svgText = svgMarkup;
+
+        if (this._container) {
+          if (typeof DOMParser !== 'undefined') {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(svgMarkup, 'image/svg+xml');
+            const rootSvg = doc.querySelector('svg');
+            if (rootSvg) {
+              this._container.innerHTML = rootSvg.innerHTML;
+            } else {
+              this._container.innerHTML = svgMarkup;
+            }
+          } else {
+            this._container.innerHTML = svgMarkup;
+          }
+
+          // Recompile AST bindings to match newly mounted DOM nodes
+          this.mountSceneAsset(this.scene, this._container);
+          this.applyBindings(this.progress);
+        }
+
+        this.emit('svghotreloaded', { svg: svgMarkup, progress: this.progress });
+        this.notifyParent({ type: 'DEV_HOT_RELOAD_SUCCESS', target: 'svg' });
+        return true;
+      } catch (err) {
+        console.error('[AST Engine] Failed to hot-reload SVG:', err);
+        return false;
+      }
+    }
+
+    /**
+     * Hot-reloads AST S-Expressions / keyframes / bindings in real-time
+     * Recompiles mathematical expressions and applies them immediately
+     */
+    hotReloadAst(astInput) {
+      if (!astInput) return false;
+      try {
+        let parsed = typeof astInput === 'string' ? this.parseAst(astInput) : astInput;
+        if (!parsed) return false;
+
+        if (!this.scene) this.scene = {};
+        this.scene.id = parsed.id || this.scene.id || 'custom-ast';
+        this.scene.title = parsed.title || this.scene.title || 'Custom AST Scene';
+        this.scene.stage = parsed.stage || this.scene.stage || 'DEVELOPER';
+        this.scene.duration = parsed.duration || this.scene.duration || 10.0;
+        this.scene.keyframes = parsed.keyframes || [];
+        this.scene.subtitles = parsed.subtitles || [];
+        this.scene.rawBindings = parsed.bindings || parsed.rawBindings || [];
+        if (parsed.camera) this.scene.camera = parsed.camera;
+        if (typeof parsed.has3D === 'boolean') this.scene.has3D = parsed.has3D;
+        this.scene.astSource = typeof astInput === 'string' ? astInput : null;
+
+        this.durationSec = this.scene.duration;
+
+        if (this._container) {
+          this.mountSceneAsset(this.scene, this._container);
+          this.applyBindings(this.progress);
+        }
+
+        this.emit('asthotreloaded', { ast: parsed, progress: this.progress });
+        this.notifyParent({ type: 'DEV_HOT_RELOAD_SUCCESS', target: 'ast' });
+        return true;
+      } catch (err) {
+        console.error('[AST Engine] Failed to hot-reload AST:', err);
+        return false;
+      }
+    }
+
+    /**
+     * Serializes clean SVG stage XML without transient developer overlay elements
+     */
+    getStageSvgSnapshot() {
+      if (typeof document === 'undefined') return '';
+      const svg = document.getElementById('stage-svg');
+      if (!svg) return '';
+      const clone = svg.cloneNode(true);
+      const devOverlay = clone.querySelector('#dev-overlay-root');
+      if (devOverlay) devOverlay.remove();
+      return clone.outerHTML;
+    }
+
+    /**
+     * Retrieves current AST source or formats current scene configuration
+     */
+    getCurrentAstSource() {
+      if (this.scene && this.scene.astSource) return this.scene.astSource;
+      if (!this.scene) return '';
+
+      const s = this.scene;
+      let ast = `(:scene :id "${s.id || 'custom'}" :title "${s.title || 'Parametric Scene'}" :stage "${s.stage || 'CURRICULUM'}" :duration ${(s.duration || 10.0).toFixed(1)}\n`;
+
+      if (s.subtitles && s.subtitles.length) {
+        ast += `  (:subtitles (\n`;
+        s.subtitles.forEach(sub => {
+          ast += `    (:start ${sub.start.toFixed(2)} :end ${sub.end.toFixed(2)} :en "${sub.en || ''}"${sub.es ? ` :es "${sub.es}"` : ''})\n`;
+        });
+        ast += `  ))\n`;
+      }
+
+      if (s.keyframes && s.keyframes.length) {
+        ast += `  (:keyframes (\n`;
+        s.keyframes.forEach(kf => {
+          ast += `    (:t ${kf.t.toFixed(2)} :title "${kf.title}" :rule "${kf.rule}")\n`;
+        });
+        ast += `  ))\n`;
+      }
+
+      if (s.rawBindings && s.rawBindings.length) {
+        ast += `  (:bindings (\n`;
+        s.rawBindings.forEach(b => {
+          if (b.type === '3d-node') {
+            ast += `    (:3d-node :target "${b.target}" :x "${b.x}" :y "${b.y}" :z "${b.z}" :baseR ${b.baseR || 6})\n`;
+          } else {
+            ast += `    (:target "${b.target}" :attr "${b.attr}" :expr "${b.expr}")\n`;
+          }
+        });
+        ast += `  ))\n`;
+      }
+
+      ast += `)\n`;
+      return ast;
+    }
   }
 
   // Setup postMessage Gateway with Origin Validation
@@ -1272,8 +1405,64 @@
             }
           }
           break;
+        case 'HOT_RELOAD_SVG':
+          if (data.svg) {
+            engine.hotReloadSvg(data.svg);
+            if (uiController && uiController.showToast) {
+              uiController.showToast('⚡ SVG Stage Hot-Reloaded');
+            }
+          }
+          break;
+        case 'HOT_RELOAD_AST':
+          if (data.ast) {
+            engine.hotReloadAst(data.ast);
+            if (uiController && uiController.showToast) {
+              uiController.showToast('⚡ AST Expressions Hot-Reloaded');
+            }
+          }
+          break;
+        case 'SET_DEV_MODE':
+          if (uiController && typeof uiController.setDevMode === 'function') {
+            uiController.setDevMode(Boolean(data.enabled));
+          }
+          break;
+        case 'OPEN_DEV_STUDIO':
+          if (uiController && typeof uiController.openDevStudio === 'function') {
+            uiController.openDevStudio(data.tab || 'svg');
+          }
+          break;
+        case 'UPDATE_ELEMENT_ATTR':
+          if (data.selector && data.attr && engine.container) {
+            const node = engine.container.querySelector(data.selector);
+            if (node) {
+              if (data.attr === 'style' || data.attr.startsWith('style.')) {
+                const prop = data.attr.replace(/^style\./, '');
+                node.style[prop] = data.value;
+              } else if (data.attr === 'textContent') {
+                node.textContent = data.value;
+              } else {
+                node.setAttribute(data.attr, data.value);
+              }
+            }
+          }
+          break;
+        case 'GET_STAGE_SVG':
+          engine.notifyParent({
+            type: 'STAGE_SVG_SNAPSHOT',
+            svg: engine.getStageSvgSnapshot(),
+            ast: engine.getCurrentAstSource(),
+            preset: engine.activePresetId
+          });
+          break;
+        case 'GET_AST_SOURCE':
+          engine.notifyParent({
+            type: 'AST_SOURCE_SNAPSHOT',
+            ast: engine.getCurrentAstSource(),
+            preset: engine.activePresetId
+          });
+          break;
         case 'PING':
-          engine.notifyParent({ type: 'PONG', ready: true, version: '2.4.0', has3D: engine.has3D() });
+          engine.notifyParent({ type: 'PONG', ready: true, version: '2.5.0', has3D: engine.has3D() });
           break;
       }
     });
