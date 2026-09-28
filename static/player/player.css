@@ -724,6 +724,28 @@ select {
    ========================================================================== */
 
 /* Active indicator for header buttons */
+#btn-play-mode {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+#btn-play-mode:hover {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+}
+
+#btn-play-mode.active {
+  background: #10b981 !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5) !important;
+}
+
 #btn-dev-mode.active,
 #btn-dev-studio.active {
   background: rgba(56, 189, 248, 0.22) !important;

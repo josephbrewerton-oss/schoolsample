@@ -1,6 +1,10 @@
 /**
  * static/player/ast-compiler.js
  * 
+ * St Joseph's AST Vector Media Player — SlideScript Compiler & Decompiler
+ * Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
+ * 
  * AST Slide-Script Compiler & De-compiler for Non-Technical Educators
  * Zero-dependency, isomorphic (browser & Node.js).
  * 
@@ -116,6 +120,12 @@
           const durMatch = line.match(/^(?:duration|time):\s*([\d\.]+)\s*s?/i);
           if (durMatch) {
             parsed.duration = Math.max(1.0, parseFloat(durMatch[1]));
+            continue;
+          }
+
+          const gravMatch = line.match(/^gravity:\s*([\d\.\-]+)/i);
+          if (gravMatch) {
+            parsed.gravity = parseFloat(gravMatch[1]);
             continue;
           }
         }
@@ -573,6 +583,11 @@
           ast += `    (:t ${cp.t.toFixed(2)} :title "${this._escapeQuotes(cp.title)}" :prompt "${this._escapeQuotes(cp.prompt)}" :options (${optStr}) :answer ${cp.answer} :explanation "${this._escapeQuotes(cp.explanation)}")\n`;
         });
         ast += `  ))\n`;
+      }
+
+      // 5. Zero-Bloat Micro-Physics Subsystem
+      if (parsed.gravity !== undefined) {
+        ast += `  (:physics (:gravity ${parsed.gravity} :friction 0.985 :ground 420))\n`;
       }
 
       ast += `)\n`;

@@ -103,39 +103,49 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const urlPreset = searchParams.get('preset') as VectorPresetType | null;
   const urlTopic = searchParams.get('topic');
   const urlSubject = searchParams.get('sub') || searchParams.get('subject');
+  const urlMode = searchParams.get('mode');
 
+  // Default to the featured Mountain Climber interactive simulation if no specific preset is requested
   const initialPreset: VectorPresetType =
     urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset)
       ? urlPreset
       : urlTopic || urlSubject
       ? resolvePresetForTopic(urlSubject || '', urlTopic || '')
-      : 'fractions';
+      : 'mountain-elevation';
 
   const [activePreset, setActivePreset] = useState<VectorPresetType>(initialPreset);
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
-  const [playMode, setPlayMode] = useState<'video' | 'game'>(
-    initialPreset === 'mountain-elevation' ? 'game' : 'video'
-  );
+
+  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation
+  const initialPlayMode: 'video' | 'game' =
+    urlMode === 'video'
+      ? 'video'
+      : urlMode === 'game'
+      ? 'game'
+      : initialPreset === 'mountain-elevation'
+      ? 'game'
+      : 'video';
+
+  const [playMode, setPlayMode] = useState<'video' | 'game'>(initialPlayMode);
 
   useEffect(() => {
     if (urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset) && urlPreset !== activePreset) {
       setActivePreset(urlPreset);
-      if (urlPreset === 'mountain-elevation') {
+      if (urlMode === 'game' || urlPreset === 'mountain-elevation') {
         setPlayMode('game');
       }
+    } else if (urlMode && (urlMode === 'game' || urlMode === 'video') && urlMode !== playMode) {
+      setPlayMode(urlMode);
     }
-  }, [urlPreset, activePreset]);
+  }, [urlPreset, urlMode, activePreset, playMode]);
 
-  const handleSelectPreset = (id: VectorPresetType) => {
+  const handleSelectPreset = (id: VectorPresetType, targetMode?: 'video' | 'game') => {
     setActivePreset(id);
-    setSearchParams({ preset: id });
-    if (id === 'mountain-elevation') {
-      setPlayMode('game');
-    } else {
-      setPlayMode('video');
-    }
+    const chosenMode = targetMode || (id === 'mountain-elevation' ? 'game' : playMode);
+    setPlayMode(chosenMode);
+    setSearchParams({ preset: id, mode: chosenMode });
   };
 
   const currentPresetMeta = PRESET_LIBRARY.find((p) => p.id === activePreset) || PRESET_LIBRARY[0];
@@ -268,70 +278,215 @@ export default function MediaPlayerPage(): React.JSX.Element {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {activePreset === 'mountain-elevation' && (
-              <div style={{ display: 'flex', background: '#090d16', padding: '3px', borderRadius: '8px', border: '1px solid #334155' }}>
-                <button
-                  type="button"
-                  onClick={() => {
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Primary Mode Selector Bar — Always visible so Play Mode and Lesson Video Mode can always be toggled */}
+            <div
+              style={{
+                display: 'inline-flex',
+                background: '#090d16',
+                padding: '4px',
+                borderRadius: '10px',
+                border: '1px solid #334155',
+                gap: '4px',
+                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.4)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  if (activePreset !== 'mountain-elevation' && activePreset !== 'church-tour') {
+                    // Switch to the featured interactive climber game if currently on a static diagram
+                    handleSelectPreset('mountain-elevation', 'game');
+                  } else {
                     setPlayMode('game');
-                    playerRef.current?.pause();
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: playMode === 'game' ? '#10b981' : 'transparent',
-                    color: playMode === 'game' ? '#ffffff' : '#94a3b8',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span>🎮</span> Play Game
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPlayMode('video');
-                    playerRef.current?.play();
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: playMode === 'video' ? '#0284c7' : 'transparent',
-                    color: playMode === 'video' ? '#ffffff' : '#94a3b8',
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span>🎬</span> Lesson Video
-                </button>
-              </div>
-            )}
+                    setSearchParams({ preset: activePreset, mode: 'game' });
+                  }
+                  playerRef.current?.pause();
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: playMode === 'game' ? '1px solid #10b981' : '1px solid transparent',
+                  background: playMode === 'game' ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' : 'transparent',
+                  color: playMode === 'game' ? '#ffffff' : '#94a3b8',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: playMode === 'game' ? '0 0 14px rgba(16, 185, 129, 0.4)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Switch to Interactive Play Mode (Keyboard & Touch Game Controls)"
+              >
+                <span style={{ fontSize: '0.95rem' }}>🎮</span>
+                <span>Play Mode</span>
+                {playMode === 'game' && (
+                  <span style={{ fontSize: '0.62rem', background: '#ffffff', color: '#047857', padding: '1px 5px', borderRadius: '4px', fontWeight: 900 }}>
+                    ACTIVE
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPlayMode('video');
+                  setSearchParams({ preset: activePreset, mode: 'video' });
+                  playerRef.current?.play();
+                }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: playMode === 'video' ? '1px solid #0284c7' : '1px solid transparent',
+                  background: playMode === 'video' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'transparent',
+                  color: playMode === 'video' ? '#ffffff' : '#94a3b8',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: playMode === 'video' ? '0 0 14px rgba(2, 132, 199, 0.4)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+                title="Switch to Lesson Video Mode (Automated 60 FPS Animation & Narration)"
+              >
+                <span style={{ fontSize: '0.95rem' }}>🎬</span>
+                <span>Lesson Video</span>
+                {playMode === 'video' && (
+                  <span style={{ fontSize: '0.62rem', background: '#ffffff', color: '#0369a1', padding: '1px 5px', borderRadius: '4px', fontWeight: 900 }}>
+                    ACTIVE
+                  </span>
+                )}
+              </button>
+            </div>
+
             <span
               style={{
-                fontSize: '0.74rem',
+                fontSize: '0.72rem',
                 color: '#38bdf8',
                 background: 'rgba(56, 189, 248, 0.1)',
                 border: '1px solid rgba(56, 189, 248, 0.3)',
-                padding: '3px 8px',
+                padding: '4px 10px',
                 borderRadius: '6px',
-                fontWeight: 600,
+                fontWeight: 700,
+                letterSpacing: '0.02em',
               }}
             >
               Zero-Bloat Vector
             </span>
           </div>
         </div>
+
+        {/* Real-time Mode State Notice Banner */}
+        {playMode === 'game' ? (
+          <div
+            style={{
+              padding: '9px 18px',
+              background: 'linear-gradient(90deg, #064e3b 0%, #0f172a 100%)',
+              borderBottom: '1px solid #059669',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px',
+              color: '#d1fae5',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+              <span style={{ fontSize: '1.2rem' }}>🎮</span>
+              <span>
+                <strong style={{ color: '#ffffff' }}>INTERACTIVE PLAY MODE ENGAGED</strong> &mdash; Direct physics simulation &amp; telemetry active!
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  color: '#6ee7b7',
+                  background: 'rgba(5, 150, 105, 0.25)',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #10b981',
+                  fontWeight: 600,
+                }}
+              >
+                ⌨️ Controls: Space / &uarr; Step &bull; S / &darr; Rest &bull; A / 1 Axe &bull; O / 2 Oxygen
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setPlayMode('video');
+                  setSearchParams({ preset: activePreset, mode: 'video' });
+                  playerRef.current?.play();
+                }}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#f8fafc',
+                  border: '1px solid #475569',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Switch to Lesson Video &rarr;
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              padding: '9px 18px',
+              background: 'linear-gradient(90deg, #0c4a6e 0%, #0f172a 100%)',
+              borderBottom: '1px solid #0284c7',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px',
+              color: '#e0f2fe',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+              <span style={{ fontSize: '1.2rem' }}>🎬</span>
+              <span>
+                <strong style={{ color: '#ffffff' }}>LESSON VIDEO MODE</strong> &mdash; Continuous timeline animation &amp; on-device narration.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (activePreset !== 'mountain-elevation') {
+                  handleSelectPreset('mountain-elevation', 'game');
+                } else {
+                  setPlayMode('game');
+                  setSearchParams({ preset: activePreset, mode: 'game' });
+                }
+                playerRef.current?.pause();
+              }}
+              style={{
+                padding: '4px 12px',
+                borderRadius: '6px',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '0.76rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+              }}
+            >
+              <span>🎮</span> Launch Interactive Play Mode Now
+            </button>
+          </div>
+        )}
 
         {/* Embedded AST Player */}
         <AstVectorMediaPlayer
@@ -340,6 +495,21 @@ export default function MediaPlayerPage(): React.JSX.Element {
           autoPlay={playMode === 'video'}
           allowPresetSwitch={true}
           height="540px"
+          onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
+          onPlayModeToggle={() => {
+            const nextMode = playMode === 'game' ? 'video' : 'game';
+            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'church-tour') {
+              handleSelectPreset('mountain-elevation', 'game');
+            } else {
+              setPlayMode(nextMode);
+              setSearchParams({ preset: activePreset, mode: nextMode });
+              if (nextMode === 'game') {
+                playerRef.current?.pause();
+              } else {
+                playerRef.current?.play();
+              }
+            }
+          }}
         />
 
         {/* Playable Interactive Game Mode Console (Active Player Physics & Telemetry) */}
@@ -348,6 +518,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
             playerRef={playerRef}
             onCloseGameMode={() => {
               setPlayMode('video');
+              setSearchParams({ preset: activePreset, mode: 'video' });
               playerRef.current?.play();
             }}
           />
@@ -563,11 +734,111 @@ export default function MediaPlayerPage(): React.JSX.Element {
                   </p>
                 </div>
 
-                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
-                  <span style={{ fontSize: '0.74rem', color: isSelected ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
-                    {isSelected ? '● Currently Playing' : 'Click to Load'}
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: isSelected ? '#0284c7' : '#94a3b8' }}>➔</span>
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                  {p.id === 'mountain-elevation' ? (
+                    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPreset(p.id, 'game');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          background: isSelected && playMode === 'game' ? '#059669' : '#10b981',
+                          color: '#ffffff',
+                          border: 'none',
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)',
+                        }}
+                      >
+                        <span>🎮</span> Play Game {isSelected && playMode === 'game' ? '✔' : ''}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPreset(p.id, 'video');
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          background: isSelected && playMode === 'video' ? '#0284c7' : '#f1f5f9',
+                          color: isSelected && playMode === 'video' ? '#ffffff' : '#334155',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <span>🎬</span> Video
+                      </button>
+                    </div>
+                  ) : p.id === 'church-tour' ? (
+                    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPreset(p.id, 'game');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          background: isSelected && playMode === 'game' ? '#9333ea' : '#a855f7',
+                          color: '#ffffff',
+                          border: 'none',
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <span>⛪</span> 3D Quest {isSelected && playMode === 'game' ? '✔' : ''}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPreset(p.id, 'video');
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          background: isSelected && playMode === 'video' ? '#0284c7' : '#f1f5f9',
+                          color: isSelected && playMode === 'video' ? '#ffffff' : '#334155',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span>🎬</span> Tour
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.74rem', color: isSelected ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
+                        {isSelected ? (playMode === 'game' ? '🎮 Playing Game' : '🎬 Playing Video') : 'Click to Load'}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: isSelected ? '#0284c7' : '#94a3b8' }}>➔</span>
+                    </div>
+                  )}
                 </div>
               </div>
             );

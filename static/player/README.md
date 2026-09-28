@@ -131,3 +131,32 @@ The `player/` folder is **completely decoupled** and self-contained:
    ```
 4. **Option C: Direct Headless or Full-Page**:
    Point your web server (Nginx, Apache, GitHub Pages, Cloudflare Pages, S3 bucket) directly at the `player` directory. Opening `index.html` loads the complete player suite with full UI controls, 3D orbit, voice narration, and A4 print worksheet generators out-of-the-box.
+
+---
+
+## Versioning & Semantic Releases
+
+This standalone distribution adheres to [Semantic Versioning 2.0.0](https://semver.org/):
+- **Current Version**: `2.5.0`
+- **Engine Runtime Constant**: `ASTVectorPlayerEngine.VERSION === '2.5.0'`
+- **PONG & PLAYER_READY Events**: Returns `{ version: '2.5.0', license: 'AGPL-3.0-or-later' }` to parent iframes.
+
+---
+
+## Licensing & Legal Distribution Charter
+
+This standalone player suite is distributed under an explicit **Dual-Licensing Charter**:
+
+### Track A: GNU Affero General Public License v3.0 (AGPLv3)
+- **SPDX**: `AGPL-3.0-or-later`
+- **100% Free**: State schools, Catholic academies, teachers, pupils, and educational non-profits have unrestricted rights to use and embed this player in perpetuity.
+- **Copyleft Network Reciprocity (Section 13)**: If you modify this player and host or serve it over a computer network (e.g., in a cloud LMS, hosted digital textbook, or SaaS platform), you **must** make the complete corresponding source code freely available to all remote users under AGPLv3.
+- **Anti-Enclosure**: Proprietary entities cannot rebrand or paywall this engine without contributing source code back to the educational commons.
+
+### Track B: Enterprise Commercial License
+- For commercial EdTech vendors, private publishers, and LMS providers who require proprietary, closed-source integration without AGPLv3 copyleft or source-disclosure obligations.
+- 100% of commercial license fees fund Chromebooks and solar digital educational hardware for disadvantaged pupils worldwide.
+- Inquiries: `licensing@stjosephs-curriculum.internal` / `joseph.brewerton@gmail.com`
+
+See [LICENSE](./LICENSE) and [LICENSING.md](./LICENSING.md) for full terms.
+

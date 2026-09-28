@@ -34,6 +34,13 @@ export const MountainClimberGame: React.FC<MountainClimberGameProps> = ({
   const [hasWon, setHasWon] = useState<boolean>(false);
   const [isExhausted, setIsExhausted] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [gravityWorld, setGravityWorld] = useState<'earth' | 'moon' | 'jupiter'>('earth');
+
+  const GRAVITY_SPECS = {
+    earth: { label: '🌍 Earth (9.8 m/s²)', g: 980, jumpVy: -480 },
+    moon: { label: '🌕 Moon (1.6 m/s²)', g: 160, jumpVy: -650 },
+    jupiter: { label: '🪐 Jupiter (24.7 m/s²)', g: 2470, jumpVy: -320 },
+  };
 
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -239,6 +246,27 @@ export const MountainClimberGame: React.FC<MountainClimberGameProps> = ({
     setTimeout(() => setWeatherEvent(null), 3000);
   }, [hasWonRef, oxygenBottles, playSfx]);
 
+  // Sync gravity world with AST Player Micro-Physics Subsystem
+  useEffect(() => {
+    playerRef.current?.postToPlayer({
+      type: 'SET_GRAVITY',
+      gravity: GRAVITY_SPECS[gravityWorld].g
+    });
+  }, [gravityWorld, playerRef]);
+
+  // Action: Micro-Physics Vertical Jump Arc
+  const handleJump = useCallback(() => {
+    if (hasWonRef.current || isExhausted) return;
+    playSfx('step');
+    setHeartRate((prev) => Math.min(185, prev + 6));
+    setStamina((prev) => Math.max(0, prev - 4));
+    playerRef.current?.postToPlayer({
+      type: 'PHYSICS_JUMP',
+      target: '#climber-group',
+      vy: GRAVITY_SPECS[gravityWorld].jumpVy
+    });
+  }, [gravityWorld, isExhausted, playerRef, playSfx]);
+
   // Keyboard navigation binding
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -251,6 +279,9 @@ export const MountainClimberGame: React.FC<MountainClimberGameProps> = ({
       } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
         e.preventDefault();
         handleRest();
+      } else if (e.key === 'j' || e.key === 'J') {
+        e.preventDefault();
+        handleJump();
       } else if (e.key === 'a' || e.key === 'A') {
         e.preventDefault();
         handlePlantAxe();
@@ -262,7 +293,7 @@ export const MountainClimberGame: React.FC<MountainClimberGameProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleTakeStep, handleRest, handlePlantAxe, handleOxygenBoost]);
+  }, [handleTakeStep, handleRest, handleJump, handlePlantAxe, handleOxygenBoost]);
 
   // Calculated telemetry
   const altitudeM = Math.round(progress * 3000);
@@ -647,6 +678,80 @@ export const MountainClimberGame: React.FC<MountainClimberGameProps> = ({
               O
             </kbd>
           </button>
+
+          {/* MICRO-PHYSICS VERTICAL JUMP BUTTON */}
+          <button
+            type="button"
+            onClick={handleJump}
+            disabled={hasWon || isExhausted}
+            style={{
+              padding: '12px 16px',
+              borderRadius: '10px',
+              border: '1px solid #0284c7',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              color: '#ffffff',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              cursor: hasWon || isExhausted ? 'not-allowed' : 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+            }}
+            title="Physical ballistic jump obeying planetary gravity"
+          >
+            <span>🦘</span>
+            <span>Physical Jump</span>
+            <kbd
+              style={{
+                fontSize: '0.65rem',
+                background: 'rgba(0,0,0,0.3)',
+                padding: '2px 5px',
+                borderRadius: '4px',
+                color: '#ffffff',
+              }}
+            >
+              J
+            </kbd>
+          </button>
+
+          {/* Planetary Gravity Physics Selector */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#090d16',
+              padding: '6px 10px',
+              borderRadius: '10px',
+              border: '1px solid #1e293b',
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8' }}>
+              🪐 Gravity:
+            </span>
+            {(['earth', 'moon', 'jupiter'] as const).map((world) => (
+              <button
+                key={world}
+                type="button"
+                onClick={() => setGravityWorld(world)}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: gravityWorld === world ? '#38bdf8' : 'transparent',
+                  color: gravityWorld === world ? '#090d16' : '#94a3b8',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {GRAVITY_SPECS[world].label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Live Mathematical Verification Box */}

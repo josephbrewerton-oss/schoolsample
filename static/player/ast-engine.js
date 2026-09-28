@@ -1,6 +1,10 @@
 /**
  * static/player/ast-engine.js
  * 
+ * St Joseph's AST Vector Media Player Engine & Runtime Suite
+ * Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
+ * 
  * Core AST Vector Media Player Engine with 3D Node Subsystem
  * Decoupled folder-based asset architecture:
  * - Dynamic ingestion of [id].svg templates & [id].ast S-expression descriptors
@@ -17,7 +21,198 @@
 (function (global) {
   'use strict';
 
+  /**
+   * VectorMicroPhysics (< 1.5 KB Zero-Bloat Arcade & Educational 2D Physics)
+   * Real-time Euler integration: Gravity, inertia, air drag, elastic bouncing,
+   * ground friction, canvas boundaries, and inter-body circle collisions.
+   */
+  class VectorMicroPhysics {
+    constructor(engine, options = {}) {
+      this.engine = engine;
+      this.gravity = options.gravity !== undefined ? options.gravity : 980; // px/sec² (~9.8 m/s²)
+      this.friction = options.friction !== undefined ? options.friction : 0.985;
+      this.groundY = options.groundY !== undefined ? options.groundY : 420;
+      this.enabled = options.enabled !== false;
+      this.bounds = Object.assign({ minX: 10, maxX: 790, minY: 0, maxY: 480 }, options.bounds || {});
+      this.bodies = [];
+      this.initialStates = new Map();
+    }
+
+    addBody(config = {}) {
+      const id = config.id || (config.target ? String(config.target).replace(/^[#\.]/, '') : `body_${this.bodies.length + 1}`);
+      const body = {
+        id,
+        target: config.target || `#${id}`,
+        x: Number(config.x) || 0,
+        y: Number(config.y) || 0,
+        vx: Number(config.vx) || 0,
+        vy: Number(config.vy) || 0,
+        mass: Math.max(0.01, Number(config.mass) || 1.0),
+        bounce: config.bounce !== undefined ? Number(config.bounce) : 0.45,
+        friction: config.friction !== undefined ? Number(config.friction) : this.friction,
+        groundY: config.groundY !== undefined ? Number(config.groundY) : this.groundY,
+        radius: Number(config.radius) || 16,
+        isGrounded: false,
+        isStatic: Boolean(config.isStatic),
+        element: null
+      };
+
+      this.removeBody(body.id);
+      this.bodies.push(body);
+      this.initialStates.set(body.id, Object.assign({}, body, { element: null }));
+      return body;
+    }
+
+    removeBody(idOrTarget) {
+      this.bodies = this.bodies.filter(b => b.id !== idOrTarget && b.target !== idOrTarget);
+      this.initialStates.delete(idOrTarget);
+    }
+
+    clear() {
+      this.bodies = [];
+      this.initialStates.clear();
+    }
+
+    reset() {
+      for (const b of this.bodies) {
+        const init = this.initialStates.get(b.id);
+        if (init) {
+          b.x = init.x;
+          b.y = init.y;
+          b.vx = init.vx;
+          b.vy = init.vy;
+          b.isGrounded = false;
+        }
+      }
+    }
+
+    applyImpulse(idOrTarget, fx, fy) {
+      const b = this.bodies.find(body => body.id === idOrTarget || body.target === idOrTarget);
+      if (b && !b.isStatic) {
+        b.vx += Number(fx || 0) / b.mass;
+        b.vy += Number(fy || 0) / b.mass;
+        b.isGrounded = false;
+      }
+    }
+
+    jump(idOrTarget, jumpVelocity = -480) {
+      const b = this.bodies.find(body => body.id === idOrTarget || body.target === idOrTarget);
+      if (b && !b.isStatic && b.isGrounded) {
+        b.vy = jumpVelocity;
+        b.isGrounded = false;
+        return true;
+      }
+      return false;
+    }
+
+    setGravity(g) {
+      this.gravity = parseFloat(g) || 0;
+    }
+
+    update(dt) {
+      if (!this.enabled || dt <= 0 || this.bodies.length === 0) return;
+      const root = (this.engine && this.engine.container) || (typeof document !== 'undefined' ? document : null);
+      if (!root) return;
+
+      for (let i = 0; i < this.bodies.length; i++) {
+        const b = this.bodies[i];
+        if (b.isStatic) continue;
+
+        if (!b.element) {
+          b.element = root.querySelector ? root.querySelector(b.target) : null;
+        }
+
+        // 1. Acceleration from gravity
+        b.vy += this.gravity * dt;
+
+        // 2. Air resistance damping
+        const drag = Math.pow(b.friction, dt * 60);
+        b.vx *= drag;
+        b.vy *= drag;
+
+        // 3. Integrate position
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+
+        // 4. Ground collision
+        const effectiveGround = b.groundY !== undefined ? b.groundY : this.groundY;
+        if (b.y >= effectiveGround) {
+          b.y = effectiveGround;
+          b.vy = -b.vy * b.bounce;
+          // Surface friction
+          b.vx *= 0.92;
+          if (Math.abs(b.vy) < 20) {
+            b.vy = 0;
+            b.isGrounded = true;
+          }
+        } else {
+          b.isGrounded = false;
+        }
+
+        // 5. Canvas horizontal boundaries bounce
+        if (b.x < this.bounds.minX + b.radius) {
+          b.x = this.bounds.minX + b.radius;
+          b.vx = -b.vx * b.bounce;
+        } else if (b.x > this.bounds.maxX - b.radius) {
+          b.x = this.bounds.maxX - b.radius;
+          b.vx = -b.vx * b.bounce;
+        }
+
+        // 6. Inter-body circle collisions
+        for (let j = i + 1; j < this.bodies.length; j++) {
+          const b2 = this.bodies[j];
+          const dx = b2.x - b.x;
+          const dy = b2.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = b.radius + b2.radius;
+
+          if (dist < minDist && dist > 0.001) {
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const overlap = minDist - dist;
+
+            // Separate overlapping bodies
+            if (!b.isStatic && !b2.isStatic) {
+              b.x -= nx * overlap * 0.5;
+              b.y -= ny * overlap * 0.5;
+              b2.x += nx * overlap * 0.5;
+              b2.y += ny * overlap * 0.5;
+            } else if (!b.isStatic) {
+              b.x -= nx * overlap;
+              b.y -= ny * overlap;
+            } else if (!b2.isStatic) {
+              b2.x += nx * overlap;
+              b2.y += ny * overlap;
+            }
+
+            // Normal impulse exchange
+            const kx = b.vx - b2.vx;
+            const ky = b.vy - b2.vy;
+            const p = 2 * (nx * kx + ny * ky) / (b.mass + b2.mass);
+            const restitution = Math.min(b.bounce, b2.bounce);
+
+            if (!b.isStatic) {
+              b.vx -= p * b2.mass * nx * (1 + restitution);
+              b.vy -= p * b2.mass * ny * (1 + restitution);
+            }
+            if (!b2.isStatic) {
+              b2.vx += p * b.mass * nx * (1 + restitution);
+              b2.vy += p * b.mass * ny * (1 + restitution);
+            }
+          }
+        }
+
+        // 7. Render directly to SVG transform attribute
+        if (b.element) {
+          b.element.setAttribute('transform', `translate(${b.x.toFixed(2)}, ${b.y.toFixed(2)})`);
+        }
+      }
+    }
+  }
+
   class ASTVectorPlayerEngine {
+    static VERSION = '2.5.0';
+    static LICENSE = 'AGPL-3.0-or-later';
     constructor(options = {}) {
       this.options = Object.assign({
         preset: 'church-tour',
@@ -79,6 +274,9 @@
         langchange: [],
         camerachange: []
       };
+
+      // Zero-Bloat Micro-Physics Subsystem (< 1.5 KB)
+      this.physics = new VectorMicroPhysics(this, this.options.physics || {});
 
       // Load initial scene
       this.scene = this.getScene(this.activePresetId);
@@ -642,6 +840,39 @@
         });
       }
 
+      // Micro-physics block parsing (:physics (:gravity 980 ...) (:body ...))
+      const physicsBlocks = extractSexprBlocks(astContent, ':physics');
+      let physics = null;
+      if (physicsBlocks.length > 0) {
+        const pb = physicsBlocks[0];
+        const gMatch = pb.match(/:gravity\s+([\d\.\-]+)/i);
+        const fMatch = pb.match(/:friction\s+([\d\.]+)/i);
+        const grMatch = pb.match(/:ground\s+([\d\.]+)/i);
+
+        const bodyBlocks = extractSexprBlocks(pb, ':body');
+        const bodies = bodyBlocks.map(bText => {
+          const bId = extractSlot(bText, /:id\s+"([^"]+)"/i) || extractSlot(bText, /:id\s+([^\s\)]+)/i);
+          const target = extractSlot(bText, /:target\s+"([^"]+)"/i) || extractSlot(bText, /:target\s+([^\s\)]+)/i);
+          const x = parseFloat(extractSlot(bText, /:x\s+([\d\.\-]+)/i) || 0);
+          const y = parseFloat(extractSlot(bText, /:y\s+([\d\.\-]+)/i) || 0);
+          const vx = parseFloat(extractSlot(bText, /:vx\s+([\d\.\-]+)/i) || 0);
+          const vy = parseFloat(extractSlot(bText, /:vy\s+([\d\.\-]+)/i) || 0);
+          const mass = parseFloat(extractSlot(bText, /:mass\s+([\d\.]+)/i) || 1.0);
+          const bounce = parseFloat(extractSlot(bText, /:bounce\s+([\d\.]+)/i) || 0.45);
+          const radius = parseFloat(extractSlot(bText, /:radius\s+([\d\.]+)/i) || 16);
+          const groundYStr = extractSlot(bText, /:groundY\s+([\d\.]+)/i);
+          const groundY = groundYStr ? parseFloat(groundYStr) : undefined;
+          return { id: bId, target: target || `#${bId}`, x, y, vx, vy, mass, bounce, radius, groundY };
+        });
+
+        physics = {
+          gravity: gMatch ? parseFloat(gMatch[1]) : 980,
+          friction: fMatch ? parseFloat(fMatch[1]) : 0.985,
+          groundY: grMatch ? parseFloat(grMatch[1]) : 420,
+          bodies
+        };
+      }
+
       const has3D = Boolean(camMatch || bindings.some(b => b.type && b.type.startsWith('3d-')));
 
       return {
@@ -655,6 +886,7 @@
         subtitles,
         bindings,
         checkpoints,
+        physics,
         interactive: checkpoints.length > 0 ? { checkpoints, hotspots: [] } : null
       };
     }
@@ -931,6 +1163,17 @@
         });
       }
 
+      // Initialize zero-bloat micro-physics if defined on the scene
+      if (scene.physics) {
+        this.physics.clear();
+        if (scene.physics.gravity !== undefined) this.physics.setGravity(scene.physics.gravity);
+        if (scene.physics.friction !== undefined) this.physics.friction = scene.physics.friction;
+        if (scene.physics.groundY !== undefined) this.physics.groundY = scene.physics.groundY;
+        if (Array.isArray(scene.physics.bodies)) {
+          scene.physics.bodies.forEach(b => this.physics.addBody(b));
+        }
+      }
+
       this.applyBindings(this.progress);
     }
 
@@ -1204,25 +1447,32 @@
      * Main Animation Tick Loop with Delta-Time Clamping
      */
     tick(currentTimestamp) {
-      if (this.isPlaying && this.lastTimestamp !== null) {
+      if (this.lastTimestamp !== null) {
         const rawDeltaSec = (currentTimestamp - this.lastTimestamp) / 1000.0;
         const deltaSec = Math.min(rawDeltaSec, 0.1);
 
-        this.progress += (deltaSec / this.durationSec) * this.speed;
-
-        if (this.progress >= 1.0) {
-          this.progress = 0.0;
-          this.lastSpokenIndex = -1;
+        // Micro-Physics Subsystem Tick (< 1.5 KB zero-bloat)
+        if (this.physics && this.physics.enabled && this.physics.bodies.length > 0) {
+          this.physics.update(deltaSec);
         }
 
-        this.updateActiveKeyframeAndSpeech(false);
-        this.applyBindings(this.progress);
+        if (this.isPlaying) {
+          this.progress += (deltaSec / this.durationSec) * this.speed;
 
-        this.emit('timeupdate', {
-          progress: this.progress,
-          currentTime: this.progress * this.durationSec,
-          duration: this.durationSec
-        });
+          if (this.progress >= 1.0) {
+            this.progress = 0.0;
+            this.lastSpokenIndex = -1;
+          }
+
+          this.updateActiveKeyframeAndSpeech(false);
+          this.applyBindings(this.progress);
+
+          this.emit('timeupdate', {
+            progress: this.progress,
+            currentTime: this.progress * this.durationSec,
+            duration: this.durationSec
+          });
+        }
       }
 
       this.lastTimestamp = currentTimestamp;
@@ -2104,7 +2354,13 @@
           break;
         }
         case 'PING':
-          engine.notifyParent({ type: 'PONG', ready: true, version: '2.5.0', has3D: engine.has3D() });
+          engine.notifyParent({
+            type: 'PONG',
+            ready: true,
+            version: ASTVectorPlayerEngine.VERSION,
+            license: ASTVectorPlayerEngine.LICENSE,
+            has3D: engine.has3D()
+          });
           break;
         case 'TOGGLE_OBS_DRAWER':
           if (uiController && typeof uiController.toggleObsDrawer === 'function') {
@@ -2136,13 +2392,50 @@
             uiController.toggleSettingsDrawer();
           }
           break;
+        case 'PHYSICS_INIT':
+          if (engine.physics && data.config) {
+            engine.physics.clear();
+            if (data.config.gravity !== undefined) engine.physics.setGravity(data.config.gravity);
+            if (data.config.groundY !== undefined) engine.physics.groundY = data.config.groundY;
+            if (data.config.friction !== undefined) engine.physics.friction = data.config.friction;
+            if (Array.isArray(data.config.bodies)) {
+              data.config.bodies.forEach(b => engine.physics.addBody(b));
+            }
+          }
+          break;
+        case 'PHYSICS_IMPULSE':
+          if (engine.physics) {
+            engine.physics.applyImpulse(data.target || data.id, data.fx, data.fy);
+          }
+          break;
+        case 'PHYSICS_JUMP':
+          if (engine.physics) {
+            engine.physics.jump(data.target || data.id, data.vy || -480);
+          }
+          break;
+        case 'SET_GRAVITY':
+          if (engine.physics) {
+            engine.physics.setGravity(data.gravity);
+          }
+          break;
+        case 'PHYSICS_RESET':
+          if (engine.physics) {
+            engine.physics.reset();
+          }
+          break;
+        case 'PHYSICS_CLEAR':
+          if (engine.physics) {
+            engine.physics.clear();
+          }
+          break;
       }
     });
 
     // Notify ready
     engine.notifyParent({
       type: 'PLAYER_READY',
-      version: '2.4.0',
+      version: ASTVectorPlayerEngine.VERSION,
+      license: ASTVectorPlayerEngine.LICENSE,
       has3D: engine.has3D(),
       hasInteractive: Boolean(engine.scene && engine.scene.interactive && engine.scene.interactive.checkpoints && engine.scene.interactive.checkpoints.length),
       preset: engine.activePresetId,
@@ -2150,10 +2443,11 @@
     });
   }
 
+  global.VectorMicroPhysics = VectorMicroPhysics;
   global.ASTVectorPlayerEngine = ASTVectorPlayerEngine;
   global.setupPostMessageBridge = setupPostMessageBridge;
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ASTVectorPlayerEngine, setupPostMessageBridge };
+    module.exports = { VectorMicroPhysics, ASTVectorPlayerEngine, setupPostMessageBridge };
   }
 })(typeof window !== 'undefined' ? window : globalThis);

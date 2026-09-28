@@ -47,6 +47,8 @@ export interface AstVectorMediaPlayerProps {
   allowPresetSwitch?: boolean;
   defaultMode?: PlayerDisplayMode;
   initialConfig?: Partial<PlayerDisplayConfig>;
+  onPresetChange?: (preset: VectorPresetType) => void;
+  onPlayModeToggle?: () => void;
   onKeyframeReached?: (keyframe: { title: string; rule: string; progress: number }) => void;
   onTimeUpdate?: (progress: number) => void;
   onConfigChange?: (config: PlayerDisplayConfig) => void;
@@ -83,6 +85,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   allowPresetSwitch = true,
   defaultMode,
   initialConfig,
+  onPresetChange,
+  onPlayModeToggle,
   onKeyframeReached,
   onTimeUpdate,
   onConfigChange,
@@ -210,6 +214,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             selectedPresetRef.current = data.preset;
             lastSentPresetRef.current = data.preset;
             setSelectedPreset(data.preset);
+            onPresetChange?.(data.preset);
           }
           if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
           if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
@@ -224,6 +229,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           break;
         case 'HOTSPOT_SELECTED':
           setActiveKeyframe({ title: data.label || 'Station Selected', rule: `Interactively inspected station at ${(data.targetT * 100).toFixed(0)}%` });
+          break;
+        case 'TOGGLE_PLAY_MODE':
+          onPlayModeToggle?.();
           break;
         case 'DEV_MODE_CHANGED':
           setIsDevMode(Boolean(data.enabled));
@@ -350,7 +358,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
               onChange={(e) => {
                 const nextPreset = e.target.value;
                 setSelectedPreset(nextPreset);
+                selectedPresetRef.current = nextPreset;
+                lastSentPresetRef.current = nextPreset;
                 postToPlayer({ type: 'SET_PRESET', preset: nextPreset, play: true });
+                onPresetChange?.(nextPreset);
               }}
               className="stj-select"
               style={{
