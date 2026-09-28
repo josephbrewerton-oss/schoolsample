@@ -624,7 +624,9 @@
 
     static _escapeQuotes(str) {
       if (!str) return '';
-      return String(str).replace(/"/g, '\\"');
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"');
     }
 
     static _escapeXml(str) {
