@@ -101,7 +101,8 @@
       this.settings = Object.assign(this.settings, newSettings);
       if (typeof window !== 'undefined' && window.localStorage) {
         try {
-          localStorage.setItem('stj_obs_settings', JSON.stringify(this.settings));
+          const persistedSettings = Object.assign({}, this.settings, { password: '' });
+          localStorage.setItem('stj_obs_settings', JSON.stringify(persistedSettings));
         } catch (e) {}
       }
     }
