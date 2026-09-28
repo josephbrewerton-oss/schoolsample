@@ -1,0 +1,99 @@
+# St Joseph's AST Vector Media Player & SlideScript Suite
+## Standalone Distribution License — Dual-Licensing Charter
+
+Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+Inspired by St Joseph's, Fishponds (Bristol), Canon Gregory, and Father Jerome Ajakaiye.
+
+SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
+
+==============================================================================
+1. DUAL-LICENSING MODEL
+==============================================================================
+
+This standalone software package (@stjosephs/ast-vector-player), including
+ast-engine.js, ast-compiler.js, obs-controller.js, player-ui.js, micro-vector-player.js,
+and the AST runtime interpreter, is distributed under a Dual-Licensing model:
+
+  Track A: The Humanitarian Commons — GNU Affero General Public License v3.0 (AGPLv3)
+  Track B: The Enterprise Commercial License — Closed-Source / Proprietary Distribution
+
+==============================================================================
+TRACK A: GNU AFFERO GENERAL PUBLIC LICENSE, VERSION 3 (AGPLv3)
+==============================================================================
+
+You may copy, distribute, embed, and modify this standalone player package
+freely under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+CRITICAL NOTICE FOR NETWORK SERVICES & LMS HOSTING (AGPLv3 SECTION 13):
+------------------------------------------------------------------------
+If you run this player, or any modified version of this player, on a server or
+network service (such as a hosted Learning Management System (LMS), digital
+textbook, web application, cloud portal, or interactive curriculum site) so that
+users interact with it remotely through a computer network, you MUST make the
+Complete Corresponding Source Code freely available to all such remote users
+under the terms of the GNU AGPLv3.
+
+ANTI-ENCLOSURE GUARANTEE:
+-------------------------
+State schools, Catholic academies, dioceses, teachers, pupils, and educational
+charities are guaranteed free and unrestricted access in perpetuity. Proprietary
+entities are legally prohibited from absorbing this standalone engine into closed-source,
+paywalled software without contributing their changes back to the public commons.
+
+==============================================================================
+TRACK B: ENTERPRISE COMMERCIAL LICENSE (CLOSED-SOURCE EXEMPTION)
+==============================================================================
+
+If your organization (e.g. commercial LMS vendor, private EdTech publisher, or
+proprietary software provider) wishes to embed, bundle, or distribute this
+standalone player in proprietary closed-source products without releasing your
+own software's source code under AGPLv3, you must obtain an Enterprise Commercial
+License (Track B).
+
+100% of Track B commercial licensing proceeds are directed to the St Joseph's
+Educational Trust Fund to finance refurbished Chromebooks and offline solar-powered
+education kits for disadvantaged pupils worldwide.
+
+To acquire a Track B Commercial License or enterprise support:
+  Contact: licensing@stjosephs-curriculum.internal / joseph.brewerton@gmail.com
+
+==============================================================================
+GNU AFFERO GENERAL PUBLIC LICENSE TEXT (CONDENSED SUMMARY)
+==============================================================================
+
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+Preamble:
+The GNU Affero General Public License is designed specifically to ensure
+that, in the case of network server software, each user who connects to the
+server gets access to the source code of the program running there.
+
+TERMS AND CONDITIONS:
+0. Definitions: "This License" refers to version 3 of the GNU Affero General Public License.
+1. Source Code: The "source code" for a work means the preferred form of the work
+   for making modifications to it.
+2. Basic Permissions: All rights granted under this License are granted for the term of
+   copyright on the Program. You may make, run and propagate covered works without conditions
+   so long as your license otherwise remains in force.
+4. Conveying Verbatim Copies: You may convey verbatim copies of the Program's source code
+   as you receive it, in any medium, provided that you conspicuously publish on each copy
+   an appropriate copyright notice.
+5. Conveying Modified Source Versions: You may convey a work based on the Program under
+   the conditions of section 4, provided that you also grant this License to all third parties.
+13. Remote Network Interaction; Use with the GNU General Public License:
+    Notwithstanding any other provision of this License, if you modify the Program, your
+    modified version must prominently offer all users interacting with it remotely through
+    a computer network an opportunity to receive the Corresponding Source of your version
+    by providing access to the Corresponding Source from a network server at no charge.
+15. Disclaimer of Warranty: THE PROGRAM IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+16. Limitation of Liability: IN NO EVENT SHALL ANY COPYRIGHT HOLDER BE LIABLE FOR DAMAGES.
+
+For the full legal text of the GNU Affero General Public License, visit:
+https://www.gnu.org/licenses/agpl-3.0.html

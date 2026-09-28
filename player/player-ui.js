@@ -1,6 +1,10 @@
 /**
  * static/player/player-ui.js
  * 
+ * St Joseph's AST Vector Media Player — UI Controller
+ * Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
+ * 
  * AST Vector Media Player UI Controller
  * Binds DOM elements, timeline scrubbing, responsive touch events, keyboard shortcuts,
  * and SVG export / print rendering.
@@ -31,6 +35,7 @@
         btnFullscreen: document.getElementById('btn-fullscreen'),
         btnPrint: document.getElementById('btn-print'),
         btnCopySvg: document.getElementById('btn-copy-svg'),
+        btnPlayMode: document.getElementById('btn-play-mode'),
         btnInteractive: document.getElementById('btn-interactive'),
         interactiveCard: document.getElementById('interactive-card'),
         interactiveBody: document.getElementById('interactive-body'),
@@ -971,6 +976,23 @@
             this.playChime(587.33, 'triangle');
             this.update3DStatus();
           });
+        });
+      }
+
+      // Interactive Play Mode Button
+      if (el.btnPlayMode) {
+        el.btnPlayMode.addEventListener('click', () => {
+          this.engine.pause();
+          this.showToast('🎮 Interactive Play Mode Active');
+          el.btnPlayMode.classList.toggle('active');
+          this.engine.notifyParent({
+            type: 'TOGGLE_PLAY_MODE',
+            preset: this.engine.activePresetId,
+            source: 'player-ui'
+          });
+          if (this.engine.activePresetId === 'church-tour') {
+            this.startQuestMode();
+          }
         });
       }
 
