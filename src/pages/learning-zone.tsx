@@ -847,6 +847,9 @@ export default function LearningZonePage() {
                     if (s.includes('relig') || s.includes('catholic') || u.includes('church') || u.includes('sanctuary')) {
                       return 'church-tour';
                     }
+                    if (u.includes('mountain') || u.includes('altitude') || u.includes('climb') || u.includes('elevation') || u.includes('hill') || u.includes('geography')) {
+                      return 'mountain-elevation';
+                    }
                     if (u.includes('photo') || u.includes('plant') || u.includes('leaf') || u.includes('botan')) {
                       return 'photosynthesis';
                     }

@@ -1,8 +1,9 @@
 // src/pages/media-player.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
-import AstVectorMediaPlayer, { VectorPresetType } from '../components/AstVectorMediaPlayer';
+import AstVectorMediaPlayer, { VectorPresetType, AstVectorMediaPlayerHandle } from '../components/AstVectorMediaPlayer';
+import MountainClimberGame from '../components/MountainClimberGame';
 import { resolvePresetForTopic } from '../services/playerLauncher';
 
 interface PresetItem {
@@ -87,6 +88,14 @@ const PRESET_LIBRARY: PresetItem[] = [
     desc: 'Latin cross basilica architecture, Nave, High Altar, golden Tabernacle, and Marian Chapel.',
     icon: '⛪',
   },
+  {
+    id: 'mountain-elevation',
+    title: 'Mountain Altitude: Climber Game & Trigonometry',
+    stage: 'KS2/KS3 MATHS & GEOGRAPHY',
+    category: 'Games & Simulations',
+    desc: 'Interactive hill climber game: ascending the mountain slope while contrasting true vertical altitude against slope distance, right-angle hypotenuse, and atmospheric lapse rate.',
+    icon: '🧗',
+  },
 ];
 
 export default function MediaPlayerPage(): React.JSX.Element {
@@ -104,23 +113,44 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
   const [activePreset, setActivePreset] = useState<VectorPresetType>(initialPreset);
   const [filterCategory, setFilterCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
+  const [playMode, setPlayMode] = useState<'video' | 'game'>(
+    initialPreset === 'mountain-elevation' ? 'game' : 'video'
+  );
 
   useEffect(() => {
     if (urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset) && urlPreset !== activePreset) {
       setActivePreset(urlPreset);
+      if (urlPreset === 'mountain-elevation') {
+        setPlayMode('game');
+      }
     }
   }, [urlPreset, activePreset]);
 
   const handleSelectPreset = (id: VectorPresetType) => {
     setActivePreset(id);
     setSearchParams({ preset: id });
+    if (id === 'mountain-elevation') {
+      setPlayMode('game');
+    } else {
+      setPlayMode('video');
+    }
   };
 
   const currentPresetMeta = PRESET_LIBRARY.find((p) => p.id === activePreset) || PRESET_LIBRARY[0];
-  const filteredPresets =
-    filterCategory === 'All'
-      ? PRESET_LIBRARY
-      : PRESET_LIBRARY.filter((p) => p.category === filterCategory);
+  const filteredPresets = PRESET_LIBRARY.filter((p) => {
+    const matchesCategory =
+      filterCategory === 'All' ? true : p.category === filterCategory;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      p.title.toLowerCase().includes(q) ||
+      p.desc.toLowerCase().includes(q) ||
+      p.stage.toLowerCase().includes(q) ||
+      p.id.toLowerCase().includes(q);
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
@@ -238,7 +268,55 @@ export default function MediaPlayerPage(): React.JSX.Element {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {activePreset === 'mountain-elevation' && (
+              <div style={{ display: 'flex', background: '#090d16', padding: '3px', borderRadius: '8px', border: '1px solid #334155' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlayMode('game');
+                    playerRef.current?.pause();
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: playMode === 'game' ? '#10b981' : 'transparent',
+                    color: playMode === 'game' ? '#ffffff' : '#94a3b8',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🎮</span> Play Game
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlayMode('video');
+                    playerRef.current?.play();
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: playMode === 'video' ? '#0284c7' : 'transparent',
+                    color: playMode === 'video' ? '#ffffff' : '#94a3b8',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🎬</span> Lesson Video
+                </button>
+              </div>
+            )}
             <span
               style={{
                 fontSize: '0.74rem',
@@ -257,11 +335,23 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
         {/* Embedded AST Player */}
         <AstVectorMediaPlayer
+          ref={playerRef}
           preset={activePreset}
-          autoPlay={true}
+          autoPlay={playMode === 'video'}
           allowPresetSwitch={true}
           height="540px"
         />
+
+        {/* Playable Interactive Game Mode Console (Active Player Physics & Telemetry) */}
+        {activePreset === 'mountain-elevation' && playMode === 'game' && (
+          <MountainClimberGame
+            playerRef={playerRef}
+            onCloseGameMode={() => {
+              setPlayMode('video');
+              playerRef.current?.play();
+            }}
+          />
+        )}
       </div>
 
       {/* Interactive SVG Developer Workstation Quick Guide */}
@@ -353,29 +443,72 @@ export default function MediaPlayerPage(): React.JSX.Element {
             </p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
-            {['All', 'Mathematics', 'Science', 'Catholic Faith'].map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setFilterCategory(cat)}
+          {/* Search Input & Category Filter Pills */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search games & models (e.g. climber, altitude)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  padding: '5px 12px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: filterCategory === cat ? '#ffffff' : 'transparent',
-                  color: filterCategory === cat ? '#0f172a' : '#64748b',
+                  padding: '6px 12px 6px 30px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
                   fontSize: '0.8rem',
-                  fontWeight: filterCategory === cat ? 700 : 500,
-                  cursor: 'pointer',
-                  boxShadow: filterCategory === cat ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
-                  transition: 'all 0.15s ease',
+                  outline: 'none',
+                  minWidth: '220px',
+                  background: '#ffffff',
+                  color: '#0f172a',
                 }}
-              >
-                {cat}
-              </button>
-            ))}
+              />
+              <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: '#94a3b8' }}>
+                🔍
+              </span>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
+              {['All', 'Games & Simulations', 'Mathematics', 'Science', 'Catholic Faith'].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilterCategory(cat)}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: filterCategory === cat ? '#ffffff' : 'transparent',
+                    color: filterCategory === cat ? '#0f172a' : '#64748b',
+                    fontSize: '0.8rem',
+                    fontWeight: filterCategory === cat ? 700 : 500,
+                    cursor: 'pointer',
+                    boxShadow: filterCategory === cat ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

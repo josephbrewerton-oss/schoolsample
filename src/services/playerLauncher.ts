@@ -14,7 +14,8 @@ export type VectorPresetId =
   | 'atom'
   | 'cell-mitosis'
   | 'velocity'
-  | 'dna-helix';
+  | 'dna-helix'
+  | 'mountain-elevation';
 
 export interface PlayerCallOptions {
   preset?: VectorPresetId;
@@ -42,6 +43,9 @@ export function resolvePresetForTopic(subject?: string, unit?: string, topic?: s
   }
   if (combined.includes('photo') || combined.includes('plant') || combined.includes('leaf') || combined.includes('botan')) {
     return 'photosynthesis';
+  }
+  if (combined.includes('mountain') || combined.includes('altitude') || combined.includes('elevation') || combined.includes('climb') || combined.includes('climber') || combined.includes('hill') || combined.includes('height')) {
+    return 'mountain-elevation';
   }
   if (combined.includes('pythag') || combined.includes('triangle') || combined.includes('hypotenuse') || combined.includes('geometry')) {
     return 'pythagoras';

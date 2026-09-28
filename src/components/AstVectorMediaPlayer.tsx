@@ -13,7 +13,7 @@
  * - Split-Off Ready: Modular code package in /player/ ready for standalone npm/CDN distribution.
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import {
   PlayerDisplayMode,
@@ -34,6 +34,7 @@ export type VectorPresetType =
   | 'velocity'
   | 'dna-helix'
   | 'church-tour'
+  | 'mountain-elevation'
   | string;
 
 export interface AstVectorMediaPlayerProps {
@@ -51,7 +52,16 @@ export interface AstVectorMediaPlayerProps {
   onConfigChange?: (config: PlayerDisplayConfig) => void;
 }
 
+export interface AstVectorMediaPlayerHandle {
+  postToPlayer: (payload: Record<string, any>) => void;
+  seek: (progress: number) => void;
+  pause: () => void;
+  play: () => void;
+  togglePlay: () => void;
+}
+
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
+  { id: 'mountain-elevation', label: '🧗 Mountain Altitude: Climber Game (Elevation & Slope)', stage: 'KS2/KS3 MATHS & GEOGRAPHY' },
   { id: 'church-tour', label: '⛪ Catholic Church: Sacred Architecture Tour', stage: 'CATHOLIC LIFE' },
   { id: 'fractions', label: '📐 Fractions: Common Denominators', stage: 'KS2 MATHS' },
   { id: 'solar-system', label: '🪐 Solar System: Heliocentric Orbits', stage: 'KS3 SCIENCE' },
@@ -63,7 +73,7 @@ export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
   { id: 'dna-helix', label: '🧬 DNA Double Helix Transcription', stage: 'KS3 GENETICS' },
 ];
 
-export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
+export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVectorMediaPlayerProps>(({
   preset = 'fractions',
   lang,
   autoPlay = false,
@@ -76,7 +86,7 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
   onKeyframeReached,
   onTimeUpdate,
   onConfigChange,
-}) => {
+}, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(preset);
   const selectedPresetRef = useRef(preset);
@@ -142,6 +152,15 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
       iframeRef.current.contentWindow.postMessage(payload, '*');
     }
   }, []);
+
+  // Expose imperative handle to parent components (for games, quizzes, external controls)
+  useImperativeHandle(ref, () => ({
+    postToPlayer,
+    seek: (progress: number) => postToPlayer({ type: 'SEEK', progress }),
+    pause: () => postToPlayer({ type: 'PAUSE' }),
+    play: () => postToPlayer({ type: 'PLAY' }),
+    togglePlay: () => postToPlayer({ type: 'TOGGLE_PLAY' }),
+  }), [postToPlayer]);
 
   // Sync with global operational language changes
   useEffect(() => {
@@ -1413,6 +1432,6 @@ export const AstVectorMediaPlayer: React.FC<AstVectorMediaPlayerProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default AstVectorMediaPlayer;
