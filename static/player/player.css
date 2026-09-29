@@ -1628,4 +1628,207 @@ body.obs-transparent footer {
   gap: 8px;
 }
 
+/* Loop & Volume Controls */
+#btn-loop.active {
+  background: rgba(14, 165, 233, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+}
+
+.volume-control-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.volume-mute-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  color: var(--text);
+  line-height: 1;
+}
+
+.volume-slider {
+  width: 65px;
+  height: 4px;
+  accent-color: #38bdf8;
+  cursor: pointer;
+}
+
+/* Physics & Gravity Control Subsystem */
+.physics-preset-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.phys-btn {
+  flex: 1 1 calc(20% - 4px);
+  min-width: 52px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.phys-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #f8fafc;
+}
+
+.phys-btn.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+/* Keyboard Shortcuts Modal */
+.shortcuts-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.shortcuts-modal.hidden {
+  display: none !important;
+}
+
+.shortcuts-card {
+  width: 100%;
+  max-width: 480px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: scaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.shortcuts-body {
+  padding: 14px 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.shortcuts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #cbd5e1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.4);
+}
+
+.sc-row kbd {
+  background: #0284c7;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 2px 0 #0369a1;
+}
+
+/* Voice Command Feedback Overlay */
+.voice-cmd-overlay {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  backdrop-filter: blur(8px);
+  padding: 6px 16px;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.35);
+  z-index: 25;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.voice-cmd-overlay.hidden {
+  display: none !important;
+}
+
+.voice-cmd-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-mic-pulse {
+  width: 10px;
+  height: 10px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse-red 1.2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.voice-cmd-btn.active {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+
 

@@ -4,6 +4,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
 import AstVectorMediaPlayer, { VectorPresetType, AstVectorMediaPlayerHandle } from '../components/AstVectorMediaPlayer';
 import MountainClimberGame from '../components/MountainClimberGame';
+import MathFishingGame from '../components/MathFishingGame';
 import { resolvePresetForTopic } from '../services/playerLauncher';
 
 interface PresetItem {
@@ -89,12 +90,28 @@ const PRESET_LIBRARY: PresetItem[] = [
     icon: '⛪',
   },
   {
+    id: 'math-fishing',
+    title: 'Math Pond: Number Bonds Fishing Game',
+    stage: 'KS1/KS2 MATHS',
+    category: 'Games & Simulations',
+    desc: 'Interactive vector pond fishing adventure: cast your line, hook swimming fish with numerals and ten-frame dots, adding them together for number bonds to 10 & 20, doubles, and mental arithmetic.',
+    icon: '🎣',
+  },
+  {
     id: 'mountain-elevation',
     title: 'Mountain Altitude: Climber Game & Trigonometry',
     stage: 'KS2/KS3 MATHS & GEOGRAPHY',
     category: 'Games & Simulations',
     desc: 'Interactive hill climber game: ascending the mountain slope while contrasting true vertical altitude against slope distance, right-angle hypotenuse, and atmospheric lapse rate.',
     icon: '🧗',
+  },
+  {
+    id: 'fish-tank',
+    title: 'Aquarium Stress Benchmark & Point Limiter',
+    stage: 'BENCHMARK & STRESS LAB',
+    category: 'Diagnostics & Games',
+    desc: 'Multi-species vector fish tank stress test: measures real-time 60 FPS performance, active vector points, and frame render budget to determine the device safe point limit.',
+    icon: '🐠',
   },
 ];
 
@@ -118,13 +135,13 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
 
-  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation
+  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation and math-fishing
   const initialPlayMode: 'video' | 'game' =
     urlMode === 'video'
       ? 'video'
       : urlMode === 'game'
       ? 'game'
-      : initialPreset === 'mountain-elevation'
+      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing'
       ? 'game'
       : 'video';
 
@@ -133,7 +150,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
   useEffect(() => {
     if (urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset) && urlPreset !== activePreset) {
       setActivePreset(urlPreset);
-      if (urlMode === 'game' || urlPreset === 'mountain-elevation') {
+      if (urlMode === 'game' || urlPreset === 'mountain-elevation' || urlPreset === 'math-fishing') {
         setPlayMode('game');
       }
     } else if (urlMode && (urlMode === 'game' || urlMode === 'video') && urlMode !== playMode) {
@@ -143,7 +160,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
   const handleSelectPreset = (id: VectorPresetType, targetMode?: 'video' | 'game') => {
     setActivePreset(id);
-    const chosenMode = targetMode || (id === 'mountain-elevation' ? 'game' : playMode);
+    const chosenMode = targetMode || (id === 'mountain-elevation' || id === 'math-fishing' ? 'game' : playMode);
     setPlayMode(chosenMode);
     setSearchParams({ preset: id, mode: chosenMode });
   };
@@ -165,8 +182,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem 3rem' }}>
       <PageMeta
-        title={`${currentPresetMeta.title} — AST Vector Media Player`}
-        description="High-fidelity 0-bloat vector media player with real-time SVG animation, synchronized subtitles, 3D orbit controls, and curriculum worksheets."
+        title={`${currentPresetMeta.title} — Lumina Vector Player | St Joseph's`}
+        description="High-fidelity 0-bloat Lumina vector media player with real-time SVG animation, synchronized subtitles, 3D orbit controls, and curriculum worksheets."
       />
 
       {/* Top Breadcrumb & Call Status */}
@@ -185,7 +202,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
           </Link>
           <span style={{ color: '#cbd5e1' }}>/</span>
           <span style={{ fontSize: '0.84rem', color: '#0284c7', fontWeight: 700 }}>
-            🎬 AST Vector Media Player
+            🎬 Lumina Vector Player
           </span>
         </div>
 
@@ -270,7 +287,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
                 >
                   {currentPresetMeta.stage}
                 </span>
-                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>&bull; Live Parametric Engine</span>
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>&bull; Lumina Motion Suite</span>
               </div>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc', margin: '2px 0 0' }}>
                 {currentPresetMeta.title}
@@ -498,8 +515,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
           onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
           onPlayModeToggle={() => {
             const nextMode = playMode === 'game' ? 'video' : 'game';
-            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'church-tour') {
-              handleSelectPreset('mountain-elevation', 'game');
+            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour') {
+              handleSelectPreset('math-fishing', 'game');
             } else {
               setPlayMode(nextMode);
               setSearchParams({ preset: activePreset, mode: nextMode });
@@ -512,9 +529,20 @@ export default function MediaPlayerPage(): React.JSX.Element {
           }}
         />
 
-        {/* Playable Interactive Game Mode Console (Active Player Physics & Telemetry) */}
+        {/* Playable Interactive Game Mode Consoles (Active Player Physics & Telemetry) */}
         {activePreset === 'mountain-elevation' && playMode === 'game' && (
           <MountainClimberGame
+            playerRef={playerRef}
+            onCloseGameMode={() => {
+              setPlayMode('video');
+              setSearchParams({ preset: activePreset, mode: 'video' });
+              playerRef.current?.play();
+            }}
+          />
+        )}
+
+        {activePreset === 'math-fishing' && playMode === 'game' && (
+          <MathFishingGame
             playerRef={playerRef}
             onCloseGameMode={() => {
               setPlayMode('video');
@@ -597,6 +625,14 @@ export default function MediaPlayerPage(): React.JSX.Element {
             </strong>
             <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
               1-click switch between 🎓 Classroom (clean whiteboard), 🎒 Student Focus (distraction-free), 📡 Broadcast, or 🛠️ Developer Mode so you only show what you need.
+            </span>
+          </div>
+          <div style={{ padding: '8px 12px', background: 'var(--stj-canvas)', borderRadius: '8px', border: '1px solid var(--stj-border)' }}>
+            <strong style={{ fontSize: '0.8rem', color: '#10b981', display: 'block', marginBottom: '2px' }}>
+              🎙️ Voice Command Control (SpeechRecognition API)
+            </strong>
+            <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>
+              Hands-free navigation via the browser's SpeechRecognition API. Click 🎤 <strong>Mic</strong> or press <kbd style={{ padding: '1px 5px', fontSize: '0.7rem', background: 'var(--stj-surface-raised)', borderRadius: '4px', border: '1px solid var(--stj-border)' }}>V</kbd> to speak: <em>"play"</em>, <em>"pause"</em>, <em>"rewind"</em>, or <em>"show me fractions"</em>.
             </span>
           </div>
         </div>
@@ -783,6 +819,34 @@ export default function MediaPlayerPage(): React.JSX.Element {
                         }}
                       >
                         <span>🎬</span> Video
+                      </button>
+                    </div>
+                  ) : p.id === 'fish-tank' ? (
+                    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPreset(p.id, 'video');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          background: isSelected ? '#0284c7' : '#0ea5e9',
+                          color: '#ffffff',
+                          border: 'none',
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px',
+                          boxShadow: '0 1px 3px rgba(14, 165, 233, 0.3)',
+                        }}
+                      >
+                        <span>🐠</span> Run Stress Benchmark {isSelected ? '✔' : ''}
                       </button>
                     </div>
                   ) : p.id === 'church-tour' ? (

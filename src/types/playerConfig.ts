@@ -32,8 +32,12 @@ export interface PlayerDisplayConfig {
   showPlaybackControls: boolean;     // Play/Pause, step, reset, time readout
   showSpeedSelector: boolean;        // Playback speed dropdown (0.5× – 2.0×)
   showVoiceNarration: boolean;       // Voice narration toggle button
+  showVoiceControl?: boolean;        // 🎤 Voice commands control button (Web Speech API)
   showLanguageSelector: boolean;     // Subtitle/narration language dropdown
   showSubtitles: boolean;            // Synchronized subtitle banner overlay
+  showLoopToggle?: boolean;          // 🔁 Auto-repeat loop toggle
+  showVolumeControl?: boolean;       // 🔊 Master volume & mute controls
+  showPhysicsControls?: boolean;     // 🪐 Micro-physics & gravity controls
 }
 
 export const MODE_METADATA: Record<PlayerDisplayMode, { label: string; icon: string; tag: string; description: string }> = {
@@ -89,8 +93,12 @@ export const CLASSROOM_PRESET: PlayerDisplayConfig = {
   showPlaybackControls: true,
   showSpeedSelector: true,
   showVoiceNarration: true,
+  showVoiceControl: true,
   showLanguageSelector: true,
   showSubtitles: true,
+  showLoopToggle: true,
+  showVolumeControl: true,
+  showPhysicsControls: true,
 };
 
 export const STUDENT_PRESET: PlayerDisplayConfig = {
@@ -113,8 +121,12 @@ export const STUDENT_PRESET: PlayerDisplayConfig = {
   showPlaybackControls: true,
   showSpeedSelector: true,
   showVoiceNarration: true,
+  showVoiceControl: true,
   showLanguageSelector: true,
   showSubtitles: true,
+  showLoopToggle: true,
+  showVolumeControl: true,
+  showPhysicsControls: false,
 };
 
 export const BROADCAST_PRESET: PlayerDisplayConfig = {
@@ -137,8 +149,12 @@ export const BROADCAST_PRESET: PlayerDisplayConfig = {
   showPlaybackControls: true,
   showSpeedSelector: true,
   showVoiceNarration: true,
+  showVoiceControl: true,
   showLanguageSelector: true,
   showSubtitles: true,
+  showLoopToggle: true,
+  showVolumeControl: true,
+  showPhysicsControls: true,
 };
 
 export const DEVELOPER_PRESET: PlayerDisplayConfig = {
@@ -161,8 +177,12 @@ export const DEVELOPER_PRESET: PlayerDisplayConfig = {
   showPlaybackControls: true,
   showSpeedSelector: true,
   showVoiceNarration: true,
+  showVoiceControl: true,
   showLanguageSelector: true,
   showSubtitles: true,
+  showLoopToggle: true,
+  showVolumeControl: true,
+  showPhysicsControls: true,
 };
 
 export const CONFIG_STORAGE_KEY = 'stj_player_display_config';

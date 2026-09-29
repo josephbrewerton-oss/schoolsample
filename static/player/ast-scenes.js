@@ -1218,6 +1218,598 @@
 
         return svg;
       }
+    },
+
+    'mountain-elevation': {
+      id: 'mountain-elevation',
+      stage: 'KS2/KS3 MATHS & GEOGRAPHY',
+      title: 'Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science',
+      duration: 16.0,
+      has3D: false,
+      svgFile: 'scenes/mountain-elevation.svg',
+      astFile: 'scenes/mountain-elevation.ast',
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.34,
+            title: 'Checkpoint 1: Slope Distance vs True Altitude',
+            prompt: 'The climber has walked 2,000m along a 30° mountain slope. What is their true vertical height above sea level?',
+            options: [
+              '2,000m (same as walking distance)',
+              '1,000m (2,000m × sin(30°) = 1,000m)',
+              '4,000m (double the distance)'
+            ],
+            answer: 1,
+            explanation: 'Walking along a slope is the hypotenuse! Vertical altitude is opposite the angle: 2,000m × sin(30°) = 1,000m.'
+          },
+          {
+            t: 0.68,
+            title: 'Checkpoint 2: Atmospheric Lapse Rate',
+            prompt: 'If sea-level temperature is 20°C and drops ~6.5°C per 1,000m, what is the temperature at 2,400m altitude?',
+            options: [
+              '4.4°C (20 - 2.4 × 6.5)',
+              '20.0°C (temperature remains constant)',
+              '-15.0°C (instant freezing)'
+            ],
+            answer: 0,
+            explanation: 'Air cools as atmospheric pressure drops. 20°C - (2.4 × 6.5°C) = 4.4°C!'
+          }
+        ]
+      },
+      keyframes: [
+        { t: 0.00, title: 'Step 1: Base Camp (0m Sea Level)', rule: 'Walking distance along a hill ≠ Vertical height! Elevation is measured straight up.' },
+        { t: 0.35, title: 'Step 2: Camp 1 The Ridge (1,500m)', rule: 'Trigonometry link: True Altitude = Slope Distance × sin(θ). The slope is the hypotenuse!' },
+        { t: 0.70, title: 'Step 3: Camp 2 The Ice Shelf (2,400m)', rule: 'Atmospheric Lapse Rate: Temperature drops ~6.5°C per 1,000m rise as air pressure thins.' },
+        { t: 1.00, title: 'Step 4: The Summit (3,000m Solved)', rule: 'Summit reached! Vertical rise = 3,000m. Pythagoras proof: Base² + Altitude² = Slope².' }
+      ],
+      subtitles: [
+        { start: 0.00, end: 0.30, en: 'Watch the climber depart Base Camp (0m). Notice the difference between walking distance along the slope and true vertical height!', es: '¡Mira al escalador salir del campamento base (0m)! Nota la diferencia entre la distancia caminada y la altura vertical real.' },
+        { start: 0.30, end: 0.65, en: 'At Camp 1 (1,500m), notice the right-angled triangle! The slope is the hypotenuse, but true altitude is the vertical rise.', es: 'En el Campamento 1 (1,500m), ¡mira el triángulo rectángulo! La pendiente es la hipotenusa, pero la altitud real es la línea vertical.' },
+        { start: 0.65, end: 1.00, en: 'Approaching the 3,000m summit: temperature drops to -2°C, air pressure falls to 70 kPa, and altitude reaches peak height!', es: '¡Llegando a la cumbre de 3,000m! La temperatura baja a -2°C, la presión cae a 70 kPa y la altitud alcanza el máximo.' }
+      ],
+      render(t) {
+        const cx = 180 + t * 220;
+        const cy = 380 - t * 240;
+        const altM = Math.round(t * 3000);
+        return `
+          <rect width="800" height="480" fill="#0284c7" />
+          <polygon points="400,140 180,380 680,380" fill="#475569" />
+          <polygon points="400,140 375,190 425,190" fill="#ffffff" />
+          <line x1="180" y1="380" x2="${cx}" y2="380" stroke="#0ea5e9" stroke-width="3" />
+          <line x1="${cx}" y1="380" x2="${cx}" y2="${cy}" stroke="#10b981" stroke-width="3" />
+          <circle cx="${cx}" cy="${cy}" r="6" fill="#ef4444" />
+          <rect x="250" y="20" width="300" height="40" rx="8" fill="#0f172a" />
+          <text x="400" y="45" fill="#38bdf8" font-size="16" font-weight="bold" text-anchor="middle">Altitude: ${altM}m / 3000m</text>
+        `;
+      }
+    },
+    'fish-tank': {
+      id: 'fish-tank',
+      stage: 'BENCHMARK & STRESS LAB',
+      title: 'Aquarium Stress Benchmark: Vector Point & FPS Limiter',
+      duration: 12.0,
+      svgFile: 'scenes/fish-tank.svg',
+      astFile: 'scenes/fish-tank.ast',
+      keyframes: [
+        { t: 0.00, title: 'Baseline Aquarium', rule: 'Calibrating baseline frame rendering at 60 FPS' },
+        { t: 0.33, title: 'Schooling Dynamics', rule: 'Evaluating multi-point fin undulation and collision vectors' },
+        { t: 0.66, title: 'Vertex Stress Test', rule: 'Measuring composite reflow limits across hardware threads' },
+        { t: 1.00, title: 'Hardware Safe Limit', rule: 'Optimal ceiling calculated and stored in local configuration' }
+      ],
+      subtitles: [
+        { start: 0.00, end: 0.35, en: "Stress testing the SVG vector rendering pipeline with animated multi-point fish boids.", es: "Prueba de esfuerzo del pipeline SVG con peces animados de múltiples vértices." },
+        { start: 0.35, end: 0.70, en: "Watch the live FPS and frame time budget as active points and vector DOM nodes increase.", es: "Observa los FPS y el tiempo de renderizado a medida que aumentan los vértices." },
+        { start: 0.70, end: 1.00, en: "The computed safe ceiling determines the ideal point boundary for this hardware.", es: "El límite seguro calculado establece la frontera ideal de puntos para este dispositivo." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.50,
+            title: "Vector Rendering Limits",
+            prompt: "Why does an SVG vector player have a physical limit on animated points and DOM nodes?",
+            options: [
+              "Because browsers evaluate the DOM tree and re-rasterize vector bezier curves on each frame",
+              "Because SVG files expire after 60 seconds of playback",
+              "Because vector math only works on computers with liquid cooling"
+            ],
+            answer: 0,
+            explanation: "Unlike flat pixel video, SVG vector rendering recalculates geometry and patches DOM element attributes every 16.6ms. Finding the point limit allows us to govern scenes safely for smooth 60 FPS on any Chromebook, mobile device, or PC."
+          }
+        ]
+      },
+      mount(container) {
+        let fishGroup = container.querySelector('#fish-school-group');
+        let bubbleGroup = container.querySelector('#bubbles-group');
+
+        // Fallback: If SVG template nodes were not already injected, initialize complete aquarium DOM
+        if (!fishGroup || !bubbleGroup) {
+          container.innerHTML = `
+            <defs>
+              <linearGradient id="tank-water" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0369a1" />
+                <stop offset="35%" stop-color="#0284c7" />
+                <stop offset="70%" stop-color="#0f172a" />
+                <stop offset="100%" stop-color="#020617" />
+              </linearGradient>
+              <linearGradient id="caustic-ray" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.0" />
+              </linearGradient>
+              <linearGradient id="seabed-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#b45309" />
+                <stop offset="40%" stop-color="#78350f" />
+                <stop offset="100%" stop-color="#451a03" />
+              </linearGradient>
+              <linearGradient id="fish-clown" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#f97316" /><stop offset="50%" stop-color="#ea580c" /><stop offset="100%" stop-color="#c2410c" />
+              </linearGradient>
+              <linearGradient id="fish-blue" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#06b6d4" /><stop offset="100%" stop-color="#0284c7" />
+              </linearGradient>
+              <linearGradient id="fish-tang" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#eab308" /><stop offset="100%" stop-color="#ca8a04" />
+              </linearGradient>
+              <linearGradient id="fish-neon" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#ec4899" /><stop offset="100%" stop-color="#8b5cf6" />
+              </linearGradient>
+              <filter id="bubble-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <rect x="0" y="0" width="800" height="480" fill="url(#tank-water)" />
+            <polygon points="120,0 240,0 360,440 200,440" fill="url(#caustic-ray)" />
+            <polygon points="400,0 520,0 660,440 500,440" fill="url(#caustic-ray)" />
+            <polygon points="620,0 720,0 800,440 700,440" fill="url(#caustic-ray)" />
+            <path d="M 0,440 Q 200,420 400,435 T 800,430 L 800,480 L 0,480 Z" fill="url(#seabed-grad)" />
+            <ellipse cx="140" cy="445" rx="35" ry="14" fill="#57534e" />
+            <ellipse cx="180" cy="450" rx="20" ry="10" fill="#44403c" />
+            <ellipse cx="640" cy="442" rx="45" ry="16" fill="#57534e" />
+            <ellipse cx="690" cy="448" rx="28" ry="12" fill="#44403c" />
+            <g id="kelp-forest">
+              <path id="kelp-1" d="M 60,450 Q 80,340 50,240 T 70,120 T 40,30" fill="none" stroke="#16a34a" stroke-width="8" stroke-linecap="round" opacity="0.85" />
+              <path id="kelp-2" d="M 90,460 Q 120,360 85,260 T 110,150 T 80,50" fill="none" stroke="#15803d" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+              <path id="kelp-3" d="M 720,450 Q 700,340 735,240 T 710,130 T 740,35" fill="none" stroke="#16a34a" stroke-width="9" stroke-linecap="round" opacity="0.85" />
+              <path id="kelp-4" d="M 750,460 Q 730,370 760,270 T 735,160 T 765,60" fill="none" stroke="#15803d" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+            </g>
+            <g id="fish-school-group"></g>
+            <g id="bubbles-group"></g>
+            <line x1="0" y1="2" x2="800" y2="2" stroke="#38bdf8" stroke-width="3" opacity="0.6" stroke-dasharray="16 8" />
+            <g id="benchmark-hud" transform="translate(16, 16)">
+              <rect x="0" y="0" width="310" height="152" rx="10" fill="#0f172a" fill-opacity="0.88" stroke="#334155" stroke-width="1.5" />
+              <text x="14" y="24" fill="#38bdf8" font-size="12" font-weight="bold" font-family="system-ui, sans-serif">🐠 HARDWARE STRESS BENCHMARK</text>
+              <rect x="238" y="12" width="58" height="16" rx="4" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="1" />
+              <text id="hud-status-badge" x="267" y="24" fill="#34d399" font-size="9" font-weight="bold" text-anchor="middle" font-family="system-ui, sans-serif">60 FPS</text>
+              <text x="14" y="48" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Render Performance:</text>
+              <text id="hud-fps-val" x="120" y="48" fill="#34d399" font-size="12" font-weight="bold" font-family="monospace">60.0 FPS</text>
+              <text id="hud-frametime-val" x="200" y="48" fill="#94a3b8" font-size="10" font-family="monospace">(16.6ms)</text>
+              <text x="14" y="68" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Active Animated Fish:</text>
+              <text id="hud-fish-count" x="120" y="68" fill="#f8fafc" font-size="11" font-weight="bold" font-family="monospace">100 Fish</text>
+              <text x="175" y="68" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Points:</text>
+              <text id="hud-points-count" x="220" y="68" fill="#38bdf8" font-size="11" font-weight="bold" font-family="monospace">2,400 pts</text>
+              <rect x="14" y="78" width="282" height="6" rx="3" fill="#1e293b" />
+              <rect id="hud-budget-fill" x="14" y="78" width="80" height="6" rx="3" fill="#10b981" />
+              <rect x="14" y="92" width="282" height="24" rx="4" fill="rgba(30, 41, 59, 0.7)" stroke="#334155" stroke-width="1" />
+              <text id="hud-recommendation" x="22" y="108" fill="#cbd5e1" font-size="9.5" font-family="system-ui, sans-serif">Safe Device Limit: Calculating...</text>
+              <text x="14" y="132" fill="#64748b" font-size="8.5" font-family="system-ui, sans-serif">Click aquarium to add +30 fish &amp; test frame limits</text>
+            </g>
+          `;
+          fishGroup = container.querySelector('#fish-school-group');
+          bubbleGroup = container.querySelector('#bubbles-group');
+        }
+
+        const svg = container.querySelector('svg') || container;
+        const hudFps = container.querySelector('#hud-fps-val');
+        const hudTime = container.querySelector('#hud-frametime-val');
+        const hudFish = container.querySelector('#hud-fish-count');
+        const hudPoints = container.querySelector('#hud-points-count');
+        const hudBadge = container.querySelector('#hud-status-badge');
+        const hudBudget = container.querySelector('#hud-budget-fill');
+        const hudRec = container.querySelector('#hud-recommendation');
+
+        // Boid species palettes
+        const fishGradients = ['url(#fish-clown)', 'url(#fish-blue)', 'url(#fish-tang)', 'url(#fish-neon)'];
+        const tailColors = ['#f97316', '#38bdf8', '#eab308', '#ec4899'];
+
+        // Initial default fish count (100 fish = 2,400 active points)
+        const initialCount = 100;
+        const fishBoids = [];
+
+        if (fishGroup) {
+          fishGroup.innerHTML = '';
+          for (let i = 0; i < initialCount; i++) {
+            const speciesIdx = i % 4;
+            const size = 0.65 + Math.random() * 0.75;
+            const speed = (60 + Math.random() * 90) * (Math.random() > 0.15 ? 1 : -1);
+            const x = Math.random() * 800;
+            const y = 60 + Math.random() * 340;
+            const phase = Math.random() * Math.PI * 2;
+            const finFreq = 4 + Math.random() * 4;
+
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'boid-fish');
+            g.setAttribute('transform', `translate(${x.toFixed(1)}, ${y.toFixed(1)})`);
+
+            // Fish body path (8 points)
+            const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const direction = speed >= 0 ? 1 : -1;
+            const bx = direction > 0 ? 12 : -12;
+            body.setAttribute('d', `M ${bx*size},0 C ${(bx*0.5)*size},${-8*size} ${(-10*direction)*size},${-6*size} ${(-16*direction)*size},0 C ${(-10*direction)*size},${6*size} ${(bx*0.5)*size},${8*size} ${bx*size},0 Z`);
+            body.setAttribute('fill', fishGradients[speciesIdx]);
+
+            // Fish tail fin (4 points)
+            const tail = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            tail.setAttribute('fill', tailColors[speciesIdx]);
+            tail.setAttribute('opacity', '0.9');
+
+            // Pectoral fin (3 points)
+            const fin = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            fin.setAttribute('points', `0,0 ${(-6*direction)*size},${4*size} ${(-2*direction)*size},${7*size}`);
+            fin.setAttribute('fill', tailColors[speciesIdx]);
+            fin.setAttribute('opacity', '0.8');
+
+            // Eye & Pupil (4 points)
+            const eye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            eye.setAttribute('cx', `${(bx * 0.65).toFixed(1)}`);
+            eye.setAttribute('cy', `${(-2 * size).toFixed(1)}`);
+            eye.setAttribute('r', `${(2.2 * size).toFixed(1)}`);
+            eye.setAttribute('fill', '#ffffff');
+
+            const pupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            pupil.setAttribute('cx', `${(bx * 0.72).toFixed(1)}`);
+            pupil.setAttribute('cy', `${(-2 * size).toFixed(1)}`);
+            pupil.setAttribute('r', `${(1.1 * size).toFixed(1)}`);
+            pupil.setAttribute('fill', '#0f172a');
+
+            g.appendChild(tail);
+            g.appendChild(body);
+            g.appendChild(fin);
+            g.appendChild(eye);
+            g.appendChild(pupil);
+            fishGroup.appendChild(g);
+
+            fishBoids.push({
+              el: g,
+              tailEl: tail,
+              x,
+              y,
+              speed,
+              size,
+              direction,
+              phase,
+              finFreq
+            });
+          }
+        }
+
+        // Bubbles with Microphysics
+        const bubbles = [];
+        if (bubbleGroup) {
+          bubbleGroup.innerHTML = '';
+          for (let b = 0; b < 24; b++) {
+            const bx = 40 + Math.random() * 720;
+            const by = 40 + Math.random() * 400;
+            const r = 2 + Math.random() * 5;
+            const vy = -(30 + Math.random() * 50);
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', bx.toFixed(1));
+            circle.setAttribute('cy', by.toFixed(1));
+            circle.setAttribute('r', r.toFixed(1));
+            circle.setAttribute('fill', '#38bdf8');
+            circle.setAttribute('fill-opacity', '0.45');
+            circle.setAttribute('stroke', '#7dd3fc');
+            circle.setAttribute('stroke-width', '1');
+            circle.setAttribute('filter', 'url(#bubble-glow)');
+            bubbleGroup.appendChild(circle);
+
+            bubbles.push({ el: circle, x: bx, y: by, r, vy, wobble: Math.random() * Math.PI * 2 });
+          }
+        }
+
+        // Benchmarking state
+        const state = {
+          fishBoids,
+          bubbles,
+          lastTime: performance.now(),
+          fps: 60.0,
+          fpsHistory: [],
+          renderDurationMs: 3.5,
+          hudFps,
+          hudTime,
+          hudFish,
+          hudPoints,
+          hudBadge,
+          hudBudget,
+          hudRec
+        };
+
+        // Click on the stage allows incrementing fish count dynamically for stress testing
+        if (svg) {
+          svg.style.cursor = 'pointer';
+          svg.onclick = (e) => {
+            // If clicking benchmark panel, don't trigger
+            if (e.target.closest('#benchmark-hud')) return;
+            const newFishCount = Math.min(600, state.fishBoids.length + 30);
+            if (hudFish) hudFish.textContent = `${newFishCount} Fish`;
+          };
+        }
+
+        return state;
+      },
+      update(t, state) {
+        if (!state) return;
+        const now = performance.now();
+        const frameTime = now - state.lastTime;
+        state.lastTime = now;
+
+        if (frameTime > 0 && frameTime < 500) {
+          const instantFps = 1000.0 / frameTime;
+          state.fps = state.fps * 0.88 + instantFps * 0.12;
+          state.renderDurationMs = Math.max(1.0, frameTime * 0.35);
+        }
+
+        const boids = state.fishBoids || [];
+        const dt = 0.016; // 60 FPS normalizer
+
+        // Animate each vector fish boid
+        for (let i = 0; i < boids.length; i++) {
+          const b = boids[i];
+          b.x += b.speed * dt;
+          b.y += Math.sin(t * b.finFreq + b.phase) * 0.55;
+
+          // Wrap horizontally around tank boundaries
+          if (b.speed > 0 && b.x > 840) b.x = -40;
+          if (b.speed < 0 && b.x < -40) b.x = 840;
+
+          if (b.el) {
+            b.el.setAttribute('transform', `translate(${b.x.toFixed(1)}, ${b.y.toFixed(1)})`);
+          }
+
+          // Oscillate tail fin vertices
+          if (b.tailEl) {
+            const tailSwing = Math.sin(t * b.finFreq * 2 + b.phase) * 4 * b.size;
+            const tailX = (-14 * b.direction) * b.size;
+            b.tailEl.setAttribute('points', `${tailX},0 ${(-24 * b.direction) * b.size},${(-7 * b.size + tailSwing).toFixed(1)} ${(-24 * b.direction) * b.size},${(7 * b.size + tailSwing).toFixed(1)}`);
+          }
+        }
+
+        // Animate bubbles
+        const bubbles = state.bubbles || [];
+        for (let j = 0; j < bubbles.length; j++) {
+          const bub = bubbles[j];
+          bub.y += bub.vy * dt;
+          bub.x += Math.sin(t * 3 + bub.wobble) * 0.6;
+          if (bub.y < 5) {
+            bub.y = 440;
+            bub.x = 40 + Math.random() * 720;
+          }
+          if (bub.el) {
+            bub.el.setAttribute('cx', bub.x.toFixed(1));
+            bub.el.setAttribute('cy', bub.y.toFixed(1));
+          }
+        }
+
+        // Diagnostics telemetry
+        const pointsPerFish = 24;
+        const totalPoints = boids.length * pointsPerFish + bubbles.length * 8 + 64; // kelp + seabed points
+        const fpsVal = Math.min(60.0, Math.max(12.0, state.fps));
+        const frameMs = (1000.0 / fpsVal).toFixed(1);
+
+        if (state.hudFps) {
+          state.hudFps.textContent = `${fpsVal.toFixed(1)} FPS`;
+          state.hudFps.setAttribute('fill', fpsVal >= 55 ? '#34d399' : (fpsVal >= 35 ? '#fbbf24' : '#f87171'));
+        }
+        if (state.hudTime) {
+          state.hudTime.textContent = `(${frameMs}ms)`;
+        }
+        if (state.hudFish) {
+          state.hudFish.textContent = `${boids.length} Fish`;
+        }
+        if (state.hudPoints) {
+          state.hudPoints.textContent = `${totalPoints.toLocaleString()} pts`;
+        }
+        if (state.hudBadge) {
+          state.hudBadge.textContent = fpsVal >= 55 ? 'OPTIMAL' : (fpsVal >= 35 ? 'BALANCED' : 'BOTTLENECK');
+          state.hudBadge.setAttribute('fill', fpsVal >= 55 ? '#34d399' : (fpsVal >= 35 ? '#fbbf24' : '#f87171'));
+        }
+        if (state.hudBudget) {
+          const budgetPct = Math.min(1.0, Math.max(0.1, (1000.0 / fpsVal) / 33.3));
+          state.hudBudget.setAttribute('width', `${(budgetPct * 282).toFixed(1)}`);
+          state.hudBudget.setAttribute('fill', fpsVal >= 55 ? '#10b981' : (fpsVal >= 35 ? '#f59e0b' : '#ef4444'));
+        }
+
+        // Calculate and cache recommended hardware ceiling
+        if (state.hudRec && Math.random() < 0.05) {
+          let safePoints = 4000;
+          if (fpsVal >= 58) {
+            safePoints = Math.round(totalPoints * 1.6);
+          } else if (fpsVal >= 50) {
+            safePoints = Math.round(totalPoints * 1.1);
+          } else {
+            safePoints = Math.max(1200, Math.round(totalPoints * (fpsVal / 60.0)));
+          }
+          const safeFish = Math.round(safePoints / pointsPerFish);
+          state.hudRec.textContent = `Safe Limit: ~${safePoints.toLocaleString()} pts (~${safeFish} fish) for 60 FPS`;
+          try {
+            localStorage.setItem('stj_player_safe_point_limit', String(safePoints));
+          } catch (_) {}
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#0369a1"/><text x="400" y="240" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">Aquarium Vector Stress Benchmark (60 FPS)</text>`;
+      }
+    },
+    'math-fishing': {
+      id: 'math-fishing',
+      stage: 'KS1/KS2 MATHS',
+      title: 'Math Pond: Number Bonds Fishing Game',
+      duration: 14.0,
+      svgFile: 'scenes/math-fishing.svg',
+      astFile: 'scenes/math-fishing.ast',
+      keyframes: [
+        { t: 0.00, title: 'Step 1: Pond Inspection', rule: 'Scanning swimming fish numerals and ten-frame dots' },
+        { t: 0.35, title: 'Step 2: First Catch (4)', rule: 'Reeling in 4: calculating complement needed to reach target 10' },
+        { t: 0.70, title: 'Step 3: Number Bond Hook (6)', rule: 'Matching 4 + 6 = 10 with tactile audio chime' },
+        { t: 1.00, title: 'Step 4: Mastery Victory', rule: 'Bonds to 10 and 20 provide the foundation for mental arithmetic' }
+      ],
+      subtitles: [
+        { start: 0.00, end: 0.35, en: "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds.", es: "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos." },
+        { start: 0.35, end: 0.70, en: "We have a 4 on our line. To make 10, we must find and catch a fish with 6!", es: "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!" },
+        { start: 0.70, end: 1.00, en: "4 plus 6 equals 10! A perfect number bond stored right in our tackle bucket.", es: "¡4 más 6 es igual a 10! Un vínculo numérico perfecto guardado en la cubeta." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.50,
+            title: "Number Bond Challenge",
+            prompt: "If you catch a fish with the number 3, which fish should you catch next to make 10?",
+            options: [
+              "A fish with 7 (because 3 + 7 = 10)",
+              "A fish with 3 (because 3 + 3 = 10)",
+              "A fish with 10 (because 3 + 10 = 10)"
+            ],
+            answer: 0,
+            explanation: "Number bonds to 10 are pairs that sum to 10. 3 + 7 = 10. Knowing these pairs by heart gives pupils quick mental math fluency for addition and subtraction."
+          },
+          {
+            t: 0.85,
+            title: "Concrete to Abstract Progression",
+            prompt: "Why do the fish display ten-frame dots alongside numerals?",
+            options: [
+              "To help early learners count concrete quantities (subitising) before reading abstract numerals",
+              "Because fish prefer polka dots",
+              "To increase the weight of the fishing hook"
+            ],
+            answer: 0,
+            explanation: "The Concrete-Pictorial-Abstract (CPA) approach allows younger learners to visually group and count dots (subitising) to understand the value of the number before transitioning to pure abstract digits."
+          }
+        ]
+      },
+      mount(container) {
+        let fishGroup = container.querySelector('#fish-school-group');
+        let rodGroup = container.querySelector('#fishing-rod-group');
+        let hook = container.querySelector('#fishing-hook');
+        let line = container.querySelector('#fishing-line');
+        let eqText = container.querySelector('#math-hud-equation');
+
+        if (!fishGroup) {
+          container.innerHTML = `
+            <defs>
+              <linearGradient id="pond-water" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0284c7" />
+                <stop offset="50%" stop-color="#0369a1" />
+                <stop offset="100%" stop-color="#0c4a6e" />
+              </linearGradient>
+              <linearGradient id="pond-bank" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#15803d" />
+                <stop offset="100%" stop-color="#14532d" />
+              </linearGradient>
+            </defs>
+            <rect width="800" height="480" fill="url(#pond-water)" />
+            <path d="M 0,0 L 220,0 C 200,60 140,110 0,130 Z" fill="url(#pond-bank)" />
+            <g id="fish-school-group"></g>
+            <g id="fishing-rod-group">
+              <line id="fishing-rod" x1="80" y1="30" x2="320" y2="70" stroke="#78350f" stroke-width="5" stroke-linecap="round" />
+              <line id="fishing-line" x1="320" y1="70" x2="320" y2="240" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="3 3" />
+              <circle id="fishing-bobber" cx="320" cy="140" r="7" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+              <path id="fishing-hook" d="M 320,240 C 320,252 328,252 328,244 L 328,242" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+            </g>
+            <g id="math-hud-panel" transform="translate(420, 16)">
+              <rect width="360" height="96" rx="10" fill="#0f172a" fill-opacity="0.92" stroke="#334155" stroke-width="1.5" />
+              <text x="16" y="24" fill="#38bdf8" font-size="11" font-weight="bold" font-family="system-ui, sans-serif">🎣 NUMBER BONDS POND: TARGET 10</text>
+              <text id="math-hud-equation" x="16" y="60" fill="#ffffff" font-size="22" font-weight="900" font-family="system-ui, sans-serif">4 + 6 = 10 🌟</text>
+              <text x="16" y="82" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Catch pairs of swimming fish that bond to make the target</text>
+            </g>
+          `;
+          fishGroup = container.querySelector('#fish-school-group');
+          rodGroup = container.querySelector('#fishing-rod-group');
+          hook = container.querySelector('#fishing-hook');
+          line = container.querySelector('#fishing-line');
+          eqText = container.querySelector('#math-hud-equation');
+        }
+
+        const fishItems = [
+          { val: 4, x: 280, y: 240, vx: 35, color: '#f97316', belly: '#fdba74' },
+          { val: 6, x: 480, y: 290, vx: -30, color: '#06b6d4', belly: '#a5f3fc' },
+          { val: 2, x: 160, y: 350, vx: 40, color: '#eab308', belly: '#fef08a' },
+          { val: 8, x: 620, y: 220, vx: -25, color: '#ec4899', belly: '#fbcfe8' },
+          { val: 5, x: 380, y: 380, vx: 30, color: '#10b981', belly: '#a7f3d0' },
+          { val: 7, x: 520, y: 340, vx: -35, color: '#8b5cf6', belly: '#ddd6fe' },
+          { val: 3, x: 690, y: 370, vx: 25, color: '#f97316', belly: '#fdba74' },
+          { val: 9, x: 120, y: 260, vx: -30, color: '#06b6d4', belly: '#a5f3fc' }
+        ];
+
+        const fishEls = [];
+        if (fishGroup) {
+          fishGroup.innerHTML = '';
+          fishItems.forEach((f, idx) => {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', `math-fish-item math-fish-${f.val}`);
+            g.innerHTML = `
+              <polygon points="0,0 -18,-9 -24,0 -18,9" fill="${f.color}" />
+              <ellipse cx="4" cy="0" rx="20" ry="13" fill="${f.color}" stroke="#ffffff" stroke-width="1.5" />
+              <path d="M -10,0 Q 4,11 16,0 Z" fill="${f.belly}" opacity="0.8" />
+              <circle cx="14" cy="-4" r="3.5" fill="#ffffff" />
+              <circle cx="15.5" cy="-4" r="1.8" fill="#0f172a" />
+              <circle cx="2" cy="0" r="10" fill="#0f172a" fill-opacity="0.8" stroke="#ffffff" stroke-width="1.2" />
+              <text x="2" y="4" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="900">${f.val}</text>
+            `;
+            fishGroup.appendChild(g);
+            fishEls.push({ el: g, ...f, phase: Math.random() * Math.PI * 2 });
+          });
+        }
+
+        return {
+          fishEls,
+          hook,
+          line,
+          eqText
+        };
+      },
+      update(t, state) {
+        if (!state) return;
+        const { fishEls, hook, line, eqText } = state;
+
+        // Fish swimming
+        if (fishEls) {
+          fishEls.forEach((f) => {
+            const phase = t * 6 + f.phase;
+            const curX = ((f.x + t * f.vx * 15) % 700) + 50;
+            const curY = f.y + Math.sin(phase) * 6;
+            if (f.el) {
+              f.el.setAttribute('transform', `translate(${curX.toFixed(1)}, ${curY.toFixed(1)})`);
+            }
+          });
+        }
+
+        // Animate line, hook, and equation as progression moves
+        if (t < 0.35) {
+          if (eqText) eqText.textContent = 'Scan Pond: Find fish that bond to 10!';
+          if (hook) hook.setAttribute('transform', `translate(480, 180)`);
+          if (line) {
+            line.setAttribute('x2', '480');
+            line.setAttribute('y2', '180');
+          }
+        } else if (t < 0.70) {
+          if (eqText) eqText.textContent = 'Caught 4! Needed: 10 - 4 = 6';
+          if (hook) hook.setAttribute('transform', `translate(320, 240)`);
+          if (line) {
+            line.setAttribute('x2', '320');
+            line.setAttribute('y2', '240');
+          }
+        } else {
+          if (eqText) eqText.textContent = '🌟 Solved: 4 + 6 = 10 (Bond Complete!)';
+          if (hook) hook.setAttribute('transform', `translate(400, 120)`);
+          if (line) {
+            line.setAttribute('x2', '400');
+            line.setAttribute('y2', '120');
+          }
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#0369a1"/><text x="400" y="240" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">Math Pond: Number Bonds Fishing Game</text>`;
+      }
     }
   };
 
@@ -1245,7 +1837,26 @@
         'watercycle': 'water-cycle',
         'water_cycle': 'water-cycle',
         'dna': 'dna-helix',
-        'dna_helix': 'dna-helix'
+        'dna_helix': 'dna-helix',
+        'mountain': 'mountain-elevation',
+        'mountain_elevation': 'mountain-elevation',
+        'mountainelevation': 'mountain-elevation',
+        'altitude': 'mountain-elevation',
+        'elevation': 'mountain-elevation',
+        'climb': 'mountain-elevation',
+        'climber': 'mountain-elevation',
+        'fishtank': 'fish-tank',
+        'fish_tank': 'fish-tank',
+        'fish-tank': 'fish-tank',
+        'aquarium': 'fish-tank',
+        'benchmark': 'fish-tank',
+        'stress': 'fish-tank',
+        'math-fishing': 'math-fishing',
+        'math_fishing': 'math-fishing',
+        'mathfishing': 'math-fishing',
+        'fishing': 'math-fishing',
+        'pond': 'math-fishing',
+        'number-bonds': 'math-fishing'
       };
       return aliases[clean] || clean;
     },

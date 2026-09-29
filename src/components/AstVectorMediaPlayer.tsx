@@ -35,6 +35,8 @@ export type VectorPresetType =
   | 'dna-helix'
   | 'church-tour'
   | 'mountain-elevation'
+  | 'fish-tank'
+  | 'math-fishing'
   | string;
 
 export interface AstVectorMediaPlayerProps {
@@ -60,10 +62,16 @@ export interface AstVectorMediaPlayerHandle {
   pause: () => void;
   play: () => void;
   togglePlay: () => void;
+  toggleVoiceCommands: () => void;
+  startVoiceCommands: () => void;
+  stopVoiceCommands: () => void;
+  executeVoiceCommand: (command: string) => void;
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
+  { id: 'math-fishing', label: '🎣 Math Pond: Number Bonds Fishing Game', stage: 'KS1/KS2 MATHS' },
   { id: 'mountain-elevation', label: '🧗 Mountain Altitude: Climber Game (Elevation & Slope)', stage: 'KS2/KS3 MATHS & GEOGRAPHY' },
+  { id: 'fish-tank', label: '🐠 Aquarium Stress Benchmark: Vector Point & FPS Limiter', stage: 'BENCHMARK & STRESS LAB' },
   { id: 'church-tour', label: '⛪ Catholic Church: Sacred Architecture Tour', stage: 'CATHOLIC LIFE' },
   { id: 'fractions', label: '📐 Fractions: Common Denominators', stage: 'KS2 MATHS' },
   { id: 'solar-system', label: '🪐 Solar System: Heliocentric Orbits', stage: 'KS3 SCIENCE' },
@@ -119,6 +127,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [isDevMode, setIsDevMode] = useState(false);
   const [showDevStudio, setShowDevStudio] = useState(false);
   const [studioTab, setStudioTab] = useState<'inspector' | 'svg' | 'ast' | 'templates'>('inspector');
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
   const [inspectedElement, setInspectedElement] = useState<{
     selector: string;
     tag: string;
@@ -164,7 +174,28 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     pause: () => postToPlayer({ type: 'PAUSE' }),
     play: () => postToPlayer({ type: 'PLAY' }),
     togglePlay: () => postToPlayer({ type: 'TOGGLE_PLAY' }),
+    toggleVoiceCommands: () => postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' }),
+    startVoiceCommands: () => postToPlayer({ type: 'START_VOICE_COMMANDS' }),
+    stopVoiceCommands: () => postToPlayer({ type: 'STOP_VOICE_COMMANDS' }),
+    executeVoiceCommand: (command: string) => postToPlayer({ type: 'VOICE_COMMAND', command }),
   }), [postToPlayer]);
+
+  // Global keyboard shortcut: Press 'V' to toggle voice commands
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+      if (isInput) return;
+
+      if ((e.key === 'v' || e.key === 'V') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [postToPlayer]);
 
   // Sync with global operational language changes
   useEffect(() => {
@@ -235,6 +266,13 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           break;
         case 'DEV_MODE_CHANGED':
           setIsDevMode(Boolean(data.enabled));
+          break;
+        case 'VOICE_STATUS':
+          setIsVoiceListening(Boolean(data.isListening));
+          break;
+        case 'VOICE_COMMAND_EXECUTED':
+          setVoiceFeedback(data.label || data.action || 'Command Executed');
+          setTimeout(() => setVoiceFeedback(null), 3200);
           break;
         case 'DEV_ELEMENT_SELECTED':
           setInspectedElement({
@@ -396,6 +434,42 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           >
             ▶ / ⏸ Play
           </button>
+
+          <button
+            type="button"
+            onClick={() => postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' })}
+            className={`stj-btn ${isVoiceListening ? 'stj-btn-danger' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '3px 9px',
+              minHeight: '32px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontWeight: 700,
+              fontSize: '0.76rem',
+              backgroundColor: isVoiceListening ? '#ef4444' : undefined,
+              color: isVoiceListening ? '#ffffff' : undefined,
+              borderColor: isVoiceListening ? '#f87171' : undefined,
+              boxShadow: isVoiceListening ? '0 0 10px rgba(239, 68, 68, 0.5)' : undefined,
+            }}
+            title="Voice Commands: Speak 'play', 'pause', 'rewind', 'show me fractions' (Press 'V')"
+          >
+            <span>{isVoiceListening ? '🔴 Mic Active' : '🎤 Mic'}</span>
+          </button>
+
+          {voiceFeedback && (
+            <span
+              className="stj-badge stj-badge-primary stj-pill"
+              style={{
+                fontSize: '0.72rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              🎙️ {voiceFeedback}
+            </span>
+          )}
 
           {has3D && displayConfig.show3DControls && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
@@ -850,6 +924,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                       { key: 'showTimelineScrubber', label: '⏱️ Timeline Scrubber Track' },
                       { key: 'showSpeedSelector', label: '⏩ Playback Speed Selector' },
                       { key: 'showLanguageSelector', label: '🌍 Multi-Language Selector' },
+                      { key: 'showLoopToggle', label: '🔁 Auto-Repeat Loop Toggle' },
+                      { key: 'showVolumeControl', label: '🔊 Master Volume & Mute Controls' },
+                      { key: 'showPhysicsControls', label: '🪐 Micro-Physics & Gravity Subsystem' },
                     ].map(({ key, label }) => (
                       <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
                         <input
@@ -939,14 +1016,14 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           key={`${selectedPreset}-${currentLang}`}
           ref={iframeRef}
           src={playerSrc}
-          title="St Joseph's AST Vector Media Player"
+          title="Lumina Vector Player"
           style={{
             width: '100%',
             height: '100%',
             border: 'none',
             display: 'block',
           }}
-          allow="fullscreen"
+          allow="fullscreen; microphone"
         />
       </div>
 
