@@ -303,9 +303,74 @@
       // Bind methods
       this.tick = this.tick.bind(this);
 
+      // Zero-bloat hardware & browser capabilities
+      this.wakeLockSentinel = null;
+      this.setupMediaSessionHandlers();
+
       // Eagerly ingest initial scene assets if in browser
       if (typeof window !== 'undefined') {
         this.loadScene(this.activePresetId, this.isPlaying);
+      }
+    }
+
+    // Native Browser Capabilities: Screen Wake Lock API
+    async requestWakeLock() {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+        try {
+          if (!this.wakeLockSentinel) {
+            this.wakeLockSentinel = await navigator.wakeLock.request('screen');
+            this.wakeLockSentinel.addEventListener('release', () => {
+              this.wakeLockSentinel = null;
+            });
+          }
+        } catch (e) {
+          // Allowed to fail silently if page is hidden or device policy prohibits
+        }
+      }
+    }
+
+    releaseWakeLock() {
+      if (this.wakeLockSentinel) {
+        try {
+          this.wakeLockSentinel.release();
+        } catch (e) {}
+        this.wakeLockSentinel = null;
+      }
+    }
+
+    // Native Browser Capabilities: Media Session API
+    updateMediaSession(isPlaying) {
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+          if (this.scene) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: this.scene.title || this.activePresetId || 'Lumina Vector Model',
+              artist: this.scene.stage || "St Joseph's Catholic Primary",
+              album: 'Interactive AST Media Player',
+              artwork: [
+                { src: '/img/logo.png', sizes: '512x512', type: 'image/png' }
+              ]
+            });
+          }
+        } catch (e) {}
+      }
+    }
+
+    setupMediaSessionHandlers() {
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.setActionHandler('play', () => this.play());
+          navigator.mediaSession.setActionHandler('pause', () => this.pause());
+          navigator.mediaSession.setActionHandler('seekto', (details) => {
+            if (details.seekTime !== undefined && this.durationSec) {
+              this.seek(details.seekTime / this.durationSec);
+            }
+          });
+          navigator.mediaSession.setActionHandler('seekbackward', () => this.step(-0.05));
+          navigator.mediaSession.setActionHandler('seekforward', () => this.step(0.05));
+          navigator.mediaSession.setActionHandler('previoustrack', () => this.seek(0));
+        } catch (e) {}
       }
     }
 
@@ -444,6 +509,8 @@
       if (!this.isPlaying) {
         this.isPlaying = true;
         this.lastTimestamp = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        this.requestWakeLock();
+        this.updateMediaSession(true);
         this.emit('statechange', { isPlaying: true, speed: this.speed });
       }
     }
@@ -451,6 +518,8 @@
     pause() {
       if (this.isPlaying) {
         this.isPlaying = false;
+        this.releaseWakeLock();
+        this.updateMediaSession(false);
         this.emit('statechange', { isPlaying: false, speed: this.speed });
       }
     }
@@ -2514,6 +2583,12 @@
         case 'TOGGLE_SETTINGS_DRAWER':
           if (uiController && typeof uiController.toggleSettingsDrawer === 'function') {
             uiController.toggleSettingsDrawer();
+          }
+          break;
+        case 'REQUEST_PIP':
+        case 'TOGGLE_PIP':
+          if (uiController && typeof uiController.togglePictureInPicture === 'function') {
+            uiController.togglePictureInPicture();
           }
           break;
         case 'PHYSICS_INIT':

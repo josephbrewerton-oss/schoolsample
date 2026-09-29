@@ -1,74 +1,135 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-  <!-- DNA Base Rungs (0-17) -->
-  <line id="dna-line-0" x1="300" y1="60" x2="500" y2="60" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-0" cx="300" cy="60" r="8" fill="#ef4444" />
-  <circle id="dna-cb-0" cx="500" cy="60" r="8" fill="#10b981" />
+  <defs>
+    <!-- Deep Space Genetics Backdrop -->
+    <radialGradient id="dna-bg-glow" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.5" />
+      <stop offset="50%" stop-color="#0f172a" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
 
-  <line id="dna-line-1" x1="300" y1="80" x2="500" y2="80" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-1" cx="300" cy="80" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-1" cx="500" cy="80" r="8" fill="#f59e0b" />
+    <!-- Base Pair Glow Filter -->
+    <filter id="dna-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
 
-  <line id="dna-line-2" x1="300" y1="100" x2="500" y2="100" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-2" cx="300" cy="100" r="8" fill="#ef4444" />
-  <circle id="dna-cb-2" cx="500" cy="100" r="8" fill="#10b981" />
+    <!-- Base Gradients -->
+    <radialGradient id="grad-adenine" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fca5a5" />
+      <stop offset="60%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </radialGradient>
+    <radialGradient id="grad-thymine" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#86efac" />
+      <stop offset="60%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#065f46" />
+    </radialGradient>
+    <radialGradient id="grad-cytosine" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#93c5fd" />
+      <stop offset="60%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1e3a8a" />
+    </radialGradient>
+    <radialGradient id="grad-guanine" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="60%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#9a3412" />
+    </radialGradient>
+  </defs>
 
-  <line id="dna-line-3" x1="300" y1="120" x2="500" y2="120" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-3" cx="300" cy="120" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-3" cx="500" cy="120" r="8" fill="#f59e0b" />
+  <!-- Ambient Backdrop -->
+  <rect width="800" height="480" fill="url(#dna-bg-glow)" />
 
-  <line id="dna-line-4" x1="300" y1="140" x2="500" y2="140" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-4" cx="300" cy="140" r="8" fill="#ef4444" />
-  <circle id="dna-cb-4" cx="500" cy="140" r="8" fill="#10b981" />
+  <!-- Top Glassmorphic Base Pairing Legend Banner -->
+  <g transform="translate(130, 16)">
+    <rect width="540" height="42" rx="10" fill="#0f172a" fill-opacity="0.9" stroke="#38bdf8" stroke-width="1.5" />
+    <text x="270" y="26" fill="#f8fafc" font-size="14" font-weight="800" text-anchor="middle" font-family="sans-serif">
+      <tspan fill="#ef4444">Adenine (A)</tspan> = <tspan fill="#10b981">Thymine (T)</tspan> [2 H-Bonds] | <tspan fill="#3b82f6">Cytosine (C)</tspan> ≡ <tspan fill="#f59e0b">Guanine (G)</tspan> [3 H-Bonds]
+    </text>
+  </g>
 
-  <line id="dna-line-5" x1="300" y1="160" x2="500" y2="160" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-5" cx="300" cy="160" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-5" cx="500" cy="160" r="8" fill="#f59e0b" />
+  <!-- Interactive 3D Rotation Prompt -->
+  <g transform="translate(30, 425)">
+    <rect width="210" height="30" rx="6" fill="#0f172a" fill-opacity="0.8" stroke="#334155" stroke-width="1" />
+    <text x="105" y="20" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle" font-family="sans-serif">
+      🖱️ Drag Stage to Orbit in 3D
+    </text>
+  </g>
 
-  <line id="dna-line-6" x1="300" y1="180" x2="500" y2="180" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-6" cx="300" cy="180" r="8" fill="#ef4444" />
-  <circle id="dna-cb-6" cx="500" cy="180" r="8" fill="#10b981" />
+  <!-- DNA Base Rungs (0-17) with 3D Depth Fog -->
+  <g id="dna-strands" filter="url(#dna-glow)">
+    <line id="dna-line-0" x1="300" y1="60" x2="500" y2="60" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-0" cx="300" cy="60" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-0" cx="500" cy="60" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-7" x1="300" y1="200" x2="500" y2="200" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-7" cx="300" cy="200" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-7" cx="500" cy="200" r="8" fill="#f59e0b" />
+    <line id="dna-line-1" x1="300" y1="80" x2="500" y2="80" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-1" cx="300" cy="80" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-1" cx="500" cy="80" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-8" x1="300" y1="220" x2="500" y2="220" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-8" cx="300" cy="220" r="8" fill="#ef4444" />
-  <circle id="dna-cb-8" cx="500" cy="220" r="8" fill="#10b981" />
+    <line id="dna-line-2" x1="300" y1="100" x2="500" y2="100" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-2" cx="300" cy="100" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-2" cx="500" cy="100" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-9" x1="300" y1="240" x2="500" y2="240" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-9" cx="300" cy="240" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-9" cx="500" cy="240" r="8" fill="#f59e0b" />
+    <line id="dna-line-3" x1="300" y1="120" x2="500" y2="120" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-3" cx="300" cy="120" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-3" cx="500" cy="120" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-10" x1="300" y1="260" x2="500" y2="260" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-10" cx="300" cy="260" r="8" fill="#ef4444" />
-  <circle id="dna-cb-10" cx="500" cy="260" r="8" fill="#10b981" />
+    <line id="dna-line-4" x1="300" y1="140" x2="500" y2="140" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-4" cx="300" cy="140" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-4" cx="500" cy="140" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-11" x1="300" y1="280" x2="500" y2="280" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-11" cx="300" cy="280" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-11" cx="500" cy="280" r="8" fill="#f59e0b" />
+    <line id="dna-line-5" x1="300" y1="160" x2="500" y2="160" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-5" cx="300" cy="160" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-5" cx="500" cy="160" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-12" x1="300" y1="300" x2="500" y2="300" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-12" cx="300" cy="300" r="8" fill="#ef4444" />
-  <circle id="dna-cb-12" cx="500" cy="300" r="8" fill="#10b981" />
+    <line id="dna-line-6" x1="300" y1="180" x2="500" y2="180" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-6" cx="300" cy="180" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-6" cx="500" cy="180" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-13" x1="300" y1="320" x2="500" y2="320" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-13" cx="300" cy="320" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-13" cx="500" cy="320" r="8" fill="#f59e0b" />
+    <line id="dna-line-7" x1="300" y1="200" x2="500" y2="200" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-7" cx="300" cy="200" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-7" cx="500" cy="200" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-14" x1="300" y1="340" x2="500" y2="340" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-14" cx="300" cy="340" r="8" fill="#ef4444" />
-  <circle id="dna-cb-14" cx="500" cy="340" r="8" fill="#10b981" />
+    <line id="dna-line-8" x1="300" y1="220" x2="500" y2="220" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-8" cx="300" cy="220" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-8" cx="500" cy="220" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-15" x1="300" y1="360" x2="500" y2="360" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-15" cx="300" cy="360" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-15" cx="500" cy="360" r="8" fill="#f59e0b" />
+    <line id="dna-line-9" x1="300" y1="240" x2="500" y2="240" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-9" cx="300" cy="240" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-9" cx="500" cy="240" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-16" x1="300" y1="380" x2="500" y2="380" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-16" cx="300" cy="380" r="8" fill="#ef4444" />
-  <circle id="dna-cb-16" cx="500" cy="380" r="8" fill="#10b981" />
+    <line id="dna-line-10" x1="300" y1="260" x2="500" y2="260" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-10" cx="300" cy="260" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-10" cx="500" cy="260" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
 
-  <line id="dna-line-17" x1="300" y1="400" x2="500" y2="400" stroke="#64748b" stroke-width="2.5" />
-  <circle id="dna-ca-17" cx="300" cy="400" r="8" fill="#3b82f6" />
-  <circle id="dna-cb-17" cx="500" cy="400" r="8" fill="#f59e0b" />
+    <line id="dna-line-11" x1="300" y1="280" x2="500" y2="280" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-11" cx="300" cy="280" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-11" cx="500" cy="280" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
+
+    <line id="dna-line-12" x1="300" y1="300" x2="500" y2="300" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-12" cx="300" cy="300" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-12" cx="500" cy="300" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
+
+    <line id="dna-line-13" x1="300" y1="320" x2="500" y2="320" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-13" cx="300" cy="320" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-13" cx="500" cy="320" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
+
+    <line id="dna-line-14" x1="300" y1="340" x2="500" y2="340" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-14" cx="300" cy="340" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-14" cx="500" cy="340" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
+
+    <line id="dna-line-15" x1="300" y1="360" x2="500" y2="360" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-15" cx="300" cy="360" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-15" cx="500" cy="360" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
+
+    <line id="dna-line-16" x1="300" y1="380" x2="500" y2="380" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-16" cx="300" cy="380" r="8" fill="url(#grad-adenine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-16" cx="500" cy="380" r="8" fill="url(#grad-thymine)" stroke="#ffffff" stroke-width="1" />
+
+    <line id="dna-line-17" x1="300" y1="400" x2="500" y2="400" stroke="#94a3b8" stroke-width="2.5" />
+    <circle id="dna-ca-17" cx="300" cy="400" r="8" fill="url(#grad-cytosine)" stroke="#ffffff" stroke-width="1" />
+    <circle id="dna-cb-17" cx="500" cy="400" r="8" fill="url(#grad-guanine)" stroke="#ffffff" stroke-width="1" />
+  </g>
 </svg>

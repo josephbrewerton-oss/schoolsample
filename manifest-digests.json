@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "compositeHash": "036001659a9c",
-  "generatedAt": "2026-09-29T11:41:11.292Z",
+  "compositeHash": "627bece52e12",
+  "generatedAt": "2026-09-29T12:23:18.660Z",
   "files": {
     "nano-map.ast": "568a99c10f2f08b8",
     "manifest.json": "5b581a737ccec74d",
@@ -13,7 +13,7 @@
     "patterns/media-player.ast": "0b265d6009c3a742",
     "patterns/numeric.ast": "ae97bf1a5d2591ff",
     "patterns/pair-sort.ast": "c40900be04c53763",
-    "manifests/catalog.json": "4ea577714a1a7ea2",
+    "manifests/catalog.json": "cabec728db25ba0a",
     "manifests/curriculum-mesh.ast": "0d07b1bd17b71ee1",
     "manifests/curriculum-mesh.json": "76548359c9371b91",
     "manifests/history-ks2.json": "7c550309d1880c07",
