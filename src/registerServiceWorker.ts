@@ -15,13 +15,17 @@ export function registerServiceWorker(): void {
       .then((registration) => {
         console.log('[PWA] Service Worker active. Offline-first zero-data engine initialized.');
 
+        // Immediately check for updates on load
+        registration.update().catch(() => {});
+
         registration.onupdatefound = () => {
           const installingWorker = registration.installing;
           if (installingWorker == null) return;
           installingWorker.onstatechange = () => {
             if (installingWorker.state === 'installed') {
               if (navigator.serviceWorker.controller) {
-                console.log('[PWA] Stored new curriculum substrate on device.');
+                console.log('[PWA] Stored new curriculum substrate on device. Activating update...');
+                installingWorker.postMessage({ type: 'SKIP_WAITING' });
               } else {
                 console.log('[PWA] Content is permanently stored on device for offline use.');
               }
@@ -32,5 +36,12 @@ export function registerServiceWorker(): void {
       .catch((error) => {
         console.warn('[PWA] Service Worker registration note:', error);
       });
+
+    // Check for updates when window regains focus (e.g. returning to tab)
+    window.addEventListener('focus', () => {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        reg?.update().catch(() => {});
+      }).catch(() => {});
+    });
   });
 }

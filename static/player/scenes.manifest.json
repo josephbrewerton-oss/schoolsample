@@ -1,6 +1,6 @@
 {
-  "version": "2.3.0",
-  "generatedAt": "2026-09-29T07:12:00.000Z",
+  "version": "2.2.0",
+  "generatedAt": "2026-09-29T11:25:43.864Z",
   "totalScenes": 12,
   "scenes": [
     {
@@ -15,6 +15,45 @@
       "keyframeCount": 6,
       "subtitleCount": 6,
       "bindingsCount": 9
+    },
+    {
+      "id": "math-fishing",
+      "title": "Math Pond: Number Bonds Fishing Game",
+      "stage": "KS1/KS2 MATHS",
+      "duration": 14,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/math-fishing.svg",
+      "astFile": "scenes/math-fishing.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 2
+    },
+    {
+      "id": "mountain-elevation",
+      "title": "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science",
+      "stage": "KS2/KS3 MATHS & GEOGRAPHY",
+      "duration": 16,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/mountain-elevation.svg",
+      "astFile": "scenes/mountain-elevation.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 15
+    },
+    {
+      "id": "fish-tank",
+      "title": "Aquarium Stress Benchmark: Vector Point & FPS Limiter",
+      "stage": "BENCHMARK & STRESS LAB",
+      "duration": 12,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/fish-tank.svg",
+      "astFile": "scenes/fish-tank.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 4
     },
     {
       "id": "fractions",
@@ -119,45 +158,6 @@
       "keyframeCount": 4,
       "subtitleCount": 3,
       "bindingsCount": 18
-    },
-    {
-      "id": "fish-tank",
-      "title": "Aquarium Stress Benchmark: Vector Point & FPS Limiter",
-      "stage": "BENCHMARK & STRESS LAB",
-      "duration": 12,
-      "has3D": false,
-      "nodes3DCount": 0,
-      "svgFile": "scenes/fish-tank.svg",
-      "astFile": "scenes/fish-tank.ast",
-      "keyframeCount": 4,
-      "subtitleCount": 3,
-      "bindingsCount": 4
-    },
-    {
-      "id": "mountain-elevation",
-      "title": "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science",
-      "stage": "KS2/KS3 MATHS & GEOGRAPHY",
-      "duration": 16,
-      "has3D": false,
-      "nodes3DCount": 0,
-      "svgFile": "scenes/mountain-elevation.svg",
-      "astFile": "scenes/mountain-elevation.ast",
-      "keyframeCount": 4,
-      "subtitleCount": 3,
-      "bindingsCount": 19
-    },
-    {
-      "id": "math-fishing",
-      "title": "Math Pond: Number Bonds Fishing Game",
-      "stage": "KS1/KS2 MATHS",
-      "duration": 14,
-      "has3D": false,
-      "nodes3DCount": 0,
-      "svgFile": "scenes/math-fishing.svg",
-      "astFile": "scenes/math-fishing.ast",
-      "keyframeCount": 4,
-      "subtitleCount": 3,
-      "bindingsCount": 2
     }
   ]
 }

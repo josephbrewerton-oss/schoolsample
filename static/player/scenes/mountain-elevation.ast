@@ -1,0 +1,56 @@
+(:scene :id "mountain-elevation" :title "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science" :stage "KS2/KS3 MATHS & GEOGRAPHY" :duration 16.0
+  (:subtitles (
+    (:start 0.00 :end 0.30 :en "Watch the climber depart Base Camp (0m). Notice the difference between walking distance along the slope and true vertical height!" :es "¡Mira al escalador salir del campamento base (0m)! Nota la diferencia entre la distancia caminada y la altura vertical real.")
+    (:start 0.30 :end 0.65 :en "At Camp 1 (1,500m), notice the right-angled triangle! The slope is the hypotenuse, but true altitude is the vertical rise." :es "En el Campamento 1 (1,500m), ¡mira el triángulo rectángulo! La pendiente es la hipotenusa, pero la altitud real es la línea vertical.")
+    (:start 0.65 :end 1.00 :en "Approaching the 3,000m summit: temperature drops to -2°C, air pressure falls to 70 kPa, and altitude reaches peak height!" :es "¡Llegando a la cumbre de 3,000m! La temperatura baja a -2°C, la presión cae a 70 kPa y la altitud alcanza el máximo.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Step 1: Base Camp (0m Sea Level)" :rule "Walking distance along a hill != Vertical height! Elevation is measured straight up.")
+    (:t 0.35 :title "Step 2: Camp 1 The Ridge (1,500m)" :rule "Trigonometry link: True Altitude = Slope Distance * sin(theta). The slope is the hypotenuse!")
+    (:t 0.70 :title "Step 3: Camp 2 The Ice Shelf (2,400m)" :rule "Atmospheric Lapse Rate: Temperature drops ~6.5°C per 1,000m rise as air pressure thins.")
+    (:t 1.00 :title "Step 4: The Summit (3,000m Solved)" :rule "Summit reached! Vertical rise = 3,000m. Pythagoras proof: Base^2 + Altitude^2 = Slope^2.")
+  ))
+  (:interactive (
+    (:checkpoints (
+      (:t 0.34
+       :title "Checkpoint 1: Slope Distance vs True Altitude"
+       :prompt "The climber has walked 2,000m along a 30° mountain slope. What is their true vertical height above sea level?"
+       :options (
+         "2,000m (same as walking distance)"
+         "1,000m (2,000m * sin(30°) = 1,000m)"
+         "4,000m (double the distance)"
+       )
+       :answer 1
+       :explanation "Walking along a slope is the hypotenuse! Vertical altitude is opposite the angle: 2,000m * sin(30°) = 1,000m."
+      )
+      (:t 0.68
+       :title "Checkpoint 2: Atmospheric Lapse Rate"
+       :prompt "If sea-level temperature is 20°C and drops ~6.5°C per 1,000m, what is the temperature at 2,400m altitude?"
+       :options (
+         "4.4°C (20 - 2.4 * 6.5)"
+         "20.0°C (temperature remains constant)"
+         "-15.0°C (instant freezing)"
+       )
+       :answer 0
+       :explanation "Air cools as atmospheric pressure drops. 20°C - (2.4 * 6.5°C) = 4.4°C!"
+      )
+    ))
+  ))
+  (:bindings (
+    (:target "#climber-marker" :attr "cx" :expr "180 + t * 220")
+    (:target "#climber-marker" :attr "cy" :expr "380 - t * 240")
+    (:target "#climber-pulse" :attr "cx" :expr "180 + t * 220")
+    (:target "#climber-pulse" :attr "cy" :expr "380 - t * 240")
+    (:target "#vertical-line" :attr "x1" :expr "180 + t * 220")
+    (:target "#vertical-line" :attr "x2" :expr "180 + t * 220")
+    (:target "#vertical-line" :attr "y1" :expr "380")
+    (:target "#vertical-line" :attr "y2" :expr "380 - t * 240")
+    (:target "#base-line" :attr "x1" :expr "180")
+    (:target "#base-line" :attr "x2" :expr "180 + t * 220")
+    (:target "#altitude-text" :attr "textContent" :expr "'Altitude: ' + Math.round(t * 3000) + ' m'")
+    (:target "#altitude-text" :attr "x" :expr "195 + t * 220")
+    (:target "#altitude-text" :attr "y" :expr "380 - (t * 240) / 2")
+    (:target "#temp-text" :attr "textContent" :expr "'Temp: ' + (20 - (t * 3 * 6.5)).toFixed(1) + ' °C'")
+    (:target "#hypotenuse-text" :attr "textContent" :expr "'Slope Distance: ' + Math.round(t * 3464) + ' m'")
+  ))
+)

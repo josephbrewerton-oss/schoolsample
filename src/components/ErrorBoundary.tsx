@@ -38,7 +38,8 @@ export default class ErrorBoundary extends Component<Props, State> {
         });
       }
     } catch {}
-    window.location.href = '/';
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    window.location.href = baseUrl;
   };
 
   public render() {

@@ -105,8 +105,8 @@ export function generateScenesManifest() {
     });
   }
 
-  // Consistent ordering: Catholic life first, then KS2/KS3
-  const order = ['church-tour', 'fractions', 'solar-system', 'photosynthesis', 'pythagoras', 'water-cycle', 'atom', 'velocity', 'dna-helix'];
+  // Consistent ordering: Catholic life first, then KS2/KS3 and interactive games
+  const order = ['church-tour', 'math-fishing', 'mountain-elevation', 'fish-tank', 'fractions', 'solar-system', 'photosynthesis', 'pythagoras', 'water-cycle', 'atom', 'velocity', 'dna-helix'];
   manifest.sort((a, b) => {
     const ai = order.indexOf(a.id);
     const bi = order.indexOf(b.id);

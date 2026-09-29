@@ -60,6 +60,21 @@ function scanAndDigest() {
 
   fs.writeFileSync(OUT_FILE, JSON.stringify(result, null, 2), 'utf-8');
   console.log(`[Manifest Digest] Generated compositeHash: ${compositeHash} across ${Object.keys(fileDigests).length} substrates.`);
+
+  // Synchronize compositeHash into static/sw.js so Service Worker recognizes changes on every build
+  const swPath = path.join(STATIC_DIR, 'sw.js');
+  if (fs.existsSync(swPath)) {
+    let swContent = fs.readFileSync(swPath, 'utf-8');
+    const updatedSw = swContent.replace(
+      /const MANIFEST_HASH = '[^']+';/,
+      `const MANIFEST_HASH = '${compositeHash}';`
+    );
+    if (updatedSw !== swContent) {
+      fs.writeFileSync(swPath, updatedSw, 'utf-8');
+      console.log(`[Manifest Digest] Updated static/sw.js MANIFEST_HASH to: ${compositeHash}`);
+    }
+  }
+
   return compositeHash;
 }
 

@@ -17,12 +17,18 @@ function lazyRetry<T extends React.ComponentType<any>>(
       } catch {}
       return component;
     } catch (error) {
-      console.warn('Chunk load error, verifying retry attempt...', error);
+      console.warn('Chunk load error, purging stale cache and reloading...', error);
       try {
         const hasRetried = sessionStorage.getItem('chunk_retry_attempt');
         if (!hasRetried) {
           sessionStorage.setItem('chunk_retry_attempt', 'true');
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((k) => caches.delete(k)));
+          }
           window.location.reload();
+          // Return an unresolved promise to avoid bubbling a crash while page reloads
+          return new Promise<{ default: T }>(() => {});
         }
       } catch {}
       throw error;
