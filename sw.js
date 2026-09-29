@@ -2,7 +2,7 @@
 // Ultra-Low-Bandwidth Offline Engine & Service Worker for St Joseph's Learning Portal
 // Designed for developing nations, metered data plans, and air-gapped schools.
 // Cache key is bound directly to the curriculum composite digest for content-addressed immutability.
-const MANIFEST_HASH = '8003ff2a2bff';
+const MANIFEST_HASH = 'f8caf658ab94';
 const CACHE_NAME = `stj-manifest-v-${MANIFEST_HASH}`;
 
 // Critical core assets to pre-cache on install for instant offline boot
@@ -97,36 +97,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests (HTML pages): Serve cached index.html immediately if offline or on navigation
+  // Navigation requests (HTML pages): Network-first to always serve the latest app version and chunk manifests
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match('./index.html')
-        .then((cachedShell) => {
-          // If cached shell exists, return it immediately to avoid cellular network latency & data usage
-          if (cachedShell) {
-            // Optional background revalidate
-            fetch(request)
-              .then((netRes) => {
-                if (netRes && netRes.ok) {
-                  caches.open(CACHE_NAME).then((c) => c.put(request, netRes));
-                }
-              })
-              .catch(() => {});
-            return cachedShell;
-          }
-
-          // If no cached shell yet, fetch from network and cache
-          return fetch(request)
-            .then((networkResponse) => {
-              if (networkResponse && networkResponse.ok) {
-                const clone = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', clone));
-              }
-              return networkResponse;
-            })
-            .catch(async () => {
-              return (await caches.match('./index.html')) || (await caches.match('/')) || new Response('Offline Portal Ready', { status: 200, headers: { 'Content-Type': 'text/html' } });
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put('./index.html', clone.clone());
+              cache.put(request, clone);
             });
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          // Offline fallback when no network is available
+          const cachedShell =
+            (await caches.match('./index.html')) ||
+            (await caches.match(request)) ||
+            (await caches.match('/'));
+          if (cachedShell) return cachedShell;
+          return new Response('Offline Portal Ready', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          });
         })
     );
     return;
