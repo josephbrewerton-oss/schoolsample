@@ -29,8 +29,19 @@
         btnPrev: document.getElementById('btn-prev'),
         btnNext: document.getElementById('btn-next'),
         btnReset: document.getElementById('btn-reset'),
+        btnLoop: document.getElementById('btn-loop'),
+        loopLabel: document.getElementById('loop-label'),
+        btnVolumeMute: document.getElementById('btn-volume-mute'),
+        volumeSlider: document.getElementById('volume-slider'),
+        volumeBox: document.getElementById('volume-box'),
+        btnShortcuts: document.getElementById('btn-shortcuts'),
+        shortcutsModal: document.getElementById('shortcuts-modal'),
+        shortcutsClose: document.getElementById('shortcuts-close'),
         btnStepMode: document.getElementById('btn-step-mode'),
         btnNarrate: document.getElementById('btn-narrate'),
+        btnVoiceCmd: document.getElementById('btn-voice-cmd'),
+        voiceCmdOverlay: document.getElementById('voice-cmd-overlay'),
+        voiceCmdText: document.getElementById('voice-cmd-text'),
         btnTheme: document.getElementById('btn-theme'),
         btnFullscreen: document.getElementById('btn-fullscreen'),
         btnPrint: document.getElementById('btn-print'),
@@ -141,6 +152,18 @@
         cfgScrubber: document.getElementById('cfg-scrubber'),
         cfgSpeed: document.getElementById('cfg-speed'),
         cfgLang: document.getElementById('cfg-lang'),
+        cfgLoop: document.getElementById('cfg-loop'),
+        cfgVolume: document.getElementById('cfg-volume'),
+        cfgPhysics: document.getElementById('cfg-physics'),
+        physicsConfigSection: document.getElementById('physics-config-section'),
+        cfgPhysicsGravity: document.getElementById('cfg-physics-gravity'),
+        cfgPhysicsBounce: document.getElementById('cfg-physics-bounce'),
+        cfgPhysicsFriction: document.getElementById('cfg-physics-friction'),
+        cfgValGravity: document.getElementById('cfg-val-gravity'),
+        cfgValBounce: document.getElementById('cfg-val-bounce'),
+        cfgValFriction: document.getElementById('cfg-val-friction'),
+        btnPhysicsImpulse: document.getElementById('btn-physics-impulse'),
+        btnPhysicsReset: document.getElementById('btn-physics-reset'),
       }, elements);
 
       this.isDragging = false;
@@ -154,6 +177,12 @@
       this.toastTimeout = null;
       this._orbitHintTimeout = null;
       this.displayConfig = this.initDisplayConfig();
+
+      // Voice Command SpeechRecognition State
+      this.isListeningVoice = false;
+      this.recognition = null;
+      this._voiceRestartTimeout = null;
+      this._voiceFeedbackTimeout = null;
 
       // Developer Mode & SVG Inspector State
       this.devModeActive = false;
@@ -736,6 +765,128 @@
         });
       }
 
+      // Loop toggle button
+      if (el.btnLoop) {
+        el.btnLoop.classList.toggle('active', this.engine.loop);
+        el.btnLoop.addEventListener('click', () => {
+          const loop = this.engine.toggleLoop();
+          el.btnLoop.classList.toggle('active', loop);
+          if (el.loopLabel) el.loopLabel.textContent = loop ? 'Loop: ON' : 'Loop: OFF';
+          this.showToast(loop ? '🔁 Auto-Repeat Loop: ON' : '🔁 Auto-Repeat Loop: OFF');
+        });
+      }
+
+      // Master Audio Volume & Mute Controls
+      if (el.volumeSlider) {
+        el.volumeSlider.value = this.engine.volume;
+        el.volumeSlider.addEventListener('input', (e) => {
+          const vol = parseFloat(e.target.value);
+          this.engine.setVolume(vol);
+          if (el.btnVolumeMute) {
+            el.btnVolumeMute.textContent = vol === 0 ? '🔇' : (vol < 0.5 ? '🔉' : '🔊');
+          }
+        });
+      }
+
+      if (el.btnVolumeMute) {
+        el.btnVolumeMute.addEventListener('click', () => {
+          const muted = this.engine.toggleMute();
+          el.btnVolumeMute.textContent = muted ? '🔇' : (this.engine.volume < 0.5 ? '🔉' : '🔊');
+          if (el.volumeSlider) {
+            el.volumeSlider.value = muted ? 0 : this.engine.volume;
+          }
+          this.showToast(muted ? '🔇 Audio Muted' : `🔊 Audio: ${Math.round(this.engine.volume * 100)}%`);
+        });
+      }
+
+      // Shortcuts Modal Handlers
+      if (el.btnShortcuts) {
+        el.btnShortcuts.addEventListener('click', () => {
+          this.toggleShortcutsModal();
+        });
+      }
+
+      if (el.shortcutsClose) {
+        el.shortcutsClose.addEventListener('click', () => {
+          this.closeShortcutsModal();
+        });
+      }
+
+      // Micro-Physics Live Sliders
+      if (el.cfgPhysicsGravity) {
+        el.cfgPhysicsGravity.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (this.engine.physics) this.engine.physics.setGravity(val);
+          if (el.cfgValGravity) el.cfgValGravity.textContent = `${(val / 100).toFixed(1)}g`;
+        });
+      }
+
+      if (el.cfgPhysicsBounce) {
+        el.cfgPhysicsBounce.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (this.engine.physics) this.engine.physics.setRestitution(val);
+          if (el.cfgValBounce) el.cfgValBounce.textContent = `${Math.round(val * 100)}%`;
+        });
+      }
+
+      if (el.cfgPhysicsFriction) {
+        el.cfgPhysicsFriction.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (this.engine.physics) this.engine.physics.setFriction(val);
+          if (el.cfgValFriction) el.cfgValFriction.textContent = `${(val * 100).toFixed(1)}%`;
+        });
+      }
+
+      // Physics Environment Preset Buttons
+      const physButtons = document.querySelectorAll('.phys-btn');
+      physButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          physButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const grav = parseFloat(btn.getAttribute('data-gravity'));
+          const bounce = parseFloat(btn.getAttribute('data-bounce'));
+          const friction = parseFloat(btn.getAttribute('data-friction'));
+
+          if (this.engine.physics) {
+            this.engine.physics.setGravity(grav);
+            this.engine.physics.setRestitution(bounce);
+            this.engine.physics.setFriction(friction);
+          }
+
+          if (el.cfgPhysicsGravity) el.cfgPhysicsGravity.value = grav;
+          if (el.cfgValGravity) el.cfgValGravity.textContent = `${(grav / 100).toFixed(1)}g`;
+          if (el.cfgPhysicsBounce) el.cfgPhysicsBounce.value = bounce;
+          if (el.cfgValBounce) el.cfgValBounce.textContent = `${Math.round(bounce * 100)}%`;
+          if (el.cfgPhysicsFriction) el.cfgPhysicsFriction.value = friction;
+          if (el.cfgValFriction) el.cfgValFriction.textContent = `${(friction * 100).toFixed(1)}%`;
+
+          this.playChime(659.25, 'triangle');
+          this.showToast(`🪐 Physics: ${btn.textContent.trim()} Active`);
+        });
+      });
+
+      if (el.btnPhysicsImpulse) {
+        el.btnPhysicsImpulse.addEventListener('click', () => {
+          if (this.engine.physics) {
+            for (const b of this.engine.physics.bodies) {
+              this.engine.physics.applyImpulse(b.id, (Math.random() - 0.5) * 200, -500);
+            }
+            this.playChime(784, 'triangle');
+            this.showToast('⚡ Jump Impulse Applied!');
+          }
+        });
+      }
+
+      if (el.btnPhysicsReset) {
+        el.btnPhysicsReset.addEventListener('click', () => {
+          if (this.engine.physics) {
+            this.engine.physics.reset();
+            this.playChime(523.25, 'sine');
+            this.showToast('↺ Physics Coordinates Reset');
+          }
+        });
+      }
+
       if (el.speedSelector) {
         el.speedSelector.addEventListener('change', (e) => {
           this.engine.setSpeed(e.target.value);
@@ -763,6 +914,12 @@
           const enabled = this.engine.toggleVoice();
           el.btnNarrate.classList.toggle('active', enabled);
           el.btnNarrate.textContent = enabled ? '🔊 Voice: ON' : '🔊 Voice';
+        });
+      }
+
+      if (el.btnVoiceCmd) {
+        el.btnVoiceCmd.addEventListener('click', () => {
+          this.toggleVoiceCommands();
         });
       }
 
@@ -1497,6 +1654,9 @@
         { el: el.cfgScrubber, key: 'showTimelineScrubber' },
         { el: el.cfgSpeed, key: 'showSpeedSelector' },
         { el: el.cfgLang, key: 'showLanguageSelector' },
+        { el: el.cfgLoop, key: 'showLoopToggle' },
+        { el: el.cfgVolume, key: 'showVolumeControl' },
+        { el: el.cfgPhysics, key: 'showPhysicsControls' },
       ];
 
       configInputs.forEach(({ el: inputEl, key }) => {
@@ -1520,31 +1680,62 @@
           } else {
             if (el.btnPlay) el.btnPlay.click();
           }
-        } else if (e.code === 'ArrowLeft' || e.code === 'PageUp' || e.code === 'KeyP') {
+        } else if (e.code === 'ArrowLeft' || e.code === 'PageUp') {
           e.preventDefault();
           if (this.stepMode) {
             this.stepToPrevKeyframe();
           } else {
             this.engine.step(-0.05);
           }
-        } else if (e.code === 'ArrowRight' || e.code === 'PageDown' || e.code === 'KeyN') {
+        } else if (e.code === 'ArrowRight' || e.code === 'PageDown') {
           e.preventDefault();
           if (this.stepMode) {
             this.stepToNextKeyframe();
           } else {
             this.engine.step(0.05);
           }
+        } else if (e.code === 'KeyL' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          if (el.btnLoop) el.btnLoop.click();
+        } else if (e.code === 'KeyM') {
+          e.preventDefault();
+          if (el.btnVolumeMute) {
+            el.btnVolumeMute.click();
+          } else if (el.btnNarrate) {
+            el.btnNarrate.click();
+          }
+        } else if (e.code === 'KeyV' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          this.toggleVoiceCommands();
         } else if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           this.toggleStepMode();
-        } else if (e.code === 'KeyM') {
+        } else if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
-          if (el.btnNarrate) el.btnNarrate.click();
+          if (el.btnFullscreen) el.btnFullscreen.click();
+        } else if (e.code === 'KeyO' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          if (el.btn3DOrbit) el.btn3DOrbit.click();
+        } else if (e.code === 'KeyR' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          this.engine.resetCamera();
+          this.showToast('🌐 3D Camera Reset');
+        } else if (e.code === 'KeyP' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          if (el.btnPlayMode) el.btnPlayMode.click();
+        } else if (e.code === 'Home' || e.code === 'Digit0' || e.code === 'Numpad0') {
+          e.preventDefault();
+          if (el.btnReset) el.btnReset.click();
+        } else if (e.key === '?' || (e.code === 'Slash' && e.shiftKey)) {
+          e.preventDefault();
+          this.toggleShortcutsModal();
         } else if (e.code === 'KeyI' && (e.ctrlKey || e.metaKey)) {
           e.preventDefault();
           this.toggleDevMode();
         } else if (e.code === 'Escape') {
-          if (this.elements.settingsDrawer && !this.elements.settingsDrawer.classList.contains('hidden')) {
+          if (this.elements.shortcutsModal && !this.elements.shortcutsModal.classList.contains('hidden')) {
+            this.closeShortcutsModal();
+          } else if (this.elements.settingsDrawer && !this.elements.settingsDrawer.classList.contains('hidden')) {
             this.closeSettingsDrawer();
           } else if (this.elements.devInspectorDrawer && !this.elements.devInspectorDrawer.classList.contains('hidden')) {
             this.closeInspectorDrawer();
@@ -1604,8 +1795,12 @@
         showPlaybackControls: true,
         showSpeedSelector: true,
         showVoiceNarration: true,
+        showVoiceCommands: true,
         showLanguageSelector: true,
         showSubtitles: true,
+        showLoopToggle: true,
+        showVolumeControl: true,
+        showPhysicsControls: true,
       };
 
       if (mode === 'student') {
@@ -1686,8 +1881,12 @@
       if (el.timeReadout) el.timeReadout.style.display = c.showPlaybackControls !== false ? '' : 'none';
       if (el.speedSelector) el.speedSelector.style.display = c.showSpeedSelector !== false ? '' : 'none';
       if (el.btnNarrate) el.btnNarrate.style.display = c.showVoiceNarration !== false ? '' : 'none';
+      if (el.btnVoiceCmd) el.btnVoiceCmd.style.display = c.showVoiceCommands !== false ? '' : 'none';
       if (el.langSelector) el.langSelector.style.display = c.showLanguageSelector !== false ? '' : 'none';
       if (el.subtitleOverlay) el.subtitleOverlay.style.display = c.showSubtitles !== false ? '' : 'none';
+      if (el.btnLoop) el.btnLoop.style.display = c.showLoopToggle !== false ? '' : 'none';
+      if (el.volumeBox) el.volumeBox.style.display = c.showVolumeControl !== false ? 'flex' : 'none';
+      if (el.physicsConfigSection) el.physicsConfigSection.style.display = c.showPhysicsControls !== false ? 'block' : 'none';
 
       this.syncSettingsDrawerUI();
 
@@ -1698,6 +1897,16 @@
           config: this.displayConfig
         });
       }
+    }
+
+    toggleShortcutsModal() {
+      if (!this.elements.shortcutsModal) return;
+      this.elements.shortcutsModal.classList.toggle('hidden');
+    }
+
+    closeShortcutsModal() {
+      if (!this.elements.shortcutsModal) return;
+      this.elements.shortcutsModal.classList.add('hidden');
     }
 
     syncSettingsDrawerUI() {
@@ -2522,6 +2731,422 @@
       const el = this.elements;
       if (el.obsDrawer) el.obsDrawer.classList.add('hidden');
       if (el.btnObsLink) el.btnObsLink.classList.remove('active');
+    }
+
+    /**
+     * Browser SpeechRecognition Voice Control Integration
+     */
+    initVoiceRecognition() {
+      const SpeechRecognition = typeof window !== 'undefined'
+        ? (window.SpeechRecognition || window.webkitSpeechRecognition)
+        : null;
+
+      if (!SpeechRecognition) {
+        return null;
+      }
+
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        const langMap = {
+          en: 'en-US',
+          es: 'es-ES',
+          fr: 'fr-FR',
+          de: 'de-DE',
+          it: 'it-IT',
+          pl: 'pl-PL',
+          pt: 'pt-BR',
+          uk: 'uk-UA',
+          ar: 'ar-SA',
+          la: 'la'
+        };
+        recognition.lang = langMap[this.engine?.lang] || 'en-US';
+
+        recognition.onstart = () => {
+          this.isListeningVoice = true;
+          this.updateVoiceStatusUI(true, '🎙️ Listening for commands... ("play", "pause", "rewind", "show me fractions")');
+          this.showToast('🎙️ Voice Control Active (Speak now)');
+          if (this.engine && typeof this.engine.notifyParent === 'function') {
+            this.engine.notifyParent({ type: 'VOICE_STATUS', isListening: true });
+          }
+        };
+
+        recognition.onresult = (event) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            const result = event.results[i];
+            const text = result[0]?.transcript || '';
+            if (result.isFinal) {
+              finalTranscript += text;
+            } else {
+              interimTranscript += text;
+            }
+          }
+
+          if (interimTranscript) {
+            this.updateVoiceOverlayText(`Hearing: "${interimTranscript.trim()}"...`);
+          }
+
+          if (finalTranscript) {
+            const clean = finalTranscript.trim();
+            this.updateVoiceOverlayText(`Recognized: "${clean}"`);
+            this.handleVoiceCommand(clean);
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.warn('[AST-PlayerUI] Voice recognition notice:', event.error);
+          if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            this.isListeningVoice = false;
+            this.updateVoiceStatusUI(false);
+            this.showToast('⚠️ Microphone permission required for Voice Control');
+            if (this.engine && typeof this.engine.notifyParent === 'function') {
+              this.engine.notifyParent({ type: 'VOICE_STATUS', isListening: false, error: event.error });
+            }
+          } else if (event.error === 'no-speech') {
+            if (this.isListeningVoice) {
+              this.updateVoiceOverlayText('🎙️ Listening for commands... ("play", "pause", "show me fractions")');
+            }
+          } else if (event.error !== 'aborted') {
+            this.showToast(`Voice input notice: ${event.error}`);
+          }
+        };
+
+        recognition.onend = () => {
+          if (this.isListeningVoice) {
+            clearTimeout(this._voiceRestartTimeout);
+            this._voiceRestartTimeout = setTimeout(() => {
+              if (this.isListeningVoice && this.recognition) {
+                try {
+                  this.recognition.start();
+                } catch (e) {}
+              }
+            }, 300);
+          } else {
+            this.updateVoiceStatusUI(false);
+            if (this.engine && typeof this.engine.notifyParent === 'function') {
+              this.engine.notifyParent({ type: 'VOICE_STATUS', isListening: false });
+            }
+          }
+        };
+
+        return recognition;
+      } catch (err) {
+        console.warn('[AST-PlayerUI] Error instantiating SpeechRecognition:', err);
+        return null;
+      }
+    }
+
+    startVoiceCommands() {
+      const SpeechRecognition = typeof window !== 'undefined'
+        ? (window.SpeechRecognition || window.webkitSpeechRecognition)
+        : null;
+
+      if (!SpeechRecognition) {
+        this.showToast('⚠️ SpeechRecognition is not supported in this browser (Use Chrome, Edge, or Safari)');
+        return false;
+      }
+
+      if (!this.recognition) {
+        this.recognition = this.initVoiceRecognition();
+      }
+
+      if (!this.recognition) {
+        this.showToast('⚠️ Unable to initialize voice recognition engine');
+        return false;
+      }
+
+      this.isListeningVoice = true;
+      try {
+        this.recognition.start();
+        return true;
+      } catch (err) {
+        // Recognition already active
+        this.updateVoiceStatusUI(true);
+        return true;
+      }
+    }
+
+    stopVoiceCommands() {
+      this.isListeningVoice = false;
+      clearTimeout(this._voiceRestartTimeout);
+      if (this.recognition) {
+        try {
+          this.recognition.stop();
+        } catch (e) {}
+      }
+      this.updateVoiceStatusUI(false);
+      this.showToast('🎙️ Voice Control Stopped');
+      if (this.engine && typeof this.engine.notifyParent === 'function') {
+        this.engine.notifyParent({ type: 'VOICE_STATUS', isListening: false });
+      }
+    }
+
+    toggleVoiceCommands() {
+      if (this.isListeningVoice) {
+        this.stopVoiceCommands();
+      } else {
+        this.startVoiceCommands();
+      }
+    }
+
+    updateVoiceStatusUI(active, text) {
+      const el = this.elements;
+      if (el.btnVoiceCmd) {
+        el.btnVoiceCmd.classList.toggle('active', active);
+        el.btnVoiceCmd.textContent = active ? '🔴 Listening...' : '🎤 Mic';
+      }
+      if (el.voiceCmdOverlay) {
+        if (active) {
+          el.voiceCmdOverlay.classList.remove('hidden');
+          el.voiceCmdOverlay.style.display = 'flex';
+          if (text) {
+            this.updateVoiceOverlayText(text);
+          }
+        } else {
+          el.voiceCmdOverlay.classList.add('hidden');
+          el.voiceCmdOverlay.style.display = 'none';
+        }
+      }
+    }
+
+    updateVoiceOverlayText(text) {
+      const el = this.elements;
+      if (el.voiceCmdText) {
+        el.voiceCmdText.textContent = text;
+      }
+    }
+
+    handleVoiceCommand(rawTranscript) {
+      if (!rawTranscript || typeof rawTranscript !== 'string') return;
+      const text = rawTranscript.toLowerCase().trim().replace(/[.,!?;:]/g, '');
+      const el = this.elements;
+
+      let executedAction = null;
+      let actionLabel = '';
+
+      // 1. Playback Controls
+      if (/^(play|resume|start|unpause|continue|go)$/.test(text) || text.includes('play video') || text.includes('play model') || text.includes('start playback')) {
+        this.engine.play();
+        executedAction = 'PLAY';
+        actionLabel = '▶ Play';
+      } else if (/^(pause|stop|freeze|halt|wait|hold)$/.test(text) || text.includes('pause video') || text.includes('stop playback')) {
+        this.engine.pause();
+        executedAction = 'PAUSE';
+        actionLabel = '⏸ Pause';
+      } else if (text === 'toggle' || text === 'toggle play' || text === 'toggle playback') {
+        this.engine.togglePlay();
+        executedAction = 'TOGGLE_PLAY';
+        actionLabel = this.engine.isPlaying ? '▶ Play' : '⏸ Pause';
+      }
+      // 2. Rewind / Seek
+      else if (/^(rewind|restart|start over|replay|beginning|back to start|reset)$/.test(text) || text.includes('rewind to start') || text.includes('from the beginning') || text.includes('back to the start')) {
+        this.engine.seek(0);
+        executedAction = 'REWIND';
+        actionLabel = '⏮ Rewound to Beginning';
+      } else if (/^(forward|fast forward|skip forward|step forward|ahead|next)$/.test(text) || text.includes('skip ahead') || text.includes('forward five')) {
+        this.engine.step(0.1);
+        executedAction = 'STEP_FORWARD';
+        actionLabel = '⏩ Stepped Forward';
+      } else if (/^(back|step back|backward|skip back|previous)$/.test(text) || text.includes('go back') || text.includes('step backwards')) {
+        this.engine.step(-0.1);
+        executedAction = 'STEP_BACK';
+        actionLabel = '⏪ Stepped Backward';
+      } else if (text.includes('middle') || text.includes('halfway') || text.includes('fifty percent') || text.includes('50%')) {
+        this.engine.seek(0.5);
+        executedAction = 'SEEK_50';
+        actionLabel = '⏱ Jumped to 50%';
+      }
+      // 3. Curriculum Scenes ("show me fractions", "show me solar system", etc.)
+      else if (text.includes('fraction') || text.includes('math fraction') || text.includes('fraction model')) {
+        this.engine.loadScene('fractions', true);
+        executedAction = 'LOAD_SCENE_fractions';
+        actionLabel = '🥧 Loaded Fractions Scene';
+      } else if (text.includes('solar system') || text.includes('solar') || text.includes('planet') || text.includes('orbit')) {
+        this.engine.loadScene('solar-system', true);
+        executedAction = 'LOAD_SCENE_solar-system';
+        actionLabel = '🪐 Loaded Solar System Scene';
+      } else if (text.includes('mountain') || text.includes('elevation') || text.includes('topography') || text.includes('climb')) {
+        this.engine.loadScene('mountain-elevation', true);
+        executedAction = 'LOAD_SCENE_mountain-elevation';
+        actionLabel = '⛰️ Loaded Mountain Elevation Scene';
+      } else if (text.includes('aquarium') || text.includes('fish tank') || text.includes('ocean') || (text.includes('fish') && !text.includes('math fish'))) {
+        this.engine.loadScene('fish-tank', true);
+        executedAction = 'LOAD_SCENE_fish-tank';
+        actionLabel = '🐠 Loaded Aquarium Scene';
+      } else if (text.includes('math fishing') || text.includes('math fish') || text.includes('fishing game')) {
+        this.engine.loadScene('math-fishing', true);
+        executedAction = 'LOAD_SCENE_math-fishing';
+        actionLabel = '🎣 Loaded Math Fishing Scene';
+      } else if (text.includes('atomic') || text.includes('atom') || text.includes('bohr')) {
+        this.engine.loadScene('atomic-structure', true);
+        executedAction = 'LOAD_SCENE_atomic-structure';
+        actionLabel = '⚛️ Loaded Atomic Structure Scene';
+      } else if (text.includes('church') || text.includes('cathedral') || text.includes('chapel')) {
+        this.engine.loadScene('church-tour', true);
+        executedAction = 'LOAD_SCENE_church-tour';
+        actionLabel = '⛪ Loaded Church Tour Scene';
+      } else if (text.includes('water cycle') || text.includes('rain cycle') || text.includes('evaporation')) {
+        this.engine.loadScene('water-cycle', true);
+        executedAction = 'LOAD_SCENE_water-cycle';
+        actionLabel = '💧 Loaded Water Cycle Scene';
+      } else if (text.includes('pythagor') || text.includes('geometry') || text.includes('triangle')) {
+        this.engine.loadScene('pythagoras', true);
+        executedAction = 'LOAD_SCENE_pythagoras';
+        actionLabel = '📐 Loaded Pythagoras Scene';
+      } else if (text.includes('photosynthesis') || text.includes('plant')) {
+        this.engine.loadScene('photosynthesis', true);
+        executedAction = 'LOAD_SCENE_photosynthesis';
+        actionLabel = '🌱 Loaded Photosynthesis Scene';
+      }
+      // Dynamic query: "show me X", "load X", "open X", "go to X", "switch to X"
+      else if (/^(show me|load|open|go to|switch to)\s+(.+)$/.test(text)) {
+        const match = text.match(/^(show me|load|open|go to|switch to)\s+(.+)$/);
+        const query = match ? match[2].trim() : '';
+        const normalized = global.ASTSceneRegistry?.normalizeId?.(query) || query;
+        if (global.ASTSceneRegistry?.getScene?.(normalized)) {
+          this.engine.loadScene(normalized, true);
+          executedAction = `LOAD_SCENE_${normalized}`;
+          actionLabel = `✨ Loaded ${normalized}`;
+        }
+      }
+      // 4. Playback Speed
+      else if (text.includes('faster') || text.includes('speed up') || text.includes('double speed') || text.includes('2x') || text.includes('two x')) {
+        this.engine.setSpeed(2.0);
+        if (el.speedSelector) el.speedSelector.value = '2';
+        executedAction = 'SET_SPEED_2';
+        actionLabel = '⚡ Speed: 2.0×';
+      } else if (text.includes('slower') || text.includes('slow down') || text.includes('half speed') || text.includes('0.5x') || text.includes('point five')) {
+        this.engine.setSpeed(0.5);
+        if (el.speedSelector) el.speedSelector.value = '0.5';
+        executedAction = 'SET_SPEED_0.5';
+        actionLabel = '🐢 Speed: 0.5×';
+      } else if (text.includes('normal speed') || text.includes('regular speed') || text.includes('1x') || text.includes('one x')) {
+        this.engine.setSpeed(1.0);
+        if (el.speedSelector) el.speedSelector.value = '1';
+        executedAction = 'SET_SPEED_1';
+        actionLabel = '▶ Speed: 1.0×';
+      } else if (text.includes('1.5x') || text.includes('one point five')) {
+        this.engine.setSpeed(1.5);
+        if (el.speedSelector) el.speedSelector.value = '1.5';
+        executedAction = 'SET_SPEED_1.5';
+        actionLabel = '⚡ Speed: 1.5×';
+      }
+      // 5. Sound & Voice Narration
+      else if (text.includes('unmute') || text.includes('sound on') || text.includes('audio on')) {
+        this.engine.setMuted(false);
+        executedAction = 'UNMUTE';
+        actionLabel = '🔊 Audio Unmuted';
+      } else if (text.includes('mute') || text.includes('sound off') || text.includes('quiet') || text.includes('silence')) {
+        this.engine.setMuted(true);
+        executedAction = 'MUTE';
+        actionLabel = '🔇 Audio Muted';
+      } else if (text.includes('voice on') || text.includes('narrat') || text.includes('read to me') || text.includes('enable voice')) {
+        if (!this.engine.voiceEnabled) {
+          const enabled = this.engine.toggleVoice();
+          if (el.btnNarrate) {
+            el.btnNarrate.classList.toggle('active', enabled);
+            el.btnNarrate.textContent = enabled ? '🔊 Voice: ON' : '🔊 Voice';
+          }
+        }
+        executedAction = 'VOICE_NARRATION_ON';
+        actionLabel = '🔊 Voice Narration Enabled';
+      } else if (text.includes('voice off') || text.includes('stop voice') || text.includes('disable voice') || text.includes('stop reading')) {
+        if (this.engine.voiceEnabled) {
+          const enabled = this.engine.toggleVoice();
+          if (el.btnNarrate) {
+            el.btnNarrate.classList.toggle('active', enabled);
+            el.btnNarrate.textContent = enabled ? '🔊 Voice: ON' : '🔊 Voice';
+          }
+        }
+        executedAction = 'VOICE_NARRATION_OFF';
+        actionLabel = '🔇 Voice Narration Disabled';
+      }
+      // 6. 3D Camera Controls
+      else if (text.includes('orbit') || text.includes('rotate') || text.includes('spin') || text.includes('turn')) {
+        this.engine.rotateCamera(45, 10);
+        executedAction = 'ORBIT_3D';
+        actionLabel = '🌐 3D Orbit (+45°)';
+      } else if (text.includes('reset camera') || text.includes('reset 3d') || text.includes('reset view')) {
+        this.engine.resetCamera();
+        executedAction = 'RESET_3D';
+        actionLabel = '🌐 3D Camera Reset';
+      } else if (this.engine.activePresetId === 'church-tour' && (text.includes('nave') || text.includes('altar') || text.includes('tabernacle') || text.includes('ambo') || text.includes('overhead'))) {
+        if (text.includes('nave')) {
+          this.engine.cameraOrbit.yawOffset = 0;
+          this.engine.cameraOrbit.pitchOffset = 18;
+          this.engine.cameraOrbit.distanceScale = 1.05;
+          this.engine.seek(0.05);
+          actionLabel = '⛪ View from Nave Entrance';
+        } else if (text.includes('altar')) {
+          this.engine.cameraOrbit.yawOffset = 0;
+          this.engine.cameraOrbit.pitchOffset = 26;
+          this.engine.cameraOrbit.distanceScale = 1.45;
+          this.engine.seek(0.60);
+          actionLabel = '✨ Focus on High Altar';
+        } else if (text.includes('tabernacle')) {
+          this.engine.cameraOrbit.yawOffset = 14;
+          this.engine.cameraOrbit.pitchOffset = 28;
+          this.engine.cameraOrbit.distanceScale = 1.70;
+          this.engine.seek(0.80);
+          actionLabel = '🕯️ Focus on Tabernacle';
+        }
+        this.engine.applyBindings(this.engine.progress);
+        this.engine.emit('camerachange', { ...this.engine.cameraOrbit });
+        executedAction = 'CHURCH_VIEWPOINT';
+      }
+      // 7. Loop & Mode & Fullscreen
+      else if (text.includes('loop') || text.includes('repeat')) {
+        this.engine.toggleLoop();
+        executedAction = 'TOGGLE_LOOP';
+        actionLabel = this.engine.isLooping ? '🔁 Loop ON' : '➡️ Loop OFF';
+      } else if (text.includes('game mode') || text.includes('interactive mode') || text.includes('play game')) {
+        if (el.btnPlayMode) el.btnPlayMode.click();
+        executedAction = 'TOGGLE_PLAY_MODE';
+        actionLabel = '🎮 Toggled Play Mode';
+      } else if (text.includes('fullscreen') || text.includes('full screen')) {
+        if (el.btnFullscreen) el.btnFullscreen.click();
+        executedAction = 'TOGGLE_FULLSCREEN';
+        actionLabel = '⛶ Toggled Fullscreen';
+      } else if (text.includes('quiz') || text.includes('checkpoint') || text.includes('challenge')) {
+        if (el.btnInteractive) el.btnInteractive.click();
+        executedAction = 'OPEN_QUIZ';
+        actionLabel = '🎯 Opened Interactive Challenge';
+      }
+
+      if (executedAction) {
+        this.updateVoiceOverlayText(`✅ Executed: ${actionLabel}`);
+        this.showToast(`🎙️ Voice: ${actionLabel}`);
+
+        if (this.engine && typeof this.engine.notifyParent === 'function') {
+          this.engine.notifyParent({
+            type: 'VOICE_COMMAND_EXECUTED',
+            command: text,
+            action: executedAction,
+            label: actionLabel,
+          });
+        }
+
+        clearTimeout(this._voiceFeedbackTimeout);
+        this._voiceFeedbackTimeout = setTimeout(() => {
+          if (this.isListeningVoice) {
+            this.updateVoiceOverlayText('🎙️ Listening for commands... ("play", "pause", "show me fractions")');
+          }
+        }, 3200);
+      } else {
+        this.updateVoiceOverlayText(`❓ Heard: "${rawTranscript}" (Try "play", "pause", "show me fractions")`);
+        clearTimeout(this._voiceFeedbackTimeout);
+        this._voiceFeedbackTimeout = setTimeout(() => {
+          if (this.isListeningVoice) {
+            this.updateVoiceOverlayText('🎙️ Listening for commands... ("play", "pause", "show me fractions")');
+          }
+        }, 3500);
+      }
     }
   }
 

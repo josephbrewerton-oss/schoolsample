@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AST Vector Media Player — Decoupled Motion Suite</title>
+  <title>Lumina Vector Player — Decoupled Motion &amp; Interactive Suite</title>
   <link rel="stylesheet" href="./player.css?v=2.5.0">
 </head>
 <body data-theme="dark">
@@ -27,6 +27,7 @@
       <button type="button" id="btn-obs-link" title="OBS Studio WebSocket Broadcast Controls">📡 <span class="btn-label">OBS</span><span id="obs-status-dot" class="obs-status-dot disconnected"></span></button>
       <button type="button" id="btn-print" title="Generate A4 Classroom Worksheet">🖨️ <span class="btn-label">Print</span></button>
       <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
+      <button type="button" id="btn-shortcuts" title="Keyboard Shortcuts Cheat Sheet (?)">⌨️ <span class="btn-label">Shortcuts</span></button>
       <button type="button" id="btn-settings" title="Player Display & Controls Settings (Classroom, Student, Broadcast, Dev)">⚙️ <span class="btn-label" id="settings-label">Settings</span></button>
       <button type="button" id="btn-theme" title="Toggle Dark/Light Mode">☀️</button>
       <button type="button" id="btn-fullscreen" title="Toggle Fullscreen">⛶</button>
@@ -158,6 +159,14 @@
 
     <!-- 3D Scene Interactive Orbit Hint -->
     <div id="orbit-hint" class="orbit-hint hidden">🌐 Drag to orbit in 3D · Scroll to zoom · Double-click to reset</div>
+
+    <!-- Voice Command Feedback Overlay -->
+    <div id="voice-cmd-overlay" class="voice-cmd-overlay hidden">
+      <div class="voice-cmd-indicator">
+        <span class="voice-mic-pulse"></span>
+        <span id="voice-cmd-text">🎙️ Listening for commands... ("play", "pause", "show me fractions")</span>
+      </div>
+    </div>
 
     <!-- 3D Camera Controls & Viewpoint Presets Toolbar -->
     <div id="camera-controls-bar" class="camera-controls-bar hidden" style="display: none;">
@@ -365,10 +374,93 @@
           <span class="config-toggle-label">🌍 Multi-Language Selector</span>
           <input type="checkbox" id="cfg-lang" class="config-toggle-input" checked />
         </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🔁 Auto-Repeat Loop Toggle</span>
+          <input type="checkbox" id="cfg-loop" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🔊 Master Audio &amp; SFX Volume</span>
+          <input type="checkbox" id="cfg-volume" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🪐 Micro-Physics Subsystem</span>
+          <input type="checkbox" id="cfg-physics" class="config-toggle-input" checked />
+        </div>
+
+        <!-- Micro-Physics & Gravity Subsystem Live Tuning -->
+        <div id="physics-config-section" style="border-top:1px solid #1e293b; margin-top:10px; padding-top:10px;">
+          <div class="config-section-title">
+            <span>🪐 Micro-Physics &amp; Gravity Subsystem</span>
+            <span style="font-size:9px; color:#10b981; font-weight:700;">&lt; 1.5 KB ZERO-BLOAT</span>
+          </div>
+
+          <div class="physics-preset-row">
+            <button type="button" class="phys-btn active" data-gravity="980" data-bounce="0.45" data-friction="0.985" title="Earth Gravity: 9.8 m/s²">🌍 Earth</button>
+            <button type="button" class="phys-btn" data-gravity="162" data-bounce="0.75" data-friction="0.999" title="Moon Gravity: 1.62 m/s²">🌕 Moon</button>
+            <button type="button" class="phys-btn" data-gravity="371" data-bounce="0.55" data-friction="0.990" title="Mars Gravity: 3.71 m/s²">🔴 Mars</button>
+            <button type="button" class="phys-btn" data-gravity="0" data-bounce="0.95" data-friction="1.000" title="Zero Gravity / Deep Space">🌌 Zero-G</button>
+            <button type="button" class="phys-btn" data-gravity="2000" data-bounce="0.20" data-friction="0.970" title="Heavy Gravity: 20 m/s²">⚡ Heavy</button>
+          </div>
+
+          <div class="dev-prop-grid" style="margin-top: 8px;">
+            <span class="dev-prop-label">Gravity</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="range" id="cfg-physics-gravity" min="0" max="2500" step="20" value="980" style="flex:1;" />
+              <span id="cfg-val-gravity" style="font-size:11px; width:44px; text-align:right;">9.8g</span>
+            </div>
+            <span class="dev-prop-label">Bounce</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="range" id="cfg-physics-bounce" min="0" max="1" step="0.05" value="0.45" style="flex:1;" />
+              <span id="cfg-val-bounce" style="font-size:11px; width:44px; text-align:right;">45%</span>
+            </div>
+            <span class="dev-prop-label">Air Friction</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="range" id="cfg-physics-friction" min="0.90" max="1.00" step="0.005" value="0.985" style="flex:1;" />
+              <span id="cfg-val-friction" style="font-size:11px; width:44px; text-align:right;">98.5%</span>
+            </div>
+          </div>
+
+          <div class="dev-action-btn-row" style="margin-top: 8px;">
+            <button type="button" class="dev-btn primary" id="btn-physics-impulse" title="Apply Jump Impulse to Physics Bodies">⚡ Test Impulse / Jump</button>
+            <button type="button" class="dev-btn" id="btn-physics-reset" title="Reset Physics Bodies to Initial Coordinates">↺ Reset Physics</button>
+          </div>
+        </div>
 
         <div class="settings-footer-actions">
           <button type="button" id="btn-reset-config" class="dev-btn" style="font-size:11px;">↺ Reset to Classroom</button>
           <span style="font-size:10px; color:#10b981;">✔ Autosaved</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal Dialog -->
+    <div id="shortcuts-modal" class="shortcuts-modal hidden">
+      <div class="shortcuts-card">
+        <div class="shortcuts-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">⌨️</span>
+            <span style="font-weight:700; font-size:14px; color:#f8fafc;">Keyboard &amp; Control Shortcuts</span>
+          </div>
+          <button type="button" id="shortcuts-close" class="interactive-close" title="Close Shortcuts (Esc)">&times;</button>
+        </div>
+        <div class="shortcuts-body">
+          <div class="shortcuts-grid">
+            <div class="sc-row"><kbd>Space</kbd><span>Play / Pause</span></div>
+            <div class="sc-row"><kbd>← / →</kbd><span>Step Back / Forward 5%</span></div>
+            <div class="sc-row"><kbd>Home / 0</kbd><span>Rewind to Start</span></div>
+            <div class="sc-row"><kbd>L</kbd><span>Toggle Auto-Repeat Loop</span></div>
+            <div class="sc-row"><kbd>M</kbd><span>Toggle Audio Mute / Voice</span></div>
+            <div class="sc-row"><kbd>V</kbd><span>Toggle Voice Commands (Microphone)</span></div>
+            <div class="sc-row"><kbd>S</kbd><span>Toggle Keyframe Step Mode</span></div>
+            <div class="sc-row"><kbd>F</kbd><span>Toggle Fullscreen</span></div>
+            <div class="sc-row"><kbd>O</kbd><span>Orbit 3D Camera (+45°)</span></div>
+            <div class="sc-row"><kbd>R</kbd><span>Reset 3D Camera</span></div>
+            <div class="sc-row"><kbd>P</kbd><span>Toggle Play Mode (Game HUD)</span></div>
+            <div class="sc-row"><kbd>Ctrl + I</kbd><span>Toggle SVG Element Inspector</span></div>
+            <div class="sc-row"><kbd>Ctrl + `</kbd><span>Open Live SVG/AST Code Studio</span></div>
+            <div class="sc-row"><kbd>?</kbd><span>Show Keyboard Shortcuts Reference</span></div>
+            <div class="sc-row"><kbd>Esc</kbd><span>Close Open Drawers &amp; Dialogs</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -393,11 +485,18 @@
         <button type="button" id="btn-play" title="Play / Pause (Spacebar)">▶ Play</button>
         <button type="button" id="btn-prev" title="Step Back 5% (Left Arrow)">⏮</button>
         <button type="button" id="btn-next" title="Step Forward 5% (Right Arrow)">⏭</button>
-        <button type="button" id="btn-reset" title="Rewind to Beginning">↺</button>
+        <button type="button" id="btn-reset" title="Rewind to Beginning (Home / 0)">↺</button>
+        <button type="button" id="btn-loop" title="Toggle Auto-Repeat Loop (L)" class="active">🔁 <span class="btn-label" id="loop-label">Loop</span></button>
         <span class="time-readout" id="time-readout">00:00 / 00:16 (0%)</span>
       </div>
 
       <div class="controls-right">
+        <!-- Master Audio Volume & Mute -->
+        <div class="volume-control-box" id="volume-box" title="Master Audio &amp; Speech Volume">
+          <button type="button" id="btn-volume-mute" class="volume-mute-btn" title="Mute / Unmute Audio (M)">🔊</button>
+          <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="1.0" title="Audio &amp; Speech Volume (0-100%)" />
+        </div>
+
         <!-- Speed Multipliers -->
         <select id="speed-selector" title="Playback Speed">
           <option value="0.5">0.5×</option>
@@ -408,6 +507,9 @@
 
         <!-- Narration Speech Toggle -->
         <button type="button" id="btn-narrate" title="Toggle On-Device Voice Narration">🔊 Voice</button>
+
+        <!-- Voice Command Speech Recognition Toggle -->
+        <button type="button" id="btn-voice-cmd" class="voice-cmd-btn" title="Voice Control: Speak 'play', 'pause', 'rewind', 'show me fractions' (V)">🎤 Mic</button>
 
         <!-- Language Selector -->
         <select id="lang-selector" title="Subtitle and Narration Language">
@@ -427,10 +529,10 @@
   </footer>
 
   <!-- Modular Scripts with Cache-Busting Version -->
-  <script src="./ast-scenes.js?v=2.5.0"></script>
-  <script src="./ast-engine.js?v=2.5.0"></script>
-  <script src="./obs-controller.js?v=2.5.0"></script>
-  <script src="./player-ui.js?v=2.5.0"></script>
+  <script src="./ast-scenes.js?v=2.5.1"></script>
+  <script src="./ast-engine.js?v=2.5.1"></script>
+  <script src="./obs-controller.js?v=2.5.1"></script>
+  <script src="./player-ui.js?v=2.5.1"></script>
   <script>
     (function () {
       'use strict';
@@ -458,10 +560,10 @@
 
       // 3. Load scenes manifest if available
       if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
-        window.ASTSceneRegistry.loadConfig('./scenes.manifest.json?v=2.5.0').then(() => {
+        window.ASTSceneRegistry.loadConfig('./scenes.manifest.json?v=2.5.1').then(() => {
           ui.populatePresets();
         }).catch(() => {
-          window.ASTSceneRegistry.loadConfig('./scenes-config.json?v=2.5.0').then(() => {
+          window.ASTSceneRegistry.loadConfig('./scenes-config.json?v=2.5.1').then(() => {
             ui.populatePresets();
           }).catch(() => {});
         });

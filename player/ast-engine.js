@@ -109,6 +109,21 @@
       this.gravity = parseFloat(g) || 0;
     }
 
+    setRestitution(bounce) {
+      const bVal = Math.max(0, Math.min(1.0, parseFloat(bounce) || 0));
+      for (const b of this.bodies) {
+        b.bounce = bVal;
+      }
+    }
+
+    setFriction(friction) {
+      const fVal = Math.max(0.5, Math.min(1.0, parseFloat(friction) || 0.985));
+      this.friction = fVal;
+      for (const b of this.bodies) {
+        b.friction = fVal;
+      }
+    }
+
     update(dt) {
       if (!this.enabled || dt <= 0 || this.bodies.length === 0) return;
       const root = (this.engine && this.engine.container) || (typeof document !== 'undefined' ? document : null);
@@ -211,7 +226,7 @@
   }
 
   class ASTVectorPlayerEngine {
-    static VERSION = '2.5.0';
+    static VERSION = '2.5.1';
     static LICENSE = 'AGPL-3.0-or-later';
     constructor(options = {}) {
       this.options = Object.assign({
@@ -229,6 +244,9 @@
       this.currentLang = this.options.lang;
       this.speed = this.options.speed;
       this.isPlaying = this.options.autoplay;
+      this.loop = this.options.loop !== undefined ? Boolean(this.options.loop) : true;
+      this.volume = this.options.volume !== undefined ? parseFloat(this.options.volume) : 1.0;
+      this.muted = Boolean(this.options.muted);
       this.progress = 0.0; // 0.000 to 1.000
       this.voiceEnabled = this.options.voiceEnabled;
       this.lastSpokenIndex = -1;
@@ -481,6 +499,39 @@
       return this.voiceEnabled;
     }
 
+    toggleLoop() {
+      this.loop = !this.loop;
+      this.emit('statechange', { isPlaying: this.isPlaying, loop: this.loop });
+      return this.loop;
+    }
+
+    setLoop(enabled) {
+      this.loop = Boolean(enabled);
+      this.emit('statechange', { isPlaying: this.isPlaying, loop: this.loop });
+      return this.loop;
+    }
+
+    setVolume(vol) {
+      this.volume = Math.max(0, Math.min(1.0, parseFloat(vol) || 0));
+      if (this.volume > 0 && this.muted) {
+        this.muted = false;
+      }
+      this.emit('volumechange', { volume: this.volume, muted: this.muted });
+      return this.volume;
+    }
+
+    toggleMute() {
+      this.muted = !this.muted;
+      this.emit('volumechange', { volume: this.volume, muted: this.muted });
+      return this.muted;
+    }
+
+    setMuted(muted) {
+      this.muted = Boolean(muted);
+      this.emit('volumechange', { volume: this.volume, muted: this.muted });
+      return this.muted;
+    }
+
     cancelSpeech() {
       if (this._speakDebounceTimer) {
         clearTimeout(this._speakDebounceTimer);
@@ -517,6 +568,7 @@
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.rate = 0.95;
+          utterance.volume = this.muted ? 0.0 : Math.max(0, Math.min(1.0, this.volume));
           utterance.lang = this.currentLang === 'es'
             ? 'es-ES'
             : this.currentLang === 'fr'
@@ -896,6 +948,10 @@
      */
     async loadScene(presetId, shouldPlay = false) {
       this.cancelSpeech();
+      const normalizedId = (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.normalizeId === 'function')
+        ? global.ASTSceneRegistry.normalizeId(presetId)
+        : presetId;
+      presetId = normalizedId;
       this.activePresetId = presetId;
       this.progress = 0.0;
       this.lastSpokenIndex = -1;
@@ -925,7 +981,7 @@
         if (typeof fetch !== 'undefined') {
           try {
             const base = (this.options.basePath || './').replace(/\/?$/, '/');
-            const cacheBust = '?v=2.5.0';
+            const cacheBust = '?v=2.5.1';
             const svgPath = `${base}scenes/${presetId}.svg${cacheBust}`;
             const astPath = `${base}scenes/${presetId}.ast${cacheBust}`;
 
@@ -1009,40 +1065,45 @@
      * Mounts SVG template and compiles AST bindings to DOM nodes
      */
     mountSceneAsset(scene, container) {
-      if (!container || !scene) return;
-      this._mountedContainer = container;
-      this._mountedSceneId = scene.id;
-      this.activeBindings = [];
-      this.active3DNodes = [];
-      this.active3DLines = [];
-      this.active3DRings = [];
-      this.active3DPolygons = [];
-      this.active3DItems = [];
-      this._cachedElements = null;
+      if (!container || !scene || this._isMounting) return;
+      this._isMounting = true;
+      try {
+        this._mountedContainer = container;
+        this._mountedSceneId = scene.id;
+        this.activeBindings = [];
+        this.active3DNodes = [];
+        this.active3DLines = [];
+        this.active3DRings = [];
+        this.active3DPolygons = [];
+        this.active3DItems = [];
+        this._cachedElements = null;
 
-      // 1. Mount procedural DOM tree or SVG template
-      if (typeof scene.mount === 'function') {
-        this._cachedElements = scene.mount(container);
-      } else if (scene.svgText) {
-        try {
-          if (typeof DOMParser !== 'undefined') {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(scene.svgText, 'image/svg+xml');
-            const rootSvg = doc.querySelector('svg');
-            if (rootSvg) {
-              container.innerHTML = rootSvg.innerHTML;
+        // 1. Mount SVG template if available
+        if (scene.svgText) {
+          try {
+            if (typeof DOMParser !== 'undefined') {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(scene.svgText, 'image/svg+xml');
+              const rootSvg = doc.querySelector('svg');
+              if (rootSvg) {
+                container.innerHTML = rootSvg.innerHTML;
+              } else {
+                container.innerHTML = scene.svgText;
+              }
             } else {
               container.innerHTML = scene.svgText;
             }
-          } else {
+          } catch {
             container.innerHTML = scene.svgText;
           }
-        } catch {
-          container.innerHTML = scene.svgText;
+        } else if (typeof scene.render === 'function' && typeof scene.mount !== 'function') {
+          container.innerHTML = scene.render(this.progress);
         }
-      } else if (typeof scene.render === 'function') {
-        container.innerHTML = scene.render(this.progress);
-      }
+
+        // 2. Run procedural mount hook (can populate existing SVG nodes or build its own)
+        if (typeof scene.mount === 'function') {
+          this._cachedElements = scene.mount(container);
+        }
 
       // Compile AST mathematical evaluation bindings
       if (scene.rawBindings && scene.rawBindings.length) {
@@ -1175,6 +1236,9 @@
       }
 
       this.applyBindings(this.progress);
+      } finally {
+        this._isMounting = false;
+      }
     }
 
     /**
@@ -1183,7 +1247,7 @@
      */
     applyBindings(t) {
       // Safety check: ensure container has scene elements mounted
-      if (this._container && (!this._container.hasChildNodes() || this._mountedSceneId !== this.activePresetId || this._mountedContainer !== this._container)) {
+      if (!this._isMounting && this._container && (this._mountedSceneId !== this.activePresetId || this._mountedContainer !== this._container)) {
         if (this.scene) {
           this.mountSceneAsset(this.scene, this._container);
         }
@@ -1428,7 +1492,7 @@
     renderCurrentVector(container) {
       const target = container || this.container;
       if (target) {
-        if (this._mountedSceneId !== this.activePresetId || this._mountedContainer !== target) {
+        if (!this._isMounting && (this._mountedSceneId !== this.activePresetId || this._mountedContainer !== target)) {
           if (this.scene) {
             this.mountSceneAsset(this.scene, target);
           }
@@ -1460,8 +1524,14 @@
           this.progress += (deltaSec / this.durationSec) * this.speed;
 
           if (this.progress >= 1.0) {
-            this.progress = 0.0;
-            this.lastSpokenIndex = -1;
+            if (this.loop) {
+              this.progress = 0.0;
+              this.lastSpokenIndex = -1;
+            } else {
+              this.progress = 1.0;
+              this.pause();
+              this.emit('ended', { duration: this.durationSec });
+            }
           }
 
           this.updateActiveKeyframeAndSpeech(false);
@@ -2234,6 +2304,39 @@
         case 'TOGGLE_PLAY':
           engine.togglePlay();
           break;
+        case 'SET_LOOP':
+          if (typeof data.loop === 'boolean') engine.setLoop(data.loop);
+          break;
+        case 'TOGGLE_LOOP':
+          engine.toggleLoop();
+          break;
+        case 'SET_VOLUME':
+          if (typeof data.volume === 'number') engine.setVolume(data.volume);
+          break;
+        case 'SET_MUTED':
+          if (typeof data.muted === 'boolean') engine.setMuted(data.muted);
+          break;
+        case 'TOGGLE_MUTE':
+          engine.toggleMute();
+          break;
+        case 'SET_GRAVITY':
+          if (typeof data.gravity === 'number' && engine.physics) engine.physics.setGravity(data.gravity);
+          break;
+        case 'SET_RESTITUTION':
+          if (typeof data.bounce === 'number' && engine.physics) engine.physics.setRestitution(data.bounce);
+          break;
+        case 'SET_FRICTION':
+          if (typeof data.friction === 'number' && engine.physics) engine.physics.setFriction(data.friction);
+          break;
+        case 'RESET_PHYSICS':
+          if (engine.physics) engine.physics.reset();
+          break;
+        case 'PHYSICS_IMPULSE':
+          if (engine.physics) engine.physics.applyImpulse(data.target || data.id, data.fx || 0, data.fy || -400);
+          break;
+        case 'PHYSICS_JUMP':
+          if (engine.physics) engine.physics.jump(data.target || data.id, data.jumpVelocity || -480);
+          break;
         case 'SET_SPEED':
           if (data.speed) engine.setSpeed(data.speed);
           break;
@@ -2269,6 +2372,27 @@
           break;
         case 'RESET_3D':
           engine.resetCamera();
+          break;
+        case 'VOICE_COMMAND':
+        case 'EXECUTE_VOICE_COMMAND':
+          if (uiController && typeof uiController.handleVoiceCommand === 'function') {
+            uiController.handleVoiceCommand(data.command || data.transcript);
+          }
+          break;
+        case 'TOGGLE_VOICE_COMMANDS':
+          if (uiController && typeof uiController.toggleVoiceCommands === 'function') {
+            uiController.toggleVoiceCommands();
+          }
+          break;
+        case 'START_VOICE_COMMANDS':
+          if (uiController && typeof uiController.startVoiceCommands === 'function') {
+            uiController.startVoiceCommands();
+          }
+          break;
+        case 'STOP_VOICE_COMMANDS':
+          if (uiController && typeof uiController.stopVoiceCommands === 'function') {
+            uiController.stopVoiceCommands();
+          }
           break;
         case 'REQUEST_PRINT':
           window.print();

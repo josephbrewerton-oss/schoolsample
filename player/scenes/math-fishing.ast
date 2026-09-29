@@ -1,0 +1,43 @@
+(:scene :id "math-fishing" :title "Math Pond: Number Bonds Fishing Game" :stage "KS1/KS2 MATHS" :duration 14.0
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds." :es "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos.")
+    (:start 0.35 :end 0.70 :en "We have a 4 on our line. To make 10, we must find and catch a fish with 6!" :es "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!")
+    (:start 0.70 :end 1.00 :en "4 plus 6 equals 10! A perfect number bond stored right in our tackle bucket." :es "¡4 más 6 es igual a 10! Un vínculo numérico perfecto guardado en la cubeta.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Step 1: Pond Inspection" :rule "Scanning swimming fish numerals and ten-frame dots")
+    (:t 0.35 :title "Step 2: First Catch (4)" :rule "Reeling in 4: calculating complement needed to reach target 10")
+    (:t 0.70 :title "Step 3: Number Bond Hook (6)" :rule "Matching 4 + 6 = 10 with tactile audio chime")
+    (:t 1.00 :title "Step 4: Mastery Victory" :rule "Bonds to 10 and 20 provide the foundation for mental arithmetic")
+  ))
+  (:interactive (
+    (:checkpoints (
+      (:t 0.50
+       :title "Number Bond Challenge"
+       :prompt "If you catch a fish with the number 3, which fish should you catch next to make 10?"
+       :options (
+         "A fish with 7 (because 3 + 7 = 10)"
+         "A fish with 3 (because 3 + 3 = 10)"
+         "A fish with 10 (because 3 + 10 = 10)"
+       )
+       :answer 0
+       :explanation "Number bonds to 10 are pairs that sum to 10. 3 + 7 = 10. Knowing these pairs by heart gives pupils quick mental math fluency for addition and subtraction."
+      )
+      (:t 0.85
+       :title "Concrete to Abstract Progression"
+       :prompt "Why do the fish display ten-frame dots alongside numerals?"
+       :options (
+         "To help early learners count concrete quantities (subitising) before reading abstract numerals"
+         "Because fish prefer polka dots"
+         "To increase the weight of the fishing hook"
+       )
+       :answer 0
+       :explanation "The Concrete-Pictorial-Abstract (CPA) approach allows younger learners to visually group and count dots (subitising) to understand the value of the number before transitioning to pure abstract digits."
+      )
+    ))
+  ))
+  (:bindings (
+    (:target "#water-wave-1" :attr "d" :expr "'M 0,' + (155 + Math.sin(t * Math.PI * 4) * 3) + ' Q 100,' + (150 + Math.cos(t * Math.PI * 4) * 4) + ' 200,155 T 400,155 T 600,155 T 800,155'")
+    (:target "#water-wave-2" :attr "d" :expr "'M 0,' + (165 + Math.cos(t * Math.PI * 3.5) * 3) + ' Q 150,' + (160 + Math.sin(t * Math.PI * 3.5) * 3) + ' 300,165 T 600,165 T 800,165'")
+  ))
+)

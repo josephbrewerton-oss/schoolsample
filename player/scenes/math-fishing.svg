@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%">
+  <defs>
+    <!-- Sky & Water Gradients -->
+    <linearGradient id="fish-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="fish-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0284c7" stop-opacity="0.85" />
+      <stop offset="35%" stop-color="#0369a1" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="fish-bank" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#15803d" />
+      <stop offset="100%" stop-color="#14532d" />
+    </linearGradient>
+
+    <!-- Species Colors -->
+    <linearGradient id="fish-clown" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="fish-blue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="fish-gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+    <linearGradient id="fish-coral" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#be185d" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="pond-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Sky & Hills -->
+  <rect x="0" y="0" width="800" height="150" fill="url(#fish-sky)" />
+  <path d="M 0,150 L 120,95 L 260,150 L 410,105 L 560,150 L 710,90 L 800,150 Z" fill="#0369a1" opacity="0.4" />
+  <path d="M 0,150 L 190,115 L 350,150 L 490,120 L 660,150 L 800,125 Z" fill="#0284c7" opacity="0.6" />
+
+  <!-- Grassy Fishing Bank -->
+  <path d="M 0,120 Q 220,140 400,135 T 800,130 L 800,165 L 0,165 Z" fill="url(#fish-bank)" />
+
+  <!-- Water Surface Layer -->
+  <rect x="0" y="150" width="800" height="330" fill="url(#fish-water)" />
+  <path id="water-wave-1" d="M 0,155 Q 100,150 200,155 T 400,155 T 600,155 T 800,155" fill="none" stroke="#bae6fd" stroke-width="2.5" opacity="0.75" />
+  <path id="water-wave-2" d="M 0,165 Q 150,160 300,165 T 600,165 T 800,165" fill="none" stroke="#7dd3fc" stroke-width="1.5" opacity="0.5" />
+
+  <!-- Reeds & Lilypads -->
+  <path d="M 50,480 Q 70,360 60,300 Q 50,240 65,180" fill="none" stroke="#059669" stroke-width="6" opacity="0.6" stroke-linecap="round" />
+  <path d="M 80,480 Q 100,380 85,310 Q 70,240 90,200" fill="none" stroke="#10b981" stroke-width="5" opacity="0.5" stroke-linecap="round" />
+  <path d="M 720,480 Q 700,370 725,290 Q 740,220 710,180" fill="none" stroke="#059669" stroke-width="6" opacity="0.6" stroke-linecap="round" />
+  <ellipse cx="160" cy="162" rx="35" ry="9" fill="#15803d" stroke="#22c55e" stroke-width="1.5" opacity="0.85" />
+  <ellipse cx="640" cy="164" rx="42" ry="11" fill="#15803d" stroke="#22c55e" stroke-width="1.5" opacity="0.85" />
+
+  <!-- Group for Animated Fish School -->
+  <g id="fish-school-group"></g>
+
+  <!-- Angler Fishing Rod -->
+  <g id="fishing-rod-group">
+    <path id="fishing-rod" d="M 380,105 Q 400,60 480,50" fill="none" stroke="#b45309" stroke-width="5" stroke-linecap="round" />
+    <line id="fishing-line" x1="480" y1="50" x2="480" y2="240" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="3 2" />
+    <g id="fishing-hook" transform="translate(480, 240)">
+      <circle cx="0" cy="-8" r="7" fill="#ef4444" />
+      <path d="M -7,-8 A 7 7 0 0 0 7,-8 Z" fill="#ffffff" />
+      <path d="M 0,-1 L 0,8 A 6 6 0 0 0 10,8 L 10,4" fill="none" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" />
+    </g>
+  </g>
+
+  <!-- Math Equation HUD Board -->
+  <g id="math-hud" transform="translate(200, 20)">
+    <rect x="0" y="0" width="400" height="50" rx="10" fill="#0f172a" fill-opacity="0.9" stroke="#0284c7" stroke-width="2" />
+    <text id="math-hud-title" x="200" y="24" fill="#94a3b8" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">NUMBER BONDS TO 10</text>
+    <text id="math-hud-equation" x="200" y="42" fill="#38bdf8" font-size="18" font-weight="900" text-anchor="middle">Catch 4 + ? = 10</text>
+  </g>
+</svg>

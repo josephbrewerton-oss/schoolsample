@@ -1,7 +1,7 @@
 {
   "version": "2.2.0",
-  "generatedAt": "2026-09-28T08:13:03.314Z",
-  "totalScenes": 9,
+  "generatedAt": "2026-09-29T10:21:55.855Z",
+  "totalScenes": 11,
   "scenes": [
     {
       "id": "church-tour",
@@ -119,6 +119,32 @@
       "keyframeCount": 4,
       "subtitleCount": 3,
       "bindingsCount": 18
+    },
+    {
+      "id": "fish-tank",
+      "title": "Aquarium Stress Benchmark: Vector Point & FPS Limiter",
+      "stage": "BENCHMARK & STRESS LAB",
+      "duration": 12,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/fish-tank.svg",
+      "astFile": "scenes/fish-tank.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 4
+    },
+    {
+      "id": "math-fishing",
+      "title": "Math Pond: Number Bonds Fishing Game",
+      "stage": "KS1/KS2 MATHS",
+      "duration": 14,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/math-fishing.svg",
+      "astFile": "scenes/math-fishing.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 2
     }
   ]
 }
