@@ -1,6 +1,6 @@
 {
   "version": "2.2.0",
-  "generatedAt": "2026-09-29T11:28:42.576Z",
+  "generatedAt": "2026-09-29T11:41:10.180Z",
   "totalScenes": 12,
   "scenes": [
     {
@@ -105,7 +105,7 @@
       "astFile": "scenes/pythagoras.ast",
       "keyframeCount": 4,
       "subtitleCount": 3,
-      "bindingsCount": 5
+      "bindingsCount": 7
     },
     {
       "id": "water-cycle",

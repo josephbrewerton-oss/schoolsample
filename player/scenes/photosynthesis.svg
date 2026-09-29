@@ -1,12 +1,111 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-  <path id="ps-leaf" d="M 120 240 C 200 80, 600 80, 680 240 C 600 400, 200 400, 120 240 Z" fill="url(#grad-leaf)" stroke="#4ade80" stroke-width="3" />
-  <path id="ps-veins" d="M 120 240 L 680 240 M 260 240 L 340 160 M 380 240 L 460 160 M 260 240 L 340 320 M 380 240 L 460 320" stroke="#86efac" stroke-width="2" fill="none" opacity="0.6" />
-  <circle id="ps-photon-0" cx="200" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
-  <circle id="ps-photon-1" cx="270" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
-  <circle id="ps-photon-2" cx="340" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
-  <circle id="ps-photon-3" cx="410" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
-  <circle id="ps-photon-4" cx="480" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
-  <circle id="ps-photon-5" cx="550" cy="30" r="4" fill="#facc15" filter="url(#glow)" />
-  <rect x="180" y="24" width="440" height="38" rx="8" fill="#1e293b" stroke="#334155" />
-  <text id="ps-formula-txt" x="400" y="48" fill="#4ade80" font-size="16" font-weight="bold" text-anchor="middle">6CO₂ + 6H₂O + Light ➔ C₆H₁₂O₆ + 6O₂</text>
+  <defs>
+    <!-- Background Ambient Glow -->
+    <radialGradient id="ps-bg-glow" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#064e3b" stop-opacity="0.4" />
+      <stop offset="60%" stop-color="#0f172a" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+
+    <!-- Botanical Leaf Gradient with Chlorophyll Sheen -->
+    <linearGradient id="grad-leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#15803d" />
+      <stop offset="35%" stop-color="#16a34a" />
+      <stop offset="70%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#14532d" />
+    </linearGradient>
+
+    <!-- Chloroplast Organelle Gradient -->
+    <linearGradient id="ps-chloroplast" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+
+    <!-- Sun Glow Gradient -->
+    <radialGradient id="ps-sun-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#ca8a04" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Photon Glow Bloom Filter -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Leaf Cuticle Filter -->
+    <filter id="leaf-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#052e16" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <!-- Dark Ambient Bio-Lab Backdrop -->
+  <rect width="800" height="480" fill="url(#ps-bg-glow)" />
+
+  <!-- Top Glassmorphic Chemical Equation Banner -->
+  <g transform="translate(140, 16)">
+    <rect width="520" height="42" rx="10" fill="#0f172a" fill-opacity="0.9" stroke="#10b981" stroke-width="1.5" />
+    <text id="ps-formula-txt" x="260" y="27" fill="#4ade80" font-size="16" font-weight="800" text-anchor="middle" font-family="sans-serif">
+      <tspan fill="#38bdf8">6CO₂</tspan> + <tspan fill="#60a5fa">6H₂O</tspan> + <tspan fill="#facc15">Light ⚡</tspan> ➔ <tspan fill="#f59e0b">C₆H₁₂O₆ (Glucose)</tspan> + <tspan fill="#34d399">6O₂</tspan>
+    </text>
+  </g>
+
+  <!-- Sun Solar Engine in Upper Sky -->
+  <g transform="translate(400, 15)">
+    <circle cx="0" cy="0" r="45" fill="url(#ps-sun-grad)" filter="url(#glow)" opacity="0.85" />
+    <circle cx="0" cy="0" r="18" fill="#fef08a" filter="url(#glow)" />
+  </g>
+
+  <!-- Botanical Leaf Structure -->
+  <g filter="url(#leaf-shadow)">
+    <!-- Main Leaf Body -->
+    <path id="ps-leaf" d="M 120 240 C 200 80, 600 80, 680 240 C 600 400, 200 400, 120 240 Z" fill="url(#grad-leaf)" stroke="#4ade80" stroke-width="3" />
+
+    <!-- Mesophyll Cellular Chloroplast Organelles inside Leaf -->
+    <g opacity="0.35">
+      <ellipse cx="260" cy="200" rx="18" ry="10" fill="url(#ps-chloroplast)" />
+      <ellipse cx="340" cy="180" rx="20" ry="11" fill="url(#ps-chloroplast)" />
+      <ellipse cx="440" cy="185" rx="22" ry="12" fill="url(#ps-chloroplast)" />
+      <ellipse cx="520" cy="205" rx="18" ry="10" fill="url(#ps-chloroplast)" />
+      <ellipse cx="270" cy="275" rx="19" ry="11" fill="url(#ps-chloroplast)" />
+      <ellipse cx="360" cy="290" rx="22" ry="12" fill="url(#ps-chloroplast)" />
+      <ellipse cx="460" cy="285" rx="20" ry="11" fill="url(#ps-chloroplast)" />
+      <ellipse cx="540" cy="270" rx="18" ry="10" fill="url(#ps-chloroplast)" />
+    </g>
+
+    <!-- Vascular Vein Network (Xylem & Phloem) -->
+    <path id="ps-veins" d="M 120 240 L 680 240 M 260 240 L 340 160 M 380 240 L 460 160 M 500 240 L 570 175 M 260 240 L 340 320 M 380 240 L 460 320 M 500 240 L 570 305" stroke="#86efac" stroke-width="2.5" fill="none" opacity="0.75" stroke-linecap="round" />
+  </g>
+
+  <!-- Cellular Anatomy Labels -->
+  <g font-family="sans-serif" font-size="12" font-weight="700">
+    <!-- Water Uptake via Petiole -->
+    <path d="M 50 240 L 110 240" stroke="#38bdf8" stroke-width="3" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+    <text x="45" y="232" fill="#38bdf8" text-anchor="start">H₂O from Roots</text>
+
+    <!-- Stomata CO2 Influx -->
+    <text x="300" y="380" fill="#a7f3d0" text-anchor="middle">CO₂ Influx (Stomata)</text>
+    <path d="M 300 365 L 300 320" stroke="#34d399" stroke-width="2.5" stroke-dasharray="3,3" />
+
+    <!-- Oxygen Release -->
+    <text x="500" y="380" fill="#67e8f9" text-anchor="middle">O₂ Released</text>
+    <path d="M 500 320 L 500 365" stroke="#67e8f9" stroke-width="2.5" stroke-dasharray="3,3" />
+
+    <!-- Glucose Formation -->
+    <text x="695" y="244" fill="#fbbf24" text-anchor="start">C₆H₁₂O₆ (Sugar)</text>
+  </g>
+
+  <!-- Radiant Light Photon Particles Streaming into Chloroplasts -->
+  <g id="ps-photons">
+    <circle id="ps-photon-0" cx="200" cy="30" r="5" fill="#facc15" filter="url(#glow)" />
+    <circle id="ps-photon-1" cx="270" cy="30" r="5" fill="#facc15" filter="url(#glow)" />
+    <circle id="ps-photon-2" cx="340" cy="30" r="5" fill="#facc15" filter="url(#glow)" />
+    <circle id="ps-photon-3" cx="410" cy="30" r="5" fill="#facc15" filter="url(#glow)" />
+    <circle id="ps-photon-4" cx="480" cy="30" r="5" fill="#facc15" filter="url(#glow)" />
+    <circle id="ps-photon-5" cx="550" cy="30" r="5" fill="#facc15" filter="url(#glow)" />
+  </g>
 </svg>
