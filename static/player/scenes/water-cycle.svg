@@ -1,20 +1,151 @@
 <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 0 340 Q 200 320, 450 350 L 800 350 L 800 480 L 0 480 Z" fill="#1d4ed8" />
-  <path d="M 0 340 Q 200 240, 400 310 L 400 480 L 0 480 Z" fill="#334155" />
-  <circle cx="700" cy="90" r="38" fill="url(#grad-sun)" filter="url(#glow)" />
-  <circle id="wc-vapor-0" cx="520" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
-  <circle id="wc-vapor-1" cx="555" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
-  <circle id="wc-vapor-2" cx="590" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
-  <circle id="wc-vapor-3" cx="625" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
-  <circle id="wc-vapor-4" cx="660" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
-  <circle id="wc-vapor-5" cx="695" cy="330" r="4" fill="#93c5fd" opacity="0.6" />
-  <path d="M 280 140 Q 320 100, 380 130 Q 420 90, 480 130 Q 520 110, 550 140 Q 560 170, 520 180 L 310 180 Z" fill="#e2e8f0" opacity="0.9" />
-  <line id="wc-rain-0" x1="320" y1="190" x2="317" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-1" x1="345" y1="190" x2="342" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-2" x1="370" y1="190" x2="367" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-3" x1="395" y1="190" x2="392" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-4" x1="420" y1="190" x2="417" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-5" x1="445" y1="190" x2="442" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-6" x1="470" y1="190" x2="467" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
-  <line id="wc-rain-7" x1="495" y1="190" x2="492" y2="198" stroke="#60a5fa" stroke-width="2" opacity="0" />
+  <defs>
+    <!-- Atmosphere Sky Gradient -->
+    <linearGradient id="wc-sky-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#bae6fd" />
+    </linearGradient>
+
+    <!-- Deep Ocean Gradient -->
+    <linearGradient id="wc-ocean-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="35%" stop-color="#1e40af" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Mountain Terrain Gradient -->
+    <linearGradient id="wc-mountain-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#64748b" />
+      <stop offset="60%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <!-- Radiant Solar Engine Gradient -->
+    <radialGradient id="grad-sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#facc15" />
+      <stop offset="85%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </radialGradient>
+
+    <!-- Volumetric Cloud Gradient -->
+    <linearGradient id="wc-cloud-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#f1f5f9" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Cloud Soft Shadow Filter -->
+    <filter id="cloud-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#1e293b" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Atmosphere Sky -->
+  <rect width="800" height="340" fill="url(#wc-sky-grad)" />
+
+  <!-- The Sun (Thermal Solar Engine) -->
+  <g transform="translate(710, 85)">
+    <circle cx="0" cy="0" r="55" fill="#facc15" opacity="0.25" filter="url(#glow)" />
+    <circle cx="0" cy="0" r="40" fill="url(#grad-sun)" filter="url(#glow)" />
+    <!-- Radiant Solar Rays -->
+    <g stroke="#fef08a" stroke-width="2" stroke-linecap="round" opacity="0.6">
+      <line x1="0" y1="-50" x2="0" y2="-62" />
+      <line x1="35" y1="-35" x2="44" y2="-44" />
+      <line x1="50" y1="0" x2="62" y2="0" />
+      <line x1="35" y1="35" x2="44" y2="44" />
+      <line x1="0" y1="50" x2="0" y2="62" />
+      <line x1="-35" y1="35" x2="-44" y2="44" />
+      <line x1="-50" y1="0" x2="-62" y2="0" />
+      <line x1="-35" y1="-35" x2="-44" y2="-44" />
+    </g>
+  </g>
+
+  <!-- Distant Mountain Ranges -->
+  <polygon points="120,200 0,340 260,340" fill="#475569" opacity="0.5" />
+  <polygon points="260,160 110,340 420,340" fill="url(#wc-mountain-grad)" />
+  <!-- Snow Peaks -->
+  <polygon points="260,160 230,205 260,215 290,205" fill="#ffffff" opacity="0.9" />
+
+  <!-- Foreground Mountain Landmass -->
+  <path d="M 0 340 Q 180 230, 360 300 L 360 480 L 0 480 Z" fill="#334155" />
+  <path d="M 0 340 Q 160 240, 320 310 L 320 480 L 0 480 Z" fill="#1e293b" opacity="0.7" />
+
+  <!-- Mountain Surface Runoff River -->
+  <path d="M 260 220 Q 280 270 330 310 Q 370 340 440 355" fill="none" stroke="#7dd3fc" stroke-width="4.5" stroke-linecap="round" opacity="0.85" />
+
+  <!-- Deep Ocean Reservoir -->
+  <path d="M 0 340 Q 200 320, 450 350 L 800 350 L 800 480 L 0 480 Z" fill="url(#wc-ocean-grad)" />
+
+  <!-- Subterranean Aquifer Table -->
+  <path d="M 0 420 L 800 420 L 800 480 L 0 480 Z" fill="#0f172a" opacity="0.85" />
+  <line x1="0" y1="420" x2="800" y2="420" stroke="#0284c7" stroke-width="2" stroke-dasharray="6,4" />
+  <text x="30" y="450" fill="#38bdf8" font-size="12" font-weight="700" font-family="sans-serif">Subterranean Groundwater &amp; Infiltration</text>
+
+  <!-- Condensation Cloud Structure -->
+  <g filter="url(#cloud-shadow)">
+    <path d="M 280 140 Q 320 100, 380 130 Q 420 90, 480 130 Q 520 110, 550 140 Q 560 170, 520 180 L 310 180 Z" fill="url(#wc-cloud-grad)" />
+    <!-- Secondary internal puff -->
+    <ellipse cx="370" cy="145" rx="45" ry="25" fill="#ffffff" opacity="0.6" />
+    <ellipse cx="440" cy="140" rx="55" ry="30" fill="#ffffff" opacity="0.6" />
+  </g>
+
+  <!-- Meteorological Stage Badges -->
+  <g font-family="sans-serif" font-size="12" font-weight="800">
+    <!-- Evaporation Indicator -->
+    <g transform="translate(560, 240)">
+      <rect width="130" height="28" rx="6" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="1.5" />
+      <text x="65" y="19" fill="#38bdf8" text-anchor="middle">↑ EVAPORATION</text>
+    </g>
+
+    <!-- Condensation Indicator -->
+    <g transform="translate(350, 70)">
+      <rect width="140" height="28" rx="6" fill="#0f172a" fill-opacity="0.85" stroke="#cbd5e1" stroke-width="1.5" />
+      <text x="70" y="19" fill="#f8fafc" text-anchor="middle">☁ CONDENSATION</text>
+    </g>
+
+    <!-- Precipitation Indicator -->
+    <g transform="translate(345, 235)">
+      <rect width="140" height="28" rx="6" fill="#0f172a" fill-opacity="0.85" stroke="#60a5fa" stroke-width="1.5" />
+      <text x="70" y="19" fill="#60a5fa" text-anchor="middle">↓ PRECIPITATION</text>
+    </g>
+
+    <!-- Runoff Indicator -->
+    <g transform="translate(180, 370)">
+      <rect width="130" height="28" rx="6" fill="#0f172a" fill-opacity="0.85" stroke="#34d399" stroke-width="1.5" />
+      <text x="65" y="19" fill="#34d399" text-anchor="middle">➔ RUNOFF</text>
+    </g>
+  </g>
+
+  <!-- Rising Evaporation Water Vapor Droplets -->
+  <g id="wc-vapors">
+    <circle id="wc-vapor-0" cx="520" cy="330" r="5" fill="#93c5fd" opacity="0.75" filter="url(#glow)" />
+    <circle id="wc-vapor-1" cx="555" cy="330" r="5" fill="#93c5fd" opacity="0.75" filter="url(#glow)" />
+    <circle id="wc-vapor-2" cx="590" cy="330" r="5" fill="#93c5fd" opacity="0.75" filter="url(#glow)" />
+    <circle id="wc-vapor-3" cx="625" cy="330" r="5" fill="#93c5fd" opacity="0.75" filter="url(#glow)" />
+    <circle id="wc-vapor-4" cx="660" cy="330" r="5" fill="#93c5fd" opacity="0.75" filter="url(#glow)" />
+    <circle id="wc-vapor-5" cx="695" cy="330" r="5" fill="#93c5fd" opacity="0.75" filter="url(#glow)" />
+  </g>
+
+  <!-- Falling Precipitation Raindrops -->
+  <g id="wc-rains">
+    <line id="wc-rain-0" x1="320" y1="190" x2="317" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-1" x1="345" y1="190" x2="342" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-2" x1="370" y1="190" x2="367" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-3" x1="395" y1="190" x2="392" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-4" x1="420" y1="190" x2="417" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-5" x1="445" y1="190" x2="442" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-6" x1="470" y1="190" x2="467" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+    <line id="wc-rain-7" x1="495" y1="190" x2="492" y2="202" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" opacity="0" />
+  </g>
 </svg>
