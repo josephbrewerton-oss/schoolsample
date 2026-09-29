@@ -26,6 +26,7 @@ export interface PlayerDisplayConfig {
   showCopySvg: boolean;              // 📋 Copy Raw SVG button
   showThemeToggle: boolean;          // ☀️ Theme toggle
   showFullscreen: boolean;           // ⛶ Fullscreen button
+  showPipButton?: boolean;           // 📺 Document Picture-in-Picture floating window button
 
   // Viewport & Playback Bar
   showTimelineScrubber: boolean;     // Timeline scrubber track
@@ -89,6 +90,7 @@ export const CLASSROOM_PRESET: PlayerDisplayConfig = {
   showCopySvg: false,
   showThemeToggle: true,
   showFullscreen: true,
+  showPipButton: true,
   showTimelineScrubber: true,
   showPlaybackControls: true,
   showSpeedSelector: true,
@@ -117,6 +119,7 @@ export const STUDENT_PRESET: PlayerDisplayConfig = {
   showCopySvg: false,
   showThemeToggle: true,
   showFullscreen: true,
+  showPipButton: true,
   showTimelineScrubber: true,
   showPlaybackControls: true,
   showSpeedSelector: true,
@@ -145,6 +148,7 @@ export const BROADCAST_PRESET: PlayerDisplayConfig = {
   showCopySvg: false,
   showThemeToggle: true,
   showFullscreen: true,
+  showPipButton: true,
   showTimelineScrubber: true,
   showPlaybackControls: true,
   showSpeedSelector: true,
@@ -173,6 +177,7 @@ export const DEVELOPER_PRESET: PlayerDisplayConfig = {
   showCopySvg: true,
   showThemeToggle: true,
   showFullscreen: true,
+  showPipButton: true,
   showTimelineScrubber: true,
   showPlaybackControls: true,
   showSpeedSelector: true,

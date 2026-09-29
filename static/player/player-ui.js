@@ -43,6 +43,7 @@
         voiceCmdOverlay: document.getElementById('voice-cmd-overlay'),
         voiceCmdText: document.getElementById('voice-cmd-text'),
         btnTheme: document.getElementById('btn-theme'),
+        btnPip: document.getElementById('btn-pip'),
         btnFullscreen: document.getElementById('btn-fullscreen'),
         btnPrint: document.getElementById('btn-print'),
         btnCopySvg: document.getElementById('btn-copy-svg'),
@@ -155,6 +156,8 @@
         cfgLoop: document.getElementById('cfg-loop'),
         cfgVolume: document.getElementById('cfg-volume'),
         cfgPhysics: document.getElementById('cfg-physics'),
+        cfgPip: document.getElementById('cfg-pip'),
+        cfgVoiceCmd: document.getElementById('cfg-voice-cmd'),
         physicsConfigSection: document.getElementById('physics-config-section'),
         cfgPhysicsGravity: document.getElementById('cfg-physics-gravity'),
         cfgPhysicsBounce: document.getElementById('cfg-physics-bounce'),
@@ -927,6 +930,12 @@
         el.btnTheme.addEventListener('click', () => this.toggleTheme());
       }
 
+      if (el.btnPip) {
+        el.btnPip.addEventListener('click', () => {
+          this.togglePictureInPicture();
+        });
+      }
+
       if (el.btnFullscreen) {
         el.btnFullscreen.addEventListener('click', () => {
           if (!document.fullscreenElement) {
@@ -1657,6 +1666,8 @@
         { el: el.cfgLoop, key: 'showLoopToggle' },
         { el: el.cfgVolume, key: 'showVolumeControl' },
         { el: el.cfgPhysics, key: 'showPhysicsControls' },
+        { el: el.cfgPip, key: 'showPipButton' },
+        { el: el.cfgVoiceCmd, key: 'showVoiceControl' },
       ];
 
       configInputs.forEach(({ el: inputEl, key }) => {
@@ -1710,6 +1721,9 @@
         } else if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           this.toggleStepMode();
+        } else if (e.code === 'KeyI' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          this.togglePictureInPicture();
         } else if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           if (el.btnFullscreen) el.btnFullscreen.click();
@@ -1870,6 +1884,7 @@
       if (el.btnPrint) el.btnPrint.style.display = c.showPrintWorksheet !== false ? '' : 'none';
       if (el.btnCopySvg) el.btnCopySvg.style.display = c.showCopySvg ? '' : 'none';
       if (el.btnTheme) el.btnTheme.style.display = c.showThemeToggle !== false ? '' : 'none';
+      if (el.btnPip) el.btnPip.style.display = c.showPipButton !== false ? '' : 'none';
       if (el.btnFullscreen) el.btnFullscreen.style.display = c.showFullscreen !== false ? '' : 'none';
 
       // Bottom playback bar & overlays
@@ -1949,6 +1964,11 @@
         { el: el.cfgScrubber, val: c.showTimelineScrubber },
         { el: el.cfgSpeed, val: c.showSpeedSelector },
         { el: el.cfgLang, val: c.showLanguageSelector },
+        { el: el.cfgLoop, val: c.showLoopToggle },
+        { el: el.cfgVolume, val: c.showVolumeControl },
+        { el: el.cfgPhysics, val: c.showPhysicsControls },
+        { el: el.cfgPip, val: c.showPipButton },
+        { el: el.cfgVoiceCmd, val: (c.showVoiceControl !== false && c.showVoiceCommands !== false) },
       ];
 
       inputs.forEach(({ el: inp, val }) => {
@@ -1972,6 +1992,106 @@
 
     closeSettingsDrawer() {
       this.toggleSettingsDrawer(false);
+    }
+
+    async togglePictureInPicture() {
+      // 1. If embedded inside an iframe in the portal, delegate up to parent window
+      if (window !== window.top) {
+        if (this.engine && typeof this.engine.notifyParent === 'function') {
+          this.engine.notifyParent({ type: 'REQUEST_PIP' });
+          this.showToast('📺 Requesting Picture-in-Picture window...');
+          return;
+        }
+      }
+
+      // 2. Standalone window mode: Document Picture-in-Picture API
+      if (typeof window !== 'undefined' && 'documentPictureInPicture' in window) {
+        if (this.pipWindow) {
+          try {
+            this.pipWindow.close();
+          } catch (e) {}
+          this.pipWindow = null;
+          return;
+        }
+
+        try {
+          const pipWin = await window.documentPictureInPicture.requestWindow({
+            width: 820,
+            height: 520,
+          });
+
+          // Copy current stylesheets into the PiP window head
+          [...document.styleSheets].forEach((styleSheet) => {
+            try {
+              if (styleSheet.cssRules) {
+                const newStyle = pipWin.document.createElement('style');
+                [...styleSheet.cssRules].forEach((rule) => {
+                  newStyle.appendChild(pipWin.document.createTextNode(rule.cssText));
+                });
+                pipWin.document.head.appendChild(newStyle);
+              } else if (styleSheet.href) {
+                const link = pipWin.document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = styleSheet.href;
+                pipWin.document.head.appendChild(link);
+              }
+            } catch (e) {
+              if (styleSheet.href) {
+                const link = pipWin.document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = styleSheet.href;
+                pipWin.document.head.appendChild(link);
+              }
+            }
+          });
+
+          pipWin.document.body.className = document.body.className;
+          pipWin.document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') || 'dark');
+          pipWin.document.body.style.margin = '0';
+          pipWin.document.body.style.display = 'flex';
+          pipWin.document.body.style.flexDirection = 'column';
+          pipWin.document.body.style.height = '100vh';
+          pipWin.document.body.style.overflow = 'hidden';
+
+          const stage = document.getElementById('player-stage') || document.querySelector('main');
+          const footer = document.querySelector('footer');
+
+          const placeholderStage = document.createElement('div');
+          placeholderStage.style.display = 'none';
+          stage.parentNode.insertBefore(placeholderStage, stage);
+
+          const placeholderFooter = document.createElement('div');
+          placeholderFooter.style.display = 'none';
+          footer.parentNode.insertBefore(placeholderFooter, footer);
+
+          pipWin.document.body.appendChild(stage);
+          pipWin.document.body.appendChild(footer);
+          this.pipWindow = pipWin;
+          if (this.elements.btnPip) this.elements.btnPip.classList.add('active');
+          this.showToast('📺 Picture-in-Picture Active');
+
+          pipWin.addEventListener('pagehide', () => {
+            if (placeholderStage.parentNode) {
+              placeholderStage.parentNode.insertBefore(stage, placeholderStage);
+              placeholderStage.remove();
+            }
+            if (placeholderFooter.parentNode) {
+              placeholderFooter.parentNode.insertBefore(footer, placeholderFooter);
+              placeholderFooter.remove();
+            }
+            this.pipWindow = null;
+            if (this.elements.btnPip) this.elements.btnPip.classList.remove('active');
+            this.showToast('📺 Returned from Picture-in-Picture');
+          });
+        } catch (err) {
+          console.warn('[PiP] Document PiP error:', err);
+          window.open(window.location.href, 'LuminaPiP', 'width=820,height=520,resizable=yes');
+        }
+      } else {
+        // Fallback for browsers without documentPictureInPicture API
+        window.open(window.location.href, 'LuminaPiP', 'width=820,height=520,resizable=yes');
+        this.showToast('📺 Opened in popup window');
+      }
     }
 
     bindEngineEvents() {
@@ -3117,6 +3237,10 @@
         if (el.btnInteractive) el.btnInteractive.click();
         executedAction = 'OPEN_QUIZ';
         actionLabel = '🎯 Opened Interactive Challenge';
+      } else if (text.includes('picture in picture') || text.includes('pip') || text.includes('float') || text.includes('pop out') || text.includes('floating window')) {
+        this.togglePictureInPicture();
+        executedAction = 'TOGGLE_PIP';
+        actionLabel = '📺 Picture-in-Picture';
       }
 
       if (executedAction) {

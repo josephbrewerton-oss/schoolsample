@@ -29,6 +29,7 @@
       <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
       <button type="button" id="btn-shortcuts" title="Keyboard Shortcuts Cheat Sheet (?)">⌨️ <span class="btn-label">Shortcuts</span></button>
       <button type="button" id="btn-settings" title="Player Display & Controls Settings (Classroom, Student, Broadcast, Dev)">⚙️ <span class="btn-label" id="settings-label">Settings</span></button>
+      <button type="button" id="btn-pip" title="Document Picture-in-Picture: Pop into always-on-top floating desktop window">📺 <span class="btn-label">PiP</span></button>
       <button type="button" id="btn-theme" title="Toggle Dark/Light Mode">☀️</button>
       <button type="button" id="btn-fullscreen" title="Toggle Fullscreen">⛶</button>
     </div>
@@ -386,6 +387,14 @@
           <span class="config-toggle-label">🪐 Micro-Physics Subsystem</span>
           <input type="checkbox" id="cfg-physics" class="config-toggle-input" checked />
         </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">📺 Picture-in-Picture Floating Window</span>
+          <input type="checkbox" id="cfg-pip" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
+          <span class="config-toggle-label">🎤 Voice Commands (Web Speech API)</span>
+          <input type="checkbox" id="cfg-voice-cmd" class="config-toggle-input" checked />
+        </div>
 
         <!-- Micro-Physics & Gravity Subsystem Live Tuning -->
         <div id="physics-config-section" style="border-top:1px solid #1e293b; margin-top:10px; padding-top:10px;">
@@ -452,6 +461,7 @@
             <div class="sc-row"><kbd>M</kbd><span>Toggle Audio Mute / Voice</span></div>
             <div class="sc-row"><kbd>V</kbd><span>Toggle Voice Commands (Microphone)</span></div>
             <div class="sc-row"><kbd>S</kbd><span>Toggle Keyframe Step Mode</span></div>
+            <div class="sc-row"><kbd>I</kbd><span>Toggle Picture-in-Picture (PiP Window)</span></div>
             <div class="sc-row"><kbd>F</kbd><span>Toggle Fullscreen</span></div>
             <div class="sc-row"><kbd>O</kbd><span>Orbit 3D Camera (+45°)</span></div>
             <div class="sc-row"><kbd>R</kbd><span>Reset 3D Camera</span></div>

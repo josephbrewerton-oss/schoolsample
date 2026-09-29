@@ -141,6 +141,12 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [hotReloadFlash, setHotReloadFlash] = useState(false);
   const [exportSuccessNotice, setExportSuccessNotice] = useState(false);
 
+  // Document Picture-in-Picture State & DOM Refs
+  const [isInPip, setIsInPip] = useState(false);
+  const pipWindowRef = useRef<any>(null);
+  const pipPlaceholderRef = useRef<HTMLDivElement | null>(null);
+  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+
   // Sync internal selected preset if external preset prop changes
   useEffect(() => {
     setSelectedPreset(preset);
@@ -223,6 +229,111 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   useEffect(() => {
     postToPlayer({ type: 'SET_THEME', theme: activeTheme });
   }, [activeTheme, postToPlayer]);
+
+  const rawBase = import.meta.env.BASE_URL || '/';
+  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&v=2.5.0`;
+
+  const openStandalone = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.open(playerSrc, '_blank', 'noopener,noreferrer');
+    }
+  }, [playerSrc]);
+
+  const togglePictureInPicture = useCallback(async () => {
+    // 1. If currently in PiP, close it
+    if (pipWindowRef.current) {
+      try {
+        pipWindowRef.current.close();
+      } catch (e) {}
+      pipWindowRef.current = null;
+      setIsInPip(false);
+      return;
+    }
+
+    // 2. Document Picture-in-Picture API
+    if (typeof window !== 'undefined' && 'documentPictureInPicture' in window) {
+      try {
+        const pipWin = await (window as any).documentPictureInPicture.requestWindow({
+          width: 840,
+          height: 540,
+        });
+
+        // Copy current stylesheets into PiP window
+        [...document.styleSheets].forEach((styleSheet) => {
+          try {
+            if (styleSheet.cssRules) {
+              const newStyle = pipWin.document.createElement('style');
+              [...styleSheet.cssRules].forEach((rule) => {
+                newStyle.appendChild(pipWin.document.createTextNode(rule.cssText));
+              });
+              pipWin.document.head.appendChild(newStyle);
+            } else if (styleSheet.href) {
+              const link = pipWin.document.createElement('link');
+              link.rel = 'stylesheet';
+              link.href = styleSheet.href;
+              pipWin.document.head.appendChild(link);
+            }
+          } catch (e) {
+            if (styleSheet.href) {
+              const link = pipWin.document.createElement('link');
+              link.rel = 'stylesheet';
+              link.href = styleSheet.href;
+              pipWin.document.head.appendChild(link);
+            }
+          }
+        });
+
+        pipWin.document.body.className = document.body.className;
+        pipWin.document.body.setAttribute('data-theme', activeTheme);
+        pipWin.document.body.style.margin = '0';
+        pipWin.document.body.style.padding = '0';
+        pipWin.document.body.style.backgroundColor = activeTheme === 'dark' ? '#090d16' : '#f8fafc';
+        pipWin.document.body.style.display = 'flex';
+        pipWin.document.body.style.flexDirection = 'column';
+        pipWin.document.body.style.height = '100vh';
+        pipWin.document.body.style.overflow = 'hidden';
+
+        const playerEl = playerContainerRef.current;
+        if (playerEl && playerEl.parentNode) {
+          const placeholder = document.createElement('div');
+          placeholder.style.minHeight = '360px';
+          placeholder.style.display = 'flex';
+          placeholder.style.flexDirection = 'column';
+          placeholder.style.alignItems = 'center';
+          placeholder.style.justifyContent = 'center';
+          placeholder.style.background = activeTheme === 'dark' ? '#0f172a' : '#f1f5f9';
+          placeholder.style.borderRadius = '12px';
+          placeholder.style.border = '2px dashed var(--stj-border, #334155)';
+          placeholder.style.color = '#94a3b8';
+          placeholder.style.fontWeight = '700';
+          placeholder.style.gap = '8px';
+          placeholder.innerHTML = '<span>📺 Vector Player is running in Picture-in-Picture window</span><span style="font-size:0.75rem;font-weight:400;color:#64748b;">Close floating window to return player here</span>';
+
+          playerEl.parentNode.insertBefore(placeholder, playerEl);
+          pipPlaceholderRef.current = placeholder;
+          pipWin.document.body.appendChild(playerEl);
+          pipWindowRef.current = pipWin;
+          setIsInPip(true);
+
+          pipWin.addEventListener('pagehide', () => {
+            if (pipPlaceholderRef.current && pipPlaceholderRef.current.parentNode && playerEl) {
+              pipPlaceholderRef.current.parentNode.insertBefore(playerEl, pipPlaceholderRef.current);
+              pipPlaceholderRef.current.remove();
+              pipPlaceholderRef.current = null;
+            }
+            pipWindowRef.current = null;
+            setIsInPip(false);
+          });
+        }
+      } catch (err) {
+        console.warn('[PiP] Document Picture-in-Picture error:', err);
+        openStandalone();
+      }
+    } else {
+      openStandalone();
+    }
+  }, [activeTheme, openStandalone]);
 
   // Listen for telemetry and events from the iframe player
   useEffect(() => {
@@ -316,6 +427,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             if (onConfigChange) onConfigChange(data.config);
           }
           break;
+        case 'REQUEST_PIP':
+          togglePictureInPicture();
+          break;
         default:
           break;
       }
@@ -323,7 +437,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange]);
+  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange, togglePictureInPicture]);
 
   // Sync display config changes to player iframe
   useEffect(() => {
@@ -331,10 +445,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     savePlayerConfig(displayConfig);
     if (onConfigChange) onConfigChange(displayConfig);
   }, [displayConfig, postToPlayer, onConfigChange]);
-
-  const rawBase = import.meta.env.BASE_URL || '/';
-  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&v=2.5.0`;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&mode=${encodeURIComponent(embedTargetMode)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
@@ -344,12 +454,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       setCopiedEmbed(true);
       setTimeout(() => setCopiedEmbed(false), 2200);
     });
-  };
-
-  const openStandalone = () => {
-    if (typeof window !== 'undefined') {
-      window.open(playerSrc, '_blank', 'noopener,noreferrer');
-    }
   };
 
   return (
@@ -712,6 +816,23 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             </button>
           )}
 
+          {displayConfig.showPipButton && (
+            <button
+              type="button"
+              onClick={togglePictureInPicture}
+              className={`stj-btn ${isInPip ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 9px',
+                minHeight: '32px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+              }}
+              title="Pop out into an always-on-top Picture-in-Picture window (I)"
+            >
+              <span>📺 {isInPip ? 'Exit PiP' : 'PiP'}</span>
+            </button>
+          )}
+
           {displayConfig.showObsLink && (
             <button
               type="button"
@@ -889,6 +1010,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                       { key: 'showLmsEmbed', label: '🔗 LMS Embed Code Generator' },
                       { key: 'showPrintWorksheet', label: '🖨️ A4 Classroom Worksheet' },
                       { key: 'showCopySvg', label: '📋 Copy Raw SVG Geometry' },
+                      { key: 'showPipButton', label: '📺 Document Picture-in-Picture Floating Window' },
                     ].map(({ key, label }) => (
                       <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
                         <input
@@ -927,6 +1049,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                       { key: 'showLoopToggle', label: '🔁 Auto-Repeat Loop Toggle' },
                       { key: 'showVolumeControl', label: '🔊 Master Volume & Mute Controls' },
                       { key: 'showPhysicsControls', label: '🪐 Micro-Physics & Gravity Subsystem' },
+                      { key: 'showVoiceControl', label: '🎤 Voice Commands (Web Speech API)' },
                     ].map(({ key, label }) => (
                       <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
                         <input
@@ -1011,7 +1134,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       )}
 
       {/* Sandboxed iFrame Element */}
-      <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height }}>
+      <div
+        ref={playerContainerRef}
+        style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height }}
+      >
         <iframe
           key={`${selectedPreset}-${currentLang}`}
           ref={iframeRef}
@@ -1023,7 +1149,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             border: 'none',
             display: 'block',
           }}
-          allow="fullscreen; microphone"
+          allow="fullscreen; microphone; document-picture-in-picture"
         />
       </div>
 
