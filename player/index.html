@@ -344,6 +344,10 @@
           <input type="checkbox" id="cfg-export-spa" class="config-toggle-input" />
         </div>
         <div class="config-toggle-row">
+          <span class="config-toggle-label">📺 Picture-in-Picture (Floating Window)</span>
+          <input type="checkbox" id="cfg-pip" class="config-toggle-input" checked />
+        </div>
+        <div class="config-toggle-row">
           <span class="config-toggle-label">📡 OBS Broadcast Controller</span>
           <input type="checkbox" id="cfg-obs" class="config-toggle-input" />
         </div>
@@ -386,14 +390,6 @@
         <div class="config-toggle-row">
           <span class="config-toggle-label">🪐 Micro-Physics Subsystem</span>
           <input type="checkbox" id="cfg-physics" class="config-toggle-input" checked />
-        </div>
-        <div class="config-toggle-row">
-          <span class="config-toggle-label">📺 Picture-in-Picture Floating Window</span>
-          <input type="checkbox" id="cfg-pip" class="config-toggle-input" checked />
-        </div>
-        <div class="config-toggle-row">
-          <span class="config-toggle-label">🎤 Voice Commands (Web Speech API)</span>
-          <input type="checkbox" id="cfg-voice-cmd" class="config-toggle-input" checked />
         </div>
 
         <!-- Micro-Physics & Gravity Subsystem Live Tuning -->
@@ -461,11 +457,11 @@
             <div class="sc-row"><kbd>M</kbd><span>Toggle Audio Mute / Voice</span></div>
             <div class="sc-row"><kbd>V</kbd><span>Toggle Voice Commands (Microphone)</span></div>
             <div class="sc-row"><kbd>S</kbd><span>Toggle Keyframe Step Mode</span></div>
-            <div class="sc-row"><kbd>I</kbd><span>Toggle Picture-in-Picture (PiP Window)</span></div>
             <div class="sc-row"><kbd>F</kbd><span>Toggle Fullscreen</span></div>
             <div class="sc-row"><kbd>O</kbd><span>Orbit 3D Camera (+45°)</span></div>
             <div class="sc-row"><kbd>R</kbd><span>Reset 3D Camera</span></div>
             <div class="sc-row"><kbd>P</kbd><span>Toggle Play Mode (Game HUD)</span></div>
+            <div class="sc-row"><kbd>Shift + P</kbd><span>Toggle Picture-in-Picture Floating Window</span></div>
             <div class="sc-row"><kbd>Ctrl + I</kbd><span>Toggle SVG Element Inspector</span></div>
             <div class="sc-row"><kbd>Ctrl + `</kbd><span>Open Live SVG/AST Code Studio</span></div>
             <div class="sc-row"><kbd>?</kbd><span>Show Keyboard Shortcuts Reference</span></div>
@@ -539,10 +535,10 @@
   </footer>
 
   <!-- Modular Scripts with Cache-Busting Version -->
-  <script src="./ast-scenes.js?v=2.5.1"></script>
-  <script src="./ast-engine.js?v=2.5.1"></script>
-  <script src="./obs-controller.js?v=2.5.1"></script>
-  <script src="./player-ui.js?v=2.5.1"></script>
+  <script src="./ast-scenes.js?v=2.5.2"></script>
+  <script src="./ast-engine.js?v=2.5.2"></script>
+  <script src="./obs-controller.js?v=2.5.2"></script>
+  <script src="./player-ui.js?v=2.5.2"></script>
   <script>
     (function () {
       'use strict';
@@ -570,10 +566,10 @@
 
       // 3. Load scenes manifest if available
       if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
-        window.ASTSceneRegistry.loadConfig('./scenes.manifest.json?v=2.5.1').then(() => {
+        window.ASTSceneRegistry.loadConfig('./scenes.manifest.json?v=2.5.2').then(() => {
           ui.populatePresets();
         }).catch(() => {
-          window.ASTSceneRegistry.loadConfig('./scenes-config.json?v=2.5.1').then(() => {
+          window.ASTSceneRegistry.loadConfig('./scenes-config.json?v=2.5.2').then(() => {
             ui.populatePresets();
           }).catch(() => {});
         });
