@@ -15,7 +15,8 @@ export type VectorPresetId =
   | 'cell-mitosis'
   | 'velocity'
   | 'dna-helix'
-  | 'mountain-elevation';
+  | 'mountain-elevation'
+  | 'shakespeare';
 
 export interface PlayerCallOptions {
   preset?: VectorPresetId;
@@ -40,6 +41,9 @@ export function resolvePresetForTopic(subject?: string, unit?: string, topic?: s
 
   if (combined.includes('relig') || combined.includes('catholic') || combined.includes('church') || combined.includes('sanctuary') || combined.includes('eucharist') || combined.includes('mass')) {
     return 'church-tour';
+  }
+  if (combined.includes('shakespear') || combined.includes('macbeth') || combined.includes('hamlet') || combined.includes('romeo') || combined.includes('juliet') || combined.includes('theatre') || combined.includes('theater') || combined.includes('drama') || combined.includes('soliloquy') || combined.includes('poetry') || combined.includes('iambic') || combined.includes('playwright')) {
+    return 'shakespeare';
   }
   if (combined.includes('photo') || combined.includes('plant') || combined.includes('leaf') || combined.includes('botan')) {
     return 'photosynthesis';

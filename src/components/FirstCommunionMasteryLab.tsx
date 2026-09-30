@@ -80,6 +80,20 @@ export default function FirstCommunionMasteryLab() {
     'final-dismissal'
   ];
 
+  const shuffleIds = (arr: string[]) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    if (copy.every((item, idx) => item === arr[idx]) && copy.length > 1) {
+      [copy[0], copy[1]] = [copy[1], copy[0]];
+    }
+    return copy;
+  };
+
+  const [shuffledSequenceIds, setShuffledSequenceIds] = useState<string[]>(() => shuffleIds(correctSequenceIds));
+
   const handleToggleSequenceItem = (id: string) => {
     playClickTone();
     triggerHapticClick();
@@ -106,6 +120,7 @@ export default function FirstCommunionMasteryLab() {
   const handleResetSequence = () => {
     setSequenceSelection([]);
     setSequenceSuccess(null);
+    setShuffledSequenceIds(shuffleIds(correctSequenceIds));
   };
 
   const activePrayer = CATHOLIC_PRAYERS.find((p) => p.id === selectedPrayerId) || CATHOLIC_PRAYERS[0];
@@ -641,7 +656,7 @@ export default function FirstCommunionMasteryLab() {
             </div>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '1rem' }}>
-              {correctSequenceIds.map((id) => {
+              {shuffledSequenceIds.map((id) => {
                 const s = LITURGY_STEPS.find((item) => item.id === id);
                 if (!s) return null;
                 const isSelected = sequenceSelection.includes(id);

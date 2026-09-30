@@ -5,6 +5,7 @@ import PageMeta from '../components/PageMeta';
 import AstVectorMediaPlayer, { VectorPresetType, AstVectorMediaPlayerHandle } from '../components/AstVectorMediaPlayer';
 import MountainClimberGame from '../components/MountainClimberGame';
 import MathFishingGame from '../components/MathFishingGame';
+import ShakespeareGlobeLab from '../components/ShakespeareGlobeLab';
 import { resolvePresetForTopic } from '../services/playerLauncher';
 
 interface PresetItem {
@@ -90,6 +91,14 @@ const PRESET_LIBRARY: PresetItem[] = [
     icon: '⛪',
   },
   {
+    id: 'shakespeare',
+    title: 'The Globe Theatre: Shakespeare & Iambic Meter',
+    stage: 'KS3/KS4 ENGLISH LITERATURE',
+    category: 'English & Drama',
+    desc: 'The Zero-Bloat Bard: 1599 Globe Theatre vector stage, real-time Iambic Pentameter heartbeat metronome, First Folio to modern translation scrubber, and dramatic irony tension matrix.',
+    icon: '🎭',
+  },
+  {
     id: 'math-fishing',
     title: 'Math Pond: Number Bonds Fishing Game',
     stage: 'KS1/KS2 MATHS',
@@ -135,13 +144,13 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
 
-  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation and math-fishing
+  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation, math-fishing, and shakespeare
   const initialPlayMode: 'video' | 'game' =
     urlMode === 'video'
       ? 'video'
       : urlMode === 'game'
       ? 'game'
-      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing'
+      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing' || initialPreset === 'shakespeare'
       ? 'game'
       : 'video';
 
@@ -515,8 +524,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
           onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
           onPlayModeToggle={() => {
             const nextMode = playMode === 'game' ? 'video' : 'game';
-            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour') {
-              handleSelectPreset('math-fishing', 'game');
+            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare') {
+              handleSelectPreset('shakespeare', 'game');
             } else {
               setPlayMode(nextMode);
               setSearchParams({ preset: activePreset, mode: nextMode });
@@ -550,6 +559,18 @@ export default function MediaPlayerPage(): React.JSX.Element {
               playerRef.current?.play();
             }}
           />
+        )}
+
+        {activePreset === 'shakespeare' && playMode === 'game' && (
+          <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
+            <ShakespeareGlobeLab
+              onClose={() => {
+                setPlayMode('video');
+                setSearchParams({ preset: activePreset, mode: 'video' });
+                playerRef.current?.play();
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -694,7 +715,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
             </div>
 
             <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
-              {['All', 'Games & Simulations', 'Mathematics', 'Science', 'Catholic Faith'].map((cat) => (
+              {['All', 'Games & Simulations', 'Mathematics', 'Science', 'English & Drama', 'Catholic Faith'].map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -712,7 +733,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat}
+                  {cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'English & Drama' ? '🎭 English & Drama' : cat}
                 </button>
               ))}
             </div>

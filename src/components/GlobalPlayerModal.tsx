@@ -90,7 +90,7 @@ export default function GlobalPlayerModal(): React.JSX.Element | null {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '1.2rem' }}>🎬</span>
             <span style={{ color: '#f8fafc', fontWeight: 800, fontSize: '0.95rem' }}>
-              {callOptions.title || 'AST Vector Media Player'}
+              {callOptions.title || 'Interactive Visual Lab'}
             </span>
           </div>
 

@@ -14,6 +14,7 @@ const ConceptConstellation = React.lazy(() => import('../components/ConceptConst
 const ZeroBloatVectorStudio = React.lazy(() => import('../components/ZeroBloatVectorStudio'));
 const AstVectorMediaPlayer = React.lazy(() => import('../components/AstVectorMediaPlayer'));
 import { openPlayerModal, resolvePresetForTopic } from '../services/playerLauncher';
+import { openChallengeModal, resolveChallengeForTopic } from '../services/challengeLauncher';
 import { hypervisor } from '../engine/hypervisor';
 import {
   SUPPORTED_LANGUAGES,
@@ -769,7 +770,7 @@ export default function LearningZonePage() {
                   Interactive Visual Lessons &amp; Vector Motion Suite
                 </h2>
                 <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '2px 0 0 0' }}>
-                  Decoupled AST vector animations (0% main thread), mathematical proofs, solar system orbits, and printable worksheets.
+                  Interactive 60 FPS visual simulations, mathematical proofs, solar system orbits, and printable worksheets.
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -789,7 +790,7 @@ export default function LearningZonePage() {
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    🎬 AST iFrame Player (LMS Embed)
+                    🎬 Interactive Lesson Player
                   </button>
                   <button
                     type="button"
@@ -836,7 +837,7 @@ export default function LearningZonePage() {
               <React.Suspense
                 fallback={
                   <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b', background: '#090d16', borderRadius: '14px', border: '1px solid #1e293b' }}>
-                    <span>Initializing AST Vector Media Player iFrame...</span>
+                    <span>Initializing Interactive Lesson Player...</span>
                   </div>
                 }
               >
@@ -1153,10 +1154,40 @@ export default function LearningZonePage() {
                       gap: '5px',
                       boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
                     }}
-                    title="Launch interactive AST Vector Animation Player for this lesson"
+                    title="Launch interactive visual animation player for this lesson"
                   >
                     <span>🎬</span>
-                    <span>Motion Player</span>
+                    <span>Visual Lab</span>
+                  </button>
+
+                  {/* Launch Matched Challenge Game for Current Lesson */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const challenge = resolveChallengeForTopic(selectedSubject, selectedUnit, effectiveLesson.title, selectedKeyStage);
+                      openChallengeModal({
+                        challenge,
+                        autoStart: true,
+                      });
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      border: '1px solid #7c3aed',
+                      color: '#ffffff',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                    }}
+                    title="Launch hands-on unit challenge game for this lesson"
+                  >
+                    <span>🎮</span>
+                    <span>Play Challenge</span>
                   </button>
 
                   <button
@@ -1385,33 +1416,146 @@ export default function LearningZonePage() {
                         </p>
                       </div>
 
-                      {/* Prompt to Test */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1.5px solid #93c5fd', borderRadius: '14px', padding: '1.25rem 1.5rem', marginTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div>
-                          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1d4ed8' }}>⭐ Ready for a Quick Challenge?</div>
-                          <div style={{ fontSize: '0.92rem', color: '#334155', marginTop: '2px' }}>Test your superpowers with 3 fun practice questions and earn stars!</div>
-                        </div>
-                        <Link
-                          to={practiceLabUrl}
-                          aria-label={`Start Practice Quiz for ${selectedUnit}`}
-                          style={{
-                            padding: '10px 22px',
-                            borderRadius: '10px',
-                            background: '#2563eb',
-                            color: '#ffffff',
-                            fontWeight: 700,
-                            textDecoration: 'none',
-                            fontSize: '0.95rem',
-                            boxShadow: '0 4px 12px rgba(37,99,235,0.25)',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                          }}
-                        >
-                          <span>⭐ Start Practice Quiz</span>
-                          <span>➔</span>
-                        </Link>
-                      </div>
+                      {/* Dual Mastery Arena: Diagnostic Quiz + Hands-On Unit Challenge Game */}
+                      {(() => {
+                        const currentChallenge = resolveChallengeForTopic(selectedSubject, selectedUnit, effectiveLesson.title, selectedKeyStage);
+                        return (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '12px',
+                              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                              border: '1.5px solid #cbd5e1',
+                              borderRadius: '16px',
+                              padding: '1.25rem 1.5rem',
+                              marginTop: '0.75rem',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                              <div>
+                                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span>🏆</span>
+                                  <span>Put Your Superpower to the Test!</span>
+                                </div>
+                                <div style={{ fontSize: '0.88rem', color: '#475569', marginTop: '2px' }}>
+                                  Choose how you want to prove mastery of <strong>{effectiveLesson.title || selectedUnit}</strong>:
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px', marginTop: '4px' }}>
+                              {/* Option 1: Hands-On Challenge Game */}
+                              <div
+                                style={{
+                                  background: '#ffffff',
+                                  border: '1.5px solid #e2e8f0',
+                                  borderRadius: '12px',
+                                  padding: '1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'space-between',
+                                  gap: '12px',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                }}
+                              >
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                    <span style={{ fontSize: '1.25rem' }}>{currentChallenge.icon}</span>
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '9999px', background: currentChallenge.badgeColor, color: '#ffffff', textTransform: 'uppercase' }}>
+                                      {currentChallenge.badge}
+                                    </span>
+                                  </div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
+                                    {currentChallenge.title}
+                                  </div>
+                                  <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0', lineHeight: 1.45 }}>
+                                    {currentChallenge.description}
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => openChallengeModal({ challenge: currentChallenge, autoStart: true })}
+                                  style={{
+                                    padding: '9px 16px',
+                                    borderRadius: '8px',
+                                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                                    color: '#ffffff',
+                                    fontWeight: 700,
+                                    fontSize: '0.88rem',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  aria-label={`Launch ${currentChallenge.title}`}
+                                >
+                                  <span>🎮 Play Hands-On Challenge</span>
+                                  <span>➔</span>
+                                </button>
+                              </div>
+
+                              {/* Option 2: 3-Question Practice Quiz */}
+                              <div
+                                style={{
+                                  background: '#ffffff',
+                                  border: '1.5px solid #e2e8f0',
+                                  borderRadius: '12px',
+                                  padding: '1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'space-between',
+                                  gap: '12px',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                }}
+                              >
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                    <span style={{ fontSize: '1.25rem' }}>⭐</span>
+                                    <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '9999px', background: '#2563eb', color: '#ffffff', textTransform: 'uppercase' }}>
+                                      Diagnostic Recall
+                                    </span>
+                                  </div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
+                                    3-Question Quick Quiz
+                                  </div>
+                                  <p style={{ fontSize: '0.84rem', color: '#64748b', margin: '4px 0 0', lineHeight: 1.45 }}>
+                                    Answer 3 quick multi-choice questions with instant explanations and earn mastery stars.
+                                  </p>
+                                </div>
+
+                                <Link
+                                  to={practiceLabUrl}
+                                  aria-label={`Start Practice Quiz for ${selectedUnit}`}
+                                  style={{
+                                    padding: '9px 16px',
+                                    borderRadius: '8px',
+                                    background: '#2563eb',
+                                    color: '#ffffff',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    fontSize: '0.88rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 2px 8px rgba(37,99,235,0.25)',
+                                  }}
+                                >
+                                  <span>📝 Start Quick Quiz</span>
+                                  <span>➔</span>
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

@@ -1810,6 +1810,129 @@
       render(t) {
         return `<rect width="800" height="480" fill="#0369a1"/><text x="400" y="240" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">Math Pond: Number Bonds Fishing Game</text>`;
       }
+    },
+    'shakespeare': {
+      id: 'shakespeare',
+      stage: 'KS3/KS4 ENGLISH LITERATURE',
+      title: 'The Globe Theatre: Shakespeare & Iambic Pentameter',
+      duration: 15.0,
+      keyframes: [
+        { t: 0.00, title: 'Step 1: The Globe Thrust Stage', rule: 'Built 1599 on Bankside. Thrust stage surrounded on three sides by 3,000 spectators.' },
+        { t: 0.30, title: 'Step 2: The Iambic Heartbeat', rule: 'Five metrical feet per line: da-DUM da-DUM da-DUM da-DUM da-DUM (10 syllables).' },
+        { t: 0.65, title: 'Step 3: The Meter Breaks', rule: 'Feminine endings (11th unstressed beat) mirror moral hesitation and psychological collapse.' },
+        { t: 1.00, title: 'Step 4: The Tragic Catastrophe', rule: 'Verse structure reveals inner psychology: Shakespeare turns meter into character.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.30, en: "Welcome to the 1599 Globe Theatre. Actors perform on a raised thrust stage surrounded by 1,000 groundlings.", es: "Bienvenidos al Globe Theatre de 1599. Los actores actúan en un escenario rodeado de espectadores." },
+        { start: 0.30, end: 0.65, en: "Shakespeare writes in Iambic Pentameter: five pairs of unstressed and stressed syllables matching human heartbeat.", es: "Shakespeare escribe en pentámetro yámbico: cinco pares de sílabas que siguen el latido del corazón." },
+        { start: 0.65, end: 1.00, en: "Notice when Macbeth wavers: 'Is this a dagger which I see before me' adds an 11th beat to show a fractured mind.", es: "Observa cuando Macbeth duda: la línea añade una undécima sílaba débil reflejando su mente fracturada." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.32,
+            title: 'Iambic Pentameter Rhythm Challenge',
+            prompt: 'What rhythm does Shakespearean Iambic Pentameter naturally follow?',
+            options: [
+              'The rhythm of the human heartbeat: five beats of da-DUM (10 syllables total)',
+              'A military waltz (ONE-two-three, ONE-two-three)',
+              'Completely random unmetered rhyming prose'
+            ],
+            answer: 0,
+            explanation: 'An iamb is an unstressed beat followed by a stressed beat (da-DUM). Pentameter means 5 feet per line (5 × 2 = 10 syllables), mirroring the natural human pulse and spoken English breathing.'
+          },
+          {
+            t: 0.70,
+            title: 'The Feminine Ending Insight',
+            prompt: 'Why does Shakespeare give Macbeth an 11th syllable in "Is this a dagger which I see before me,"?',
+            options: [
+              'To show Macbeth’s hesitation, wavering resolve, and moral instability before regicide',
+              'Because Shakespeare miscounted the syllables on his quill',
+              'To signal a change in the weather'
+            ],
+            answer: 0,
+            explanation: 'In Elizabethan poetry, breaking strict meter with a weak, falling 11th syllable (a feminine ending) signifies uncertainty, grief, or mental fracturing.'
+          }
+        ]
+      },
+      mount(container) {
+        container.innerHTML = `
+          <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="globe-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#0c0a09"/>
+                <stop offset="100%" stop-color="#1c1917"/>
+              </linearGradient>
+              <linearGradient id="heavens-canopy" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0369a1"/>
+                <stop offset="100%" stop-color="#1e1b4b"/>
+              </linearGradient>
+            </defs>
+            <rect width="800" height="480" fill="url(#globe-bg)"/>
+
+            <!-- The Heavens Canopy -->
+            <polygon points="180,90 620,90 570,40 230,40" fill="url(#heavens-canopy)" stroke="#38bdf8" stroke-width="2"/>
+            <text x="400" y="65" text-anchor="middle" fill="#fef08a" font-size="14" font-weight="bold">THE HEAVENS (Sun, Moon & Zodiac Roof)</text>
+
+            <!-- Upper Gallery / Frons Scenae -->
+            <rect x="200" y="90" width="400" height="80" rx="4" fill="#292524" stroke="#78350f" stroke-width="2"/>
+            <text x="400" y="125" text-anchor="middle" fill="#fef3c7" font-size="12" font-weight="bold">BALCONY / TARRAS (Juliet’s Window)</text>
+            <rect x="360" y="135" width="80" height="35" rx="3" fill="#1c1917" stroke="#b45309" stroke-width="1.5"/>
+            <text x="400" y="157" text-anchor="middle" fill="#d97706" font-size="10">Discovery Space</text>
+
+            <!-- Main Wooden Thrust Stage -->
+            <polygon points="220,170 580,170 540,360 260,360" fill="#451a03" stroke="#d97706" stroke-width="3"/>
+            <text x="400" y="240" text-anchor="middle" fill="#fef3c7" font-size="16" font-weight="900" letter-spacing="1">THE GLOBE THRUST STAGE</text>
+            <text x="400" y="262" text-anchor="middle" fill="#fde68a" font-size="11">Surrounded by Groundlings on Three Sides</text>
+
+            <!-- Trapdoor to Hell -->
+            <rect x="370" y="280" width="60" height="30" rx="3" fill="#1c1917" stroke="#ef4444" stroke-width="2"/>
+            <text x="400" y="300" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="bold">TRAPDOOR</text>
+
+            <!-- Stage Pillars Supporting the Heavens -->
+            <rect x="250" y="90" width="16" height="150" fill="#d97706" rx="3"/>
+            <rect x="534" y="90" width="16" height="150" fill="#d97706" rx="3"/>
+
+            <!-- Real-Time Iambic Pulse Line (EKG Heartbeat of the Bard) -->
+            <g id="iambic-pulse-bar" transform="translate(150, 390)">
+              <rect width="500" height="60" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+              <text x="250" y="24" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold" id="iambic-status-text">
+                IAMBIC PENTAMETER: da-DUM da-DUM da-DUM da-DUM da-DUM
+              </text>
+              <path id="iambic-wave" d="M 20 42 L 80 42 L 95 28 L 110 42 L 170 42 L 185 24 L 200 42 L 260 42 L 275 24 L 290 42 L 350 42 L 365 24 L 380 42 L 440 42 L 455 24 L 480 42" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+              <circle id="iambic-dot" cx="20" cy="42" r="5" fill="#ef4444"/>
+            </g>
+          </svg>
+        `;
+        return {
+          wave: container.querySelector('#iambic-wave'),
+          dot: container.querySelector('#iambic-dot'),
+          text: container.querySelector('#iambic-status-text')
+        };
+      },
+      update(t, elements) {
+        if (!elements) return;
+        const progressInCycle = (t * 4) % 1; // 4 beats per cycle
+        const dotX = 20 + progressInCycle * 460;
+        if (elements.dot) {
+          elements.dot.setAttribute('cx', String(dotX));
+          const isStressPeak = Math.sin(progressInCycle * Math.PI * 10) > 0.5;
+          elements.dot.setAttribute('r', isStressPeak ? '7' : '4');
+          elements.dot.setAttribute('fill', isStressPeak ? '#38bdf8' : '#ef4444');
+        }
+        if (elements.text) {
+          if (t < 0.3) {
+            elements.text.textContent = 'THE 1599 GLOBE: 360° Thrust Stage & Standing Yard';
+          } else if (t < 0.65) {
+            elements.text.textContent = 'IAMBIC PENTAMETER (10 beats): da-DUM da-DUM da-DUM da-DUM da-DUM';
+          } else {
+            elements.text.textContent = 'METER BREAK: Feminine Ending (11th syllable waver in Macbeth)';
+          }
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#1c1917"/><text x="400" y="240" fill="#fef08a" font-size="20" font-weight="bold" text-anchor="middle">The Globe Theatre: Shakespeare & Iambic Pentameter</text>`;
+      }
     }
   };
 
@@ -1827,6 +1950,14 @@
         'church-tour': 'church-tour',
         'catholic-church': 'church-tour',
         'catholic_church': 'church-tour',
+        'shakespeare': 'shakespeare',
+        'globe': 'shakespeare',
+        'globe-theatre': 'shakespeare',
+        'globetheatre': 'shakespeare',
+        'macbeth': 'shakespeare',
+        'hamlet': 'shakespeare',
+        'romeo': 'shakespeare',
+        'juliet': 'shakespeare',
         'fraction': 'fractions',
         'fractions': 'fractions',
         'solarsystem': 'solar-system',

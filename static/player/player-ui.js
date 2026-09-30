@@ -145,6 +145,7 @@
         cfgInspect: document.getElementById('cfg-inspect'),
         cfgStudio: document.getElementById('cfg-studio'),
         cfgExportSpa: document.getElementById('cfg-export-spa'),
+        cfgPip: document.getElementById('cfg-pip'),
         cfgObs: document.getElementById('cfg-obs'),
         cfgPrint: document.getElementById('cfg-print'),
         cfgCopySvg: document.getElementById('cfg-copy-svg'),
@@ -156,8 +157,6 @@
         cfgLoop: document.getElementById('cfg-loop'),
         cfgVolume: document.getElementById('cfg-volume'),
         cfgPhysics: document.getElementById('cfg-physics'),
-        cfgPip: document.getElementById('cfg-pip'),
-        cfgVoiceCmd: document.getElementById('cfg-voice-cmd'),
         physicsConfigSection: document.getElementById('physics-config-section'),
         cfgPhysicsGravity: document.getElementById('cfg-physics-gravity'),
         cfgPhysicsBounce: document.getElementById('cfg-physics-bounce'),
@@ -221,7 +220,8 @@
         active: false,
         missionIndex: 0,
         score: 0,
-        completedMissions: new Set()
+        completedMissions: new Set(),
+        tourRunId: 1
       };
 
       this.questMissions = [
@@ -231,14 +231,28 @@
           cam: { yaw: 0, pitch: 12, scale: 1.0 },
           title: 'Mission 1: The Narthex & Holy Water Stoup',
           desc: 'Find where Christians first enter the sacred space and bless themselves with Holy Water.',
-          question: 'Why do we bless ourselves with Holy Water upon entering the church?',
-          options: [
-            'To wash physical dust off our hands',
-            'To recall our Holy Baptism and bless ourselves in the Name of the Father, Son, and Holy Spirit',
-            'As an ancient medieval heating custom'
-          ],
-          correct: 1,
-          explanation: 'Blessing ourselves with Holy Water at the Narthex stoup reminds us of our Baptism, cleansing our thoughts as we enter God\'s holy house.'
+          questionPool: [
+            {
+              question: 'Why do we bless ourselves with Holy Water upon entering the church?',
+              options: [
+                'To recall our Holy Baptism and bless ourselves in the Name of the Father, Son, and Holy Spirit',
+                'To wash physical dust off our hands before entering',
+                'As an ancient medieval heating custom'
+              ],
+              correct: 0,
+              explanation: 'Blessing ourselves with Holy Water at the Narthex stoup reminds us of our Baptism, cleansing our thoughts as we enter God\'s holy house.'
+            },
+            {
+              question: 'What is the primary spiritual purpose of the church Narthex (vestibule)?',
+              options: [
+                'To mark the sacred transition from the secular, busy outside world into the reverent presence of God',
+                'To serve as an overflow cloakroom and umbrella store',
+                'To act as an administrative office for parish accounting'
+              ],
+              correct: 0,
+              explanation: 'The Narthex is the holy threshold where the pilgrim prepares their heart to transition from worldly distraction into divine contemplation.'
+            }
+          ]
         },
         {
           id: 'nave',
@@ -246,14 +260,28 @@
           cam: { yaw: 0, pitch: 10, scale: 0.9 },
           title: 'Mission 2: The Nave Colonnade & Central Aisle',
           desc: 'Walk down the central aisle where the pilgrim people of God gather.',
-          question: 'Why do Catholics genuflect on the right knee toward the Tabernacle before entering the pew?',
-          options: [
-            'To show formal etiquette to fellow parishioners',
-            'To adore Jesus Christ truly and bodily present in the Eucharist inside the Tabernacle',
-            'To stretch after the long walk'
-          ],
-          correct: 1,
-          explanation: 'Genuflection is a sacred posture of royal adoration before Christ our Lord truly present in the Blessed Sacrament.'
+          questionPool: [
+            {
+              question: 'Why do Catholics genuflect on the right knee toward the Tabernacle before entering the pew?',
+              options: [
+                'To adore Jesus Christ truly and bodily present in the Eucharist inside the Tabernacle',
+                'To show formal etiquette to fellow parishioners',
+                'To stretch after walking up the nave'
+              ],
+              correct: 0,
+              explanation: 'Genuflection is a sacred posture of royal adoration before Christ our Lord truly present in the Blessed Sacrament.'
+            },
+            {
+              question: 'What does the Latin root of the word "Nave" (navis, meaning ship) symbolize?',
+              options: [
+                'The Church as the Barque of St Peter carrying the faithful through the storms of life',
+                'That historical stone basilicas were constructed exclusively by sailors',
+                'The storage holds used for grain in ancient churches'
+              ],
+              correct: 0,
+              explanation: 'The Nave represents the Ark or Barque of Peter—the Church journeying across earthly waves toward the eternal harbor of Heaven.'
+            }
+          ]
         },
         {
           id: 'ambo',
@@ -261,14 +289,28 @@
           cam: { yaw: -22, pitch: 8, scale: 0.7 },
           title: 'Mission 3: The Ambo (Table of the Word)',
           desc: 'Locate the sacred pulpit from which Sacred Scripture is read.',
-          question: 'What sacred proclamation takes place at the Ambo?',
-          options: [
-            'Weekly parish notices only',
-            'The Holy Gospel and the Word of God for the Liturgy of the Word',
-            'Organ choir practice'
-          ],
-          correct: 1,
-          explanation: 'The Ambo is the Table of the Word, dignified and consecrated for the proclamation of Sacred Scripture and the Holy Gospel.'
+          questionPool: [
+            {
+              question: 'What sacred proclamation takes place at the Ambo?',
+              options: [
+                'The Holy Gospel and the Word of God for the Liturgy of the Word',
+                'Parish social announcements and ticket sales only',
+                'Rehearsals for the pipe organists'
+              ],
+              correct: 0,
+              explanation: 'The Ambo is the Table of the Word, dignified and consecrated for the proclamation of Sacred Scripture and the Holy Gospel.'
+            },
+            {
+              question: 'Why do the faithful stand and sing the Alleluia when the Gospel is proclaimed from the Ambo?',
+              options: [
+                'To give joyful reverence and honor to Christ Himself speaking directly in the Gospel',
+                'Because the priest asks for a posture change to keep the congregation awake',
+                'To signal that the liturgy is almost finished'
+              ],
+              correct: 0,
+              explanation: 'We stand and sing Alleluia because in the Gospel reading, Christ is personally present and speaking His living words to us.'
+            }
+          ]
         },
         {
           id: 'altar',
@@ -276,14 +318,28 @@
           cam: { yaw: 0, pitch: 8, scale: 0.65 },
           title: 'Mission 4: The High Altar of Sacrifice',
           desc: 'Examine the sacred focal center of the Catholic basilica.',
-          question: 'What does the High Altar represent and what occurs upon it?',
-          options: [
-            'It is a dining table for parish meetings',
-            'It represents Christ Himself; upon it the Holy Sacrifice of the Mass is offered',
-            'It is purely an architectural stone decoration'
-          ],
-          correct: 1,
-          explanation: 'The altar is Christ! During Mass, bread and wine become Christ\'s real Body and Blood in the Holy Eucharist.'
+          questionPool: [
+            {
+              question: 'What does the High Altar represent and what occurs upon it?',
+              options: [
+                'It represents Christ Himself; upon it the Holy Sacrifice of the Mass is offered',
+                'It is a dining table for parish council meetings',
+                'It is purely an architectural stone decoration with no liturgical function'
+              ],
+              correct: 0,
+              explanation: 'The altar is Christ! During Mass, bread and wine become Christ\'s real Body and Blood in the Holy Eucharist.'
+            },
+            {
+              question: 'Why does the priest kiss the High Altar at the beginning and end of Mass?',
+              options: [
+                'To venerate Jesus Christ, whom the altar symbolizes, and the relics of the saints embedded within it',
+                'Because Catholic rubrics require inspecting the altar cloth for dust',
+                'To cue the cantor to cease singing the entrance hymn'
+              ],
+              correct: 0,
+              explanation: 'Kissing the altar is an act of deep veneration to Christ Jesus, the Living Stone and Eternal High Priest.'
+            }
+          ]
         },
         {
           id: 'tabernacle',
@@ -291,14 +347,28 @@
           cam: { yaw: 0, pitch: 6, scale: 0.5 },
           title: 'Mission 5: The Golden Tabernacle & Sanctuary Lamp',
           desc: 'Locate the golden ark in the apse and note the burning red lamp.',
-          question: 'Why does the red Sanctuary Lamp burn day and night beside the Tabernacle?',
-          options: [
-            'To provide emergency fire exit lighting',
-            'To indicate the Real Presence of Christ reserved in the Blessed Sacrament',
-            'To illuminate the priest\'s books'
-          ],
-          correct: 1,
-          explanation: 'The sanctuary lamp is an undying beacon signaling to all pilgrims that Christ is truly present in the Tabernacle.'
+          questionPool: [
+            {
+              question: 'Why does the red Sanctuary Lamp burn day and night beside the Tabernacle?',
+              options: [
+                'To indicate the Real Presence of Christ reserved in the Blessed Sacrament',
+                'To provide emergency fire exit lighting in the dark',
+                'To illuminate the priest\'s liturgical books in the sanctuary'
+              ],
+              correct: 0,
+              explanation: 'The sanctuary lamp is an undying beacon signaling to all pilgrims that Christ is truly present in the Tabernacle.'
+            },
+            {
+              question: 'What sacred vessel is used to hold the consecrated Hosts reserved inside the Tabernacle?',
+              options: [
+                'The Ciborium (a covered sacred chalice)',
+                'The Cruet for water and wine',
+                'The Thurible for incense burning'
+              ],
+              correct: 0,
+              explanation: 'The Ciborium (from the Latin cibus meaning food) is the consecrated, covered golden vessel that holds the Holy Eucharist inside the Tabernacle.'
+            }
+          ]
         },
         {
           id: 'lady-and-font',
@@ -306,14 +376,28 @@
           cam: { yaw: 22, pitch: 10, scale: 0.75 },
           title: 'Mission 6: The Lady Chapel & Baptismal Font',
           desc: 'Explore the devotional side chapel of Our Lady and the Baptismal Font.',
-          question: 'Which Sacrament of Initiation is received at the Baptismal Font?',
-          options: [
-            'Holy Baptism, which washes away original sin and welcomes us into God\'s family',
-            'Holy Orders',
-            'Anointing of the Sick'
-          ],
-          correct: 0,
-          explanation: 'At the Baptismal Font, the holy waters of regeneration give new spiritual life in Christ, washing away original sin.'
+          questionPool: [
+            {
+              question: 'Which Sacrament of Initiation is received at the Baptismal Font?',
+              options: [
+                'Holy Baptism, which washes away original sin and welcomes us into God\'s family',
+                'Holy Orders, consecrating priests and bishops',
+                'Anointing of the Sick for bodily and spiritual healing'
+              ],
+              correct: 0,
+              explanation: 'At the Baptismal Font, the holy waters of regeneration give new spiritual life in Christ, washing away original sin.'
+            },
+            {
+              question: 'Why is a devotional side chapel dedicated to Our Lady (the Virgin Mary) present in Catholic churches?',
+              options: [
+                'To honor Mary as the Mother of God and ask for her maternal intercession',
+                'To serve as a private waiting room for altar servers',
+                'Strictly as a gallery for seasonal floral arrangements'
+              ],
+              correct: 0,
+              explanation: 'Catholics honor Mary as the Queen of Heaven and Mother of the Church, lighting votive candles and seeking her maternal prayers.'
+            }
+          ]
         }
       ];
 
@@ -930,12 +1014,6 @@
         el.btnTheme.addEventListener('click', () => this.toggleTheme());
       }
 
-      if (el.btnPip) {
-        el.btnPip.addEventListener('click', () => {
-          this.togglePictureInPicture();
-        });
-      }
-
       if (el.btnFullscreen) {
         el.btnFullscreen.addEventListener('click', () => {
           if (!document.fullscreenElement) {
@@ -943,6 +1021,12 @@
           } else {
             document.exitFullscreen().catch(() => {});
           }
+        });
+      }
+
+      if (el.btnPip) {
+        el.btnPip.addEventListener('click', () => {
+          this.togglePictureInPicture();
         });
       }
 
@@ -1655,6 +1739,7 @@
         { el: el.cfgInspect, key: 'showDevInspect' },
         { el: el.cfgStudio, key: 'showDevStudio' },
         { el: el.cfgExportSpa, key: 'showExportSpa' },
+        { el: el.cfgPip, key: 'showPipButton' },
         { el: el.cfgObs, key: 'showObsLink' },
         { el: el.cfgPrint, key: 'showPrintWorksheet' },
         { el: el.cfgCopySvg, key: 'showCopySvg' },
@@ -1666,8 +1751,6 @@
         { el: el.cfgLoop, key: 'showLoopToggle' },
         { el: el.cfgVolume, key: 'showVolumeControl' },
         { el: el.cfgPhysics, key: 'showPhysicsControls' },
-        { el: el.cfgPip, key: 'showPipButton' },
-        { el: el.cfgVoiceCmd, key: 'showVoiceControl' },
       ];
 
       configInputs.forEach(({ el: inputEl, key }) => {
@@ -1721,9 +1804,6 @@
         } else if (e.code === 'KeyS' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           this.toggleStepMode();
-        } else if (e.code === 'KeyI' && !e.ctrlKey && !e.metaKey) {
-          e.preventDefault();
-          this.togglePictureInPicture();
         } else if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           if (el.btnFullscreen) el.btnFullscreen.click();
@@ -1734,6 +1814,9 @@
           e.preventDefault();
           this.engine.resetCamera();
           this.showToast('🌐 3D Camera Reset');
+        } else if (e.code === 'KeyP' && e.shiftKey && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          this.togglePictureInPicture();
         } else if (e.code === 'KeyP' && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           if (el.btnPlayMode) el.btnPlayMode.click();
@@ -1956,6 +2039,7 @@
         { el: el.cfgInspect, val: c.showDevInspect },
         { el: el.cfgStudio, val: c.showDevStudio },
         { el: el.cfgExportSpa, val: c.showExportSpa },
+        { el: el.cfgPip, val: c.showPipButton !== false },
         { el: el.cfgObs, val: c.showObsLink },
         { el: el.cfgPrint, val: c.showPrintWorksheet },
         { el: el.cfgCopySvg, val: c.showCopySvg },
@@ -1964,11 +2048,6 @@
         { el: el.cfgScrubber, val: c.showTimelineScrubber },
         { el: el.cfgSpeed, val: c.showSpeedSelector },
         { el: el.cfgLang, val: c.showLanguageSelector },
-        { el: el.cfgLoop, val: c.showLoopToggle },
-        { el: el.cfgVolume, val: c.showVolumeControl },
-        { el: el.cfgPhysics, val: c.showPhysicsControls },
-        { el: el.cfgPip, val: c.showPipButton },
-        { el: el.cfgVoiceCmd, val: (c.showVoiceControl !== false && c.showVoiceCommands !== false) },
       ];
 
       inputs.forEach(({ el: inp, val }) => {
@@ -1995,103 +2074,110 @@
     }
 
     async togglePictureInPicture() {
-      // 1. If embedded inside an iframe in the portal, delegate up to parent window
-      if (window !== window.top) {
+      // 1. Notify parent iframe container (React wrapper) if embedded
+      if (window.parent && window.parent !== window) {
         if (this.engine && typeof this.engine.notifyParent === 'function') {
-          this.engine.notifyParent({ type: 'REQUEST_PIP' });
-          this.showToast('📺 Requesting Picture-in-Picture window...');
-          return;
+          this.engine.notifyParent({
+            type: 'TOGGLE_PIP',
+            preset: this.engine.activePresetId,
+            progress: this.engine.progress,
+            isPlaying: this.engine.isPlaying
+          });
         }
       }
 
-      // 2. Standalone window mode: Document Picture-in-Picture API
-      if (typeof window !== 'undefined' && 'documentPictureInPicture' in window) {
+      // 2. Direct Document Picture-in-Picture API support (Chrome 116+, Edge, Opera)
+      if ('documentPictureInPicture' in window && typeof window.documentPictureInPicture.requestWindow === 'function') {
         if (this.pipWindow) {
           try {
             this.pipWindow.close();
-          } catch (e) {}
+          } catch (_) {}
           this.pipWindow = null;
+          this.showToast('📺 Picture-in-Picture Closed');
           return;
         }
 
         try {
-          const pipWin = await window.documentPictureInPicture.requestWindow({
-            width: 820,
-            height: 520,
+          const pip = await window.documentPictureInPicture.requestWindow({
+            width: 680,
+            height: 480
           });
+          this.pipWindow = pip;
 
-          // Copy current stylesheets into the PiP window head
-          [...document.styleSheets].forEach((styleSheet) => {
+          // Copy stylesheets into PiP window
+          [...document.styleSheets].forEach((sheet) => {
             try {
-              if (styleSheet.cssRules) {
-                const newStyle = pipWin.document.createElement('style');
-                [...styleSheet.cssRules].forEach((rule) => {
-                  newStyle.appendChild(pipWin.document.createTextNode(rule.cssText));
+              if (sheet.href) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = sheet.href;
+                pip.document.head.appendChild(link);
+              } else if (sheet.cssRules) {
+                const style = document.createElement('style');
+                [...sheet.cssRules].forEach((rule) => {
+                  style.appendChild(document.createTextNode(rule.cssText));
                 });
-                pipWin.document.head.appendChild(newStyle);
-              } else if (styleSheet.href) {
-                const link = pipWin.document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = styleSheet.href;
-                pipWin.document.head.appendChild(link);
+                pip.document.head.appendChild(style);
               }
-            } catch (e) {
-              if (styleSheet.href) {
-                const link = pipWin.document.createElement('link');
+            } catch (_) {
+              if (sheet.href) {
+                const link = document.createElement('link');
                 link.rel = 'stylesheet';
-                link.href = styleSheet.href;
-                pipWin.document.head.appendChild(link);
+                link.href = sheet.href;
+                pip.document.head.appendChild(link);
               }
             }
           });
 
-          pipWin.document.body.className = document.body.className;
-          pipWin.document.body.setAttribute('data-theme', document.body.getAttribute('data-theme') || 'dark');
-          pipWin.document.body.style.margin = '0';
-          pipWin.document.body.style.display = 'flex';
-          pipWin.document.body.style.flexDirection = 'column';
-          pipWin.document.body.style.height = '100vh';
-          pipWin.document.body.style.overflow = 'hidden';
+          pip.document.title = `📺 ${document.title || 'AST Vector Player'} (PiP)`;
+          pip.document.body.style.margin = '0';
+          pip.document.body.style.padding = '0';
+          pip.document.body.style.background = '#090d16';
+          pip.document.body.style.overflow = 'hidden';
 
-          const stage = document.getElementById('player-stage') || document.querySelector('main');
-          const footer = document.querySelector('footer');
+          const appContainer = document.getElementById('ast-player-container') || document.body.firstElementChild;
+          if (appContainer && appContainer.parentNode) {
+            const originalParent = appContainer.parentNode;
+            const placeholder = document.createElement('div');
+            placeholder.style.display = 'flex';
+            placeholder.style.flexDirection = 'column';
+            placeholder.style.alignItems = 'center';
+            placeholder.style.justifyContent = 'center';
+            placeholder.style.height = '100vh';
+            placeholder.style.background = '#090d16';
+            placeholder.style.color = '#fff';
+            placeholder.style.textAlign = 'center';
+            placeholder.style.padding = '20px';
+            placeholder.innerHTML = `
+              <div style="font-size:3rem; margin-bottom:12px;">📺</div>
+              <h3 style="margin:0 0 8px 0; font-size:1.2rem;">Floating in Picture-in-Picture</h3>
+              <p style="margin:0 0 16px 0; font-size:0.85rem; color:#94a3b8;">Stage is active in an always-on-top desktop window</p>
+              <button id="pip-return-btn" style="padding:8px 18px; border-radius:9999px; background:#6366f1; color:#fff; border:none; font-weight:700; cursor:pointer;">↩ Return to Page</button>
+            `;
 
-          const placeholderStage = document.createElement('div');
-          placeholderStage.style.display = 'none';
-          stage.parentNode.insertBefore(placeholderStage, stage);
+            originalParent.insertBefore(placeholder, appContainer);
+            pip.document.body.appendChild(appContainer);
 
-          const placeholderFooter = document.createElement('div');
-          placeholderFooter.style.display = 'none';
-          footer.parentNode.insertBefore(placeholderFooter, footer);
+            placeholder.querySelector('#pip-return-btn')?.addEventListener('click', () => {
+              pip.close();
+            });
 
-          pipWin.document.body.appendChild(stage);
-          pipWin.document.body.appendChild(footer);
-          this.pipWindow = pipWin;
-          if (this.elements.btnPip) this.elements.btnPip.classList.add('active');
-          this.showToast('📺 Picture-in-Picture Active');
+            pip.addEventListener('pagehide', () => {
+              originalParent.insertBefore(appContainer, placeholder);
+              placeholder.remove();
+              this.pipWindow = null;
+              this.showToast('📺 Restored from Picture-in-Picture');
+            });
+          }
 
-          pipWin.addEventListener('pagehide', () => {
-            if (placeholderStage.parentNode) {
-              placeholderStage.parentNode.insertBefore(stage, placeholderStage);
-              placeholderStage.remove();
-            }
-            if (placeholderFooter.parentNode) {
-              placeholderFooter.parentNode.insertBefore(footer, placeholderFooter);
-              placeholderFooter.remove();
-            }
-            this.pipWindow = null;
-            if (this.elements.btnPip) this.elements.btnPip.classList.remove('active');
-            this.showToast('📺 Returned from Picture-in-Picture');
-          });
+          this.showToast('📺 Always-on-Top PiP Window Opened');
+          return;
         } catch (err) {
-          console.warn('[PiP] Document PiP error:', err);
-          window.open(window.location.href, 'LuminaPiP', 'width=820,height=520,resizable=yes');
+          console.warn('Document Picture-in-Picture request:', err);
         }
-      } else {
-        // Fallback for browsers without documentPictureInPicture API
-        window.open(window.location.href, 'LuminaPiP', 'width=820,height=520,resizable=yes');
-        this.showToast('📺 Opened in popup window');
       }
+
+      this.showToast('📺 Picture-in-Picture Toggled');
     }
 
     bindEngineEvents() {
@@ -2256,6 +2342,7 @@
     startQuestMode() {
       if (!this.elements.questDrawer) return;
       this.questState.active = true;
+      this.questState.tourRunId = (this.questState.tourRunId || 1) + 1;
       this.elements.questDrawer.classList.remove('hidden');
       this.engine.pause();
       this.showToast('🎮 3D Pilgrim Quest: Sacred Space Explorer Started!');
@@ -2290,6 +2377,7 @@
             this.questState.missionIndex = 0;
             this.questState.score = 0;
             this.questState.completedMissions.clear();
+            this.questState.tourRunId = (this.questState.tourRunId || 1) + 1;
             this.renderCurrentMission();
           });
         }
@@ -2309,14 +2397,45 @@
         this.update3DStatus();
       }
 
+      // Pick question from pool and shuffle options dynamically for current tour run
+      if (!m.activeQuestion || m._lastTourRunId !== this.questState.tourRunId) {
+        const pool = m.questionPool || [{
+          question: m.question,
+          options: m.options,
+          correct: m.correct,
+          explanation: m.explanation
+        }];
+        const selected = pool[Math.floor(Math.random() * pool.length)];
+
+        // Shuffle options so correct answer is NOT always in the same position
+        const correctText = selected.options[selected.correct];
+        const shuffledOpts = [...selected.options];
+        for (let i = shuffledOpts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledOpts[i], shuffledOpts[j]] = [shuffledOpts[j], shuffledOpts[i]];
+        }
+        const newCorrect = shuffledOpts.indexOf(correctText);
+
+        m.activeQuestion = {
+          id: m.id,
+          question: selected.question,
+          options: shuffledOpts,
+          correct: newCorrect,
+          explanation: selected.explanation
+        };
+        m._lastTourRunId = this.questState.tourRunId;
+      }
+
+      const q = m.activeQuestion;
+
       let html = `
         <div class="quest-mission-title">${m.title}</div>
         <div class="quest-mission-desc">${m.desc}</div>
-        <div style="font-weight: 700; font-size: 12px; color: #f8fafc; margin-bottom: 6px;">${m.question}</div>
+        <div style="font-weight: 700; font-size: 12px; color: #f8fafc; margin-bottom: 6px;">${q.question}</div>
         <div class="quest-options-grid">
       `;
 
-      m.options.forEach((opt, optIdx) => {
+      q.options.forEach((opt, optIdx) => {
         html += `<button type="button" class="quest-option-btn" data-opt="${optIdx}">${opt}</button>`;
       });
 
@@ -2327,16 +2446,16 @@
       optionBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
           const optIdx = parseInt(e.currentTarget.getAttribute('data-opt'), 10);
-          this.checkMissionAnswer(m, optIdx, optionBtns);
+          this.checkMissionAnswer(m, q, optIdx, optionBtns);
         });
       });
     }
 
-    checkMissionAnswer(mission, selectedIdx, optionBtns) {
-      const isCorrect = selectedIdx === mission.correct;
+    checkMissionAnswer(mission, activeQ, selectedIdx, optionBtns) {
+      const isCorrect = selectedIdx === activeQ.correct;
       optionBtns.forEach((btn, i) => {
         btn.disabled = true;
-        if (i === mission.correct) {
+        if (i === activeQ.correct) {
           btn.classList.add('correct');
         } else if (i === selectedIdx) {
           btn.classList.add('incorrect');
@@ -2369,7 +2488,7 @@
         <div style="font-weight: 700; color: ${isCorrect ? '#34d399' : '#f87171'}; margin-bottom: 4px;">
           ${isCorrect ? '✓ Well answered, Pilgrim!' : 'Catechetical Insight:'}
         </div>
-        <div style="color: #e2e8f0; margin-bottom: 8px;">${mission.explanation}</div>
+        <div style="color: #e2e8f0; margin-bottom: 8px;">${activeQ.explanation}</div>
         <button type="button" class="quest-action-btn" id="btn-next-mission">
           ${this.questState.missionIndex + 1 < this.questMissions.length ? 'Next Sacred Station ➜' : 'View Master Results 🏆'}
         </button>
@@ -3233,14 +3352,14 @@
         if (el.btnFullscreen) el.btnFullscreen.click();
         executedAction = 'TOGGLE_FULLSCREEN';
         actionLabel = '⛶ Toggled Fullscreen';
+      } else if (text.includes('pip') || text.includes('picture in picture') || text.includes('float window') || text.includes('floating player') || text.includes('mini player')) {
+        this.togglePictureInPicture();
+        executedAction = 'TOGGLE_PIP';
+        actionLabel = '📺 Toggled Picture-in-Picture';
       } else if (text.includes('quiz') || text.includes('checkpoint') || text.includes('challenge')) {
         if (el.btnInteractive) el.btnInteractive.click();
         executedAction = 'OPEN_QUIZ';
         actionLabel = '🎯 Opened Interactive Challenge';
-      } else if (text.includes('picture in picture') || text.includes('pip') || text.includes('float') || text.includes('pop out') || text.includes('floating window')) {
-        this.togglePictureInPicture();
-        executedAction = 'TOGGLE_PIP';
-        actionLabel = '📺 Picture-in-Picture';
       }
 
       if (executedAction) {

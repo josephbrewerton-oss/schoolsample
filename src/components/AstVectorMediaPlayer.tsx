@@ -15,6 +15,7 @@
 
 import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
+import { transpileSwfToAst, type SwfTranspileResult } from '../utils/swfAstParser';
 import {
   PlayerDisplayMode,
   PlayerDisplayConfig,
@@ -66,6 +67,7 @@ export interface AstVectorMediaPlayerHandle {
   startVoiceCommands: () => void;
   stopVoiceCommands: () => void;
   executeVoiceCommand: (command: string) => void;
+  togglePictureInPicture: () => void;
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
@@ -73,6 +75,7 @@ export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
   { id: 'mountain-elevation', label: '🧗 Mountain Altitude: Climber Game (Elevation & Slope)', stage: 'KS2/KS3 MATHS & GEOGRAPHY' },
   { id: 'fish-tank', label: '🐠 Aquarium Stress Benchmark: Vector Point & FPS Limiter', stage: 'BENCHMARK & STRESS LAB' },
   { id: 'church-tour', label: '⛪ Catholic Church: Sacred Architecture Tour', stage: 'CATHOLIC LIFE' },
+  { id: 'shakespeare', label: '🎭 The Globe Theatre: Shakespeare & Iambic Meter', stage: 'KS3/KS4 ENGLISH LITERATURE' },
   { id: 'fractions', label: '📐 Fractions: Common Denominators', stage: 'KS2 MATHS' },
   { id: 'solar-system', label: '🪐 Solar System: Heliocentric Orbits', stage: 'KS3 SCIENCE' },
   { id: 'photosynthesis', label: '🌱 Photosynthesis: Leaf Factory', stage: 'KS3 BIOLOGY' },
@@ -126,7 +129,11 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   // Developer Mode & Code Studio State
   const [isDevMode, setIsDevMode] = useState(false);
   const [showDevStudio, setShowDevStudio] = useState(false);
-  const [studioTab, setStudioTab] = useState<'inspector' | 'svg' | 'ast' | 'templates'>('inspector');
+  const [studioTab, setStudioTab] = useState<'inspector' | 'svg' | 'ast' | 'templates' | 'swf'>('inspector');
+  const [swfResult, setSwfResult] = useState<SwfTranspileResult | null>(null);
+  const [isParsingSwf, setIsParsingSwf] = useState(false);
+  const [swfError, setSwfError] = useState<string | null>(null);
+  const [swfDragActive, setSwfDragActive] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
   const [inspectedElement, setInspectedElement] = useState<{
@@ -140,12 +147,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [customAstCode, setCustomAstCode] = useState('');
   const [hotReloadFlash, setHotReloadFlash] = useState(false);
   const [exportSuccessNotice, setExportSuccessNotice] = useState(false);
-
-  // Document Picture-in-Picture State & DOM Refs
-  const [isInPip, setIsInPip] = useState(false);
-  const pipWindowRef = useRef<any>(null);
-  const pipPlaceholderRef = useRef<HTMLDivElement | null>(null);
-  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const [isPipActive, setIsPipActive] = useState(false);
+  const [pipType, setPipType] = useState<'document' | 'docked' | null>(null);
+  const pipWindowRef = useRef<Window | null>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync internal selected preset if external preset prop changes
   useEffect(() => {
@@ -173,6 +178,104 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     }
   }, []);
 
+  const togglePictureInPicture = useCallback(async () => {
+    // If desktop document PiP window is open, close it
+    if (pipWindowRef.current) {
+      try {
+        pipWindowRef.current.close();
+      } catch (_) {}
+      pipWindowRef.current = null;
+      setIsPipActive(false);
+      setPipType(null);
+      return;
+    }
+
+    // If docked in-page PiP is active, restore to regular viewport
+    if (isPipActive && pipType === 'docked') {
+      setIsPipActive(false);
+      setPipType(null);
+      return;
+    }
+
+    // 1. Try Document Picture-in-Picture API (Chrome 116+, Edge, Opera)
+    if (typeof window !== 'undefined' && 'documentPictureInPicture' in window && typeof (window as any).documentPictureInPicture.requestWindow === 'function') {
+      try {
+        const pip = await (window as any).documentPictureInPicture.requestWindow({
+          width: 720,
+          height: 500,
+        });
+        pipWindowRef.current = pip;
+        setIsPipActive(true);
+        setPipType('document');
+
+        // Copy stylesheets into PiP window
+        document.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
+          pip.document.head.appendChild(node.cloneNode(true));
+        });
+
+        pip.document.documentElement.className = document.documentElement.className;
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        pip.document.documentElement.setAttribute('data-theme', currentTheme);
+        pip.document.title = `📺 ${selectedPreset} — Desktop PiP`;
+        pip.document.body.style.margin = '0';
+        pip.document.body.style.padding = '0';
+        pip.document.body.style.background = '#090d16';
+        pip.document.body.style.overflow = 'hidden';
+        pip.document.body.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+
+        const wrapper = playerContainerRef.current;
+        if (wrapper && wrapper.parentNode) {
+          const originalParent = wrapper.parentNode;
+          const placeholder = document.createElement('div');
+          placeholder.id = 'ast-pip-placeholder';
+          placeholder.style.display = 'flex';
+          placeholder.style.flexDirection = 'column';
+          placeholder.style.alignItems = 'center';
+          placeholder.style.justifyContent = 'center';
+          placeholder.style.height = '420px';
+          placeholder.style.background = 'var(--stj-surface, #0f172a)';
+          placeholder.style.borderRadius = '16px';
+          placeholder.style.border = '2px dashed var(--stj-primary, #6366f1)';
+          placeholder.style.color = '#fff';
+          placeholder.style.padding = '24px';
+          placeholder.style.textAlign = 'center';
+          placeholder.innerHTML = `
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📺</div>
+            <h4 style="margin: 0 0 6px 0; font-size: 1.15rem; font-weight: 700;">Playing in Picture-in-Picture</h4>
+            <p style="margin: 0 0 16px 0; font-size: 0.85rem; color: #94a3b8; max-width: 440px;">
+              The interactive vector media player is open in an always-on-top desktop window. Quizzes, physics controls, and 3D scenes remain interactive across all desktop windows.
+            </p>
+            <button id="close-desktop-pip-btn" style="padding: 8px 20px; background: #6366f1; color: white; border: none; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              <span>↩ Return Player to Page</span>
+            </button>
+          `;
+
+          originalParent.insertBefore(placeholder, wrapper);
+          pip.document.body.appendChild(wrapper);
+
+          placeholder.querySelector('#close-desktop-pip-btn')?.addEventListener('click', () => {
+            pip.close();
+          });
+
+          pip.addEventListener('pagehide', () => {
+            originalParent.insertBefore(wrapper, placeholder);
+            placeholder.remove();
+            pipWindowRef.current = null;
+            setIsPipActive(false);
+            setPipType(null);
+          });
+        }
+        return;
+      } catch (err) {
+        console.warn('Document Picture-in-Picture request fell back to docked mini-player:', err);
+      }
+    }
+
+    // 2. Fallback to docked in-page floating mini player
+    setIsPipActive(true);
+    setPipType('docked');
+  }, [selectedPreset, isPipActive, pipType]);
+
   // Expose imperative handle to parent components (for games, quizzes, external controls)
   useImperativeHandle(ref, () => ({
     postToPlayer,
@@ -184,7 +287,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     startVoiceCommands: () => postToPlayer({ type: 'START_VOICE_COMMANDS' }),
     stopVoiceCommands: () => postToPlayer({ type: 'STOP_VOICE_COMMANDS' }),
     executeVoiceCommand: (command: string) => postToPlayer({ type: 'VOICE_COMMAND', command }),
-  }), [postToPlayer]);
+    togglePictureInPicture: () => togglePictureInPicture(),
+  }), [postToPlayer, togglePictureInPicture]);
 
   // Global keyboard shortcut: Press 'V' to toggle voice commands
   useEffect(() => {
@@ -196,6 +300,11 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       if ((e.key === 'v' || e.key === 'V') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' });
+      }
+
+      if ((e.key === 'p' || e.key === 'P') && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        togglePictureInPicture();
       }
     };
 
@@ -229,111 +338,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   useEffect(() => {
     postToPlayer({ type: 'SET_THEME', theme: activeTheme });
   }, [activeTheme, postToPlayer]);
-
-  const rawBase = import.meta.env.BASE_URL || '/';
-  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&v=2.5.0`;
-
-  const openStandalone = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.open(playerSrc, '_blank', 'noopener,noreferrer');
-    }
-  }, [playerSrc]);
-
-  const togglePictureInPicture = useCallback(async () => {
-    // 1. If currently in PiP, close it
-    if (pipWindowRef.current) {
-      try {
-        pipWindowRef.current.close();
-      } catch (e) {}
-      pipWindowRef.current = null;
-      setIsInPip(false);
-      return;
-    }
-
-    // 2. Document Picture-in-Picture API
-    if (typeof window !== 'undefined' && 'documentPictureInPicture' in window) {
-      try {
-        const pipWin = await (window as any).documentPictureInPicture.requestWindow({
-          width: 840,
-          height: 540,
-        });
-
-        // Copy current stylesheets into PiP window
-        [...document.styleSheets].forEach((styleSheet) => {
-          try {
-            if (styleSheet.cssRules) {
-              const newStyle = pipWin.document.createElement('style');
-              [...styleSheet.cssRules].forEach((rule) => {
-                newStyle.appendChild(pipWin.document.createTextNode(rule.cssText));
-              });
-              pipWin.document.head.appendChild(newStyle);
-            } else if (styleSheet.href) {
-              const link = pipWin.document.createElement('link');
-              link.rel = 'stylesheet';
-              link.href = styleSheet.href;
-              pipWin.document.head.appendChild(link);
-            }
-          } catch (e) {
-            if (styleSheet.href) {
-              const link = pipWin.document.createElement('link');
-              link.rel = 'stylesheet';
-              link.href = styleSheet.href;
-              pipWin.document.head.appendChild(link);
-            }
-          }
-        });
-
-        pipWin.document.body.className = document.body.className;
-        pipWin.document.body.setAttribute('data-theme', activeTheme);
-        pipWin.document.body.style.margin = '0';
-        pipWin.document.body.style.padding = '0';
-        pipWin.document.body.style.backgroundColor = activeTheme === 'dark' ? '#090d16' : '#f8fafc';
-        pipWin.document.body.style.display = 'flex';
-        pipWin.document.body.style.flexDirection = 'column';
-        pipWin.document.body.style.height = '100vh';
-        pipWin.document.body.style.overflow = 'hidden';
-
-        const playerEl = playerContainerRef.current;
-        if (playerEl && playerEl.parentNode) {
-          const placeholder = document.createElement('div');
-          placeholder.style.minHeight = '360px';
-          placeholder.style.display = 'flex';
-          placeholder.style.flexDirection = 'column';
-          placeholder.style.alignItems = 'center';
-          placeholder.style.justifyContent = 'center';
-          placeholder.style.background = activeTheme === 'dark' ? '#0f172a' : '#f1f5f9';
-          placeholder.style.borderRadius = '12px';
-          placeholder.style.border = '2px dashed var(--stj-border, #334155)';
-          placeholder.style.color = '#94a3b8';
-          placeholder.style.fontWeight = '700';
-          placeholder.style.gap = '8px';
-          placeholder.innerHTML = '<span>📺 Vector Player is running in Picture-in-Picture window</span><span style="font-size:0.75rem;font-weight:400;color:#64748b;">Close floating window to return player here</span>';
-
-          playerEl.parentNode.insertBefore(placeholder, playerEl);
-          pipPlaceholderRef.current = placeholder;
-          pipWin.document.body.appendChild(playerEl);
-          pipWindowRef.current = pipWin;
-          setIsInPip(true);
-
-          pipWin.addEventListener('pagehide', () => {
-            if (pipPlaceholderRef.current && pipPlaceholderRef.current.parentNode && playerEl) {
-              pipPlaceholderRef.current.parentNode.insertBefore(playerEl, pipPlaceholderRef.current);
-              pipPlaceholderRef.current.remove();
-              pipPlaceholderRef.current = null;
-            }
-            pipWindowRef.current = null;
-            setIsInPip(false);
-          });
-        }
-      } catch (err) {
-        console.warn('[PiP] Document Picture-in-Picture error:', err);
-        openStandalone();
-      }
-    } else {
-      openStandalone();
-    }
-  }, [activeTheme, openStandalone]);
 
   // Listen for telemetry and events from the iframe player
   useEffect(() => {
@@ -427,6 +431,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             if (onConfigChange) onConfigChange(data.config);
           }
           break;
+        case 'TOGGLE_PIP':
         case 'REQUEST_PIP':
           togglePictureInPicture();
           break;
@@ -446,6 +451,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     if (onConfigChange) onConfigChange(displayConfig);
   }, [displayConfig, postToPlayer, onConfigChange]);
 
+  const rawBase = import.meta.env.BASE_URL || '/';
+  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&v=2.5.0`;
+
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&mode=${encodeURIComponent(embedTargetMode)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
 
@@ -456,19 +465,108 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     });
   };
 
+  const openStandalone = () => {
+    if (typeof window !== 'undefined') {
+      window.open(playerSrc, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <div
-      className={`ast-vector-media-player-container stj-card ${className}`}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        maxWidth: '100%',
-        padding: 0,
-        overflow: 'hidden',
-        boxShadow: 'var(--stj-shadow-lg)',
-      }}
-    >
+    <>
+      {isPipActive && pipType === 'docked' && (
+        <div
+          style={{
+            padding: '24px 20px',
+            borderRadius: '16px',
+            border: '2px dashed var(--stj-primary, #6366f1)',
+            background: 'var(--stj-surface-raised, #0f172a)',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '220px',
+            gap: '12px',
+            margin: '12px 0',
+          }}
+        >
+          <span style={{ fontSize: '2.4rem' }}>📺</span>
+          <div>
+            <strong style={{ fontSize: '1.05rem', display: 'block', color: 'var(--stj-text)' }}>
+              Media Player Floating in Picture-in-Picture
+            </strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: 'var(--stj-text-muted)', maxWidth: '420px' }}>
+              The interactive vector player is docked in the lower corner of your screen. All animations, 3D viewpoints, and recall quizzes continue running seamlessly.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={togglePictureInPicture}
+            className="stj-btn stj-btn-primary stj-btn-sm"
+            style={{ padding: '6px 18px', fontWeight: 700 }}
+          >
+            ↩ Dock Back to Page
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={playerContainerRef}
+        className={`ast-vector-media-player-container stj-card ${className}`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: isPipActive && pipType === 'docked' ? '460px' : '100%',
+          maxWidth: isPipActive && pipType === 'docked' ? 'calc(100vw - 32px)' : '100%',
+          padding: 0,
+          overflow: 'hidden',
+          boxShadow: isPipActive && pipType === 'docked' ? '0 25px 60px -10px rgba(0,0,0,0.7), 0 0 0 2px var(--stj-primary, #6366f1)' : 'var(--stj-shadow-lg)',
+          ...(isPipActive && pipType === 'docked' ? {
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 99999,
+            borderRadius: '16px',
+            transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          } : {}),
+        }}
+      >
+        {isPipActive && pipType === 'docked' && (
+          <div
+            style={{
+              background: 'var(--stj-primary, #6366f1)',
+              color: '#fff',
+              padding: '6px 12px',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>📺 Floating Mini Player</span>
+              <span style={{ opacity: 0.85, fontWeight: 500 }}>&bull; {selectedPreset}</span>
+            </div>
+            <button
+              type="button"
+              onClick={togglePictureInPicture}
+              style={{
+                background: 'rgba(255,255,255,0.22)',
+                border: 'none',
+                color: '#fff',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                fontSize: '0.72rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }}
+              title="Return to page"
+            >
+              ✕ Close PiP
+            </button>
+          </div>
+        )}
       {/* Top Banner Toolbar */}
       <div
         style={{
@@ -816,20 +914,22 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             </button>
           )}
 
-          {displayConfig.showPipButton && (
+          {displayConfig.showPipButton !== false && (
             <button
               type="button"
               onClick={togglePictureInPicture}
-              className={`stj-btn ${isInPip ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              className={`stj-btn ${isPipActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
               style={{
-                padding: '4px 9px',
+                padding: '4px 10px',
                 minHeight: '32px',
-                fontSize: '0.75rem',
+                fontSize: '0.76rem',
                 fontWeight: 700,
+                color: isPipActive ? '#ffffff' : undefined,
+                background: isPipActive ? 'var(--stj-primary)' : undefined,
               }}
-              title="Pop out into an always-on-top Picture-in-Picture window (I)"
+              title="Picture-in-Picture: Always-on-top desktop window or docked floating mini-player (Shift+P)"
             >
-              <span>📺 {isInPip ? 'Exit PiP' : 'PiP'}</span>
+              <span>{isPipActive ? '📺 Dock Back' : '📺 PiP'}</span>
             </button>
           )}
 
@@ -1006,11 +1106,11 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                       { key: 'showDevStudio', label: '💻 Live Code Studio' },
                       { key: 'showExportSpa', label: '🚀 Standalone SVG SPA Export' },
                       { key: 'showStandaloneLink', label: '↗ Standalone Window Button' },
+                      { key: 'showPipButton', label: '📺 Document Picture-in-Picture & Floating Player' },
                       { key: 'showObsLink', label: '📡 OBS Broadcast WebSocket Link' },
                       { key: 'showLmsEmbed', label: '🔗 LMS Embed Code Generator' },
                       { key: 'showPrintWorksheet', label: '🖨️ A4 Classroom Worksheet' },
                       { key: 'showCopySvg', label: '📋 Copy Raw SVG Geometry' },
-                      { key: 'showPipButton', label: '📺 Document Picture-in-Picture Floating Window' },
                     ].map(({ key, label }) => (
                       <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
                         <input
@@ -1049,7 +1149,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                       { key: 'showLoopToggle', label: '🔁 Auto-Repeat Loop Toggle' },
                       { key: 'showVolumeControl', label: '🔊 Master Volume & Mute Controls' },
                       { key: 'showPhysicsControls', label: '🪐 Micro-Physics & Gravity Subsystem' },
-                      { key: 'showVoiceControl', label: '🎤 Voice Commands (Web Speech API)' },
                     ].map(({ key, label }) => (
                       <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
                         <input
@@ -1134,10 +1233,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       )}
 
       {/* Sandboxed iFrame Element */}
-      <div
-        ref={playerContainerRef}
-        style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height }}
-      >
+      <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height }}>
         <iframe
           key={`${selectedPreset}-${currentLang}`}
           ref={iframeRef}
@@ -1149,7 +1245,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             border: 'none',
             display: 'block',
           }}
-          allow="fullscreen; microphone; document-picture-in-picture"
+          allow="fullscreen; microphone"
         />
       </div>
 
@@ -1234,6 +1330,15 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                 style={{ fontSize: '0.76rem' }}
               >
                 🚀 Scratchpad Templates
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudioTab('swf')}
+                className={`stj-btn ${studioTab === 'swf' ? 'stj-btn-primary' : 'stj-btn-ghost'} stj-btn-sm`}
+                style={{ fontSize: '0.76rem' }}
+                title="Transpile legacy Adobe Flash (.swf) into modern SVG + AST vectors"
+              >
+                📦 SWF / Flash Importer
               </button>
             </div>
 
@@ -1642,9 +1747,267 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
               </div>
             </div>
           )}
+
+          {/* Tab 5: SWF / Flash Transcompiler */}
+          {studioTab === 'swf' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setSwfDragActive(true);
+                }}
+                onDragLeave={() => setSwfDragActive(false)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setSwfDragActive(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (!file) return;
+                  setIsParsingSwf(true);
+                  setSwfError(null);
+                  try {
+                    const buf = await file.arrayBuffer();
+                    const cleanName = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
+                    const res = await transpileSwfToAst(buf, cleanName);
+                    if (res.success) {
+                      setSwfResult(res);
+                      setCustomSvgCode(res.svgMarkup);
+                      setCustomAstCode(res.astSource);
+                    } else {
+                      setSwfError(res.error || 'Failed to transpile SWF binary.');
+                    }
+                  } catch (err: any) {
+                    setSwfError(err?.message || 'Error processing SWF file.');
+                  } finally {
+                    setIsParsingSwf(false);
+                  }
+                }}
+                style={{
+                  border: swfDragActive ? '2px dashed var(--stj-primary, #6366f1)' : '2px dashed var(--stj-border)',
+                  background: swfDragActive ? 'var(--stj-primary-surface, rgba(99, 102, 241, 0.1))' : 'var(--stj-canvas)',
+                  borderRadius: '12px',
+                  padding: '24px 16px',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📦</div>
+                <strong style={{ fontSize: '0.95rem', color: 'var(--stj-text)', display: 'block', marginBottom: '4px' }}>
+                  Drag &amp; Drop Legacy Adobe Flash (.swf) File Here
+                </strong>
+                <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: 'var(--stj-text-muted)' }}>
+                  Decodes FWS (uncompressed) &amp; CWS (zlib-compressed) binary vector shapes, twips coordinates, and timeline frames into native 60 FPS SVG + AST S-Expressions.
+                </p>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <label className="stj-btn stj-btn-primary stj-btn-sm" style={{ cursor: 'pointer', fontSize: '0.76rem' }}>
+                    <span>Browse .swf File...</span>
+                    <input
+                      type="file"
+                      accept=".swf"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setIsParsingSwf(true);
+                        setSwfError(null);
+                        try {
+                          const buf = await file.arrayBuffer();
+                          const cleanName = file.name.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
+                          const res = await transpileSwfToAst(buf, cleanName);
+                          if (res.success) {
+                            setSwfResult(res);
+                            setCustomSvgCode(res.svgMarkup);
+                            setCustomAstCode(res.astSource);
+                          } else {
+                            setSwfError(res.error || 'Failed to transpile SWF binary.');
+                          }
+                        } catch (err: any) {
+                          setSwfError(err?.message || 'Error processing SWF file.');
+                        } finally {
+                          setIsParsingSwf(false);
+                        }
+                      }}
+                    />
+                  </label>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--stj-text-muted)' }}>or try an educational sample below</span>
+                </div>
+              </div>
+
+              {/* Sample Flash Assets to Test Immediately */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--stj-text-muted)' }}>
+                  Legacy Samples:
+                </span>
+                {[
+                  {
+                    id: 'flash-pendulum',
+                    title: '⚖️ Physics Harmonic Pendulum',
+                    desc: 'Classic legacy science lab animation with angle sweep & potential energy.',
+                    mockBytes: () => {
+                      const b = new Uint8Array([
+                        0x46, 0x57, 0x53, 0x08,
+                        0x40, 0x00, 0x00, 0x00,
+                        0x78, 0x00, 0x07, 0xd0, 0x00, 0x00, 0x04, 0xb0,
+                        0x18, 0x00,
+                        0x3c, 0x00,
+                        0x43, 0x02, 0x0f, 0x17, 0x2a,
+                        0x00, 0x00,
+                      ]);
+                      return b;
+                    }
+                  },
+                  {
+                    id: 'flash-fraction-clock',
+                    title: '⏰ Primary Math Fraction Clock',
+                    desc: 'Interactive clock face manipulative with rotating hands and sector fills.',
+                    mockBytes: () => {
+                      const b = new Uint8Array([
+                        0x46, 0x57, 0x53, 0x09,
+                        0x50, 0x00, 0x00, 0x00,
+                        0x78, 0x00, 0x09, 0xc4, 0x00, 0x00, 0x05, 0xdc,
+                        0x1e, 0x00,
+                        0x5a, 0x00,
+                        0x43, 0x02, 0x1e, 0x29, 0x3b,
+                        0x00, 0x00,
+                      ]);
+                      return b;
+                    }
+                  },
+                ].map((sample) => (
+                  <button
+                    key={sample.id}
+                    type="button"
+                    onClick={async () => {
+                      setIsParsingSwf(true);
+                      setSwfError(null);
+                      try {
+                        const buf = sample.mockBytes();
+                        const res = await transpileSwfToAst(buf, sample.id);
+                        setSwfResult(res);
+                        setCustomSvgCode(res.svgMarkup);
+                        setCustomAstCode(res.astSource);
+                      } catch (err: any) {
+                        setSwfError(err?.message || 'Error processing sample.');
+                      } finally {
+                        setIsParsingSwf(false);
+                      }
+                    }}
+                    className="stj-btn stj-btn-secondary stj-btn-sm"
+                    style={{ fontSize: '0.72rem' }}
+                    title={sample.desc}
+                  >
+                    {sample.title}
+                  </button>
+                ))}
+              </div>
+
+              {isParsingSwf && (
+                <div style={{ textAlign: 'center', padding: '16px', color: 'var(--stj-primary)' }}>
+                  <span>⏳ Decompressing and transpiling SWF vector display list...</span>
+                </div>
+              )}
+
+              {swfError && (
+                <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#f87171', fontSize: '0.76rem' }}>
+                  <strong>⚠️ SWF Transpile Notice:</strong> {swfError}
+                </div>
+              )}
+
+              {swfResult && swfResult.metadata && (
+                <div style={{ background: 'var(--stj-canvas)', border: '1px solid var(--stj-border)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="stj-badge stj-badge-success stj-pill" style={{ fontWeight: 800 }}>✓ TRANSPILED</span>
+                      <strong style={{ fontSize: '0.86rem', color: 'var(--stj-text)' }}>
+                        Legacy Flash SWF v{swfResult.metadata.version} ({swfResult.metadata.signature})
+                      </strong>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          postToPlayer({ type: 'HOT_RELOAD_SVG', svg: swfResult.svgMarkup });
+                          postToPlayer({ type: 'HOT_RELOAD_AST', ast: swfResult.astSource });
+                          postToPlayer({ type: 'SEEK', progress: 0 });
+                          postToPlayer({ type: 'PLAY' });
+                          setHotReloadFlash(true);
+                          setTimeout(() => setHotReloadFlash(false), 2200);
+                        }}
+                        className="stj-btn stj-btn-primary stj-btn-sm"
+                        style={{ fontSize: '0.75rem', fontWeight: 700 }}
+                      >
+                        ⚡ Test &amp; Play in Stage
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const blob = new Blob([swfResult.svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `transpiled-${swfResult.metadata?.signature.toLowerCase() || 'swf'}.svg`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="stj-btn stj-btn-secondary stj-btn-sm"
+                        style={{ fontSize: '0.75rem' }}
+                      >
+                        💾 Download SVG
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Metadata Chips Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                    <div style={{ padding: '6px 10px', background: 'var(--stj-surface)', borderRadius: '6px', border: '1px solid var(--stj-border)', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'var(--stj-text-muted)', display: 'block' }}>Canvas Dimensions</span>
+                      <strong style={{ color: 'var(--stj-text)' }}>{swfResult.metadata.width} × {swfResult.metadata.height} px</strong>
+                    </div>
+                    <div style={{ padding: '6px 10px', background: 'var(--stj-surface)', borderRadius: '6px', border: '1px solid var(--stj-border)', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'var(--stj-text-muted)', display: 'block' }}>Timeline &amp; Speed</span>
+                      <strong style={{ color: 'var(--stj-text)' }}>{swfResult.metadata.frameCount} Frames @ {swfResult.metadata.frameRate} FPS</strong>
+                    </div>
+                    <div style={{ padding: '6px 10px', background: 'var(--stj-surface)', borderRadius: '6px', border: '1px solid var(--stj-border)', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'var(--stj-text-muted)', display: 'block' }}>Shapes Extracted</span>
+                      <strong style={{ color: 'var(--stj-text)' }}>{swfResult.metadata.shapeCount} Vector Paths</strong>
+                    </div>
+                    <div style={{ padding: '6px 10px', background: 'var(--stj-surface)', borderRadius: '6px', border: '1px solid var(--stj-border)', fontSize: '0.72rem' }}>
+                      <span style={{ color: 'var(--stj-text-muted)', display: 'block' }}>Background</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '3px', background: swfResult.metadata.backgroundColor, border: '1px solid #64748b' }} />
+                        <strong style={{ color: 'var(--stj-text)' }}>{swfResult.metadata.backgroundColor}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Generated AST S-Expression Preview */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--stj-primary)' }}>⚡ Generated Declarative AST S-Expressions:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(swfResult.astSource);
+                        }}
+                        className="stj-btn stj-btn-ghost stj-btn-sm"
+                        style={{ fontSize: '0.7rem', padding: '2px 6px' }}
+                      >
+                        📋 Copy AST
+                      </button>
+                    </div>
+                    <pre style={{ margin: 0, padding: '8px', background: 'var(--stj-surface)', border: '1px solid var(--stj-border)', borderRadius: '6px', fontSize: '0.72rem', color: 'var(--stj-text-muted)', maxHeight: '110px', overflowY: 'auto', fontFamily: 'monospace' }}>
+                      {swfResult.astSource}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
+    </>
   );
 });
 

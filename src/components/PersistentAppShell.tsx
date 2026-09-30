@@ -6,6 +6,7 @@ import PersistentFooter from './PersistentFooter';
 import ViewportSkeleton from './ViewportSkeleton';
 import { OfflineIndicator } from './OfflineIndicator';
 import GlobalPlayerModal from './GlobalPlayerModal';
+import GlobalChallengeModal from './GlobalChallengeModal';
 import { classroomBeacon, TeacherBroadcastCommand } from '../services/classroomBeacon';
 import { getLearnerProfile } from '../services/studentProfileStore';
 import { hypervisor } from '../engine/hypervisor';
@@ -173,6 +174,9 @@ export default function PersistentAppShell(): React.JSX.Element {
 
       {/* Global Interactive Media Player Caller Modal */}
       <GlobalPlayerModal />
+
+      {/* Global Interactive Challenge & Educational Game Caller Modal */}
+      <GlobalChallengeModal />
 
       {/* 6. Off-Main-Thread Neural WebRTC Guest VM Daemon */}
       <iframe

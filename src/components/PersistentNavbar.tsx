@@ -229,8 +229,8 @@ export default function PersistentNavbar(): React.JSX.Element {
     {
       to: '/player',
       icon: '🎬',
-      title: 'AST Vector Media Player',
-      desc: 'Parametric curriculum SVG motion, synchronized narration & 3D models',
+      title: 'Interactive Visual Lab',
+      desc: 'Parametric curriculum visual models, synchronized narration & 3D simulations',
     },
     {
       to: '/practice-lab',
@@ -910,7 +910,7 @@ export default function PersistentNavbar(): React.JSX.Element {
           <NavLink
             to="/player"
             id="navbar-player-btn"
-            title="Launch Interactive AST Vector Media Player"
+            title="Launch Interactive Visual Lab & Simulations"
             style={({ isActive }) => ({
               background: isActive
                 ? colorMode === 'dark' ? '#0369a1' : '#e0f2fe'
@@ -935,7 +935,7 @@ export default function PersistentNavbar(): React.JSX.Element {
             })}
           >
             <span>🎬</span>
-            <span className="navbar-action-desktop-only">Player</span>
+            <span className="navbar-action-desktop-only">Visual Lab</span>
           </NavLink>
 
           {/* Standalone Settings Button (Separated from Admin) */}
