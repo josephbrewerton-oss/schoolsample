@@ -650,6 +650,12 @@
         list = global.ASTSceneRegistry.list();
       }
 
+      if (!list.length) {
+        list = [
+          { id: this.engine.activePresetId || 'standalone-stage', title: 'Standalone Vector Stage', stage: 'SYSTEM' }
+        ];
+      }
+
       const activeId = this.engine.activePresetId || 'church-tour';
       this.elements.presetSelector.innerHTML = '';
       list.forEach(item => {
