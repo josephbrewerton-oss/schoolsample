@@ -16,7 +16,8 @@ export type VectorPresetId =
   | 'velocity'
   | 'dna-helix'
   | 'mountain-elevation'
-  | 'shakespeare';
+  | 'shakespeare'
+  | 'languages';
 
 export interface PlayerCallOptions {
   preset?: VectorPresetId;
@@ -44,6 +45,9 @@ export function resolvePresetForTopic(subject?: string, unit?: string, topic?: s
   }
   if (combined.includes('shakespear') || combined.includes('macbeth') || combined.includes('hamlet') || combined.includes('romeo') || combined.includes('juliet') || combined.includes('theatre') || combined.includes('theater') || combined.includes('drama') || combined.includes('soliloquy') || combined.includes('poetry') || combined.includes('iambic') || combined.includes('playwright')) {
     return 'shakespeare';
+  }
+  if (combined.includes('spanish') || combined.includes('french') || combined.includes('latin') || combined.includes('mfl') || combined.includes('foreign language') || combined.includes('polyglot') || combined.includes('conjugat') || combined.includes('vocab')) {
+    return 'languages';
   }
   if (combined.includes('photo') || combined.includes('plant') || combined.includes('leaf') || combined.includes('botan')) {
     return 'photosynthesis';

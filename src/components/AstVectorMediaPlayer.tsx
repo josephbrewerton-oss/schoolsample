@@ -76,6 +76,7 @@ export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
   { id: 'fish-tank', label: '🐠 Aquarium Stress Benchmark: Vector Point & FPS Limiter', stage: 'BENCHMARK & STRESS LAB' },
   { id: 'church-tour', label: '⛪ Catholic Church: Sacred Architecture Tour', stage: 'CATHOLIC LIFE' },
   { id: 'shakespeare', label: '🎭 The Globe Theatre: Shakespeare & Iambic Meter', stage: 'KS3/KS4 ENGLISH LITERATURE' },
+  { id: 'languages', label: '🌍 MFL & Polyglot Studio: Spanish, French & Latin', stage: 'KS2/KS3 MFL' },
   { id: 'fractions', label: '📐 Fractions: Common Denominators', stage: 'KS2 MATHS' },
   { id: 'solar-system', label: '🪐 Solar System: Heliocentric Orbits', stage: 'KS3 SCIENCE' },
   { id: 'photosynthesis', label: '🌱 Photosynthesis: Leaf Factory', stage: 'KS3 BIOLOGY' },

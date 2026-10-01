@@ -6,6 +6,7 @@ import AstVectorMediaPlayer, { VectorPresetType, AstVectorMediaPlayerHandle } fr
 import MountainClimberGame from '../components/MountainClimberGame';
 import MathFishingGame from '../components/MathFishingGame';
 import ShakespeareGlobeLab from '../components/ShakespeareGlobeLab';
+import MflLanguageLab from '../components/MflLanguageLab';
 import { resolvePresetForTopic } from '../services/playerLauncher';
 
 interface PresetItem {
@@ -99,6 +100,14 @@ const PRESET_LIBRARY: PresetItem[] = [
     icon: '🎭',
   },
   {
+    id: 'languages',
+    title: 'MFL & Polyglot Studio: Spanish, French & Latin',
+    stage: 'KS2/KS3 MFL',
+    category: 'Languages & MFL',
+    desc: 'Interactive Modern Foreign Languages & Polyglot Lab: Spanish & French phonics studio, dynamic verb conjugation engine (-ar, -er, -ir), and rapid vocabulary recall sprints with native audio.',
+    icon: '🌍',
+  },
+  {
     id: 'math-fishing',
     title: 'Math Pond: Number Bonds Fishing Game',
     stage: 'KS1/KS2 MATHS',
@@ -144,13 +153,13 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
 
-  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation, math-fishing, and shakespeare
+  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation, math-fishing, shakespeare, and languages
   const initialPlayMode: 'video' | 'game' =
     urlMode === 'video'
       ? 'video'
       : urlMode === 'game'
       ? 'game'
-      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing' || initialPreset === 'shakespeare'
+      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing' || initialPreset === 'shakespeare' || initialPreset === 'languages'
       ? 'game'
       : 'video';
 
@@ -524,8 +533,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
           onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
           onPlayModeToggle={() => {
             const nextMode = playMode === 'game' ? 'video' : 'game';
-            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare') {
-              handleSelectPreset('shakespeare', 'game');
+            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare' && activePreset !== 'languages') {
+              handleSelectPreset('languages', 'game');
             } else {
               setPlayMode(nextMode);
               setSearchParams({ preset: activePreset, mode: nextMode });
@@ -564,6 +573,18 @@ export default function MediaPlayerPage(): React.JSX.Element {
         {activePreset === 'shakespeare' && playMode === 'game' && (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
             <ShakespeareGlobeLab
+              onClose={() => {
+                setPlayMode('video');
+                setSearchParams({ preset: activePreset, mode: 'video' });
+                playerRef.current?.play();
+              }}
+            />
+          </div>
+        )}
+
+        {activePreset === 'languages' && playMode === 'game' && (
+          <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
+            <MflLanguageLab
               onClose={() => {
                 setPlayMode('video');
                 setSearchParams({ preset: activePreset, mode: 'video' });
@@ -715,7 +736,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
             </div>
 
             <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
-              {['All', 'Games & Simulations', 'Mathematics', 'Science', 'English & Drama', 'Catholic Faith'].map((cat) => (
+              {['All', 'Languages & MFL', 'Games & Simulations', 'Mathematics', 'Science', 'English & Drama', 'Catholic Faith'].map((cat) => (
                 <button
                   key={cat}
                   type="button"
@@ -733,7 +754,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  {cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'English & Drama' ? '🎭 English & Drama' : cat}
+                  {cat === 'Languages & MFL' ? '🌍 Languages & MFL' : cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'English & Drama' ? '🎭 English & Drama' : cat}
                 </button>
               ))}
             </div>

@@ -10,6 +10,8 @@ import GlobalChallengeModal from './GlobalChallengeModal';
 import { classroomBeacon, TeacherBroadcastCommand } from '../services/classroomBeacon';
 import { getLearnerProfile } from '../services/studentProfileStore';
 import { hypervisor } from '../engine/hypervisor';
+import { playSuccessChime, playIncorrectTone, triggerHapticSuccess, triggerHapticError } from '../services/soundHaptics';
+import { triggerMasteryConfetti } from '../utils/confetti';
 
 export default function PersistentAppShell(): React.JSX.Element {
   const location = useLocation();
@@ -53,6 +55,15 @@ export default function PersistentAppShell(): React.JSX.Element {
     // If the teacher themselves is on the beacon console, don't broadcast as pupil
     if (location.pathname === '/teacher-beacon') return;
 
+    // Auto-join WebRTC peer connection if teacher pairing token is present in URL
+    const searchParams = new URLSearchParams(location.search);
+    const joinToken = searchParams.get('join');
+    if (joinToken) {
+      classroomBeacon.acceptOfferAsStudent(joinToken).catch((err) => {
+        console.warn('[WebRTC] Automatic student handshake failed:', err);
+      });
+    }
+
     classroomBeacon.startStudentBeacon(
       () => {
         const profile = getLearnerProfile();
@@ -63,7 +74,7 @@ export default function PersistentAppShell(): React.JSX.Element {
           avatarEmoji: profile.avatarEmoji || '🦉',
           keyStage: profile.keyStage || 'Key Stage 2',
           cohortCode: profile.cohortCode || 'Year 4',
-          activeSubject: location.pathname.includes('learning-zone') ? 'Guided Lessons' : 'Interactive Practice',
+          activeSubject: location.pathname.includes('learning-zone') ? 'Guided Lessons' : location.pathname.includes('player') ? 'Interactive Visual Lab' : 'Interactive Practice',
           activeTopic: location.pathname.replace(/^\//, '') || 'Home',
           recentMisconception: storedMisconception,
           starsEarned: profile.starsEarned || 0,
@@ -79,6 +90,17 @@ export default function PersistentAppShell(): React.JSX.Element {
           if (location.pathname !== '/practice-lab' && location.pathname !== '/learning-zone') {
             navigate('/practice-lab');
           }
+        } else if (command.type === 'BROADCAST_AST_SCENE' && command.preset) {
+          playSuccessChime();
+          triggerHapticSuccess();
+          navigate(`/player?preset=${encodeURIComponent(command.preset)}`);
+        } else if (command.type === 'ATTENTION') {
+          playIncorrectTone();
+          triggerHapticError();
+        } else if (command.type === 'PRAISE_ALL') {
+          playSuccessChime();
+          triggerHapticSuccess();
+          triggerMasteryConfetti();
         }
         setTimeout(() => setIncomingBroadcast(null), 6000);
       }
@@ -87,7 +109,7 @@ export default function PersistentAppShell(): React.JSX.Element {
     return () => {
       classroomBeacon.stopStudentBeacon();
     };
-  }, [location.pathname, navigate]);
+  }, [location.pathname, location.search, navigate]);
 
   return (
     <div

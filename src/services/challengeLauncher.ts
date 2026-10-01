@@ -15,7 +15,8 @@ export type ChallengeType =
   | 'liturgy-sequence'   // Liturgical Sequence & Sacred Architecture
   | 'neural-logic'       // Logic Gates, Binary & Computational Thinking
   | 'vector-lab'         // Interactive Vector Lab with Socratic Checkpoints
-  | 'shakespeare-theatre'; // 1599 Globe Theatre, Iambic Scansion & Soliloquy Director
+  | 'shakespeare-theatre' // 1599 Globe Theatre, Iambic Scansion & Soliloquy Director
+  | 'language-mastery';  // MFL & Polyglot Studio: Phonics, Conjugation & Vocab
 
 export interface ChallengeMetadata {
   type: ChallengeType;
@@ -106,6 +107,32 @@ export function resolveChallengeForTopic(
       preset: 'shakespeare',
       subject: subject || 'English Literature',
       unit: unit || 'Shakespearean Drama',
+      keyStage,
+    };
+  }
+
+  // 1c. Modern Foreign Languages, Spanish, French, Latin, Vocab, Phonics
+  if (
+    combined.includes('spanish') ||
+    combined.includes('french') ||
+    combined.includes('latin') ||
+    combined.includes('mfl') ||
+    combined.includes('foreign language') ||
+    combined.includes('polyglot') ||
+    combined.includes('conjugat') ||
+    combined.includes('eal') ||
+    combined.includes('vocab')
+  ) {
+    return {
+      type: 'language-mastery',
+      title: 'MFL & Polyglot Studio: Spanish, French & Latin',
+      badge: 'Phonics, Conjugation & Vocab',
+      badgeColor: '#4f46e5',
+      icon: '🌍',
+      description: 'Master phonics mouth articulation, dynamic verb conjugation wheels (-ar, -er, -ir), and rapid vocabulary recall with native audio.',
+      preset: 'languages',
+      subject: subject || 'Modern Foreign Languages',
+      unit: unit || 'Language Acquisition',
       keyStage,
     };
   }
