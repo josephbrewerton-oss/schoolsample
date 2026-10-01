@@ -172,12 +172,20 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const activeTheme = theme || (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark' ? 'dark' : 'dark');
   const [currentLang, setCurrentLang] = useState(() => lang || (typeof window !== 'undefined' ? getSavedLanguage() : 'en'));
 
-  // Post message helper
+  // Post message helper with strict targetOrigin (tightened from wildcard '*' to prevent LMS cross-frame snooping)
+  const getVerifiedTargetOrigin = useCallback(() => {
+    if (typeof window === 'undefined') return '*';
+    const origin = window.location.origin;
+    // Fall back to '*' only when origin is opaque 'null' (e.g., sandboxed iframe without allow-same-origin)
+    return origin && origin !== 'null' ? origin : '*';
+  }, []);
+
   const postToPlayer = useCallback((payload: Record<string, any>) => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(payload, '*');
+      const targetOrigin = getVerifiedTargetOrigin();
+      iframeRef.current.contentWindow.postMessage(payload, targetOrigin);
     }
-  }, []);
+  }, [getVerifiedTargetOrigin]);
 
   const togglePictureInPicture = useCallback(async () => {
     // If desktop document PiP window is open, close it
@@ -343,8 +351,13 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   // Listen for telemetry and events from the iframe player
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Validate event source directly to safely support sandboxed and preview environments
+      // Security: Validate event source and origin directly to prevent cross-frame message spoofing in LMS embeds
       if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
+      if (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') {
+        if (event.origin && event.origin !== 'null' && event.origin !== window.location.origin) {
+          return;
+        }
+      }
 
       const data = event.data;
       if (!data || data.source !== 'ast-vector-player') return;
