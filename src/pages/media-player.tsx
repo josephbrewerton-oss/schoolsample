@@ -523,29 +523,31 @@ export default function MediaPlayerPage(): React.JSX.Element {
           </div>
         )}
 
-        {/* Embedded AST Player */}
-        <AstVectorMediaPlayer
-          ref={playerRef}
-          preset={activePreset}
-          autoPlay={playMode === 'video'}
-          allowPresetSwitch={true}
-          height="540px"
-          onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
-          onPlayModeToggle={() => {
-            const nextMode = playMode === 'game' ? 'video' : 'game';
-            if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare' && activePreset !== 'languages') {
-              handleSelectPreset('languages', 'game');
-            } else {
-              setPlayMode(nextMode);
-              setSearchParams({ preset: activePreset, mode: nextMode });
-              if (nextMode === 'game') {
-                playerRef.current?.pause();
+        {/* Embedded AST Player (Hidden when in standalone interactive full-stage labs like Languages) */}
+        {!(activePreset === 'languages' && playMode === 'game') && (
+          <AstVectorMediaPlayer
+            ref={playerRef}
+            preset={activePreset}
+            autoPlay={playMode === 'video'}
+            allowPresetSwitch={true}
+            height="min(520px, 55vh)"
+            onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
+            onPlayModeToggle={() => {
+              const nextMode = playMode === 'game' ? 'video' : 'game';
+              if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare' && activePreset !== 'languages') {
+                handleSelectPreset('languages', 'game');
               } else {
-                playerRef.current?.play();
+                setPlayMode(nextMode);
+                setSearchParams({ preset: activePreset, mode: nextMode });
+                if (nextMode === 'game') {
+                  playerRef.current?.pause();
+                } else {
+                  playerRef.current?.play();
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
+        )}
 
         {/* Playable Interactive Game Mode Consoles (Active Player Physics & Telemetry) */}
         {activePreset === 'mountain-elevation' && playMode === 'game' && (

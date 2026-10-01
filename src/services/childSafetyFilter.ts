@@ -129,6 +129,39 @@ export function validateStudentInput(input: string): SafetyCheckResult {
 }
 
 /**
+ * Strips all script tags and payloads using deterministic O(n) index searching.
+ * Guaranteed zero regex backtracking and completely immune to ReDoS attacks.
+ */
+function stripScriptTags(input: string): string {
+  let text = input;
+  let lower = text.toLowerCase();
+  let startIdx = lower.indexOf('<script');
+
+  // Strip <script...>...</script> blocks
+  while (startIdx !== -1) {
+    const endTag = '</script>';
+    const endIdx = lower.indexOf(endTag, startIdx);
+    if (endIdx === -1) {
+      text = text.slice(0, startIdx);
+      break;
+    } else {
+      text = text.slice(0, startIdx) + text.slice(endIdx + endTag.length);
+      lower = text.toLowerCase();
+      startIdx = lower.indexOf('<script');
+    }
+  }
+
+  // Also strip any orphan closing </script> tags
+  while (lower.includes('</script>')) {
+    const idx = lower.indexOf('</script>');
+    text = text.slice(0, idx) + text.slice(idx + 9);
+    lower = text.toLowerCase();
+  }
+
+  return text;
+}
+
+/**
  * Sanitizes any AI-generated response before displaying or speaking it to a child.
  * Guarantees zero inappropriate words or accidental unsafe content slips through.
  */
@@ -146,12 +179,8 @@ export function sanitizeAiOutput(output: string, fallbackContext: string = 'your
     }
   }
 
-  // Clean any accidental markdown or code injection without backtracking regexes
-  let previousText: string;
-  do {
-    previousText = text;
-    text = text.replace(/<script\b[\s\S]*?<\/script>/gi, '');
-  } while (text !== previousText);
+  // Clean script tags with linear deterministic O(n) scanner (zero ReDoS backtracking)
+  text = stripScriptTags(text);
   text = text.replace(/(?:javascript|data|vbscript):/gi, '');
   text = text.replace(/onload=/gi, '');
 

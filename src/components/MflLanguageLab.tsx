@@ -1133,6 +1133,10 @@ export default function MflLanguageLab({
         gap: '16px',
         color: '#f8fafc',
         fontFamily: 'system-ui, -apple-system, sans-serif',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
       }}
     >
       {/* Top Banner: Track Selector & Stats */}
@@ -1781,7 +1785,7 @@ export default function MflLanguageLab({
             </div>
           )}
 
-          {/* Procedural Vector SVG Stage (Resolution Independent, <3KB) */}
+          {/* Procedural Vector SVG Stage (Responsive Scenic Banner) */}
           <div
             style={{
               position: 'relative',
@@ -1790,14 +1794,18 @@ export default function MflLanguageLab({
               border: '2px solid #3730a3',
               background: '#090d16',
               boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <svg
-              viewBox="0 0 800 240"
+              viewBox="0 0 800 180"
               width="100%"
-              height="240"
+              height="auto"
+              preserveAspectRatio="xMidYMid meet"
               xmlns="http://www.w3.org/2000/svg"
-              style={{ display: 'block' }}
+              style={{ display: 'block', width: '100%', maxHeight: '180px' }}
             >
               <defs>
                 <linearGradient id="cafeSky" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -1837,45 +1845,45 @@ export default function MflLanguageLab({
               </defs>
 
               {/* Background Wall & Ground Paving */}
-              <rect width="800" height="240" fill="url(#cafeSky)" />
-              <rect y="195" width="800" height="45" fill="#1e293b" />
+              <rect width="800" height="180" fill="url(#cafeSky)" />
+              <rect y="145" width="800" height="35" fill="#1e293b" />
               {/* Paving lines */}
-              <line x1="0" y1="210" x2="800" y2="210" stroke="#334155" strokeWidth="1" strokeDasharray="16,8" />
-              <line x1="0" y1="225" x2="800" y2="225" stroke="#334155" strokeWidth="1" strokeDasharray="12,12" />
+              <line x1="0" y1="155" x2="800" y2="155" stroke="#334155" strokeWidth="1" strokeDasharray="16,8" />
+              <line x1="0" y1="168" x2="800" y2="168" stroke="#334155" strokeWidth="1" strokeDasharray="12,12" />
 
               {/* Canopy / Classical Roman Lintel */}
               {currentScenario.stageType === 'roman' ? (
                 <g transform="translate(0, 0)">
                   {/* Classical Marble Architrave & Frieze */}
-                  <rect width="800" height="24" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
-                  <rect y="24" width="800" height="12" fill="#cbd5e1" />
+                  <rect width="800" height="22" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
+                  <rect y="22" width="800" height="10" fill="#cbd5e1" />
                   {/* Classical Dentil Moulding */}
                   {[...Array(26)].map((_, i) => (
-                    <rect key={i} x={i * 31 + 4} y="26" width="16" height="8" fill="#64748b" rx="1" />
+                    <rect key={i} x={i * 31 + 4} y="24" width="16" height="6" fill="#64748b" rx="1" />
                   ))}
                   {/* Classical Stone Pediment Centerpiece */}
-                  <polygon points="340,0 400,-15 460,0" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
-                  <text x="400" y="16" textAnchor="middle" fill="#1e293b" fontSize="11" fontWeight="bold" letterSpacing="4">
+                  <polygon points="340,0 400,-12 460,0" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
+                  <text x="400" y="15" textAnchor="middle" fill="#1e293b" fontSize="11" fontWeight="bold" letterSpacing="4">
                     SENATVS &bull; POPVLVSQVE &bull; ROMANVS
                   </text>
                   {/* Classical Fluted Marble Columns */}
-                  <rect x="18" y="24" width="22" height="175" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1" />
-                  <line x1="25" y1="24" x2="25" y2="199" stroke="#cbd5e1" strokeWidth="1.5" />
-                  <line x1="32" y1="24" x2="32" y2="199" stroke="#cbd5e1" strokeWidth="1.5" />
+                  <rect x="18" y="22" width="22" height="125" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1" />
+                  <line x1="25" y1="22" x2="25" y2="147" stroke="#cbd5e1" strokeWidth="1.5" />
+                  <line x1="32" y1="22" x2="32" y2="147" stroke="#cbd5e1" strokeWidth="1.5" />
                   {/* Column Capital & Base */}
-                  <rect x="14" y="24" width="30" height="10" rx="2" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
-                  <rect x="14" y="195" width="30" height="8" rx="2" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
+                  <rect x="14" y="22" width="30" height="8" rx="2" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
+                  <rect x="14" y="142" width="30" height="6" rx="2" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
                 </g>
               ) : (
                 <g transform="translate(0, 0)">
-                  <polygon points="0,0 800,0 800,45 0,45" fill="url(#awningGrad)" />
+                  <polygon points="0,0 800,0 800,36 0,36" fill="url(#awningGrad)" />
                   {/* White Awning Stripes */}
                   {[40, 120, 200, 280, 360, 440, 520, 600, 680, 760].map((x) => (
-                    <rect key={x} x={x} y="0" width="40" height="45" fill="#ffffff" opacity="0.9" />
+                    <rect key={x} x={x} y="0" width="40" height="36" fill="#ffffff" opacity="0.9" />
                   ))}
                   {/* Scalloped Awning Valance */}
                   <path
-                    d="M0,45 Q20,58 40,45 Q60,58 80,45 Q100,58 120,45 Q140,58 160,45 Q180,58 200,45 Q220,58 240,45 Q260,58 280,45 Q300,58 320,45 Q340,58 360,45 Q380,58 400,45 Q420,58 440,45 Q460,58 480,45 Q500,58 520,45 Q540,58 560,45 Q580,58 600,45 Q620,58 640,45 Q660,58 680,45 Q700,58 720,45 Q740,58 760,45 Q780,58 800,45"
+                    d="M0,36 Q20,46 40,36 Q60,46 80,36 Q100,46 120,36 Q140,46 160,36 Q180,46 200,36 Q220,46 240,36 Q260,46 280,36 Q300,46 320,36 Q340,46 360,36 Q380,46 400,36 Q420,46 440,36 Q460,46 480,36 Q500,46 520,36 Q540,46 560,36 Q580,46 600,36 Q620,46 640,36 Q660,46 680,36 Q700,46 720,36 Q740,46 760,36 Q780,46 800,36"
                     fill={
                       currentScenario.stageType === 'market'
                         ? '#15803d'
@@ -1890,9 +1898,9 @@ export default function MflLanguageLab({
               )}
 
               {/* Setting Signboard */}
-              <g transform="translate(52, 60)">
-                <rect width="130" height="60" rx="6" fill="#0f172a" stroke="#d97706" strokeWidth="2" />
-                <text x="65" y="24" textAnchor="middle" fill="#fef08a" fontSize="11" fontWeight="bold" letterSpacing="1">
+              <g transform="translate(48, 50)">
+                <rect width="130" height="52" rx="6" fill="#0f172a" stroke="#d97706" strokeWidth="2" />
+                <text x="65" y="22" textAnchor="middle" fill="#fef08a" fontSize="11" fontWeight="bold" letterSpacing="1">
                   {currentScenario.stageType === 'market'
                     ? 'MERCADO'
                     : currentScenario.stageType === 'station'
@@ -1903,7 +1911,7 @@ export default function MflLanguageLab({
                     ? 'S • P • Q • R'
                     : 'MENÚ DEL DÍA'}
                 </text>
-                <text x="65" y="40" textAnchor="middle" fill="#cbd5e1" fontSize="9">
+                <text x="65" y="38" textAnchor="middle" fill="#cbd5e1" fontSize="9">
                   {currentScenario.stageType === 'market'
                     ? 'Frescos &bull; Kilos'
                     : currentScenario.stageType === 'station'
@@ -1917,65 +1925,39 @@ export default function MflLanguageLab({
               </g>
 
               {/* Stage Props (Procedural SVGs based on stageType) */}
-              <g transform="translate(195, 140)">
-                {/* Table or Pedestal Stand */}
+              <g transform="translate(195, 95)">
                 {currentScenario.stageType === 'roman' ? (
                   <>
-                    {/* Fluted Roman Marble Pedestal */}
-                    <rect x="52" y="32" width="38" height="48" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
-                    <line x1="60" y1="32" x2="60" y2="80" stroke="#cbd5e1" strokeWidth="1.5" />
-                    <line x1="71" y1="32" x2="71" y2="80" stroke="#cbd5e1" strokeWidth="1.5" />
-                    <line x1="82" y1="32" x2="82" y2="80" stroke="#cbd5e1" strokeWidth="1.5" />
-                    <rect x="46" y="24" width="50" height="8" rx="2" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
-                    <rect x="46" y="80" width="50" height="8" rx="2" fill="#e2e8f0" stroke="#64748b" strokeWidth="1" />
-                    {/* Terracotta Amphora */}
-                    <ellipse cx="71" cy="14" rx="11" ry="14" fill="#c2410c" stroke="#7c2d12" strokeWidth="1.5" />
-                    <rect x="67" y="-2" width="8" height="6" fill="#c2410c" stroke="#7c2d12" strokeWidth="1" />
-                    {/* Amphora Handles */}
-                    <path d="M60,6 C54,10 54,18 61,20" fill="none" stroke="#7c2d12" strokeWidth="2" />
-                    <path d="M82,6 C88,10 88,18 81,20" fill="none" stroke="#7c2d12" strokeWidth="2" />
-                    {/* Papyrus Scroll */}
-                    <rect x="74" y="16" width="22" height="6" rx="2" fill="#fef08a" stroke="#ca8a04" strokeWidth="1" />
-                    <rect x="82" y="16" width="3" height="6" fill="#dc2626" />
+                    <rect x="52" y="24" width="38" height="34" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
+                    <ellipse cx="71" cy="12" rx="11" ry="12" fill="#c2410c" stroke="#7c2d12" strokeWidth="1.5" />
                   </>
                 ) : (
                   <>
-                    <rect x="68" y="35" width="6" height="45" fill="#475569" />
-                    <ellipse cx="71" cy="80" rx="28" ry="6" fill="#334155" />
-                    <ellipse cx="71" cy="35" rx="55" ry="14" fill="url(#tableWood)" stroke="#d97706" strokeWidth="2" />
+                    <rect x="68" y="25" width="6" height="32" fill="#475569" />
+                    <ellipse cx="71" cy="56" rx="24" ry="5" fill="#334155" />
+                    <ellipse cx="71" cy="25" rx="46" ry="11" fill="url(#tableWood)" stroke="#d97706" strokeWidth="2" />
 
                     {currentScenario.stageType === 'cafe' && (
                       <>
-                        <ellipse cx="70" cy="30" rx="14" ry="4" fill="#ffffff" />
-                        <rect x="62" y="18" width="16" height="12" rx="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
-                        <ellipse cx="70" cy="20" rx="7" ry="2" fill="#78350f" />
-                        <path d="M66,16 Q64,10 68,6" stroke="#93c5fd" strokeWidth="1.5" fill="none" opacity="0.75" />
-                        <path d="M72,16 Q75,10 71,5" stroke="#93c5fd" strokeWidth="1.5" fill="none" opacity="0.75" />
+                        <ellipse cx="70" cy="20" rx="12" ry="3.5" fill="#ffffff" />
+                        <rect x="63" y="10" width="14" height="10" rx="2" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
+                        <ellipse cx="70" cy="12" rx="6" ry="2" fill="#78350f" />
                       </>
                     )}
 
                     {currentScenario.stageType === 'market' && (
                       <>
-                        <rect x="48" y="14" width="44" height="20" rx="2" fill="#a16207" stroke="#78350f" strokeWidth="1.5" />
-                        <circle cx="58" cy="18" r="6" fill="#ea580c" />
-                        <circle cx="70" cy="17" r="5.5" fill="#dc2626" />
-                        <circle cx="82" cy="18" r="6" fill="#ea580c" />
+                        <rect x="50" y="10" width="38" height="16" rx="2" fill="#a16207" stroke="#78350f" strokeWidth="1.5" />
+                        <circle cx="58" cy="14" r="5" fill="#ea580c" />
+                        <circle cx="68" cy="13" r="4.5" fill="#dc2626" />
+                        <circle cx="78" cy="14" r="5" fill="#ea580c" />
                       </>
                     )}
 
                     {currentScenario.stageType === 'station' && (
                       <>
-                        <rect x="52" y="14" width="38" height="20" rx="4" fill="#0284c7" stroke="#0369a1" strokeWidth="1.5" />
-                        <line x1="56" y1="20" x2="84" y2="20" stroke="#ffffff" strokeWidth="1.5" />
-                        <line x1="56" y1="26" x2="74" y2="26" stroke="#bae6fd" strokeWidth="1.5" />
-                      </>
-                    )}
-
-                    {currentScenario.stageType === 'library' && (
-                      <>
-                        <rect x="54" y="24" width="34" height="8" rx="1" fill="#b91c1c" />
-                        <rect x="56" y="18" width="30" height="7" rx="1" fill="#1d4ed8" />
-                        <rect x="58" y="12" width="26" height="7" rx="1" fill="#047857" />
+                        <rect x="52" y="10" width="34" height="16" rx="4" fill="#0284c7" stroke="#0369a1" strokeWidth="1.5" />
+                        <line x1="56" y1="15" x2="80" y2="15" stroke="#ffffff" strokeWidth="1.5" />
                       </>
                     )}
                   </>
@@ -1983,95 +1965,154 @@ export default function MflLanguageLab({
               </g>
 
               {/* Character Avatar Stage Node */}
-              <g transform="translate(360, 68)">
-                <circle cx="35" cy="35" r="32" fill="#1e1b4b" stroke="#6366f1" strokeWidth="2.5" />
-                <text x="35" y="44" textAnchor="middle" fontSize="30">
+              <g transform="translate(370, 48)">
+                <circle cx="34" cy="34" r="30" fill="#1e1b4b" stroke="#6366f1" strokeWidth="2.5" />
+                <text x="34" y="43" textAnchor="middle" fontSize="28">
                   {currentTurn.avatar}
                 </text>
-                <rect x="2" y="74" width="66" height="18" rx="5" fill="#312e81" />
-                <text x="35" y="87" textAnchor="middle" fill="#fef3c7" fontSize="10" fontWeight="bold">
+                <rect x="4" y="68" width="60" height="16" rx="4" fill="#312e81" />
+                <text x="34" y="80" textAnchor="middle" fill="#fef3c7" fontSize="9.5" fontWeight="bold">
                   {currentTurn.speaker}
                 </text>
               </g>
-
-              {/* Dynamic Speech Bubble */}
-              <g transform="translate(450, 60)">
-                <rect width="320" height="92" rx="12" fill="#ffffff" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
-                {/* Speech Bubble Pointer */}
-                <polygon points="0,35 -14,40 0,47" fill="#ffffff" />
-                {/* Target Language Phrase */}
-                <text x="16" y="28" fill="#0f172a" fontSize="13" fontWeight="bold">
-                  {currentTurn.phrase.length > 40 ? currentTurn.phrase.slice(0, 38) + '...' : currentTurn.phrase}
-                </text>
-                {/* English Subtitle */}
-                {showSubtitles && (
-                  <text x="16" y="48" fill="#64748b" fontSize="11" fontStyle="italic">
-                    "{currentTurn.english.length > 44 ? currentTurn.english.slice(0, 42) + '...' : currentTurn.english}"
-                  </text>
-                )}
-                {/* Cultural Etiquette Tooltip */}
-                {currentTurn.culturalNote && (
-                  <text x="16" y="74" fill="#2563eb" fontSize="9.5" fontWeight="600">
-                    💡 Note: {currentTurn.culturalNote.length > 50 ? currentTurn.culturalNote.slice(0, 48) + '...' : currentTurn.culturalNote}
-                  </text>
-                )}
-              </g>
             </svg>
+          </div>
 
-            {/* Quick Action Floating Bar on SVG Canvas */}
+          {/* Responsive High-Legibility Conversation Card (Zero Pinch to Zoom!) */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+              border: '1.5px solid #4338ca',
+              borderRadius: '14px',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
+            {/* Speaker Header with Audio Actions */}
             <div
               style={{
-                position: 'absolute',
-                bottom: '12px',
-                right: '16px',
                 display: 'flex',
-                gap: '8px',
+                justifyContent: 'space-between',
                 alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+                borderBottom: '1px solid rgba(99, 102, 241, 0.25)',
+                paddingBottom: '10px',
               }}
             >
-              <button
-                type="button"
-                onClick={() => handleSpeak(currentTurn.audioPrompt || currentTurn.phrase)}
-                style={{
-                  background: '#4f46e5',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 14px',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 8px rgba(79, 70, 229, 0.4)',
-                }}
-              >
-                <span>🔊 Hear Speaker</span>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>{currentTurn.avatar}</span>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#fef3c7' }}>
+                    {currentTurn.speaker}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#a5b4fc' }}>
+                    Step {turnIdx + 1} of {currentScenario.turns.length} &bull; {currentScenario.title}
+                  </div>
+                </div>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => handleStartVoicePractice(currentTurn.options?.[0]?.text || currentTurn.phrase)}
+              {/* Action Buttons: Listen & Speak */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => handleSpeak(currentTurn.audioPrompt || currentTurn.phrase)}
+                  style={{
+                    background: '#4f46e5',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.4)',
+                  }}
+                  title="Hear native speaker pronunciation"
+                >
+                  <span>🔊 Hear Speaker</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleStartVoicePractice(currentTurn.options?.[0]?.text || currentTurn.phrase)}
+                  style={{
+                    background: isListening ? '#dc2626' : '#059669',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.4)',
+                    animation: isListening ? 'pulse 1.2s infinite' : 'none',
+                  }}
+                  title="Practice speaking into your microphone"
+                >
+                  <span>{isListening ? '🛑 Listening...' : '🎙️ Practice Speaking'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Target Language Phrase in Large, Crisp, Untruncated Font */}
+            <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 800,
+                lineHeight: 1.45,
+                color: '#ffffff',
+                wordBreak: 'break-word',
+                letterSpacing: '0.01em',
+              }}
+            >
+              &ldquo;{currentTurn.phrase}&rdquo;
+            </div>
+
+            {/* English Subtitle (Untruncated) */}
+            {showSubtitles && (
+              <div
                 style={{
-                  background: isListening ? '#dc2626' : '#059669',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 14px',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.4)',
-                  animation: isListening ? 'pulse 1.2s infinite' : 'none',
+                  fontSize: '0.94rem',
+                  color: '#cbd5e1',
+                  fontStyle: 'italic',
+                  lineHeight: 1.4,
+                  paddingLeft: '10px',
+                  borderLeft: '3px solid #6366f1',
                 }}
               >
-                <span>{isListening ? '🛑 Listening...' : '🎙️ Practice Speaking'}</span>
-              </button>
-            </div>
+                &ldquo;{currentTurn.english}&rdquo;
+              </div>
+            )}
+
+            {/* Cultural Etiquette Tooltip */}
+            {currentTurn.culturalNote && (
+              <div
+                style={{
+                  background: 'rgba(37, 99, 235, 0.15)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  fontSize: '0.82rem',
+                  color: '#93c5fd',
+                  lineHeight: 1.4,
+                }}
+              >
+                💡 <strong>Cultural Context:</strong> {currentTurn.culturalNote}
+              </div>
+            )}
           </div>
 
           {/* Voice Practice Real-Time Feedback */}
