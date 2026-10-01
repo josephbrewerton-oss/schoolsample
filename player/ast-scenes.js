@@ -1933,6 +1933,107 @@
       render(t) {
         return `<rect width="800" height="480" fill="#1c1917"/><text x="400" y="240" fill="#fef08a" font-size="20" font-weight="bold" text-anchor="middle">The Globe Theatre: Shakespeare & Iambic Pentameter</text>`;
       }
+    },
+    'languages': {
+      id: 'languages',
+      stage: 'KS2/KS3 MFL',
+      title: 'MFL & Polyglot Studio: Spanish, French & Latin',
+      duration: 15.0,
+      keyframes: [
+        { t: 0.00, title: 'Step 1: The Soundboard', rule: 'Phonics first: Sound-to-spelling correspondence across European languages.' },
+        { t: 0.35, title: 'Step 2: The Stem & Ending', rule: 'Morphology: Stripping the infinitive (-ar, -er, -ir) and attaching person markers.' },
+        { t: 0.70, title: 'Step 3: Pro-Drop Syntax', rule: 'Spanish & Latin omit pronouns ("Hablo") because the ending encodes the subject.' },
+        { t: 1.00, title: 'Step 4: Polyglot Mastery', rule: '60% of academic English connects back to Latin and Romance language cognates.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.35, en: "Welcome to the Polyglot Lab. Let's explore how Spanish, French, and Latin construct meaning through sounds and stems.", es: "Bienvenidos al Laboratorio Políglota. Exploremos cómo el español, francés y latín construyen significado." },
+        { start: 0.35, end: 0.70, en: "Notice how the verb stem stays stable while the ending signals WHO is doing the action.", es: "Observa cómo la raíz del verbo se mantiene estable mientras la terminación indica QUIÉN realiza la acción." },
+        { start: 0.70, end: 1.00, en: "Because the ending uniquely tells us the subject, Spanish and Latin drop the pronoun: 'Hablo' means 'I speak'.", es: "Debido a que la terminación indica el sujeto, el español no necesita el pronombre: 'Hablo' ya significa 'Yo hablo'." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.38,
+            title: 'Verb Morphology Challenge',
+            prompt: 'In Spanish, what does the verb ending "-o" indicate in words like "hablo" and "como"?',
+            options: [
+              'First person singular: "I" (yo)',
+              'Plural: "we" (nosotros)',
+              'Past tense yesterday'
+            ],
+            answer: 0,
+            explanation: 'The "-o" ending in Spanish regular present tense uniquely signals the first person singular ("I").'
+          }
+        ]
+      },
+      mount(container) {
+        container.innerHTML = `
+          <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="lang-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#0b132b"/>
+                <stop offset="100%" stop-color="#1c2541"/>
+              </linearGradient>
+            </defs>
+            <rect width="800" height="480" fill="url(#lang-bg)"/>
+            <text x="400" y="55" text-anchor="middle" fill="#fef08a" font-size="20" font-weight="900" letter-spacing="1">MFL &amp; POLYGLOT MORPHOLOGY ENGINE</text>
+            <text x="400" y="80" text-anchor="middle" fill="#94a3b8" font-size="12">Spanish &bull; French &bull; Latin &bull; English Etymology</text>
+
+            <g transform="translate(100, 110)">
+              <rect x="0" y="0" width="180" height="120" rx="12" fill="#1e1b4b" stroke="#6366f1" stroke-width="2"/>
+              <text x="90" y="32" text-anchor="middle" fill="#fef3c7" font-size="16" font-weight="bold">🇪🇸 Español</text>
+              <text x="90" y="60" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="900">habl + <tspan fill="#f59e0b">o</tspan></text>
+              <text x="90" y="85" text-anchor="middle" fill="#cbd5e1" font-size="11">"I speak" (Pro-drop)</text>
+
+              <rect x="210" y="0" width="180" height="120" rx="12" fill="#1e1b4b" stroke="#3b82f6" stroke-width="2"/>
+              <text x="300" y="32" text-anchor="middle" fill="#fef3c7" font-size="16" font-weight="bold">🇫🇷 Français</text>
+              <text x="300" y="60" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="900">je parl + <tspan fill="#f59e0b">e</tspan></text>
+              <text x="300" y="85" text-anchor="middle" fill="#cbd5e1" font-size="11">Silent final "-e"</text>
+
+              <rect x="420" y="0" width="180" height="120" rx="12" fill="#1e1b4b" stroke="#8b5cf6" stroke-width="2"/>
+              <text x="510" y="32" text-anchor="middle" fill="#fef3c7" font-size="16" font-weight="bold">🏛️ Lingua Latina</text>
+              <text x="510" y="60" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="900">am + <tspan fill="#f59e0b">o</tspan></text>
+              <text x="510" y="85" text-anchor="middle" fill="#cbd5e1" font-size="11">English: "Amiable"</text>
+            </g>
+
+            <g id="morphology-interactive-bar" transform="translate(100, 260)">
+              <rect width="600" height="180" rx="14" fill="#0f172a" stroke="#d97706" stroke-width="2"/>
+              <text x="300" y="35" text-anchor="middle" fill="#fde68a" font-size="14" font-weight="bold">DYNAMIC CONJUGATION PARADIGM</text>
+              
+              <text x="120" y="75" text-anchor="middle" fill="#94a3b8" font-size="12">Subject Pronoun</text>
+              <rect x="60" y="90" width="120" height="50" rx="8" fill="#1e293b"/>
+              <text id="pronoun-display" x="120" y="122" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="bold">Yo (I)</text>
+
+              <text x="240" y="124" text-anchor="middle" fill="#d97706" font-size="24" font-weight="900">+</text>
+
+              <text x="340" y="75" text-anchor="middle" fill="#94a3b8" font-size="12">Invariable Stem</text>
+              <rect x="280" y="90" width="120" height="50" rx="8" fill="#1e293b"/>
+              <text x="340" y="122" text-anchor="middle" fill="#38bdf8" font-size="18" font-weight="900">habl-</text>
+
+              <text x="440" y="124" text-anchor="middle" fill="#d97706" font-size="24" font-weight="900">+</text>
+
+              <text x="520" y="75" text-anchor="middle" fill="#94a3b8" font-size="12">Person Suffix</text>
+              <rect x="460" y="90" width="120" height="50" rx="8" fill="#78350f" stroke="#f59e0b" stroke-width="1.5"/>
+              <text id="suffix-display" x="520" y="122" text-anchor="middle" fill="#fde68a" font-size="20" font-weight="900">-o</text>
+            </g>
+          </svg>
+        `;
+        return {
+          pronoun: container.querySelector('#pronoun-display'),
+          suffix: container.querySelector('#suffix-display')
+        };
+      },
+      update(t, elements) {
+        if (!elements) return;
+        const cycle = Math.floor(t * 6) % 6;
+        const pronouns = ['Yo (I)', 'Tú (You)', 'Él (He)', 'Nosotros (We)', 'Vosotros (You all)', 'Ellos (They)'];
+        const suffixes = ['-o', '-as', '-a', '-amos', '-áis', '-an'];
+        if (elements.pronoun) elements.pronoun.textContent = pronouns[cycle];
+        if (elements.suffix) elements.suffix.textContent = suffixes[cycle];
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#1c2541"/><text x="400" y="240" fill="#fef08a" font-size="20" font-weight="bold" text-anchor="middle">MFL &amp; Polyglot Studio</text>`;
+      }
     }
   };
 
@@ -1958,6 +2059,12 @@
         'hamlet': 'shakespeare',
         'romeo': 'shakespeare',
         'juliet': 'shakespeare',
+        'languages': 'languages',
+        'mfl': 'languages',
+        'spanish': 'languages',
+        'french': 'languages',
+        'latin': 'languages',
+        'polyglot': 'languages',
         'fraction': 'fractions',
         'fractions': 'fractions',
         'solarsystem': 'solar-system',
