@@ -233,6 +233,12 @@ export default function PersistentNavbar(): React.JSX.Element {
       desc: 'Parametric curriculum visual models, synchronized narration & 3D simulations',
     },
     {
+      to: '/player?preset=languages&mode=game',
+      icon: '🌍',
+      title: 'MFL & Polyglot Studio',
+      desc: 'Spanish, French & Latin phonics soundboard, verb wheels & vocab sprints',
+    },
+    {
       to: '/practice-lab',
       icon: '⚡',
       title: 'Practice Lab',

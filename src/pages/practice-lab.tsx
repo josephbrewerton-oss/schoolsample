@@ -1,6 +1,6 @@
 // src/pages/practice-lab.tsx
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import NeuralLabCanvas from '../components/NeuralLabCanvas';
 import NanoAssistantPanel from '../components/NanoAssistantPanel';
 import PageMeta from '../components/PageMeta';
@@ -242,6 +242,104 @@ export default function PracticeLabPage() {
               <p style={{ color: '#94a3b8', fontSize: '0.92rem', margin: 0 }}>
                 Interactive curriculum drills, adaptive question mastery, and on-device Socratic guidance.
               </p>
+            </div>
+
+            {/* Quick Switcher for Languages & MFL Lab */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px',
+                background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                border: '1px solid #4338ca',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                marginBottom: '1.25rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.25rem' }}>🌍</span>
+                <div>
+                  <span style={{ fontSize: '0.86rem', color: '#fef3c7', fontWeight: 700 }}>
+                    Modern Foreign Languages &amp; EAL Booster:
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: '#cbd5e1', marginLeft: '6px' }}>
+                    Phonics soundboards, verb conjugation wheels &amp; rapid vocab sprints with native audio.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveStage('Key Stage 2');
+                    setActiveSubject('Spanish');
+                    setActiveUnit('Spanish Greetings & Introductions');
+                  }}
+                  style={{
+                    background: '#312e81',
+                    color: '#c7d2fe',
+                    border: '1px solid #6366f1',
+                    borderRadius: '8px',
+                    padding: '5px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🇪🇸 KS2 Spanish Drill</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveStage('Key Stage 3');
+                    setActiveSubject('Spanish');
+                    setActiveUnit('Spanish Present Tense: Regular Verbs (-ar, -er, -ir)');
+                  }}
+                  style={{
+                    background: '#312e81',
+                    color: '#c7d2fe',
+                    border: '1px solid #6366f1',
+                    borderRadius: '8px',
+                    padding: '5px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>🇪🇸 KS3 Verbs Drill</span>
+                </button>
+
+                <Link
+                  to="/player?preset=languages&mode=game"
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    textDecoration: 'none',
+                    borderRadius: '8px',
+                    padding: '5px 14px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  }}
+                >
+                  <span>🚀 Open Polyglot Studio</span>
+                  <span>➔</span>
+                </Link>
+              </div>
             </div>
 
             <ComponentGuard label="NeuralLabCanvas">

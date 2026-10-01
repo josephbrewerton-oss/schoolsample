@@ -120,11 +120,13 @@ export function parseSExpr(input: string): SExprAST {
  * Handles escaped quotes within strings cleanly.
  */
 export function tokenize(str: string): string[] {
-  const regex = /"([^"\\]*(?:\\.[^"\\]*)*)"|([()[\]])|([^\s()[\]]+)/g;
+  const regex = /"((?:[^"\\]|\\.)*)"|([()[\]])|([^\s()[\]]+)/g;
   const tokens: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = regex.exec(str)) !== null) {
-    if (match[1].length > 0) tokens.push(match[1]);
+    if (match[0] && match[0].length > 0) {
+      tokens.push(match[0]);
+    }
   }
   return tokens;
 }

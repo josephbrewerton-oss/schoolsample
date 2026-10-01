@@ -648,5 +648,47 @@ body {
   }
 }
 
+/* ==========================================================================
+   BROWSER-NATIVE PERFORMANCE & RENDERING SUPERPOWERS
+   Zero-JavaScript Layout Virtualization, View Transitions & Overscroll Control
+   ========================================================================== */
+
+/* 1. Native Layout Virtualization (Off-screen rendering bypass) */
+.browser-virtualized-item,
+.stj-lesson-card,
+.stj-curriculum-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}
+
+/* 2. Touch Overscroll Containment (Prevents accidental pull-to-refresh during canvas interactions) */
+#ast-persistent-viewport,
+.interactive-canvas-container,
+.touch-draw-surface {
+  overscroll-behavior-y: contain;
+  touch-action: manipulation;
+}
+
+/* 3. Native Smooth View Transitions */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.18s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 4. Native Accessibility: Prefers-Reduced-Motion Honor */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 
 
