@@ -2,7 +2,7 @@
  * static/player/player-ui.js
  * 
  * St Joseph's AST Vector Media Player — UI Controller
- * Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+ * Copyright (c) 2026 Joseph Brewerton.
  * SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
  * 
  * AST Vector Media Player UI Controller

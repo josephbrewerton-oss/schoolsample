@@ -2,7 +2,7 @@
  * static/player/ast-compiler.js
  * 
  * St Joseph's AST Vector Media Player — SlideScript Compiler & Decompiler
- * Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+ * Copyright (c) 2026 Joseph Brewerton.
  * SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
  * 
  * AST Slide-Script Compiler & De-compiler for Non-Technical Educators
