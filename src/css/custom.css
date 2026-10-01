@@ -535,6 +535,27 @@ html[data-data-saver="true"] .ast-viewport-stage {
   }
 }
 
+/* Mobile Bottom Navigation Dock */
+.mobile-bottom-dock-container {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-dock-container {
+    display: flex !important;
+  }
+
+  /* Ensure bottom content is never hidden behind the persistent mobile dock */
+  #ast-persistent-viewport {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Make sure footer has appropriate bottom margin on mobile */
+  #persistent-site-footer {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
 /* Mobile Drawer Smooth Slide Down */
 #mobile-nav-drawer {
   animation: navDrawerFadeIn 0.15s ease-out;

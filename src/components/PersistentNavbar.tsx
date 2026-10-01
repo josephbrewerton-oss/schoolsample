@@ -100,6 +100,24 @@ export default function PersistentNavbar(): React.JSX.Element {
     };
   }, []);
 
+  // Listen for mobile bottom nav drawer toggle
+  useEffect(() => {
+    const handleDrawerEvent = (e: any) => {
+      if (typeof e.detail?.open === 'boolean') {
+        setMobileMenuOpen(e.detail.open);
+      } else {
+        setMobileMenuOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('stj_toggle_mobile_drawer', handleDrawerEvent);
+    return () => window.removeEventListener('stj_toggle_mobile_drawer', handleDrawerEvent);
+  }, []);
+
+  // Broadcast drawer open state to bottom dock
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('stj_mobile_drawer_state', { detail: { open: mobileMenuOpen } }));
+  }, [mobileMenuOpen]);
+
   useEffect(() => {
     const handleSyncUpdate = () => {
       setIsOfflineSynced(isOfflineSyncComplete());
@@ -912,10 +930,11 @@ export default function PersistentNavbar(): React.JSX.Element {
             </button>
           )}
 
-          {/* Standalone Player Quick Launcher */}
+          {/* Standalone Player Quick Launcher (Desktop only; on mobile accessible via bottom dock) */}
           <NavLink
             to="/player"
             id="navbar-player-btn"
+            className="navbar-action-desktop-only"
             title="Launch Interactive Visual Lab & Simulations"
             style={({ isActive }) => ({
               background: isActive
@@ -941,13 +960,14 @@ export default function PersistentNavbar(): React.JSX.Element {
             })}
           >
             <span>🎬</span>
-            <span className="navbar-action-desktop-only">Visual Lab</span>
+            <span>Visual Lab</span>
           </NavLink>
 
-          {/* Standalone Settings Button (Separated from Admin) */}
+          {/* Standalone Settings Button (Desktop only; on mobile accessible via bottom dock drawer) */}
           <NavLink
             to="/settings"
             id="navbar-settings-btn"
+            className="navbar-action-desktop-only"
             title="System Settings: Audio, Sensory, Language, AI & Offline Storage"
             style={({ isActive }) => ({
               background: isActive
@@ -973,7 +993,7 @@ export default function PersistentNavbar(): React.JSX.Element {
             })}
           >
             <span>⚙️</span>
-            <span className="navbar-action-desktop-only">Settings</span>
+            <span>Settings</span>
           </NavLink>
 
           <button
@@ -1020,26 +1040,47 @@ export default function PersistentNavbar(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer with Backdrop */}
       {mobileMenuOpen && (
-        <div
-          id="mobile-nav-drawer"
-          role="region"
-          aria-label="Mobile Navigation Drawer"
-          style={{
-            backgroundColor: colorMode === 'dark' ? '#0f172a' : '#ffffff',
-            borderTop: `1px solid ${colorMode === 'dark' ? '#1e293b' : '#e2e8f0'}`,
-            padding: '1rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-            maxHeight: 'calc(100dvh - 54px)',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-            boxSizing: 'border-box',
-            width: '100%',
-          }}
-        >
+        <>
+          <div
+            id="mobile-nav-backdrop"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.55)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              zIndex: 991,
+            }}
+          />
+          <div
+            id="mobile-nav-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation Menu"
+            style={{
+              position: 'fixed',
+              top: '54px',
+              left: 0,
+              right: 0,
+              bottom: 'calc(58px + env(safe-area-inset-bottom, 0px))',
+              zIndex: 992,
+              backgroundColor: colorMode === 'dark' ? '#0f172a' : '#ffffff',
+              borderTop: `1px solid ${colorMode === 'dark' ? '#1e293b' : '#e2e8f0'}`,
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              boxSizing: 'border-box',
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+            }}
+          >
           {/* Mobile Drawer Header with Close Button */}
           <div
             style={{
@@ -1484,7 +1525,8 @@ export default function PersistentNavbar(): React.JSX.Element {
             </div>
           </div>
         </div>
-      )}
+      </>
+    )}
 
       {/* Zero-Data Offline Storage Manager Modal */}
       <OfflineStorageManager

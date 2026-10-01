@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import UniversalTranslatorBar from './UniversalTranslatorBar';
 import PersistentNavbar from './PersistentNavbar';
 import PersistentFooter from './PersistentFooter';
+import MobileBottomNav from './MobileBottomNav';
 import ViewportSkeleton from './ViewportSkeleton';
 import { OfflineIndicator } from './OfflineIndicator';
 import GlobalPlayerModal from './GlobalPlayerModal';
@@ -191,7 +192,10 @@ export default function PersistentAppShell(): React.JSX.Element {
       {/* 4. Persistent Site Footer */}
       <PersistentFooter />
 
-      {/* 5. Zero-Data Offline Mode Status Indicator */}
+      {/* 5. Mobile Thumb-Friendly Persistent Navigation Dock */}
+      <MobileBottomNav />
+
+      {/* 6. Zero-Data Offline Mode Status Indicator */}
       <OfflineIndicator />
 
       {/* Global Interactive Media Player Caller Modal */}
