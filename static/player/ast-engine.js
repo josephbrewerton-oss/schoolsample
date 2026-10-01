@@ -324,25 +324,20 @@
       if (this.sceneCache && this.sceneCache[presetId]) {
         return this.sceneCache[presetId];
       }
-      if (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.get === 'function') {
-        const found = global.ASTSceneRegistry.get(presetId);
-        if (found) return found;
+      if (global.ASTSceneRegistry) {
+        return global.ASTSceneRegistry.get(presetId);
       }
       if (global.ASTScenes && (global.ASTScenes[presetId] || global.ASTScenes['church-tour'])) {
         return global.ASTScenes[presetId] || global.ASTScenes['church-tour'];
       }
       return {
-        id: presetId || 'standalone-scene',
+        id: presetId,
         stage: 'CURRICULUM',
-        title: 'Parametric Vector Stage',
+        title: 'Parametric Scene',
         duration: 10.0,
-        keyframes: [
-          { t: 0.0, title: 'Phase 0°', rule: 'Standalone loop initialized' },
-          { t: 0.5, title: 'Phase 180°', rule: 'Opposite cycle' }
-        ],
+        keyframes: [],
         subtitles: [],
-        rawBindings: [],
-        render: () => '<text x="400" y="240" fill="#fff" text-anchor="middle">Vector Stage Ready</text>'
+        render: () => '<text x="400" y="240" fill="#fff" text-anchor="middle">Scene Ready</text>'
       };
     }
 
@@ -1019,25 +1014,6 @@
           (registryScene && registryScene.has3D)
         );
 
-        // Standalone Fallback: If no source files exist on disk/network and no registry scene is defined
-        if (!svgText && !registryScene.render && !registryScene.mount) {
-          svgText = `<svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="fallbackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#0f172a" />
-                <stop offset="100%" stop-color="#1e293b" />
-              </linearGradient>
-            </defs>
-            <rect width="800" height="480" fill="url(#fallbackGrad)" />
-            <circle cx="400" cy="240" r="130" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="6 6" />
-            <circle id="fallback-core" cx="400" cy="240" r="28" fill="#3b82f6" />
-            <circle id="fallback-orbit" cx="400" cy="110" r="14" fill="#38bdf8" />
-            <text x="400" y="245" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">AST</text>
-            <text id="fallback-title" x="400" y="400" fill="#f8fafc" font-size="20" font-weight="bold" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">${(parsedAst && parsedAst.title) || registryScene.title || presetId || 'AST Vector Stage'}</text>
-            <text id="fallback-status" x="400" y="428" fill="#94a3b8" font-size="13" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">Standalone Vector Mode • Self-Contained</text>
-          </svg>`;
-        }
-
         scene = {
           id: presetId,
           title: (parsedAst && parsedAst.title) || registryScene.title || presetId,
@@ -1046,16 +1022,9 @@
           camera: has3D ? ((parsedAst && parsedAst.camera) || registryScene.camera || { distance: 500, pitch: 20, yaw: 0, fov: 60 }) : null,
           has3D: has3D,
           interactive: registryScene.interactive || (parsedAst && parsedAst.interactive) || null,
-          keyframes: (parsedAst && parsedAst.keyframes && parsedAst.keyframes.length) ? parsedAst.keyframes : (registryScene.keyframes || [
-            { t: 0.0, title: 'Phase 0°', rule: 'Standalone loop initialized' },
-            { t: 0.5, title: 'Phase 180°', rule: 'Opposite cycle' }
-          ]),
+          keyframes: (parsedAst && parsedAst.keyframes && parsedAst.keyframes.length) ? parsedAst.keyframes : (registryScene.keyframes || []),
           subtitles: (parsedAst && parsedAst.subtitles && parsedAst.subtitles.length) ? parsedAst.subtitles : (registryScene.subtitles || []),
-          rawBindings: (parsedAst && parsedAst.bindings && parsedAst.bindings.length) ? parsedAst.bindings : (registryScene.bindings || [
-            { target: '#fallback-orbit', attr: 'cx', expr: '400 + Math.cos(t * Math.PI * 2) * 130' },
-            { target: '#fallback-orbit', attr: 'cy', expr: '240 + Math.sin(t * Math.PI * 2) * 130' },
-            { target: '#fallback-status', attr: 'textContent', expr: "'Phase: ' + Math.round(t * 360) + '° | 60 FPS Standalone Active'" }
-          ]),
+          rawBindings: (parsedAst && parsedAst.bindings) || [],
           svgText: svgText,
           mount: registryScene.mount,
           update: registryScene.update,
@@ -1113,25 +1082,41 @@
         this._cachedElements = null;
 
         // 1. Mount SVG template if available
-        if (scene.svgText) {
+if (scene.svgText) {
           try {
+            let safeSvg = String(scene.svgText).trim();
+            // Mitigate XML Bomb (CWE-776): Neutralize DOCTYPE and ENTITY expansion
+            if (/<!doctype|<!entity/i.test(safeSvg)) {
+              safeSvg = safeSvg
+                .replace(/<!DOCTYPE[\s\S]*?]>(\r?\n)?/gi, '')
+                .replace(/<!ENTITY[\s\S]*?>/gi, '');
+            }
+
             if (typeof DOMParser !== 'undefined') {
               const parser = new DOMParser();
-              const doc = parser.parseFromString(scene.svgText, 'image/svg+xml');
-              const rootSvg = doc.querySelector('svg');
-              if (rootSvg) {
-                container.innerHTML = rootSvg.innerHTML;
-              } else {
-                container.innerHTML = scene.svgText;
+              const doc = parser.parseFromString(safeSvg, 'image/svg+xml');
+
+              if (!doc.querySelector('parsererror')) {
+                const rootSvg = doc.querySelector('svg');
+                if (rootSvg) {
+                  // Neutralize potential script execution vectors inside SVG
+                  rootSvg.querySelectorAll('script, foreignObject').forEach(el => el.remove());
+                  container.replaceChildren(...rootSvg.childNodes);
+                }
               }
-            } else {
-              container.innerHTML = scene.svgText;
             }
-          } catch {
-            container.innerHTML = scene.svgText;
+          } catch (err) {
+            console.warn('SVG mount bypassed due to parse failure:', err);
           }
         } else if (typeof scene.render === 'function' && typeof scene.mount !== 'function') {
-          container.innerHTML = scene.render(this.progress);
+          const rendered = scene.render(this.progress);
+          if (rendered instanceof Node) {
+            container.replaceChildren(rendered);
+          } else if (typeof rendered === 'string') {
+            const temp = document.createElement('div');
+            temp.textContent = rendered;
+            container.replaceChildren(temp);
+          }
         }
 
         // 2. Run procedural mount hook (can populate existing SVG nodes or build its own)
@@ -1499,24 +1484,16 @@
         }
       }
 
-      // 2. Direct 2D AST Math Bindings with Error Isolation
+      // 2. Direct 2D AST Math Bindings
       if (this.activeBindings && this.activeBindings.length) {
         for (let i = 0; i < this.activeBindings.length; i++) {
           const b = this.activeBindings[i];
-          if (b.node && !b.disabled) {
-            try {
-              const val = b.evalFn(t, Math);
-              if (b.attr === 'textContent') {
-                b.node.textContent = String(val);
-              } else {
-                b.node.setAttribute(b.attr, String(val));
-              }
-            } catch (evalErr) {
-              b.errorCount = (b.errorCount || 0) + 1;
-              if (b.errorCount > 3) {
-                b.disabled = true;
-                console.warn(`[AST Engine] Disabled failing binding '${b.attr}' on target:`, evalErr);
-              }
+          if (b.node) {
+            const val = b.evalFn(t, Math);
+            if (b.attr === 'textContent') {
+              b.node.textContent = String(val);
+            } else {
+              b.node.setAttribute(b.attr, String(val));
             }
           }
         }
@@ -1524,11 +1501,7 @@
 
       // 3. Procedural update hook if present
       if (this.scene && typeof this.scene.update === 'function' && this._cachedElements) {
-        try {
-          this.scene.update(t, this._cachedElements, this);
-        } catch (updateErr) {
-          console.warn('[AST Engine] Scene update hook error:', updateErr);
-        }
+        this.scene.update(t, this._cachedElements, this);
       }
     }
 
@@ -1554,63 +1527,46 @@
     }
 
     /**
-     * Main Animation Tick Loop with Delta-Time Clamping & Fault-Tolerant Error Recovery
+     * Main Animation Tick Loop with Delta-Time Clamping
      */
     tick(currentTimestamp) {
-      try {
-        if (this.lastTimestamp !== null) {
-          const rawDeltaSec = (currentTimestamp - this.lastTimestamp) / 1000.0;
-          const deltaSec = Math.min(rawDeltaSec, 0.1);
+      if (this.lastTimestamp !== null) {
+        const rawDeltaSec = (currentTimestamp - this.lastTimestamp) / 1000.0;
+        const deltaSec = Math.min(rawDeltaSec, 0.1);
 
-          // Micro-Physics Subsystem Tick (< 1.5 KB zero-bloat)
-          if (this.physics && this.physics.enabled && this.physics.bodies.length > 0) {
-            try {
-              this.physics.update(deltaSec);
-            } catch (physErr) {
-              console.warn('[AST Engine] Micro-physics tick recovered from error:', physErr);
+        // Micro-Physics Subsystem Tick (< 1.5 KB zero-bloat)
+        if (this.physics && this.physics.enabled && this.physics.bodies.length > 0) {
+          this.physics.update(deltaSec);
+        }
+
+        if (this.isPlaying) {
+          this.progress += (deltaSec / this.durationSec) * this.speed;
+
+          if (this.progress >= 1.0) {
+            if (this.loop) {
+              this.progress = 0.0;
+              this.lastSpokenIndex = -1;
+            } else {
+              this.progress = 1.0;
+              this.pause();
+              this.emit('ended', { duration: this.durationSec });
             }
           }
 
-          if (this.isPlaying) {
-            this.progress += (deltaSec / this.durationSec) * this.speed;
+          this.updateActiveKeyframeAndSpeech(false);
+          this.applyBindings(this.progress);
 
-            if (this.progress >= 1.0) {
-              if (this.loop) {
-                this.progress = 0.0;
-                this.lastSpokenIndex = -1;
-              } else {
-                this.progress = 1.0;
-                this.pause();
-                this.emit('ended', { duration: this.durationSec });
-              }
-            }
-
-            try {
-              this.updateActiveKeyframeAndSpeech(false);
-            } catch (kfErr) {
-              console.warn('[AST Engine] Keyframe update error:', kfErr);
-            }
-
-            try {
-              this.applyBindings(this.progress);
-            } catch (bindErr) {
-              console.warn('[AST Engine] Binding update error:', bindErr);
-            }
-
-            this.emit('timeupdate', {
-              progress: this.progress,
-              currentTime: this.progress * this.durationSec,
-              duration: this.durationSec
-            });
-          }
+          this.emit('timeupdate', {
+            progress: this.progress,
+            currentTime: this.progress * this.durationSec,
+            duration: this.durationSec
+          });
         }
-      } catch (tickErr) {
-        console.error('[AST Engine] Animation tick recovered from unhandled error:', tickErr);
-      } finally {
-        this.lastTimestamp = currentTimestamp;
-        if (typeof requestAnimationFrame !== 'undefined') {
-          this.animationFrameId = requestAnimationFrame(this.tick);
-        }
+      }
+
+      this.lastTimestamp = currentTimestamp;
+      if (typeof requestAnimationFrame !== 'undefined') {
+        this.animationFrameId = requestAnimationFrame(this.tick);
       }
     }
 
