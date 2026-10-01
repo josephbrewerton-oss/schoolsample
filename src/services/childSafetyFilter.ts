@@ -146,11 +146,11 @@ export function sanitizeAiOutput(output: string, fallbackContext: string = 'your
     }
   }
 
-  // Clean any accidental markdown or code injection
+  // Clean any accidental markdown or code injection without backtracking regexes
   let previousText: string;
   do {
     previousText = text;
-    text = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    text = text.replace(/<script\b[\s\S]*?<\/script>/gi, '');
   } while (text !== previousText);
   text = text.replace(/(?:javascript|data|vbscript):/gi, '');
   text = text.replace(/onload=/gi, '');

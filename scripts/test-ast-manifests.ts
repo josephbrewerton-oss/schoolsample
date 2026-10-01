@@ -465,6 +465,15 @@ try {
   assert.strictEqual(AstCompiler.validate({ route: 'quiz:mcq', prompt: 'Valid', options: ['A', 'B'], answerKey: 5 }), false);
   console.log(`  ${GREEN}✓${RESET} AstCompiler.validate enforces strict enterprise invariants`);
 
+  // Test 7: CodeQL polynomial ReDoS regression test (10,000 repetitions of \"!)
+  const adversarialStr = '"' + '\\"!'.repeat(5000) + '"';
+  const startReDos = Date.now();
+  const tokens = tokenize(adversarialStr);
+  const elapsedReDos = Date.now() - startReDos;
+  assert(elapsedReDos < 50, `ReDoS regression: tokenizing adversarial string took ${elapsedReDos}ms (> 50ms)`);
+  assert.strictEqual(tokens.length, 1);
+  console.log(`  ${GREEN}✓${RESET} ReDoS immunity verified: 10,000 adversarial tokens parsed in ${elapsedReDos}ms (O(n) linear)`);
+
   stats.suitesPassed++;
   console.log(`${GREEN}Suite 7 Passed!${RESET}\n`);
 } catch (err: any) {

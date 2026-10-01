@@ -117,17 +117,78 @@ export function parseSExpr(input: string): SExprAST {
 
 /**
  * Tokenizes an S-Expression string into individual atomic tokens, delimiters, and quoted literals.
+ * Implemented as a strictly linear O(n) character scanner without backtracking regular expressions
+ * to guarantee complete immunity against Polynomial/Exponential ReDoS attacks (CodeQL: js/polynomial-redos).
  * Handles escaped quotes within strings cleanly.
  */
 export function tokenize(str: string): string[] {
-  const regex = /"((?:[^"\\]|\\.)*)"|([()[\]])|([^\s()[\]]+)/g;
+  if (!str || typeof str !== 'string') return [];
   const tokens: string[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(str)) !== null) {
-    if (match[0] && match[0].length > 0) {
-      tokens.push(match[0]);
+  const len = str.length;
+  let i = 0;
+
+  while (i < len) {
+    const ch = str[i];
+
+    // Skip whitespace
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' || ch === '\f') {
+      i++;
+      continue;
+    }
+
+    // Delimiters
+    if (ch === '(' || ch === ')' || ch === '[' || ch === ']') {
+      tokens.push(ch);
+      i++;
+      continue;
+    }
+
+    // Quoted string literal
+    if (ch === '"') {
+      const start = i;
+      i++; // skip opening quote
+      let inEscape = false;
+      while (i < len) {
+        const c = str[i];
+        if (inEscape) {
+          inEscape = false;
+          i++;
+        } else if (c === '\\') {
+          inEscape = true;
+          i++;
+        } else if (c === '"') {
+          i++; // include closing quote
+          break;
+        } else {
+          i++;
+        }
+      }
+      tokens.push(str.slice(start, i));
+      continue;
+    }
+
+    // Atomic symbol, keyword (:kw), number, or identifier
+    const start = i;
+    while (
+      i < len &&
+      str[i] !== ' ' &&
+      str[i] !== '\t' &&
+      str[i] !== '\n' &&
+      str[i] !== '\r' &&
+      str[i] !== '\f' &&
+      str[i] !== '(' &&
+      str[i] !== ')' &&
+      str[i] !== '[' &&
+      str[i] !== ']' &&
+      str[i] !== '"'
+    ) {
+      i++;
+    }
+    if (i > start) {
+      tokens.push(str.slice(start, i));
     }
   }
+
   return tokens;
 }
 
