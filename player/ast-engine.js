@@ -1574,6 +1574,10 @@ if (scene.svgText) {
      * Hot-reloads raw SVG markup directly onto the stage container
      * Rebinds active AST expressions without losing clock state or timeline position
      */
+/**
+     * Hot-reloads raw SVG markup directly onto the stage container
+     * Rebinds active AST expressions without losing clock state or timeline position
+     */
     hotReloadSvg(svgMarkup) {
       if (!svgMarkup || typeof svgMarkup !== 'string') return false;
       try {
@@ -1583,17 +1587,21 @@ if (scene.svgText) {
         this.scene.svgText = svgMarkup;
 
         if (this._container) {
+          let safeSvg = svgMarkup.trim();
+          if (/<!doctype|<!entity/i.test(safeSvg)) {
+            safeSvg = safeSvg
+              .replace(/<!DOCTYPE[\s\S]*?]>(\r?\n)?/gi, '')
+              .replace(/<!ENTITY[\s\S]*?>/gi, '');
+          }
+
           if (typeof DOMParser !== 'undefined') {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(svgMarkup, 'image/svg+xml');
+            const doc = parser.parseFromString(safeSvg, 'image/svg+xml');
             const rootSvg = doc.querySelector('svg');
-            if (rootSvg) {
-              this._container.innerHTML = rootSvg.innerHTML;
-            } else {
-              this._container.innerHTML = svgMarkup;
+            if (rootSvg && !doc.querySelector('parsererror')) {
+              rootSvg.querySelectorAll('script, foreignObject').forEach(el => el.remove());
+              this._container.replaceChildren(...rootSvg.childNodes);
             }
-          } else {
-            this._container.innerHTML = svgMarkup;
           }
 
           // Recompile AST bindings to match newly mounted DOM nodes
