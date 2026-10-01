@@ -370,7 +370,10 @@
      */
     notifyParent(payload) {
       if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-        window.parent.postMessage({ source: 'ast-vector-player', ...payload }, '*');
+        const origin = (this.targetOrigin && this.targetOrigin !== 'null')
+          ? this.targetOrigin
+          : (window.location && window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*');
+        window.parent.postMessage({ source: 'ast-vector-player', ...payload }, origin);
       }
     }
 
