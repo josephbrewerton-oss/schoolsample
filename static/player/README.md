@@ -156,7 +156,7 @@ This standalone player suite is distributed under an explicit **Dual-Licensing C
 ### Track B: Enterprise Commercial License
 - For commercial EdTech vendors, private publishers, and LMS providers who require proprietary, closed-source integration without AGPLv3 copyleft or source-disclosure obligations.
 - 100% of commercial license fees fund Chromebooks and solar digital educational hardware for disadvantaged pupils worldwide.
-- Inquiries: `licensing@stjosephs-curriculum.internal` / `joseph.brewerton@gmail.com`
+- Inquiries: `joseph.brewerton@gmail.com`
 
 See [LICENSE](./LICENSE) and [LICENSING.md](./LICENSING.md) for full terms.
 

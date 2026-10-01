@@ -1,6 +1,6 @@
 # St Joseph's Curriculum Portal — Dual-Licensing Charter
 
-Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+Copyright (c) 2026 Joseph Brewerton
 Inspired by St Joseph's, Fishponds (Bristol), Canon Gregory, and Father Jerome Ajakaiye.
 
 ---
@@ -46,4 +46,4 @@ For organizations, commercial learning management system (LMS) providers, propri
 * Translating curriculum vector slides into regional dialects and languages.
 
 To enquire about Track B Commercial Licensing terms, contact:
-`licensing@stjosephs-curriculum.internal` / `joseph.brewerton@gmail.com`
+`joseph.brewerton@gmail.com`

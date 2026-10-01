@@ -18,7 +18,7 @@ The St Joseph's Curriculum Portal is engineered as a zero-cloud-egress, client-s
 If you discover a security vulnerability or potential data privacy concern within this project, please report it privately:
 
 1. **GitHub Private Vulnerability Reporting (Preferred):** Use the "Report a vulnerability" button under the **Security** tab of this repository.
-2. **Direct Email:** If you cannot use GitHub's reporting tool, email: **security@yourdomain.com** (replace with your contact email).
+2. **Direct Email:** If you cannot use GitHub's reporting tool, email: **joseph.brewerton@gmail.com**.
 
 ### What to Include
 * A description of the issue and potential impact.

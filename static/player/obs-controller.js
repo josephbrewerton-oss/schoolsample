@@ -2,7 +2,7 @@
  * static/player/obs-controller.js
  * 
  * St Joseph's AST Vector Media Player — OBS Studio WebSocket Controller
- * Copyright (c) 2026 St Joseph's Curriculum Engineering Team & Contributors.
+ * Copyright (c) 2026 Joseph Brewerton.
  * SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial-License
  * 
  * Native OBS Studio WebSocket v5 Broadcast Controller (RPC v1)

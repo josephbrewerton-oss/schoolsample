@@ -30,7 +30,7 @@ The **AST Vector Media Player & SlideScript Suite** is distributed under an expl
 ### Track B: Enterprise Commercial License
 - For commercial organizations wishing to integrate this player into closed-source, proprietary platforms without being bound by the AGPLv3 copyleft or source-disclosure requirements.
 - 100% of commercial license revenues fund Chromebooks and offline solar-powered digital education equipment for disadvantaged pupils.
-- Enquiries: `licensing@stjosephs-curriculum.internal` / `joseph.brewerton@gmail.com`
+- Enquiries: `joseph.brewerton@gmail.com`
 
 ---
 

@@ -242,7 +242,7 @@ Full text: https://github.com/josephbrewerton-oss/schoolsample/blob/main/LICENSE
               fontWeight: 600,
             }}
           >
-            🤝 Commercial licensing enquiries: <code>licensing@stjosephs-curriculum.internal</code>
+            🤝 Commercial licensing enquiries: <code>joseph.brewerton@gmail.com</code>
           </div>
         </div>
       </div>
