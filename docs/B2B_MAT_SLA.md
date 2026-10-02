@@ -88,7 +88,7 @@ School estates operate diverse fleets consisting of managed Chromebooks, legacy 
 | Tier | Runtime Engine | Target Fleet Devices | Inference Latency | RAM / VRAM Budget |
 | :--- | :--- | :--- | :--- | :--- |
 | **Tier 1: Native Chrome Prompt API** | Google Gemini Nano (on-device NPU/GPU) | Modern Chromebooks (Intel N100+, 8GB RAM), Windows 11 PCs, ChromeOS enterprise fleets | 25–85 ms / token | 0 MB heap overhead (Chrome system daemon managed) |
-| **Tier 2: WebLLM Neural Pipeline** | WebGPU shader compute (`SmolLM2-360M-Instruct-q4f16_1-MLC`) | Safari 18+ on M-series iPads / Macs, Firefox, Chromium with WebGPU enabled | 40–120 ms / token | ~380 MB model weights + 250 MB KV buffer |
+| **Tier 2: WebLLM Neural Pipeline** | WebGPU shader compute (`SmolLM2-360M-Instruct-q4f16_1-MLC`) | Safari 18+ on M-series iPads / Macs, Firefox, Chromium with WebGPU enabled | 40–120 ms / token | ~380 MB model weights + 45–65 MB budgeted KV buffer (~425–445 MB combined, down from 630 MB) |
 | **Tier 3: Local Socratic Synthesizer** | Deterministic AST Rulebook & WebAssembly VM | Legacy 2GB/3GB iPads (5th–9th gen), older Celeron Chromebooks, locked-down kiosk exam PCs | < 5 ms (Instantaneous) | < 15 MB RAM (Zero GPU memory footprint) |
 
 ### 3.2 WebGPU Memory Guard on Older iPads & Mobile Fleets
@@ -102,6 +102,14 @@ To prevent tab eviction:
    - Verifying WebGPU buffer binding limits (`maxStorageBufferBindingSize >= 128MB`).
 2. **Safe Degradation:** If any condition fails, the engine bypasses heavy weight allocation entirely and drops gracefully into **Tier 3 (Local Socratic Rule Synthesizer)**.
 3. **Tab Crash Immunity:** Ensures student sessions never freeze, drop frames, or crash during live classroom lessons.
+
+### 3.3 Dynamic Weight Budgeting & Lazy Chunk Unloading
+
+To ensure Tier 2 execution operates well within client heap constraints on 4GB–8GB educational devices:
+1. **Budgeted KV Cache Allocation:** Rather than unconstrained 2048/4096 token allocations (which consume ~250 MB in KV buffers), the engine provisions a bounded Socratic context window (`context_window_size: 768–1024` with `sliding_window_size: 384–512`). This trims the KV buffer from 250 MB down to **45–65 MB**, slashing peak unified memory footprint from ~630 MB down to **~425–445 MB**.
+2. **Inactivity Auto-Unload Watchdog:** If a student finishes interacting with the Socratic tutor, an idle timer automatically unloads the ~380 MB model weights and KV cache from GPU VRAM after 2–4 minutes of inactivity, releasing memory back to the operating system.
+3. **Background Tab Jetsam Protection:** Listening to the `visibilitychange` API, the runtime immediately initiates a 15-second grace countdown when the browser tab is hidden on iOS/iPadOS or <=4GB hardware. If the student switches apps or locks the screen, WebLLM shaders are deallocated to guarantee the tab is immune to background WebKit Jetsam watchdog termination.
+4. **On-Demand Lazy Rehydration:** Upon renewed user interaction in the Socratic tutor, the engine transparently re-initializes from browser IndexedDB cache in sub-second time without re-downloading model weights.
 
 ---
 

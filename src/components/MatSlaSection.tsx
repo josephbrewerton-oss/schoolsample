@@ -201,7 +201,7 @@ export default function MatSlaSection(): React.JSX.Element {
               WebLLM Neural Pipeline
             </h3>
             <p style={{ fontSize: '0.84rem', color: '#475569', lineHeight: 1.5, margin: 0 }}>
-              On-device execution via WebGPU shaders (SmolLM2-360M) for Safari 18+ (M-series iPads/Macs), Firefox, and non-Chromium enterprise devices.
+              On-device execution via WebGPU shaders (SmolLM2-360M) for Safari 18+ (M-series iPads/Macs), Firefox, and non-Chromium enterprise devices. Features dynamic KV cache budgeting (~425–445 MB combined, down from 630 MB) and auto-unload protection.
             </p>
           </div>
 

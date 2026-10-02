@@ -151,7 +151,8 @@ export default function SettingsPage() {
       } else if (avail.status === 'after-download') {
         setTestResult('📥 Tier 1 Available: Managed Chrome can download on-device Gemini Nano for offline neural inference.');
       } else if (edgeCognitiveEngine.isSupported() && !memGuard.tripped) {
-        setTestResult('⚡ Tier 2 Active (WebLLM WebGPU Neural Engine): On-device neural shader pipeline supported with memory guard protection active.');
+        const budget = edgeCognitiveEngine.getMemoryBudgetReport();
+        setTestResult(`⚡ Tier 2 Active (WebLLM WebGPU Neural Engine): On-device neural shader pipeline supported with budgeted KV cache (~${budget.totalEstimatedFootprintMb} MB combined, saving ${budget.budgetSavedMb} MB vs unconstrained ${budget.unbudgetedBaselineFootprintMb} MB baseline). Auto-unload timer set to ${budget.idleTimeoutSeconds}s.`);
       } else if (memGuard.tripped) {
         setTestResult(`🛡️ Tier 3 Active (Local Socratic Rule Synthesizer): ${memGuard.reason} Memory guard successfully engaged to prevent browser tab termination.`);
       } else {

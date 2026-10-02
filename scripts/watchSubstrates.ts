@@ -23,7 +23,9 @@ const runCascade = (filename: string | null, event: string) => {
       filename.startsWith('.') ||
       filename.endsWith('.d.ts') ||
       filename.endsWith('.ast.ts') ||
-      filename.includes('rootSubstrate.generated.ts')
+      filename.includes('rootSubstrate.generated.ts') ||
+      filename.includes('.substrate.ts') ||
+      filename.includes('substrates')
     ) {
       return;
     }

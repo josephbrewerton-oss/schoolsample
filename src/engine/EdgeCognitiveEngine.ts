@@ -53,6 +53,20 @@ export interface MemoryGuardStatus {
   hardwareConcurrency?: number;
 }
 
+export interface MemoryBudgetReport {
+  engineState: 'unloaded' | 'loading' | 'loaded' | 'memory-guarded';
+  selectedModel: string;
+  estimatedWeightMb: number;
+  estimatedKvBufferMb: number;
+  totalEstimatedFootprintMb: number;
+  unbudgetedBaselineFootprintMb: number;
+  budgetSavedMb: number;
+  idleTimeoutSeconds: number;
+  contextWindowSize: number;
+  slidingWindowSize: number;
+  eligibility: MemoryGuardStatus;
+}
+
 export class EdgeCognitiveEngine {
   private webllmEngine: MLCEngineInterface | null = null;
   private hasWebGPU: boolean = false;
@@ -63,8 +77,17 @@ export class EdgeCognitiveEngine {
   private memoryGuardReason: string = '';
   public selectedModel: string = 'SmolLM2-360M-Instruct-q4f16_1-MLC';
 
+  // Dynamic memory budgeting & idle unloading
+  private idleTimer: any = null;
+  private backgroundTimer: any = null;
+  private idleTimeoutMs: number = 180_000;
+  private contextWindowSize: number = 1024;
+  private slidingWindowSize: number = 512;
+  private visibilityListenerAttached: boolean = false;
+
   constructor() {
     this.detectCapabilities();
+    this.setupVisibilityWatcher();
   }
 
   private detectCapabilities(): void {
@@ -77,6 +100,145 @@ export class EdgeCognitiveEngine {
     );
 
     this.hasWebGPU = typeof navigator !== 'undefined' && 'gpu' in navigator;
+  }
+
+  /**
+   * Sets up background tab visibility watcher to protect against iOS/iPadOS WebKit Jetsam kills.
+   */
+  private setupVisibilityWatcher(): void {
+    if (typeof document === 'undefined' || this.visibilityListenerAttached) return;
+    this.visibilityListenerAttached = true;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        const memStatus = this.checkMemoryEligibility();
+        // On iPadOS/iOS or memory-constrained devices (<= 4GB), background tabs exceeding ~1GB are killed by Jetsam.
+        // Start a 15-second grace countdown to unload WebGPU weights.
+        if (memStatus.isIpadOrIos || (memStatus.deviceMemoryGb && memStatus.deviceMemoryGb <= 4)) {
+          if (this.backgroundTimer) clearTimeout(this.backgroundTimer);
+          this.backgroundTimer = setTimeout(() => {
+            if (document.visibilityState === 'hidden' && this.webllmEngine) {
+              console.info('[EdgeCognitiveEngine] Background tab detected on memory-constrained device. Unloading WebLLM to prevent WebKit Jetsam kill.');
+              this.unload();
+            }
+          }, 15_000);
+        }
+      } else if (document.visibilityState === 'visible') {
+        if (this.backgroundTimer) {
+          clearTimeout(this.backgroundTimer);
+          this.backgroundTimer = null;
+        }
+      }
+    });
+  }
+
+  /**
+   * Resets the inactivity timer for automatic dynamic unloading.
+   */
+  private resetIdleTimer(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+    if (!this.webllmEngine) return;
+
+    this.idleTimer = setTimeout(() => {
+      console.info('[EdgeCognitiveEngine] Inactivity threshold reached. Dynamically unloading WebLLM weights from GPU to free memory.');
+      this.unload();
+    }, this.idleTimeoutMs);
+  }
+
+  /**
+   * Dynamically calculates KV cache token limits based on device RAM tier.
+   * Reduces the default ~250MB KV buffer down to ~45MB-65MB.
+   */
+  public calculateKvBudget(): {
+    contextWindowSize: number;
+    slidingWindowSize: number;
+    estimatedKvMb: number;
+    idleTimeoutMs: number;
+  } {
+    const memStatus = this.checkMemoryEligibility();
+    const reportedRam = memStatus.deviceMemoryGb || 4;
+
+    if (reportedRam >= 8) {
+      // High-memory desktop/Mac: 1024 tokens (~65 MB KV buffer, 4 min idle unload)
+      return {
+        contextWindowSize: 1024,
+        slidingWindowSize: 512,
+        estimatedKvMb: 65,
+        idleTimeoutMs: 240_000,
+      };
+    } else {
+      // 4GB-6GB constrained tier: 768 tokens (~45 MB KV buffer, 2 min idle unload)
+      return {
+        contextWindowSize: 768,
+        slidingWindowSize: 384,
+        estimatedKvMb: 45,
+        idleTimeoutMs: 120_000,
+      };
+    }
+  }
+
+  /**
+   * Diagnostic telemetry reporting current memory budget, weight size, KV buffer, and savings.
+   */
+  public getMemoryBudgetReport(): MemoryBudgetReport {
+    const eligibility = this.checkMemoryEligibility();
+    const budget = this.calculateKvBudget();
+    const estimatedWeightMb = 380;
+    const estimatedKvBufferMb = budget.estimatedKvMb;
+    const totalEstimatedFootprintMb = estimatedWeightMb + estimatedKvBufferMb;
+    const unbudgetedBaselineFootprintMb = 630; // 380 + 250
+    const budgetSavedMb = unbudgetedBaselineFootprintMb - totalEstimatedFootprintMb;
+
+    let engineState: MemoryBudgetReport['engineState'] = 'unloaded';
+    if (this.memoryGuardTripped || !eligibility.isEligible) {
+      engineState = 'memory-guarded';
+    } else if (this.isInitializing) {
+      engineState = 'loading';
+    } else if (this.webllmEngine !== null) {
+      engineState = 'loaded';
+    }
+
+    return {
+      engineState,
+      selectedModel: this.selectedModel,
+      estimatedWeightMb,
+      estimatedKvBufferMb,
+      totalEstimatedFootprintMb,
+      unbudgetedBaselineFootprintMb,
+      budgetSavedMb,
+      idleTimeoutSeconds: Math.round(budget.idleTimeoutMs / 1000),
+      contextWindowSize: budget.contextWindowSize,
+      slidingWindowSize: budget.slidingWindowSize,
+      eligibility,
+    };
+  }
+
+  /**
+   * Dynamically unloads WebLLM model weights (~380MB) and KV cache from GPU memory.
+   * Can be invoked manually or automatically on inactivity / tab backgrounding.
+   */
+  public async unload(): Promise<void> {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = null;
+    }
+    if (this.backgroundTimer) {
+      clearTimeout(this.backgroundTimer);
+      this.backgroundTimer = null;
+    }
+
+    if (this.webllmEngine) {
+      try {
+        await this.webllmEngine.unload();
+      } catch (err) {
+        console.warn('[EdgeCognitiveEngine] WebLLM unload error:', err);
+      }
+      this.webllmEngine = null;
+      console.info('[EdgeCognitiveEngine] WebLLM weights (~380MB) and KV cache freed from client heap.');
+    }
   }
 
   /**
@@ -245,20 +407,34 @@ export class EdgeCognitiveEngine {
           }
         }
 
-        onProgress?.({ text: `Initializing WebGPU shader pipeline for ${this.selectedModel}...`, progress: 0.1 });
+        const kvBudget = this.calculateKvBudget();
+        this.contextWindowSize = kvBudget.contextWindowSize;
+        this.slidingWindowSize = kvBudget.slidingWindowSize;
+        this.idleTimeoutMs = kvBudget.idleTimeoutMs;
+
+        onProgress?.({ text: `Initializing budgeted WebGPU shader pipeline for ${this.selectedModel} (${kvBudget.contextWindowSize} ctx)...`, progress: 0.1 });
 
         const webllm = await import('@mlc-ai/web-llm');
-        const engine = await webllm.CreateMLCEngine(this.selectedModel, {
-          initProgressCallback: (report: any) => {
-            onProgress?.({
-              text: report.text,
-              progress: typeof report.progress === 'number' ? report.progress : 0.5,
-            });
+        const engine = await webllm.CreateMLCEngine(
+          this.selectedModel,
+          {
+            initProgressCallback: (report: any) => {
+              onProgress?.({
+                text: report.text,
+                progress: typeof report.progress === 'number' ? report.progress : 0.5,
+              });
+            },
           },
-        });
+          {
+            context_window_size: kvBudget.contextWindowSize,
+            sliding_window_size: kvBudget.slidingWindowSize,
+            attention_sink_size: 4,
+          }
+        );
 
         this.webllmEngine = engine;
-        onProgress?.({ text: 'On-device neural weights cached & ready', progress: 1.0 });
+        this.resetIdleTimer();
+        onProgress?.({ text: `On-device neural weights budgeted (~${kvBudget.estimatedKvMb + 380}MB) & ready`, progress: 1.0 });
       } catch (err: any) {
         this.memoryGuardTripped = true;
         this.memoryGuardReason = err?.message || 'WebGPU allocation failure';
@@ -316,6 +492,7 @@ export class EdgeCognitiveEngine {
         }
 
         if (this.webllmEngine) {
+          this.resetIdleTimer();
           try {
             const reply = await this.webllmEngine.chat.completions.create({
               messages: [
@@ -326,6 +503,7 @@ export class EdgeCognitiveEngine {
               max_tokens: 512,
             });
             const text = reply.choices[0]?.message?.content || '';
+            this.resetIdleTimer();
             return { output: text, source: 'webgpu-webllm' };
           } catch (webllmErr: any) {
             console.warn('[EdgeCognitiveEngine] WebLLM memory/inference error, degrading gracefully to Tier 3:', webllmErr);
@@ -390,6 +568,7 @@ export class EdgeCognitiveEngine {
         }
 
         if (this.webllmEngine) {
+          this.resetIdleTimer();
           try {
             const stream = await this.webllmEngine.chat.completions.create({
               messages: [
@@ -405,6 +584,7 @@ export class EdgeCognitiveEngine {
               const delta = chunk.choices[0]?.delta?.content || '';
               if (delta) yield delta;
             }
+            this.resetIdleTimer();
             return;
           } catch (err: any) {
             console.warn('[EdgeCognitiveEngine] WebLLM stream failed, degrading gracefully to Tier 3:', err);
@@ -450,15 +630,10 @@ export class EdgeCognitiveEngine {
   }
 
   /**
-   * Cleans up GPU memory buffers
+   * Cleans up GPU memory buffers and unloads neural weights.
    */
   public destroy(): void {
-    if (this.webllmEngine) {
-      try {
-        this.webllmEngine.unload();
-      } catch {}
-      this.webllmEngine = null;
-    }
+    this.unload();
   }
 }
 

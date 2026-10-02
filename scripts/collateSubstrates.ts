@@ -6,13 +6,29 @@ import { fileURLToPath } from 'url';
 
 const tsEngine: typeof ts = (ts as any).default || ts;
 
-interface SubstrateExport {
+export type SubstrateDomain = 'ui' | 'engine' | 'services' | 'core';
+
+export interface SubstrateExport {
   name: string;
   kind: 'function' | 'const' | 'class';
   returnType: string;
   params: { name: string; type: string }[];
   sourceFile: string;
   relPath: string;
+}
+
+export function getFileDomain(relPath: string): SubstrateDomain {
+  const norm = relPath.replace(/\\/g, '/');
+  if (norm.startsWith('components/') || norm.startsWith('pages/') || norm.startsWith('theme/')) {
+    return 'ui';
+  }
+  if (norm.startsWith('engine/')) {
+    return 'engine';
+  }
+  if (norm.startsWith('services/') || norm.startsWith('lib/') || norm.startsWith('hooks/')) {
+    return 'services';
+  }
+  return 'core';
 }
 
 function getTsFilesRecursive(dir: string): string[] {
@@ -27,12 +43,24 @@ function getTsFilesRecursive(dir: string): string[] {
       entry.isFile() &&
       (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) &&
       !entry.name.endsWith('.d.ts') &&
-      !entry.name.endsWith('.ast.ts')
+      !entry.name.endsWith('.ast.ts') &&
+      !entry.name.includes('.generated.') &&
+      !entry.name.includes('.substrate.')
     ) {
       results.push(fullPath);
     }
   }
   return results;
+}
+
+function generateDomainAst(domainName: string, exports: SubstrateExport[]): string {
+  let astContent = `;; Domain AST Manifest: ${domainName}\n(:domain-substrate :${domainName}\n`;
+  for (const exp of exports) {
+    const paramStr = exp.params.map((p) => `(:param "${p.name}" :type "${p.type}")`).join(' ');
+    astContent += `  (:symbol "${exp.name}" :from "${exp.relPath}" :kind :${exp.kind} :return "${exp.returnType}" :params (${paramStr}))\n`;
+  }
+  astContent += `)\n`;
+  return astContent;
 }
 
 export function collateProject(srcDir: string, outPath: string) {
@@ -42,7 +70,13 @@ export function collateProject(srcDir: string, outPath: string) {
     module: tsEngine.ModuleKind?.CommonJS ?? 1,
   });
   const checker = program.getTypeChecker();
-  const collatedExports: SubstrateExport[] = [];
+
+  const domainExports: Record<SubstrateDomain, SubstrateExport[]> = {
+    ui: [],
+    engine: [],
+    services: [],
+    core: [],
+  };
 
   for (const filePath of allFiles) {
     const sourceFile = program.getSourceFile(filePath);
@@ -53,6 +87,7 @@ export function collateProject(srcDir: string, outPath: string) {
 
     const exports = checker.getExportsOfModule(fileSymbol);
     const relPath = path.relative(srcDir, filePath).replace(/\\/g, '/');
+    const domain = getFileDomain(relPath);
 
     for (const sym of exports) {
       const decl = sym.valueDeclaration || (sym.declarations && sym.declarations[0]);
@@ -69,7 +104,7 @@ export function collateProject(srcDir: string, outPath: string) {
           return { name: p.getName(), type: checker.typeToString(pType) };
         });
 
-        collatedExports.push({
+        domainExports[domain].push({
           name: sym.getName(),
           kind: tsEngine.isFunctionDeclaration(decl) ? 'function' : 'const',
           returnType: checker.typeToString(sig.getReturnType()),
@@ -78,7 +113,7 @@ export function collateProject(srcDir: string, outPath: string) {
           relPath,
         });
       } else {
-        collatedExports.push({
+        domainExports[domain].push({
           name: sym.getName(),
           kind: tsEngine.isClassDeclaration(decl) ? 'class' : 'const',
           returnType: checker.typeToString(symType),
@@ -90,22 +125,70 @@ export function collateProject(srcDir: string, outPath: string) {
     }
   }
 
-  // Generate S-Expression Manifest
-  let astContent = `;; Collated Root AST Manifest\n(:root-substrate\n`;
-  for (const exp of collatedExports) {
-    const paramStr = exp.params.map((p) => `(:param "${p.name}" :type "${p.type}")`).join(' ');
-    astContent += `  (:symbol "${exp.name}" :from "${exp.relPath}" :kind :${exp.kind} :return "${exp.returnType}" :params (${paramStr}))\n`;
+  // Ensure substrates directory exists
+  const substratesDir = path.join(path.dirname(outPath), 'substrates');
+  if (!fs.existsSync(substratesDir)) {
+    fs.mkdirSync(substratesDir, { recursive: true });
   }
-  astContent += `)\n`;
 
-  // Output runtime TypeScript registry
-  const tsOutput = `// Auto-generated Global AST Substrate Manifest
-export const ROOT_AST_STRING = ${JSON.stringify(astContent)};
-export const ROOT_EXPORT_CATALOG = ${JSON.stringify(collatedExports, null, 2)} as const;
+  // Generate domain-scoped substrate modules
+  const domains: SubstrateDomain[] = ['ui', 'engine', 'services', 'core'];
+  for (const dom of domains) {
+    const list = domainExports[dom];
+    const domAst = generateDomainAst(dom, list);
+    const varPrefix = dom.toUpperCase();
+    const filePath = path.join(substratesDir, `${dom}.substrate.ts`);
+    const fileContent = `// Auto-generated Domain Substrate: ${dom.toUpperCase()}
+export const ${varPrefix}_AST_STRING = ${JSON.stringify(domAst)};
+export const ${varPrefix}_EXPORT_CATALOG = ${JSON.stringify(list, null, 2)} as const;
+`;
+    fs.writeFileSync(filePath, fileContent, 'utf-8');
+  }
+
+  // Output lean aggregator registry
+  const aggregatorOutput = `// Auto-generated Global AST Substrate Manifest (Domain-Scoped Aggregator)
+import { UI_AST_STRING, UI_EXPORT_CATALOG } from './substrates/ui.substrate';
+import { ENGINE_AST_STRING, ENGINE_EXPORT_CATALOG } from './substrates/engine.substrate';
+import { SERVICES_AST_STRING, SERVICES_EXPORT_CATALOG } from './substrates/services.substrate';
+import { CORE_AST_STRING, CORE_EXPORT_CATALOG } from './substrates/core.substrate';
+
+export {
+  UI_AST_STRING,
+  UI_EXPORT_CATALOG,
+  ENGINE_AST_STRING,
+  ENGINE_EXPORT_CATALOG,
+  SERVICES_AST_STRING,
+  SERVICES_EXPORT_CATALOG,
+  CORE_AST_STRING,
+  CORE_EXPORT_CATALOG,
+};
+
+export const DOMAIN_SUBSTRATE_REGISTRY = {
+  ui: { ast: UI_AST_STRING, catalog: UI_EXPORT_CATALOG },
+  engine: { ast: ENGINE_AST_STRING, catalog: ENGINE_EXPORT_CATALOG },
+  services: { ast: SERVICES_AST_STRING, catalog: SERVICES_EXPORT_CATALOG },
+  core: { ast: CORE_AST_STRING, catalog: CORE_EXPORT_CATALOG },
+} as const;
+
+export const ROOT_EXPORT_CATALOG = [
+  ...UI_EXPORT_CATALOG,
+  ...ENGINE_EXPORT_CATALOG,
+  ...SERVICES_EXPORT_CATALOG,
+  ...CORE_EXPORT_CATALOG,
+] as const;
+
+export const ROOT_AST_STRING =
+  ';; Collated Root AST Manifest\\n(:root-substrate\\n' +
+  UI_AST_STRING +
+  ENGINE_AST_STRING +
+  SERVICES_AST_STRING +
+  CORE_AST_STRING +
+  ')\\n';
 `;
 
-  fs.writeFileSync(outPath, tsOutput, 'utf-8');
-  console.log(`[AST Collator] Indexed ${collatedExports.length} exports across ${allFiles.length} files.`);
+  fs.writeFileSync(outPath, aggregatorOutput, 'utf-8');
+  const total = domainExports.ui.length + domainExports.engine.length + domainExports.services.length + domainExports.core.length;
+  console.log(`[AST Collator] Indexed ${total} exports across ${allFiles.length} files (UI: ${domainExports.ui.length}, Engine: ${domainExports.engine.length}, Services: ${domainExports.services.length}, Core: ${domainExports.core.length}).`);
 }
 
 const __filename = fileURLToPath(import.meta.url);
