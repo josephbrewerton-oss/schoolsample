@@ -543,17 +543,20 @@
     (function () {
       'use strict';
       const params = new URLSearchParams(window.location.search);
-      const preset = params.get('preset') || 'fractions';
+      const src = params.get('src') || params.get('file');
+      const basePath = params.get('basePath') || params.get('base');
+      const preset = params.get('preset') || (src ? null : 'fractions');
       const lang = params.get('lang') || 'en';
       const speed = parseFloat(params.get('speed') || '1.0');
-      const autoplay = params.get('autoplay') === '1';
+      const autoplay = params.get('autoplay') === '1' || params.get('play') === '1';
       const theme = params.get('theme') || 'dark';
 
       const stageRoot = document.getElementById('scene-root');
 
-      // 1. Initialize Engine with mounted container
+      // 1. Initialize Engine with mounted container and optional custom basePath
       const engine = new window.ASTVectorPlayerEngine({
         preset: preset,
+        basePath: basePath || undefined,
         lang: lang,
         speed: speed,
         autoplay: autoplay,
@@ -564,12 +567,21 @@
       const ui = new window.ASTPlayerUI(engine);
       ui.setTheme(theme);
 
-      // 3. Load scenes manifest if available
+      // If an external src URL is passed, load it from any remote or local directory
+      if (src) {
+        engine.loadFromUrl(src, autoplay).catch((err) => {
+          console.warn('[AST Player] Could not load external src:', src, err);
+        });
+      }
+
+      // 3. Load scenes manifest if available (can be loaded relative to basePath or default)
       if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
-        window.ASTSceneRegistry.loadConfig('./scenes.manifest.json?v=2.5.2').then(() => {
+        const manifestUrl = basePath ? `${basePath.replace(/\/?$/, '/')}/scenes.manifest.json` : './scenes.manifest.json?v=2.5.2';
+        const fallbackUrl = basePath ? `${basePath.replace(/\/?$/, '/')}/scenes-config.json` : './scenes-config.json?v=2.5.2';
+        window.ASTSceneRegistry.loadConfig(manifestUrl).then(() => {
           ui.populatePresets();
         }).catch(() => {
-          window.ASTSceneRegistry.loadConfig('./scenes-config.json?v=2.5.2').then(() => {
+          window.ASTSceneRegistry.loadConfig(fallbackUrl).then(() => {
             ui.populatePresets();
           }).catch(() => {});
         });

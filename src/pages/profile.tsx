@@ -9,6 +9,7 @@ import {
   generateRandomAlias,
   purgeAllLearnerData,
   exportLearnerPassportJson,
+  exportLearnerArborCsv,
   downloadLearnerCertificateHtml,
   LearnerAnalytics,
 } from '../services/studentProfileStore';
@@ -512,6 +513,27 @@ export default function StudentProfilePage() {
           </p>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={exportLearnerArborCsv}
+              style={{
+                padding: '10px 18px',
+                background: '#047857',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Export assessment marks compatible with Arbor, Bromcom, and ESS SIMS"
+            >
+              📊 Export to Arbor / MIS (CSV)
+            </button>
+
             <button
               type="button"
               onClick={exportLearnerPassportJson}

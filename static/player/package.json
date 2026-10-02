@@ -5,6 +5,16 @@
   "main": "ast-engine.js",
   "module": "ast-engine.js",
   "style": "player.css",
+  "exports": {
+    ".": {
+      "import": "./ast-engine.js",
+      "default": "./ast-engine.js"
+    },
+    "./micro": "./micro-vector-player.js",
+    "./compiler": "./ast-compiler.js",
+    "./obs": "./obs-controller.js",
+    "./player.css": "./player.css"
+  },
   "files": [
     "index.html",
     "player.css",

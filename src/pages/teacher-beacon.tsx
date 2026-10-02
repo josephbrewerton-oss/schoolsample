@@ -126,6 +126,89 @@ export default function TeacherBeaconPage(): React.JSX.Element {
     }
   };
 
+  const handleExportCohortArborCsv = () => {
+    const dateStr = new Date().toISOString().split('T')[0];
+    const headers = [
+      'Student_Identifier',
+      'Student_Alias',
+      'Key_Stage',
+      'Cohort_Code',
+      'Active_Subject',
+      'Curriculum_Topic',
+      'Total_Attempts',
+      'Stars_Earned',
+      'Accuracy_Percentage',
+      'Attainment_Band',
+      'Status',
+      'Assessment_Date',
+      'MIS_Target_System'
+    ];
+
+    const escapeCell = (cell: string) => {
+      if (cell.includes(',') || cell.includes('"') || cell.includes('\n') || cell.includes('\r')) {
+        return `"${cell.replace(/"/g, '""')}"`;
+      }
+      return cell;
+    };
+
+    const rows: string[][] = students.map((s) => {
+      let attainmentBand = 'Emerging';
+      if (s.accuracyPercent >= 85) attainmentBand = 'Exceeding / Mastered';
+      else if (s.accuracyPercent >= 70) attainmentBand = 'Secure (Expected Standard)';
+      else if (s.accuracyPercent >= 50) attainmentBand = 'Developing';
+
+      return [
+        s.studentId || s.alias,
+        s.alias,
+        s.keyStage || 'KS2',
+        s.cohortCode || 'Primary Group',
+        s.activeSubject || 'Curriculum',
+        s.activeTopic || s.activePreset || 'Independent Practice',
+        String(s.totalAttempts || 0),
+        String(s.starsEarned || 0),
+        `${s.accuracyPercent || 0}%`,
+        attainmentBand,
+        s.status.toUpperCase(),
+        dateStr,
+        'Arbor / Bromcom / SIMS Compatible'
+      ];
+    });
+
+    if (rows.length === 0) {
+      rows.push([
+        'STUDENT_001',
+        'Demo Pupil',
+        'Key Stage 2',
+        'Class 4B',
+        'Mathematics',
+        'Fractions and Decimals',
+        '12',
+        '10',
+        '83%',
+        'Secure (Expected Standard)',
+        'ACTIVE',
+        dateStr,
+        'Arbor / Bromcom / SIMS Compatible'
+      ]);
+    }
+
+    const csvContent = [
+      headers.map(escapeCell).join(','),
+      ...rows.map((r) => r.map(escapeCell).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `arbor_cohort_assessment_${dateStr}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    playSuccessChime();
+    setBroadcastNotice('📊 Exported class cohort marks for Arbor / School MIS!');
+    setTimeout(() => setBroadcastNotice(null), 4000);
+  };
+
   return (
     <PageMeta
       title="Classroom Beacon — Teacher Live Console"
@@ -514,6 +597,27 @@ export default function TeacherBeaconPage(): React.JSX.Element {
                 Encrypted via DTLS-SRTP over local school Wi-Fi &bull; Sub-5ms telemetry
               </span>
             </div>
+
+            <button
+              type="button"
+              onClick={handleExportCohortArborCsv}
+              style={{
+                padding: '7px 15px',
+                borderRadius: '8px',
+                background: '#047857',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Download cohort marks in CSV format compatible with Arbor, Bromcom, and ESS SIMS"
+            >
+              📊 Export Cohort to Arbor / MIS (CSV)
+            </button>
           </div>
 
           {students.length === 0 ? (

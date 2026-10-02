@@ -267,6 +267,99 @@ export async function exportLearnerPassportJson(): Promise<void> {
 }
 
 /**
+ * UK School MIS Assessment Export (Arbor, Bromcom, ESS SIMS)
+ * Generates an RFC 4180 compliant CSV formatted for direct import into Arbor
+ * Assessment Marks & Progress Trackers.
+ */
+export async function exportLearnerArborCsv(): Promise<void> {
+  if (typeof window === 'undefined') return;
+
+  const analytics = await getLearnerAnalytics();
+  const p = analytics.profile;
+  const dateStr = new Date().toISOString().split('T')[0];
+
+  const headers = [
+    'Student_Identifier',
+    'Student_Alias',
+    'Key_Stage',
+    'Cohort_Code',
+    'Subject_Domain',
+    'Curriculum_Objective',
+    'Questions_Attempted',
+    'Questions_Correct',
+    'Score_Percentage',
+    'Attainment_Band',
+    'Mastery_Status',
+    'Assessment_Date',
+    'MIS_Target_System'
+  ];
+
+  const rows: string[][] = [];
+
+  for (const topic of analytics.topicBreakdown) {
+    let attainmentBand = 'Emerging';
+    if (topic.accuracyPercent >= 85) attainmentBand = 'Exceeding / Mastered';
+    else if (topic.accuracyPercent >= 70) attainmentBand = 'Secure (Expected Standard)';
+    else if (topic.accuracyPercent >= 50) attainmentBand = 'Developing';
+
+    rows.push([
+      p.alias,
+      p.alias,
+      p.keyStage,
+      p.cohortCode,
+      topic.topicId.split('-')[0].toUpperCase(),
+      topic.displayName,
+      String(topic.attempts),
+      String(topic.correctCount),
+      `${topic.accuracyPercent}%`,
+      attainmentBand,
+      topic.status === 'Mastered' ? 'MASTERED' : 'IN_PROGRESS',
+      dateStr,
+      'Arbor / Bromcom / SIMS Compatible'
+    ]);
+  }
+
+  // If no topic attempts yet, generate baseline row
+  if (rows.length === 0) {
+    rows.push([
+      p.alias,
+      p.alias,
+      p.keyStage,
+      p.cohortCode,
+      'GENERAL',
+      'Overall Curriculum Progress',
+      String(analytics.totalAttempts),
+      String(analytics.totalCorrect),
+      `${analytics.overallAccuracy}%`,
+      analytics.overallAccuracy >= 80 ? 'Secure' : 'Developing',
+      analytics.totalAttempts > 0 ? 'ACTIVE' : 'NO_DATA',
+      dateStr,
+      'Arbor / Bromcom / SIMS Compatible'
+    ]);
+  }
+
+  const escapeCell = (cell: string) => {
+    if (cell.includes(',') || cell.includes('"') || cell.includes('\n') || cell.includes('\r')) {
+      return `"${cell.replace(/"/g, '""')}"`;
+    }
+    return cell;
+  };
+
+  const csvContent = [
+    headers.map(escapeCell).join(','),
+    ...rows.map(r => r.map(escapeCell).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `arbor_mis_assessment_${p.alias.replace(/\s+/g, '_')}_${dateStr}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Printable Offline Learning Certificate & Progress Record
  * Generates an offline HTML card for students, teachers, or parents.
  */

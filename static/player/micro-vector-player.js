@@ -296,17 +296,70 @@
           }
         }
       });
+
+      // Drag & Drop Standalone File Loading
+      const stage = this.shadowRoot.querySelector('.stage-wrap');
+      if (stage) {
+        stage.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          stage.style.outline = '3px dashed #38bdf8';
+          stage.style.outlineOffset = '-4px';
+        });
+        stage.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          stage.style.outline = 'none';
+        });
+        stage.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          stage.style.outline = 'none';
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            this.loadFromFile(e.dataTransfer.files[0]);
+          }
+        });
+      }
+    }
+
+    async loadFromFile(file) {
+      if (!file) return;
+      try {
+        const text = await file.text();
+        this.parseAndSetScene(text);
+        this.dispatchEvent(new CustomEvent('fileloaded', { detail: { name: file.name } }));
+      } catch (err) {
+        console.warn('micro-vector-player failed to load file:', err);
+        this.dispatchEvent(new CustomEvent('error', { detail: { message: err.message, file: file.name } }));
+        this.renderErrorState(file.name, err.message);
+      }
     }
 
     async loadSrc(url) {
       try {
         const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const text = await res.text();
         this.parseAndSetScene(text);
       } catch (err) {
         console.warn('micro-vector-player failed to load src:', err);
-        this.loadPreset('fractions');
+        this.dispatchEvent(new CustomEvent('error', { detail: { message: err.message, url } }));
+        this.renderErrorState(url, err.message);
       }
+    }
+
+    renderErrorState(identifier, message) {
+      const safeId = String(identifier || 'Unknown').replace(/<[^>]+>/g, '');
+      const safeMsg = String(message || 'Failed to load asset').replace(/<[^>]+>/g, '');
+      this.$layer.innerHTML = `
+        <rect x="50" y="50" width="700" height="380" rx="16" fill="#0f172a" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 6"/>
+        <circle cx="400" cy="180" r="38" fill="#ef4444" fill-opacity="0.12" stroke="#ef4444" stroke-width="2"/>
+        <text x="400" y="192" fill="#ef4444" font-size="28" font-weight="bold" text-anchor="middle">⚠️</text>
+        <text x="400" y="250" fill="#f8fafc" font-size="18" font-weight="bold" text-anchor="middle">Failed to Load Scene</text>
+        <text x="400" y="280" fill="#94a3b8" font-size="13" text-anchor="middle">${safeMsg}</text>
+        <text x="400" y="310" fill="#64748b" font-size="11" text-anchor="middle" font-family="monospace">${safeId}</text>
+      `;
+      if (this.$sub) this.$sub.textContent = 'Asset Error — Check Source';
     }
 
     loadPreset(presetId) {
