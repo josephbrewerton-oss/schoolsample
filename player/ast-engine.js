@@ -1289,7 +1289,12 @@
         .replace(/<embed[\s\S]*?<\/embed>/gi, '');
 
       // 3. Strip inline event handlers (onload, onerror, onclick, etc.) from tag definitions
-      clean = clean.replace(/\s+on[a-z0-9_-]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '');
+      //    Apply repeatedly until stable to avoid incomplete multi-character sanitization bypasses.
+      let prevClean;
+      do {
+        prevClean = clean;
+        clean = clean.replace(/\s+on[a-z0-9_-]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '');
+      } while (clean !== prevClean);
 
       // 4. Strip dangerous URI schemes in href / xlink:href / src attributes
       clean = clean.replace(
