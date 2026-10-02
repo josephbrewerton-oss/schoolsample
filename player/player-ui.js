@@ -812,6 +812,34 @@
         if (this.isDragging) this.isDragging = false;
       });
 
+      // Standalone Drag & Drop File Handling (.json, .ast, .svg)
+      const stageWrap = el.stageWrap || document.getElementById('stage-wrap') || el.stage;
+      if (stageWrap) {
+        stageWrap.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          stageWrap.classList.add('drag-drop-active');
+        });
+
+        stageWrap.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          stageWrap.classList.remove('drag-drop-active');
+        });
+
+        stageWrap.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          stageWrap.classList.remove('drag-drop-active');
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            const file = e.dataTransfer.files[0];
+            this.engine.loadFromFile(file, true).catch((err) => {
+              this.showToast('❌ ' + err.message, 4500);
+            });
+          }
+        });
+      }
+
       // Controls
       if (el.btnStepMode) {
         el.btnStepMode.addEventListener('click', () => {
@@ -1854,7 +1882,21 @@
     initDisplayConfig() {
       const urlParams = new URLSearchParams(window.location.search);
       const urlMode = urlParams.get('mode');
-      if (urlMode && ['classroom', 'student', 'broadcast', 'developer'].includes(urlMode)) {
+
+      // 1. Check for dedicated embed / iframe flags
+      const isEmbed = urlParams.get('embed') === '1' || urlParams.get('embedded') === '1' || urlMode === 'embed' || urlMode === 'embedded' || urlMode === 'minimal';
+      if (isEmbed) {
+        const profile = this.getPresetProfile('embed');
+        if (urlParams.get('controls') === '0') {
+          profile.showPlaybackControls = false;
+          profile.showTimelineScrubber = false;
+        }
+        if (urlParams.get('scrubber') === '0') profile.showTimelineScrubber = false;
+        if (urlParams.get('subtitles') === '0') profile.showSubtitles = false;
+        return profile;
+      }
+
+      if (urlMode && ['classroom', 'student', 'broadcast', 'developer', 'embed'].includes(urlMode)) {
         return this.getPresetProfile(urlMode);
       }
       if (urlParams.get('clean') === '1') {
@@ -1906,7 +1948,20 @@
         showPhysicsControls: true,
       };
 
-      if (mode === 'student') {
+      if (mode === 'embed' || mode === 'embedded' || mode === 'minimal') {
+        base.showPresetSelector = false;
+        base.showPrintWorksheet = false;
+        base.showStandaloneLink = false;
+        base.showDevInspect = false;
+        base.showDevStudio = false;
+        base.showExportSpa = false;
+        base.showObsLink = false;
+        base.showLmsEmbed = false;
+        base.showCopySvg = false;
+        base.showSpeedSelector = false;
+        base.showVoiceCommands = false;
+        base.showPhysicsControls = false;
+      } else if (mode === 'student') {
         base.showPrintWorksheet = false;
         base.showStandaloneLink = false;
       } else if (mode === 'broadcast') {
@@ -2235,6 +2290,31 @@
 
       this.engine.on('camerachange', () => {
         this.update3DStatus();
+      });
+
+      this.engine.on('error', (err) => {
+        const msg = (err && (err.message || err.type)) || 'An asset error occurred';
+        this.showToast('⚠️ ' + msg, 4000);
+      });
+
+      this.engine.on('fileloaded', (info) => {
+        this.showToast(`📂 File Loaded: ${info.filename}`, 3000);
+        if (this.elements.presetSelector) {
+          let exists = false;
+          for (let i = 0; i < this.elements.presetSelector.options.length; i++) {
+            if (this.elements.presetSelector.options[i].value === info.id) {
+              exists = true;
+              break;
+            }
+          }
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = info.id;
+            opt.textContent = `📁 ${info.filename}`;
+            this.elements.presetSelector.appendChild(opt);
+          }
+          this.elements.presetSelector.value = info.id;
+        }
       });
 
       this.engine.on('presetchange', (data) => {

@@ -1000,12 +1000,25 @@
           }
         }
 
+        const isNotFound = !svgText && !astText && !registryScene.mount && !registryScene.render && (!registryScene.keyframes || !registryScene.keyframes.length);
+        if (isNotFound) {
+          const errMsg = `Scene "${presetId}" could not be located in registry or fetched from asset path.`;
+          console.warn(`[AST Engine] ${errMsg}`);
+          this.emit('error', { type: 'SCENE_NOT_FOUND', presetId, message: errMsg });
+          this.notifyParent({ type: 'PLAYER_ERROR', presetId, message: errMsg });
+          if (this.container) {
+            this.renderErrorPlaceholder(presetId, errMsg);
+          }
+          return null;
+        }
+
         let parsedAst = null;
         if (astText) {
           try {
             parsedAst = this.parseAst(astText);
           } catch (err) {
             console.warn('[AST Engine] Error parsing AST for', presetId, err);
+            this.emit('error', { type: 'AST_PARSE_ERROR', presetId, message: err.message });
           }
         }
         const has3D = Boolean(
@@ -1065,6 +1078,271 @@
     }
 
     /**
+     * Ingests and mounts an in-memory scene object directly without requiring filesystem fetch.
+     * Ideal for standalone npm packages and programmatic scene generation.
+     * @param {Object} sceneData
+     * @param {boolean} shouldPlay
+     */
+    loadSceneData(sceneData, shouldPlay = false) {
+      if (!sceneData || typeof sceneData !== 'object') {
+        const err = new Error('[AST Engine] loadSceneData requires a valid scene object');
+        this.emit('error', { type: 'INVALID_SCENE_DATA', message: err.message });
+        throw err;
+      }
+      const id = sceneData.id || `custom-${Date.now()}`;
+      this.sceneCache[id] = {
+        id,
+        title: sceneData.title || id,
+        stage: sceneData.stage || 'CUSTOM',
+        duration: parseFloat(sceneData.duration) || 10.0,
+        camera: sceneData.camera || null,
+        has3D: Boolean(sceneData.has3D || sceneData.camera),
+        interactive: sceneData.interactive || null,
+        keyframes: sceneData.keyframes || [],
+        subtitles: sceneData.subtitles || [],
+        rawBindings: sceneData.bindings || sceneData.rawBindings || [],
+        svgText: sceneData.svgText || '',
+        mount: sceneData.mount,
+        update: sceneData.update,
+        render: sceneData.render
+      };
+      return this.loadScene(id, shouldPlay);
+    }
+
+    /**
+     * Ingests local files (.json, .ast, .svg) via File/Blob APIs (e.g. file picker or drag-and-drop).
+     * @param {File|Blob} file
+     * @param {boolean} shouldPlay
+     * @returns {Promise<Object>} Loaded scene
+     */
+    async loadFromFile(file, shouldPlay = false) {
+      if (!file) {
+        const err = new Error('[AST Engine] loadFromFile requires a valid File or Blob');
+        this.emit('error', { type: 'FILE_LOAD_ERROR', message: err.message });
+        throw err;
+      }
+      const filename = file.name || 'custom-asset';
+      const ext = filename.split('.').pop().toLowerCase();
+
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => {
+          const err = new Error(`Failed to read file "${filename}": ${reader.error?.message}`);
+          this.emit('error', { type: 'FILE_READ_ERROR', filename, message: err.message });
+          if (this.container) {
+            this.renderErrorPlaceholder(filename, err.message);
+          }
+          reject(err);
+        };
+        reader.onload = () => {
+          try {
+            const content = String(reader.result || '').trim();
+            const id = filename.replace(/\.[^/.]+$/, '').toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+
+            if (ext === 'json') {
+              const json = JSON.parse(content);
+              json.id = json.id || id;
+              const loaded = this.loadSceneData(json, shouldPlay);
+              this.emit('fileloaded', { filename, type: 'json', id: json.id });
+              resolve(loaded);
+            } else if (ext === 'svg') {
+              const loaded = this.loadSceneData({
+                id,
+                title: filename,
+                stage: 'CUSTOM SVG',
+                duration: 10.0,
+                svgText: content,
+                keyframes: [],
+                subtitles: []
+              }, shouldPlay);
+              this.emit('fileloaded', { filename, type: 'svg', id });
+              resolve(loaded);
+            } else if (ext === 'ast') {
+              const parsed = this.parseAst(content);
+              const scene = {
+                id: (parsed && parsed.id) || id,
+                title: (parsed && parsed.title) || filename,
+                stage: (parsed && parsed.stage) || 'CUSTOM AST',
+                duration: (parsed && parsed.duration) || 10.0,
+                keyframes: (parsed && parsed.keyframes) || [],
+                subtitles: (parsed && parsed.subtitles) || [],
+                rawBindings: (parsed && parsed.bindings) || [],
+                svgText: ''
+              };
+              const loaded = this.loadSceneData(scene, shouldPlay);
+              this.emit('fileloaded', { filename, type: 'ast', id: scene.id });
+              resolve(loaded);
+            } else {
+              // Heuristic content-based detection
+              if (content.startsWith('{')) {
+                const json = JSON.parse(content);
+                resolve(this.loadSceneData(json, shouldPlay));
+              } else if (content.startsWith('(')) {
+                const parsed = this.parseAst(content);
+                resolve(this.loadSceneData({ id, ...parsed }, shouldPlay));
+              } else if (content.includes('<svg')) {
+                resolve(this.loadSceneData({ id, title: filename, svgText: content }, shouldPlay));
+              } else {
+                throw new Error(`Unsupported file extension: .${ext}. Expected .json, .ast, or .svg.`);
+              }
+            }
+          } catch (parseErr) {
+            console.error('[AST Engine] Error parsing file:', filename, parseErr);
+            this.emit('error', { type: 'FILE_PARSE_ERROR', filename, message: parseErr.message });
+            if (this.container) {
+              this.renderErrorPlaceholder(filename, `File parse failed: ${parseErr.message}`);
+            }
+            reject(parseErr);
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    /**
+     * Loads an external standalone scene manifest (.json), AST file (.ast), or SVG (.svg) from a remote URL.
+     * @param {string} url
+     * @param {boolean} shouldPlay
+     */
+    async loadFromUrl(url, shouldPlay = false) {
+      if (!url || typeof url !== 'string') {
+        const err = new Error('[AST Engine] loadFromUrl requires a valid URL');
+        this.emit('error', { type: 'INVALID_URL', message: err.message });
+        throw err;
+      }
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        const text = await res.text();
+        const cleanUrl = url.split('?')[0];
+        const filename = cleanUrl.split('/').pop() || 'remote-asset';
+        const blob = new Blob([text], { type: res.headers.get('content-type') || 'text/plain' });
+        try {
+          Object.defineProperty(blob, 'name', { value: filename, writable: false });
+        } catch {}
+        return await this.loadFromFile(blob, shouldPlay);
+      } catch (err) {
+        console.error('[AST Engine] Failed to load from URL:', url, err);
+        this.emit('error', { type: 'URL_LOAD_ERROR', url, message: err.message });
+        if (this.container) {
+          this.renderErrorPlaceholder(url, `Network error: ${err.message}`);
+        }
+        throw err;
+      }
+    }
+
+    /**
+     * Renders a resilient, accessible vector fallback card inside the container when a scene fails to load.
+     * Prevents empty/black screen states in standalone embeds.
+     */
+    renderErrorPlaceholder(identifier, message) {
+      if (!this.container) return;
+      const safeId = String(identifier || 'Unknown').replace(/<[^>]+>/g, '');
+      const safeMsg = String(message || 'Failed to load vector asset').replace(/<[^>]+>/g, '');
+      this.container.innerHTML = `
+        <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; border-radius:12px;">
+          <rect x="20" y="20" width="760" height="440" rx="16" fill="#0f172a" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 6"/>
+          <circle cx="400" cy="180" r="42" fill="#ef4444" fill-opacity="0.12" stroke="#ef4444" stroke-width="2.5"/>
+          <text x="400" y="192" fill="#ef4444" font-size="34" font-weight="bold" text-anchor="middle" font-family="system-ui, sans-serif">⚠️</text>
+          <text x="400" y="260" fill="#f8fafc" font-size="20" font-weight="700" text-anchor="middle" font-family="system-ui, sans-serif">Scene Load Error</text>
+          <text x="400" y="295" fill="#94a3b8" font-size="14" text-anchor="middle" font-family="system-ui, sans-serif">${safeMsg}</text>
+          <text x="400" y="325" fill="#64748b" font-size="12" text-anchor="middle" font-family="monospace">Target: ${safeId}</text>
+          <g cursor="pointer" id="error-fallback-action" transform="translate(325, 360)">
+            <rect width="150" height="38" rx="19" fill="#2563eb"/>
+            <text x="75" y="24" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle" font-family="system-ui, sans-serif">Load Default Scene</text>
+          </g>
+        </svg>
+      `;
+      const btn = this.container.querySelector('#error-fallback-action');
+      if (btn) {
+        btn.onclick = () => {
+          this.loadScene('fractions', true);
+        };
+      }
+    }
+
+    /**
+     * Sanitizes raw SVG text against XML bombs (CWE-776) and DOM-based XSS (CWE-79 / js/xss-through-dom).
+     * Strips DOCTYPE, ENTITY declarations, script/foreignObject/iframe tags, inline on* handlers, and javascript: protocols.
+     * @param {string} rawSvg
+     * @returns {string} Clean SVG markup
+     */
+    sanitizeSvg(rawSvg) {
+      if (!rawSvg || typeof rawSvg !== 'string') return '';
+      let clean = rawSvg.trim();
+
+      // 1. Mitigate XML Bomb (CWE-776): Neutralize DOCTYPE and ENTITY expansion
+      if (/<!doctype|<!entity/i.test(clean)) {
+        clean = clean
+          .replace(/<!DOCTYPE[\s\S]*?]>(\r?\n)?/gi, '')
+          .replace(/<!ENTITY[\s\S]*?>/gi, '');
+      }
+
+      // 2. Strip dangerous executable containers from raw string prior to DOM reinterpretation
+      clean = clean
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/<object[\s\S]*?<\/object>/gi, '')
+        .replace(/<embed[\s\S]*?<\/embed>/gi, '');
+
+      // 3. Strip inline event handlers (onload, onerror, onclick, etc.) from tag definitions
+      clean = clean.replace(/\s+on[a-z0-9_-]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '');
+
+      // 4. Strip dangerous URI schemes in href / xlink:href / src attributes
+      clean = clean.replace(
+        /\s+(?:xlink:)?href\s*=\s*['"]\s*(?:javascript|vbscript|data:(?!image\/)):?[^'"]*['"]/gi,
+        ' href=""'
+      );
+
+      return clean;
+    }
+
+    /**
+     * Deep-sanitizes parsed SVG DOM element tree before mounting into live container.
+     * Recursively scrubs any nested executable elements or script attributes.
+     * @param {Element} rootSvg
+     * @returns {Element|null} Sanitized root SVG node
+     */
+    sanitizeSvgElement(rootSvg) {
+      if (!rootSvg) return null;
+
+      // 1. Remove dangerous elements if any bypassed string sanitization
+      const dangerousTags = ['script', 'foreignobject', 'iframe', 'embed', 'object', 'link', 'meta', 'style'];
+      for (const tag of dangerousTags) {
+        rootSvg.querySelectorAll(tag).forEach(el => el.remove());
+      }
+
+      // 2. Deep-clean attributes across all descendants
+      const allElements = [rootSvg, ...rootSvg.querySelectorAll('*')];
+      for (const el of allElements) {
+        if (!el.attributes) continue;
+        const toRemove = [];
+        for (let i = 0; i < el.attributes.length; i++) {
+          const attr = el.attributes[i];
+          const name = attr.name.toLowerCase();
+          const val = (attr.value || '').trim().toLowerCase();
+
+          if (name.startsWith('on')) {
+            toRemove.push(attr.name);
+          } else if (
+            (name === 'href' || name.endsWith(':href') || name === 'src') &&
+            /^(javascript:|vbscript:|data:(?!image\/(png|jpe?g|gif|webp|svg\+xml)))/i.test(val)
+          ) {
+            toRemove.push(attr.name);
+          }
+        }
+        for (const attrName of toRemove) {
+          el.removeAttribute(attrName);
+        }
+      }
+
+      return rootSvg;
+    }
+
+    /**
      * Mounts SVG template and compiles AST bindings to DOM nodes
      */
     mountSceneAsset(scene, container) {
@@ -1082,25 +1360,18 @@
         this._cachedElements = null;
 
         // 1. Mount SVG template if available
-if (scene.svgText) {
+        if (scene.svgText) {
           try {
-            let safeSvg = String(scene.svgText).trim();
-            // Mitigate XML Bomb (CWE-776): Neutralize DOCTYPE and ENTITY expansion
-            if (/<!doctype|<!entity/i.test(safeSvg)) {
-              safeSvg = safeSvg
-                .replace(/<!DOCTYPE[\s\S]*?]>(\r?\n)?/gi, '')
-                .replace(/<!ENTITY[\s\S]*?>/gi, '');
-            }
+            const safeSvg = this.sanitizeSvg(scene.svgText);
 
-            if (typeof DOMParser !== 'undefined') {
+            if (safeSvg && typeof DOMParser !== 'undefined') {
               const parser = new DOMParser();
               const doc = parser.parseFromString(safeSvg, 'image/svg+xml');
 
               if (!doc.querySelector('parsererror')) {
                 const rootSvg = doc.querySelector('svg');
                 if (rootSvg) {
-                  // Neutralize potential script execution vectors inside SVG
-                  rootSvg.querySelectorAll('script, foreignObject').forEach(el => el.remove());
+                  this.sanitizeSvgElement(rootSvg);
                   container.replaceChildren(...rootSvg.childNodes);
                 }
               }
@@ -1587,19 +1858,14 @@ if (scene.svgText) {
         this.scene.svgText = svgMarkup;
 
         if (this._container) {
-          let safeSvg = svgMarkup.trim();
-          if (/<!doctype|<!entity/i.test(safeSvg)) {
-            safeSvg = safeSvg
-              .replace(/<!DOCTYPE[\s\S]*?]>(\r?\n)?/gi, '')
-              .replace(/<!ENTITY[\s\S]*?>/gi, '');
-          }
+          const safeSvg = this.sanitizeSvg(svgMarkup);
 
-          if (typeof DOMParser !== 'undefined') {
+          if (safeSvg && typeof DOMParser !== 'undefined') {
             const parser = new DOMParser();
             const doc = parser.parseFromString(safeSvg, 'image/svg+xml');
             const rootSvg = doc.querySelector('svg');
             if (rootSvg && !doc.querySelector('parsererror')) {
-              rootSvg.querySelectorAll('script, foreignObject').forEach(el => el.remove());
+              this.sanitizeSvgElement(rootSvg);
               this._container.replaceChildren(...rootSvg.childNodes);
             }
           }
