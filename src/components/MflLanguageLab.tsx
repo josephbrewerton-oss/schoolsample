@@ -9,6 +9,12 @@ import {
 } from '../services/soundHaptics';
 import { triggerCorrectConfetti, triggerMasteryConfetti } from '../utils/confetti';
 import { speakInLanguage } from '../engine/translationService';
+import {
+  MFL_PERSONAS,
+  MflChatMessage,
+  sendMflChatMessage,
+} from '../services/mflConversationEngine';
+import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 
 export interface MflLanguageLabProps {
   onClose?: () => void;
@@ -146,6 +152,76 @@ const LANGUAGE_DATASETS: Record<string, LanguageDataset> = {
           { pronoun: 'ellos / ellas', ending: 'en', full: 'viven', english: 'they live' },
         ],
       },
+      {
+        infinitive: 'ser',
+        translation: 'to be (identity, origin, traits)',
+        type: 'irregular power verb',
+        stem: 's',
+        forms: [
+          { pronoun: 'yo', ending: 'oy', full: 'soy', english: 'I am' },
+          { pronoun: 'tú', ending: 'res', full: 'eres', english: 'you are (informal)' },
+          { pronoun: 'él / ella', ending: 'es', full: 'es', english: 'he / she is' },
+          { pronoun: 'nosotros', ending: 'omos', full: 'somos', english: 'we are' },
+          { pronoun: 'vosotros', ending: 'ois', full: 'sois', english: 'you all are' },
+          { pronoun: 'ellos / ellas', ending: 'on', full: 'son', english: 'they are' },
+        ],
+      },
+      {
+        infinitive: 'estar',
+        translation: 'to be (location, mood, condition)',
+        type: 'irregular power verb',
+        stem: 'est',
+        forms: [
+          { pronoun: 'yo', ending: 'oy', full: 'estoy', english: 'I am (feeling/located)' },
+          { pronoun: 'tú', ending: 'ás', full: 'estás', english: 'you are (feeling/located)' },
+          { pronoun: 'él / ella', ending: 'á', full: 'está', english: 'he / she is' },
+          { pronoun: 'nosotros', ending: 'amos', full: 'estamos', english: 'we are' },
+          { pronoun: 'vosotros', ending: 'áis', full: 'estáis', english: 'you all are' },
+          { pronoun: 'ellos / ellas', ending: 'án', full: 'están', english: 'they are' },
+        ],
+      },
+      {
+        infinitive: 'ir',
+        translation: 'to go (motion & immediate future: voy a...)',
+        type: 'irregular power verb',
+        stem: 'v',
+        forms: [
+          { pronoun: 'yo', ending: 'oy', full: 'voy', english: 'I go / I am going' },
+          { pronoun: 'tú', ending: 'as', full: 'vas', english: 'you go' },
+          { pronoun: 'él / ella', ending: 'a', full: 'va', english: 'he / she goes' },
+          { pronoun: 'nosotros', ending: 'amos', full: 'vamos', english: 'we go / let\'s go' },
+          { pronoun: 'vosotros', ending: 'ais', full: 'vais', english: 'you all go' },
+          { pronoun: 'ellos / ellas', ending: 'an', full: 'van', english: 'they go' },
+        ],
+      },
+      {
+        infinitive: 'tener',
+        translation: 'to have (possession, age, necessity)',
+        type: 'irregular stem-changing',
+        stem: 'ten',
+        forms: [
+          { pronoun: 'yo', ending: 'go', full: 'tengo', english: 'I have (e.g. tengo 10 años)' },
+          { pronoun: 'tú', ending: 'es', full: 'tienes', english: 'you have' },
+          { pronoun: 'él / ella', ending: 'e', full: 'tiene', english: 'he / she has' },
+          { pronoun: 'nosotros', ending: 'emos', full: 'tenemos', english: 'we have' },
+          { pronoun: 'vosotros', ending: 'éis', full: 'tenéis', english: 'you all have' },
+          { pronoun: 'ellos / ellas', ending: 'en', full: 'tienen', english: 'they have' },
+        ],
+      },
+      {
+        infinitive: 'hacer',
+        translation: 'to do / make (activities, weather)',
+        type: 'irregular power verb',
+        stem: 'hac',
+        forms: [
+          { pronoun: 'yo', ending: 'go', full: 'hago', english: 'I do / make' },
+          { pronoun: 'tú', ending: 'es', full: 'haces', english: 'you do / make' },
+          { pronoun: 'él / ella', ending: 'e', full: 'hace', english: 'he/she does / (hace calor)' },
+          { pronoun: 'nosotros', ending: 'emos', full: 'hacemos', english: 'we do / make' },
+          { pronoun: 'vosotros', ending: 'éis', full: 'hacéis', english: 'you all do' },
+          { pronoun: 'ellos / ellas', ending: 'en', full: 'hacen', english: 'they do / make' },
+        ],
+      },
     ],
     vocabulary: [
       { id: 'v-es-1', targetWord: 'buenos días', english: 'good morning', phonetic: 'BWEH-nohs DEE-ahs', category: 'Greetings', partOfSpeech: 'phrase', exampleSentence: '¡Buenos días, profesor!' },
@@ -154,6 +230,22 @@ const LANGUAGE_DATASETS: Record<string, LanguageDataset> = {
       { id: 'v-es-4', targetWord: 'el libro', english: 'the book', phonetic: 'ehl LEE-broh', category: 'School & Desk', partOfSpeech: 'noun (m)', exampleSentence: 'Abro el libro de matemáticas.' },
       { id: 'v-es-5', targetWord: 'la biblioteca', english: 'the library', phonetic: 'lah bee-blyoh-TEH-kah', category: 'School & Town', partOfSpeech: 'noun (f)', exampleSentence: 'Estudio en la biblioteca en silencio.' },
       { id: 'v-es-6', targetWord: '¿cómo te llamas?', english: 'what is your name?', phonetic: 'KOH-moh teh YAH-mahs', category: 'Greetings', partOfSpeech: 'phrase', exampleSentence: 'Hola, ¿cómo te llamas tú?' },
+      { id: 'v-es-7', targetWord: 'me llamo...', english: 'my name is...', phonetic: 'meh YAH-moh', category: 'Greetings', partOfSpeech: 'phrase', exampleSentence: 'Me llamo Mateo y tengo diez años.' },
+      { id: 'v-es-8', targetWord: 'el agua', english: 'the water', phonetic: 'ehl AH-gwah', category: 'Food & Dining', partOfSpeech: 'noun (f)', exampleSentence: 'Quiero un vaso de agua fresca.' },
+      { id: 'v-es-9', targetWord: 'el pan', english: 'the bread', phonetic: 'ehl PAHN', category: 'Food & Dining', partOfSpeech: 'noun (m)', exampleSentence: 'Compro el pan en la panadería.' },
+      { id: 'v-es-10', targetWord: 'la cuenta, por favor', english: 'the bill, please', phonetic: 'lah KWEHN-tah pohr fah-BVOHR', category: 'Food & Dining', partOfSpeech: 'phrase', exampleSentence: 'Camarero, ¿nos trae la cuenta, por favor?' },
+      { id: 'v-es-11', targetWord: 'la madre / el padre', english: 'mother / father', phonetic: 'lah MAH-dreh / ehl PAH-dreh', category: 'Family', partOfSpeech: 'noun', exampleSentence: 'Mi madre y mi padre cocinan juntos.' },
+      { id: 'v-es-12', targetWord: 'el hermano / la hermana', english: 'brother / sister', phonetic: 'ehl ehr-MAH-noh', category: 'Family', partOfSpeech: 'noun', exampleSentence: 'Tengo un hermano mayor.' },
+      { id: 'v-es-13', targetWord: 'el perro / el gato', english: 'the dog / the cat', phonetic: 'ehl PEHR-roh / ehl GAH-toh', category: 'Family & Pets', partOfSpeech: 'noun (m)', exampleSentence: 'Juego con mi perro en el jardín.' },
+      { id: 'v-es-14', targetWord: 'la calle', english: 'the street', phonetic: 'lah KAH-yeh', category: 'Directions & City', partOfSpeech: 'noun (f)', exampleSentence: 'Camino por la calle principal.' },
+      { id: 'v-es-15', targetWord: 'la estación de tren', english: 'the train station', phonetic: 'lah ehs-tah-SYOHN deh TREHN', category: 'Directions & City', partOfSpeech: 'noun (f)', exampleSentence: 'La estación de tren está a la derecha.' },
+      { id: 'v-es-16', targetWord: 'a la derecha / a la izquierda', english: 'to the right / to the left', phonetic: 'ah lah deh-REH-chah', category: 'Directions & City', partOfSpeech: 'phrase', exampleSentence: 'Gira a la izquierda en la esquina.' },
+      { id: 'v-es-17', targetWord: 'hoy / mañana / ayer', english: 'today / tomorrow / yesterday', phonetic: 'oy / mah-NYAH-nah / ah-YEHR', category: 'Time', partOfSpeech: 'adverb', exampleSentence: 'Hoy es lunes y mañana voy al parque.' },
+      { id: 'v-es-18', targetWord: '¿qué hora es?', english: 'what time is it?', phonetic: 'keh OH-rah ehs', category: 'Time', partOfSpeech: 'phrase', exampleSentence: 'Disculpe, ¿qué hora es?' },
+      { id: 'v-es-19', targetWord: 'hace calor / hace frío', english: 'it is hot / it is cold', phonetic: 'AH-seh kah-LOHR', category: 'Weather', partOfSpeech: 'phrase', exampleSentence: 'En verano hace mucho calor en Madrid.' },
+      { id: 'v-es-20', targetWord: 'estoy contento / feliz', english: 'I am happy / glad', phonetic: 'ehs-TOY kohn-TEHN-toh', category: 'Feelings', partOfSpeech: 'phrase', exampleSentence: 'Hoy estoy muy contento de aprender español.' },
+      { id: 'v-es-21', targetWord: 'tengo hambre / tengo sed', english: 'I am hungry / thirsty', phonetic: 'TEHN-goh AHM-breh', category: 'Feelings', partOfSpeech: 'phrase', exampleSentence: 'Tengo hambre, quiero una tostada.' },
+      { id: 'v-es-22', targetWord: 'hasta luego / adiós', english: 'see you later / goodbye', phonetic: 'AHS-tah LWEH-goh', category: 'Courtesy', partOfSpeech: 'phrase', exampleSentence: '¡Hasta luego y muchas gracias!' },
     ],
     scenarios: [
       {
@@ -452,6 +544,76 @@ const LANGUAGE_DATASETS: Record<string, LanguageDataset> = {
           { pronoun: 'ils / elles', ending: 'issent', full: 'ils finissent', english: 'they finish' },
         ],
       },
+      {
+        infinitive: 'être',
+        translation: 'to be (identity, state, feelings)',
+        type: 'irregular power verb',
+        stem: 'êt',
+        forms: [
+          { pronoun: 'je', ending: 'suis', full: 'je suis', english: 'I am' },
+          { pronoun: 'tu', ending: 'es', full: 'tu es', english: 'you are' },
+          { pronoun: 'il / elle', ending: 'est', full: 'il est', english: 'he / she is' },
+          { pronoun: 'nous', ending: 'sommes', full: 'nous sommes', english: 'we are' },
+          { pronoun: 'vous', ending: 'êtes', full: 'vous êtes', english: 'you all are' },
+          { pronoun: 'ils / elles', ending: 'sont', full: 'ils sont', english: 'they are' },
+        ],
+      },
+      {
+        infinitive: 'avoir',
+        translation: 'to have (possession & age: j\'ai 10 ans)',
+        type: 'irregular power verb',
+        stem: 'av',
+        forms: [
+          { pronoun: 'j\'', ending: 'ai', full: 'j’ai', english: 'I have (e.g. j\'ai dix ans)' },
+          { pronoun: 'tu', ending: 'as', full: 'tu as', english: 'you have' },
+          { pronoun: 'il / elle', ending: 'a', full: 'il a', english: 'he / she has' },
+          { pronoun: 'nous', ending: 'avons', full: 'nous avons', english: 'we have' },
+          { pronoun: 'vous', ending: 'avez', full: 'vous avez', english: 'you all have' },
+          { pronoun: 'ils / elles', ending: 'ont', full: 'ils ont', english: 'they have' },
+        ],
+      },
+      {
+        infinitive: 'aller',
+        translation: 'to go (motion & immediate future: je vais...)',
+        type: 'irregular power verb',
+        stem: 'all',
+        forms: [
+          { pronoun: 'je', ending: 'vais', full: 'je vais', english: 'I go / I am going' },
+          { pronoun: 'tu', ending: 'vas', full: 'tu vas', english: 'you go' },
+          { pronoun: 'il / elle', ending: 'va', full: 'il va', english: 'he / she goes' },
+          { pronoun: 'nous', ending: 'allons', full: 'nous allons', english: 'we go / let\'s go' },
+          { pronoun: 'vous', ending: 'allez', full: 'vous allez', english: 'you all go' },
+          { pronoun: 'ils / elles', ending: 'vont', full: 'ils vont', english: 'they go' },
+        ],
+      },
+      {
+        infinitive: 'faire',
+        translation: 'to do / make (activities & weather: il fait beau)',
+        type: 'irregular power verb',
+        stem: 'fai',
+        forms: [
+          { pronoun: 'je', ending: 'fais', full: 'je fais', english: 'I do / make' },
+          { pronoun: 'tu', ending: 'fais', full: 'tu fais', english: 'you do / make' },
+          { pronoun: 'il / elle', ending: 'fait', full: 'il fait', english: 'he/she does / (il fait chaud)' },
+          { pronoun: 'nous', ending: 'faisons', full: 'nous faisons', english: 'we do / make' },
+          { pronoun: 'vous', ending: 'faites', full: 'vous faites', english: 'you all do / make' },
+          { pronoun: 'ils / elles', ending: 'font', full: 'ils font', english: 'they do / make' },
+        ],
+      },
+      {
+        infinitive: 'pouvoir',
+        translation: 'can / to be able to (polite requests)',
+        type: 'irregular modal verb',
+        stem: 'pouv',
+        forms: [
+          { pronoun: 'je', ending: 'peux', full: 'je peux', english: 'I can' },
+          { pronoun: 'tu', ending: 'peux', full: 'tu peux', english: 'you can' },
+          { pronoun: 'il / elle', ending: 'peut', full: 'il peut', english: 'he / she can' },
+          { pronoun: 'nous', ending: 'pouvons', full: 'nous pouvons', english: 'we can' },
+          { pronoun: 'vous', ending: 'pouvez', full: 'vous pouvez', english: 'you all can' },
+          { pronoun: 'ils / elles', ending: 'peuvent', full: 'ils peuvent', english: 'they can' },
+        ],
+      },
     ],
     vocabulary: [
       { id: 'v-fr-1', targetWord: 'bonjour', english: 'hello / good day', phonetic: 'bohn-ZHOOR', category: 'Greetings', partOfSpeech: 'interjection', exampleSentence: 'Bonjour madame la directrice.' },
@@ -460,6 +622,21 @@ const LANGUAGE_DATASETS: Record<string, LanguageDataset> = {
       { id: 'v-fr-4', targetWord: 'le stylo', english: 'the pen', phonetic: 'luh stee-LOH', category: 'School & Desk', partOfSpeech: 'noun (m)', exampleSentence: 'J’écris avec mon stylo bleu.' },
       { id: 'v-fr-5', targetWord: 'la pomme', english: 'the apple', phonetic: 'lah POHM', category: 'Food & Drink', partOfSpeech: 'noun (f)', exampleSentence: 'Je mange une pomme rouge à midi.' },
       { id: 'v-fr-6', targetWord: 'je m’appelle', english: 'my name is', phonetic: 'zhuh mah-PEHL', category: 'Greetings', partOfSpeech: 'phrase', exampleSentence: 'Bonjour, je m’appelle Claire.' },
+      { id: 'v-fr-7', targetWord: 'l’eau / le pain', english: 'the water / the bread', phonetic: 'LOH / luh PAN', category: 'Food & Dining', partOfSpeech: 'noun', exampleSentence: 'De l’eau fraîche et du pain croustillant, s’il vous plaît.' },
+      { id: 'v-fr-8', targetWord: 'le fromage / le beurre', english: 'the cheese / the butter', phonetic: 'luh froh-MAHZH / luh BUHR', category: 'Food & Dining', partOfSpeech: 'noun (m)', exampleSentence: 'Le fromage français est délicieux.' },
+      { id: 'v-fr-9', targetWord: 'l’addition, s’il vous plaît', english: 'the bill, please', phonetic: 'lah-dee-SYOHN seel voo PLEH', category: 'Food & Dining', partOfSpeech: 'phrase', exampleSentence: 'Garçon, l’addition s’il vous plaît !' },
+      { id: 'v-fr-10', targetWord: 'la mère / le père', english: 'the mother / the father', phonetic: 'lah MEHR / luh PEHR', category: 'Family', partOfSpeech: 'noun', exampleSentence: 'Ma mère et mon père habitent à Paris.' },
+      { id: 'v-fr-11', targetWord: 'le frère / la sœur', english: 'the brother / the sister', phonetic: 'luh FREHR / lah SUHR', category: 'Family', partOfSpeech: 'noun', exampleSentence: 'J’ai un petit frère et une grande sœur.' },
+      { id: 'v-fr-12', targetWord: 'le chien / le chat', english: 'the dog / the cat', phonetic: 'luh SHYAN / luh SHAH', category: 'Family & Pets', partOfSpeech: 'noun (m)', exampleSentence: 'Mon chat dort sur le canapé.' },
+      { id: 'v-fr-13', targetWord: 'la rue / la place', english: 'the street / the square', phonetic: 'lah ROO / lah PLAHS', category: 'Directions & City', partOfSpeech: 'noun (f)', exampleSentence: 'Traversez la rue vers la boulangerie.' },
+      { id: 'v-fr-14', targetWord: 'la gare', english: 'the train station', phonetic: 'lah GAHR', category: 'Directions & City', partOfSpeech: 'noun (f)', exampleSentence: 'Le train part de la gare centrale.' },
+      { id: 'v-fr-15', targetWord: 'à droite / à gauche', english: 'to the right / to the left', phonetic: 'ah DRWAHT / ah GOHSH', category: 'Directions & City', partOfSpeech: 'phrase', exampleSentence: 'Tournez à droite après le feu rouge.' },
+      { id: 'v-fr-16', targetWord: 'aujourd’hui / demain / hier', english: 'today / tomorrow / yesterday', phonetic: 'oh-zhoor-DWEE / duh-MAN / YAIR', category: 'Time', partOfSpeech: 'adverb', exampleSentence: 'Aujourd’hui il fait beau, demain il pleuvra.' },
+      { id: 'v-fr-17', targetWord: 'quelle heure est-il ?', english: 'what time is it?', phonetic: 'kehl UHR eh-TEEL', category: 'Time', partOfSpeech: 'phrase', exampleSentence: 'Pardon madame, quelle heure est-il ?' },
+      { id: 'v-fr-18', targetWord: 'il fait beau / il fait chaud', english: 'the weather is nice / it is warm', phonetic: 'eel feh BOH / eel feh SHOH', category: 'Weather', partOfSpeech: 'phrase', exampleSentence: 'Au printemps, il fait beau et doux.' },
+      { id: 'v-fr-19', targetWord: 'je suis heureux / fatigué', english: 'I am happy / tired', phonetic: 'zhuh swee uh-RUH / fah-tee-GAY', category: 'Feelings', partOfSpeech: 'phrase', exampleSentence: 'Je suis très heureux d’être ici.' },
+      { id: 'v-fr-20', targetWord: 'j’ai faim / j’ai soif', english: 'I am hungry / thirsty', phonetic: 'zhay FAN / zhay SWAHF', category: 'Feelings', partOfSpeech: 'phrase', exampleSentence: 'Après le sport, j’ai très soif.' },
+      { id: 'v-fr-21', targetWord: 'au revoir / à bientôt', english: 'goodbye / see you soon', phonetic: 'oh ruh-VWAHR / ah byan-TOH', category: 'Courtesy', partOfSpeech: 'phrase', exampleSentence: 'Au revoir et à bientôt !' },
     ],
     scenarios: [
       {
@@ -1023,7 +1200,7 @@ export default function MflLanguageLab({
   initialLanguage = 'es',
 }: MflLanguageLabProps) {
   const [selectedLang, setSelectedLang] = useState<string>(initialLanguage);
-  const [activeTab, setActiveTab] = useState<'phonics' | 'verbs' | 'vocab' | 'dialogue'>('phonics');
+  const [activeTab, setActiveTab] = useState<'phonics' | 'verbs' | 'vocab' | 'dialogue' | 'conversation'>('phonics');
   const [activeVerbIdx, setActiveVerbIdx] = useState<number>(0);
   const [selectedPronounIdx, setSelectedPronounIdx] = useState<number>(0);
   const [vocabCardIdx, setVocabCardIdx] = useState<number>(0);
@@ -1041,6 +1218,129 @@ export default function MflLanguageLab({
   const [isListening, setIsListening] = useState<boolean>(false);
   const [spokenTranscript, setSpokenTranscript] = useState<string | null>(null);
   const [speechFeedback, setSpeechFeedback] = useState<string | null>(null);
+
+  // Conversational Partner (AI Voice Lab) State
+  const activePersona = MFL_PERSONAS[selectedLang] || MFL_PERSONAS.es;
+  const [chatMessages, setChatMessages] = useState<MflChatMessage[]>(() => [
+    {
+      id: 'welcome-init',
+      sender: 'partner',
+      targetText: activePersona.greetingTarget,
+      translation: activePersona.greetingEnglish,
+      timestamp: Date.now(),
+    },
+  ]);
+  const [chatInputText, setChatInputText] = useState<string>('');
+  const [isPartnerThinking, setIsPartnerThinking] = useState<boolean>(false);
+  const [isListeningConversation, setIsListeningConversation] = useState<boolean>(false);
+  const [showConversationEnglish, setShowConversationEnglish] = useState<boolean>(true);
+  const [hasAiConsent, setHasAiConsent] = useState<boolean>(() => hasUserGrantedAiConsent());
+  const chatScrollEndRef = useRef<HTMLDivElement>(null);
+
+  // Refresh conversation persona greeting when language switcher is toggled
+  useEffect(() => {
+    const persona = MFL_PERSONAS[selectedLang] || MFL_PERSONAS.es;
+    setChatMessages([
+      {
+        id: `welcome-${selectedLang}-${Date.now()}`,
+        sender: 'partner',
+        targetText: persona.greetingTarget,
+        translation: persona.greetingEnglish,
+        timestamp: Date.now(),
+      },
+    ]);
+  }, [selectedLang]);
+
+  useEffect(() => {
+    if (activeTab === 'conversation') {
+      chatScrollEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isPartnerThinking, activeTab]);
+
+  const handleSendChatMessage = async (overrideText?: string) => {
+    const text = (overrideText !== undefined ? overrideText : chatInputText).trim();
+    if (!text || isPartnerThinking) return;
+    setChatInputText('');
+    playClickTone();
+    triggerHapticClick();
+
+    const userMsg: MflChatMessage = {
+      id: `usr-${Date.now()}`,
+      sender: 'user',
+      targetText: text,
+      translation: '',
+      timestamp: Date.now(),
+    };
+
+    setChatMessages((prev) => [...prev, userMsg]);
+    setIsPartnerThinking(true);
+
+    try {
+      const persona = MFL_PERSONAS[selectedLang] || MFL_PERSONAS.es;
+      const result = await sendMflChatMessage(text, selectedLang, chatMessages);
+      const partnerMsg: MflChatMessage = {
+        id: `npc-${Date.now()}`,
+        sender: 'partner',
+        targetText: result.targetText,
+        translation: result.translation,
+        coachingTip: result.coachingTip,
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev) => [...prev, partnerMsg]);
+      setIsPartnerThinking(false);
+
+      // Reward stars for speaking/interacting in target language!
+      const newStars = stars + 2;
+      setStars(newStars);
+      localStorage.setItem('stj_mfl_stars', String(newStars));
+      playSuccessChime();
+      triggerHapticSuccess();
+
+      // Automatically speak the partner's target sentence in clear native accent
+      speakInLanguage(result.targetText, persona.ttsCode, { rate: speechRate });
+    } catch (err) {
+      console.error(err);
+      setIsPartnerThinking(false);
+    }
+  };
+
+  const handleStartConversationVoice = () => {
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) {
+      alert('Speech recognition is supported natively in Chromium & Safari browsers.');
+      return;
+    }
+    const persona = MFL_PERSONAS[selectedLang] || MFL_PERSONAS.es;
+    try {
+      setIsListeningConversation(true);
+      playClickTone();
+
+      const recognition = new SpeechRec();
+      recognition.lang = persona.ttsCode;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || '';
+        setIsListeningConversation(false);
+        if (transcript.trim()) {
+          handleSendChatMessage(transcript.trim());
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListeningConversation(false);
+      };
+
+      recognition.onend = () => {
+        setIsListeningConversation(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      setIsListeningConversation(false);
+    }
+  };
 
   const dataset = LANGUAGE_DATASETS[selectedLang] || LANGUAGE_DATASETS.es;
   const currentVerb = dataset.verbs[activeVerbIdx] || dataset.verbs[0];
@@ -1262,6 +1562,7 @@ export default function MflLanguageLab({
           { id: 'verbs', label: '⚙️ Verb Conjugator Wheel', icon: '🔄' },
           { id: 'vocab', label: '⚡ Rapid Vocab Sprint', icon: '🃏' },
           { id: 'dialogue', label: '☕ Café & Roleplay Studio', icon: '🎭' },
+          { id: 'conversation', label: '💬 Live Voice Partner (AI)', icon: '🤖' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -2338,6 +2639,471 @@ export default function MflLanguageLab({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB 5: LIVE VOICE PARTNER (ON-DEVICE CONVERSATIONAL AI) */}
+      {activeTab === 'conversation' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Persona Header Card */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+              border: '1px solid #4338ca',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 8px 24px rgba(67, 56, 202, 0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.8rem',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.35)',
+                  border: '2px solid #818cf8',
+                }}
+              >
+                {activePersona.avatar}
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#fef3c7' }}>
+                    {activePersona.name} ({activePersona.age} yrs)
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', background: '#312e81', color: '#c7d2fe', padding: '2px 8px', borderRadius: '12px', fontWeight: 700, border: '1px solid #4f46e5' }}>
+                    {activePersona.flag} {activePersona.location}
+                  </span>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', padding: '2px 8px', borderRadius: '12px', fontWeight: 700, border: '1px solid #059669' }}>
+                    CEFR A1 / A2 Conversational
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#94a3b8' }}>
+                  {activePersona.description}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setShowConversationEnglish((v) => !v)}
+                style={{
+                  background: showConversationEnglish ? '#312e81' : '#1e293b',
+                  color: showConversationEnglish ? '#fef3c7' : '#94a3b8',
+                  border: `1px solid ${showConversationEnglish ? '#6366f1' : '#334155'}`,
+                  borderRadius: '7px',
+                  padding: '5px 10px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>{showConversationEnglish ? '👁️ Subtitles ON' : '🙈 Subtitles Hidden'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSpeechRate((r) => (r === 0.85 ? 1.0 : r === 1.0 ? 0.75 : 0.85))}
+                style={{
+                  background: '#1e293b',
+                  color: '#cbd5e1',
+                  border: '1px solid #334155',
+                  borderRadius: '7px',
+                  padding: '5px 10px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>⚡ Voice: {speechRate}x</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  playClickTone();
+                  setChatMessages([
+                    {
+                      id: `reset-${Date.now()}`,
+                      sender: 'partner',
+                      targetText: activePersona.greetingTarget,
+                      translation: activePersona.greetingEnglish,
+                      timestamp: Date.now(),
+                    },
+                  ]);
+                }}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#fca5a5',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  borderRadius: '7px',
+                  padding: '5px 10px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                🔄 Restart
+              </button>
+            </div>
+          </div>
+
+          {/* AI Status / Consent Banner */}
+          <div
+            style={{
+              background: '#090d16',
+              border: '1px solid #1e293b',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.78rem',
+              color: '#94a3b8',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: '#10b981' }}>●</span>
+              <span>
+                <strong>100% On-Device Privacy:</strong> Student speech and voice practice never leave your device (Zero Cloud Egress).
+              </span>
+            </div>
+
+            {!hasAiConsent ? (
+              <button
+                type="button"
+                onClick={() => {
+                  playClickTone();
+                  setUserAiConsent(true);
+                  setHasAiConsent(true);
+                }}
+                style={{
+                  background: '#4f46e5',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                }}
+              >
+                ✨ Enable Local AI Reasoning
+              </button>
+            ) : (
+              <span style={{ color: '#818cf8', fontWeight: 700 }}>
+                ✨ Local AI Model Active
+              </span>
+            )}
+          </div>
+
+          {/* Starter Suggestions Chips */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              💡 Practice Suggestions (Click to practice speaking):
+            </span>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {activePersona.starterSuggestions.map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    playClickTone();
+                    handleSendChatMessage(item.target);
+                  }}
+                  style={{
+                    background: '#1e1b4b',
+                    border: '1px solid #4338ca',
+                    color: '#e0e7ff',
+                    borderRadius: '20px',
+                    padding: '5px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={item.english}
+                >
+                  <span>💬</span>
+                  <span>{item.target}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chat Message Stream */}
+          <div
+            style={{
+              background: '#0a0f1d',
+              border: '1px solid #1e293b',
+              borderRadius: '12px',
+              padding: '16px',
+              height: '380px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            {chatMessages.map((msg) => {
+              const isPartner = msg.sender === 'partner';
+              return (
+                <div
+                  key={msg.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: isPartner ? 'flex-start' : 'flex-end',
+                    gap: '10px',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  {isPartner && (
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: '#312e81',
+                        border: '1px solid #6366f1',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {activePersona.avatar}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      maxWidth: '75%',
+                      background: isPartner ? '#1e1b4b' : '#312e81',
+                      border: isPartner ? '1px solid #4338ca' : '1px solid #6366f1',
+                      borderRadius: isPartner ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
+                      padding: '12px 16px',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                      <p style={{ margin: 0, fontSize: '0.94rem', fontWeight: 600, lineHeight: 1.5, color: '#f8fafc' }}>
+                        {msg.targetText}
+                      </p>
+                      {isPartner && (
+                        <button
+                          type="button"
+                          onClick={() => handleSpeak(msg.targetText, activePersona.ttsCode)}
+                          style={{
+                            background: 'rgba(99, 102, 241, 0.25)',
+                            border: '1px solid #6366f1',
+                            color: '#e0e7ff',
+                            borderRadius: '6px',
+                            padding: '3px 7px',
+                            cursor: 'pointer',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            flexShrink: 0,
+                          }}
+                          title="Listen to native pronunciation"
+                        >
+                          <span>🔊</span>
+                          <span>Listen</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Subtitle translation */}
+                    {isPartner && showConversationEnglish && msg.translation && (
+                      <p
+                        style={{
+                          margin: '6px 0 0',
+                          fontSize: '0.8rem',
+                          color: '#94a3b8',
+                          fontStyle: 'italic',
+                          borderTop: '1px dashed rgba(148, 163, 184, 0.25)',
+                          paddingTop: '6px',
+                        }}
+                      >
+                        {msg.translation}
+                      </p>
+                    )}
+
+                    {/* Coaching tip if partner detected a language slip */}
+                    {msg.coachingTip && (
+                      <div
+                        style={{
+                          margin: '8px 0 0',
+                          background: 'rgba(234, 179, 8, 0.15)',
+                          border: '1px solid rgba(234, 179, 8, 0.4)',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '0.75rem',
+                          color: '#fef08a',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span>💡</span>
+                        <span>{msg.coachingTip}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isPartner && (
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: '#047857',
+                        border: '1px solid #10b981',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem',
+                        flexShrink: 0,
+                      }}
+                    >
+                      🎒
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Thinking indicator */}
+            {isPartnerThinking && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#a5b4fc', fontSize: '0.82rem', fontStyle: 'italic' }}>
+                <span style={{ fontSize: '1.1rem' }}>{activePersona.avatar}</span>
+                <span>{activePersona.name} is thinking and replying in {activePersona.code.toUpperCase()}...</span>
+              </div>
+            )}
+
+            <div ref={chatScrollEndRef} />
+          </div>
+
+          {/* Voice & Text Input Dock */}
+          <div
+            style={{
+              background: '#0f172a',
+              border: '1px solid #334155',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              display: 'flex',
+              gap: '10px',
+              alignItems: 'center',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            {/* Big Voice Mic Button */}
+            <button
+              type="button"
+              onClick={handleStartConversationVoice}
+              disabled={isListeningConversation || isPartnerThinking}
+              style={{
+                background: isListeningConversation
+                  ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                  : 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
+                color: '#ffffff',
+                border: isListeningConversation ? '2px solid #f87171' : '1px solid #6366f1',
+                borderRadius: '10px',
+                padding: '10px 16px',
+                fontSize: '0.86rem',
+                fontWeight: 800,
+                cursor: isListeningConversation ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flexShrink: 0,
+                boxShadow: isListeningConversation
+                  ? '0 0 16px rgba(239, 68, 68, 0.6)'
+                  : '0 4px 12px rgba(79, 70, 229, 0.3)',
+                animation: isListeningConversation ? 'pulse 1s infinite' : 'none',
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>{isListeningConversation ? '🔴' : '🎙️'}</span>
+              <span>{isListeningConversation ? 'Listening...' : 'Speak'}</span>
+            </button>
+
+            {/* Text Input Field */}
+            <input
+              type="text"
+              value={chatInputText}
+              onChange={(e) => setChatInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSendChatMessage();
+                }
+              }}
+              placeholder={`Type a phrase in ${activePersona.flag} or speak aloud...`}
+              disabled={isPartnerThinking}
+              style={{
+                flex: 1,
+                background: '#020617',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                color: '#f8fafc',
+                fontSize: '0.88rem',
+                outline: 'none',
+              }}
+            />
+
+            {/* Send Button */}
+            <button
+              type="button"
+              onClick={() => handleSendChatMessage()}
+              disabled={!chatInputText.trim() || isPartnerThinking}
+              style={{
+                background: chatInputText.trim() && !isPartnerThinking ? '#10b981' : '#334155',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 18px',
+                fontSize: '0.86rem',
+                fontWeight: 800,
+                cursor: chatInputText.trim() && !isPartnerThinking ? 'pointer' : 'not-allowed',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0,
+              }}
+            >
+              <span>Send</span>
+              <span>➔</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
