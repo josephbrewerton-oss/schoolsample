@@ -31,6 +31,10 @@ import {
   type InspectedElementData,
   type StudioTabType,
 } from './player';
+import AstChalkboardOverlay from './player/AstChalkboardOverlay';
+import AstInteractiveLabDrawer from './player/AstInteractiveLabDrawer';
+import { exportAirgapHtmlBundle } from '../utils/exportAirgapHtmlBundle';
+import { getRelatedConcepts } from '../data/player/astConceptGraph';
 
 export type VectorPresetType =
   | 'fractions'
@@ -147,6 +151,12 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [swfDragActive, setSwfDragActive] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [voiceFeedback, setVoiceFeedback] = useState<string | null>(null);
+  const [showConceptTrail, setShowConceptTrail] = useState(true);
+  const [comparisonPreset, setComparisonPreset] = useState<string | null>(null);
+  const [showChalkboard, setShowChalkboard] = useState(false);
+  const [showLabDrawer, setShowLabDrawer] = useState(false);
+  const relatedConcepts = getRelatedConcepts(selectedPreset);
+
   const [inspectedElement, setInspectedElement] = useState<InspectedElementData | null>(null);
   const [customSvgCode, setCustomSvgCode] = useState('');
   const [customAstCode, setCustomAstCode] = useState('');
@@ -190,6 +200,14 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       iframeRef.current.contentWindow.postMessage(payload, targetOrigin);
     }
   }, [getVerifiedTargetOrigin]);
+
+  const handleSwitchPreset = useCallback((nextPreset: string) => {
+    setSelectedPreset(nextPreset);
+    selectedPresetRef.current = nextPreset;
+    lastSentPresetRef.current = nextPreset;
+    postToPlayer({ type: 'SET_PRESET', preset: nextPreset, play: true });
+    onPresetChange?.(nextPreset);
+  }, [postToPlayer, onPresetChange]);
 
   const togglePictureInPicture = useCallback(async () => {
     // If desktop document PiP window is open, close it
@@ -613,14 +631,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           {allowPresetSwitch && displayConfig.showPresetSelector && (
             <select
               value={selectedPreset}
-              onChange={(e) => {
-                const nextPreset = e.target.value;
-                setSelectedPreset(nextPreset);
-                selectedPresetRef.current = nextPreset;
-                lastSentPresetRef.current = nextPreset;
-                postToPlayer({ type: 'SET_PRESET', preset: nextPreset, play: true });
-                onPresetChange?.(nextPreset);
-              }}
+              onChange={(e) => handleSwitchPreset(e.target.value)}
               className="stj-select"
               style={{
                 padding: '3px 8px',
@@ -637,6 +648,26 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                 </option>
               ))}
             </select>
+          )}
+
+          {relatedConcepts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowConceptTrail((prev) => !prev)}
+              className={`stj-btn ${showConceptTrail ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '3px 8px',
+                minHeight: '32px',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Explore mathematically and scientifically related concept slides"
+            >
+              <span>🧠 Concept Trail ({relatedConcepts.length})</span>
+            </button>
           )}
 
           <button
@@ -832,6 +863,72 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Live Chalkboard Annotation Button */}
+          <button
+            type="button"
+            onClick={() => setShowChalkboard((prev) => !prev)}
+            className={`stj-btn ${showChalkboard ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: showChalkboard ? '#f59e0b' : undefined,
+              borderColor: showChalkboard ? '#d97706' : undefined,
+              color: showChalkboard ? '#1e1b4b' : undefined,
+            }}
+            title="Toggle Live Chalkboard & Annotation Layer"
+          >
+            <span>✏️ Chalkboard {showChalkboard ? 'ON' : ''}</span>
+          </button>
+
+          {/* Reactive Invariant Lab Button */}
+          <button
+            type="button"
+            onClick={() => setShowLabDrawer((prev) => !prev)}
+            className={`stj-btn ${showLabDrawer ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: showLabDrawer ? '#3b82f6' : undefined,
+              borderColor: showLabDrawer ? '#2563eb' : undefined,
+              color: showLabDrawer ? '#ffffff' : undefined,
+            }}
+            title="Open Reactive Mathematical & Scientific Invariant Sliders"
+          >
+            <span>🔬 Reactive Lab</span>
+          </button>
+
+          {/* Standalone Air-Gap HTML Exporter */}
+          <button
+            type="button"
+            onClick={() => {
+              const opt = PRESET_OPTIONS.find((p) => p.id === selectedPreset);
+              exportAirgapHtmlBundle(selectedPreset, opt?.label || selectedPreset);
+            }}
+            className="stj-btn stj-btn-secondary stj-btn-sm"
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+            title="Download standalone, 100% offline single-file HTML lesson for rural or air-gapped schools"
+          >
+            <span>📦 Air-Gap HTML</span>
+          </button>
+
           {/* Display & Mode Settings Button */}
           <button
             type="button"
@@ -1007,20 +1104,169 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
         embedCode={embedCode}
       />
 
-      {/* Sandboxed iFrame Element */}
-      <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height }}>
-        <iframe
-          key={`${selectedPreset}-${currentLang}`}
-          ref={iframeRef}
-          src={playerSrc}
-          title="Lumina Vector Player"
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            display: 'block',
-          }}
-          allow="fullscreen; microphone"
+      {/* Sandboxed iFrame Element or Dual Comparative Viewports */}
+      <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height, overflow: 'hidden', borderRadius: '12px' }}>
+        {comparisonPreset ? (
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '8px',
+              background: '#090d16',
+              overflow: 'hidden',
+              border: '1px solid #1e293b',
+            }}
+          >
+            {/* Primary Viewport */}
+            <div style={{ position: 'relative', height: '100%', borderRight: '1px solid #1e293b' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  left: '8px',
+                  zIndex: 10,
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  backdropFilter: 'blur(4px)',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  color: '#38bdf8',
+                  fontWeight: 800,
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                }}
+              >
+                Primary: {selectedPreset}
+              </div>
+              <iframe
+                key={`primary-${selectedPreset}-${currentLang}`}
+                ref={iframeRef}
+                src={playerSrc}
+                title="Primary Concept Viewport"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  display: 'block',
+                }}
+                allow="fullscreen; microphone"
+              />
+            </div>
+
+            {/* Comparative Secondary Mini Browser Viewport */}
+            <div style={{ position: 'relative', height: '100%' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  left: '8px',
+                  right: '8px',
+                  zIndex: 10,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.88)',
+                    backdropFilter: 'blur(4px)',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    color: '#4ade80',
+                    fontWeight: 800,
+                    border: '1px solid rgba(74, 222, 128, 0.3)',
+                  }}
+                >
+                  Comparing: {comparisonPreset}
+                </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = comparisonPreset;
+                      setComparisonPreset(null);
+                      handleSwitchPreset(target);
+                    }}
+                    style={{
+                      background: '#22c55e',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '2px 8px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                    title="Promote comparison slide into full view"
+                  >
+                    ⛶ Expand Full
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComparisonPreset(null)}
+                    style={{
+                      background: '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '2px 6px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                    title="Close comparison viewport"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <iframe
+                key={`compare-${comparisonPreset}-${currentLang}`}
+                src={`${cleanBase}player/index.html?preset=${encodeURIComponent(comparisonPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=1&theme=${encodeURIComponent(activeTheme)}&mode=minimal&v=2.5.0`}
+                title="Comparative Concept Viewport"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  display: 'block',
+                }}
+                allow="fullscreen; microphone"
+              />
+            </div>
+          </div>
+        ) : (
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <iframe
+              key={`${selectedPreset}-${currentLang}`}
+              ref={iframeRef}
+              src={playerSrc}
+              title="Lumina Vector Player"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
+              }}
+              allow="fullscreen; microphone"
+            />
+          </div>
+        )}
+
+        {/* Live Chalkboard & Annotation Layer */}
+        <AstChalkboardOverlay
+          isActive={showChalkboard}
+          onClose={() => setShowChalkboard(false)}
+        />
+
+        {/* Reactive Invariant Parameter Manipulation Lab */}
+        <AstInteractiveLabDrawer
+          isOpen={showLabDrawer}
+          onClose={() => setShowLabDrawer(false)}
+          preset={selectedPreset}
         />
       </div>
 
@@ -1048,6 +1294,138 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
             {Math.round(currentProgress * 100)}% Complete
           </span>
+        </div>
+      )}
+
+      {/* Semantic Concept Trail & Related Slide Portal (AST Knowledge Graph Traversal) */}
+      {relatedConcepts.length > 0 && (
+        <div
+          style={{
+            background: 'var(--stj-surface-raised, #0f172a)',
+            borderTop: '1px solid var(--stj-border, #334155)',
+            padding: '12px 16px',
+            marginTop: '0px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showConceptTrail ? '10px' : '0px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>🔗</span>
+              <strong style={{ fontSize: '0.85rem', color: 'var(--stj-text, #f8fafc)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Semantic Concept Trail (AST Graph)
+              </strong>
+              <span style={{ fontSize: '0.72rem', background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                {relatedConcepts.length} Linked Concepts
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowConceptTrail((prev) => !prev)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--stj-text-muted, #94a3b8)',
+                fontSize: '0.76rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              {showConceptTrail ? '▲ Hide Concept Trail' : '▼ Show Concept Trail'}
+            </button>
+          </div>
+
+          {showConceptTrail && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+              {relatedConcepts.map((rel) => (
+                <div
+                  key={rel.id}
+                  onClick={() => handleSwitchPreset(rel.id)}
+                  style={{
+                    background: 'var(--stj-surface, #1e293b)',
+                    border: '1px solid var(--stj-border, #334155)',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#38bdf8';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--stj-border, #334155)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>{rel.icon}</span> {rel.title}
+                      </span>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>
+                        {rel.stage}
+                      </span>
+                    </div>
+
+                    <p style={{ margin: '0 0 6px 0', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                      {rel.reason}
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.08)', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 600 }}>
+                      ⚡ Invariant: {rel.invariantConcept}
+                    </span>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setComparisonPreset((prev) => prev === rel.id ? null : rel.id);
+                        }}
+                        style={{
+                          background: comparisonPreset === rel.id ? '#2563eb' : 'rgba(59, 130, 246, 0.15)',
+                          color: comparisonPreset === rel.id ? '#ffffff' : '#60a5fa',
+                          border: '1px solid rgba(59, 130, 246, 0.4)',
+                          borderRadius: '4px',
+                          padding: '3px 8px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                        title="Open this related concept in a side-by-side mini browser viewport"
+                      >
+                        {comparisonPreset === rel.id ? '✕ Close Split' : '🪟 Compare Dual'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setComparisonPreset(null);
+                          handleSwitchPreset(rel.id);
+                        }}
+                        style={{
+                          background: 'rgba(34, 197, 94, 0.15)',
+                          color: '#4ade80',
+                          border: '1px solid rgba(34, 197, 94, 0.4)',
+                          borderRadius: '4px',
+                          padding: '3px 8px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                        }}
+                        title="Morph player directly into this concept slide"
+                      >
+                        Jump Slide &rarr;
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
