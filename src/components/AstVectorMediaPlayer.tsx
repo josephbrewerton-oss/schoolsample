@@ -34,6 +34,7 @@ import {
 import AstChalkboardOverlay from './player/AstChalkboardOverlay';
 import AstInteractiveLabDrawer from './player/AstInteractiveLabDrawer';
 import { exportAirgapHtmlBundle } from '../utils/exportAirgapHtmlBundle';
+import { exportSubjectCartridge, AVAILABLE_CARTRIDGES } from '../utils/exportSubjectCartridge';
 import { getRelatedConcepts } from '../data/player/astConceptGraph';
 
 export type VectorPresetType =
@@ -82,6 +83,8 @@ export interface AstVectorMediaPlayerHandle {
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
+  { id: 'algebra-balance', label: '⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)', stage: 'KS2/KS3 MATHS' },
+  { id: 'electric-circuits', label: '💡 Electrical Circuits: Ohm\'s Law & Electron Physics (V = I × R)', stage: 'KS2/KS3 PHYSICS' },
   { id: 'bodmas', label: '🧮 BODMAS / BIDMAS: Forcefield Clamps & Area Physics', stage: 'KS2/KS3 MATHS' },
   { id: 'times-tables', label: '📐 Times Tables: 2D Array & Distributive Splitter', stage: 'KS1/KS2 MATHS' },
   { id: 'phonics-lab', label: '🔤 Early Phonics: Sound Buttons & Blending Mat', stage: 'EYFS/KS1 ENGLISH' },
@@ -155,6 +158,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [comparisonPreset, setComparisonPreset] = useState<string | null>(null);
   const [showChalkboard, setShowChalkboard] = useState(false);
   const [showLabDrawer, setShowLabDrawer] = useState(false);
+  const [showCartridgeMenu, setShowCartridgeMenu] = useState(false);
   const relatedConcepts = getRelatedConcepts(selectedPreset);
 
   const [inspectedElement, setInspectedElement] = useState<InspectedElementData | null>(null);
@@ -185,6 +189,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   // Derive system theme if not explicitly passed
   const activeTheme = theme || (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark' ? 'dark' : 'dark');
   const [currentLang, setCurrentLang] = useState(() => lang || (typeof window !== 'undefined' ? getSavedLanguage() : 'en'));
+  const [bilingualSubtitles, setBilingualSubtitles] = useState(true);
 
   // Post message helper with strict targetOrigin (tightened from wildcard '*' to prevent LMS cross-frame snooping)
   const getVerifiedTargetOrigin = useCallback(() => {
@@ -200,6 +205,15 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       iframeRef.current.contentWindow.postMessage(payload, targetOrigin);
     }
   }, [getVerifiedTargetOrigin]);
+
+  // Synchronize language changes from the UniversalTranslatorBar with the player engine
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setCurrentLang(newLang);
+      postToPlayer({ type: 'SET_LANGUAGE', lang: newLang });
+    });
+    return unsub;
+  }, [postToPlayer]);
 
   const handleSwitchPreset = useCallback((nextPreset: string) => {
     setSelectedPreset(nextPreset);
@@ -907,27 +921,130 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             <span>🔬 Reactive Lab</span>
           </button>
 
-          {/* Standalone Air-Gap HTML Exporter */}
-          <button
-            type="button"
-            onClick={() => {
-              const opt = PRESET_OPTIONS.find((p) => p.id === selectedPreset);
-              exportAirgapHtmlBundle(selectedPreset, opt?.label || selectedPreset);
-            }}
-            className="stj-btn stj-btn-secondary stj-btn-sm"
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-            title="Download standalone, 100% offline single-file HTML lesson for rural or air-gapped schools"
-          >
-            <span>📦 Air-Gap HTML</span>
-          </button>
+          {/* Standalone Air-Gap HTML & Cartridge Exporter */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowCartridgeMenu((prev) => !prev)}
+              className={`stj-btn ${showCartridgeMenu ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Download standalone, 100% offline single-file HTML lessons and cartridges for rural or air-gapped schools"
+            >
+              <span>📦 Offline Packs ▾</span>
+            </button>
+
+            {showCartridgeMenu && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '6px',
+                  background: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                  width: '310px',
+                  zIndex: 70,
+                  padding: '8px',
+                  color: '#f8fafc',
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', padding: '4px 8px', textTransform: 'uppercase' }}>
+                  Single Lesson Micro-Pack:
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const opt = PRESET_OPTIONS.find((p) => p.id === selectedPreset);
+                    exportAirgapHtmlBundle(selectedPreset, opt?.label || selectedPreset);
+                    setShowCartridgeMenu(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 10px',
+                    color: '#f8fafc',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <div style={{ fontWeight: 800, color: '#38bdf8' }}>📄 This Slide Only (&lt; 45 KB)</div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Standalone self-executing lesson for {selectedPreset}</div>
+                </button>
+
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', padding: '4px 8px', textTransform: 'uppercase' }}>
+                  Multi-Lesson Offline Cartridges:
+                </div>
+                {AVAILABLE_CARTRIDGES.map((cart) => (
+                  <button
+                    key={cart.id}
+                    type="button"
+                    onClick={() => {
+                      exportSubjectCartridge(cart.id);
+                      setShowCartridgeMenu(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'rgba(255,255,255,0.04)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 10px',
+                      color: '#f8fafc',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      marginBottom: '4px',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  >
+                    <div style={{ fontWeight: 800, color: '#facc15' }}>📦 {cart.title}</div>
+                    <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>{cart.description}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* EAL Bilingual Subtitles Bridge Toggle */}
+          {currentLang !== 'en' && (
+            <button
+              type="button"
+              onClick={() => {
+                setBilingualSubtitles((prev) => {
+                  const next = !prev;
+                  postToPlayer({ type: 'SET_BILINGUAL_SUBTITLES', enabled: next });
+                  return next;
+                });
+              }}
+              className={`stj-btn ${bilingualSubtitles ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Toggle dual bilingual subtitles (EN + Localized) for EAL English learners"
+            >
+              <span>🌐 {bilingualSubtitles ? 'Bilingual: ON' : 'Bilingual: OFF'}</span>
+            </button>
+          )}
 
           {/* Display & Mode Settings Button */}
           <button

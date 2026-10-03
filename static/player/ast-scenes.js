@@ -2145,6 +2145,290 @@
       render(t) {
         return `<rect width="800" height="480" fill="#1c2541"/><text x="400" y="240" fill="#fef08a" font-size="20" font-weight="bold" text-anchor="middle">MFL &amp; Polyglot Studio</text>`;
       }
+    },
+
+    'algebra-balance': {
+      id: 'algebra-balance',
+      stage: 'KS2/KS3 MATHS',
+      title: '⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)',
+      duration: 14.0,
+      keyframes: [
+        { t: 0.00, title: 'Initial Equation', rule: 'Left Pan: 2x + 5 blocks. Right Pan: 15 unit weights. Both sides balance equally.' },
+        { t: 0.35, title: 'Step 1: Isolate Variable Terms', rule: 'Subtract 5 from BOTH pans simultaneously: (2x + 5 - 5) = (15 - 5) => 2x = 10.' },
+        { t: 0.70, title: 'Step 2: Divide Equally', rule: 'Divide both pans by 2: (2x ÷ 2) = (10 ÷ 2) => x = 5.' },
+        { t: 1.00, title: 'Equality Verified', rule: 'Each x block weighs exactly 5 units! Scale remains in perfect equilibrium.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.35, en: "An equation is a physical balance scale! 2 unknown 'x' boxes plus 5 unit weights balance 15 weights.", es: "¡Una ecuación es una balanza física! 2 cajas 'x' más 5 unidades equilibran 15 unidades." },
+        { start: 0.35, end: 0.70, en: "To solve for x, whatever you do to one side, you MUST do to the other. Subtract 5 from both pans!", es: "Para despejar x, lo que hagas a un lado, ¡DEBES hacerlo al otro! Resta 5 de ambos lados." },
+        { start: 0.70, end: 1.00, en: "Now 2x balances 10. Divide both pans in half: one single x equals exactly 5 units!", es: "Ahora 2x equilibra 10. Divide ambos lados a la mitad: ¡una sola x vale exactamente 5 unidades!" }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.34,
+            title: 'Golden Rule of Algebra',
+            prompt: 'Why must we subtract 5 from BOTH pans rather than just the left pan?',
+            options: [
+              'To preserve equality and keep the balance scale level',
+              'Because the right side cannot have weights',
+              'Because subtracting only from one side makes it heavier'
+            ],
+            answer: 0,
+            explanation: 'An equation states that two expressions have equal value. Performing the exact same operation to both sides keeps the scale perfectly balanced.'
+          },
+          {
+            t: 0.69,
+            title: 'Division Step',
+            prompt: 'If 2x = 10, how do we find the weight of a single x box?',
+            options: [
+              'Divide both sides by 2 (x = 10 ÷ 2 = 5)',
+              'Subtract 2 from both sides (x = 8)',
+              'Multiply both sides by 2 (x = 20)'
+            ],
+            answer: 0,
+            explanation: 'Since x is multiplied by 2, we apply the inverse operation: divide both sides by 2 to isolate a single x.'
+          }
+        ]
+      },
+      mount(container) {
+        container.innerHTML = `
+          <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="goldBeam" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#d97706"/>
+              </linearGradient>
+            </defs>
+            <rect width="800" height="480" fill="#090d16"/>
+            <!-- Title Header -->
+            <text x="400" y="40" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle">Algebraic Balance Scale: Golden Rule of Equality</text>
+            <text id="eq-display" x="400" y="70" fill="#38bdf8" font-size="22" font-weight="900" text-anchor="middle">2x + 5 = 15</text>
+
+            <!-- Fulcrum / Stand -->
+            <polygon points="400,240 370,410 430,410" fill="#334155" stroke="#475569" stroke-width="2"/>
+            <circle cx="400" cy="240" r="14" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+            <rect x="300" y="410" width="200" height="20" rx="4" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+
+            <!-- Moving Balance Beam Assembly -->
+            <g id="balance-beam" transform="rotate(0, 400, 240)">
+              <!-- Horizontal Beam -->
+              <rect x="120" y="235" width="560" height="10" rx="5" fill="url(#goldBeam)" stroke="#b45309" stroke-width="1.5"/>
+              
+              <!-- Left Pan Strings & Tray -->
+              <line x1="200" y1="240" x2="160" y2="330" stroke="#94a3b8" stroke-width="2"/>
+              <line x1="200" y1="240" x2="240" y2="330" stroke="#94a3b8" stroke-width="2"/>
+              <ellipse cx="200" cy="330" rx="70" ry="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+              
+              <!-- Left Pan Weights Group -->
+              <g id="left-pan-weights">
+                <!-- 2x Boxes -->
+                <rect x="150" y="280" width="40" height="40" rx="6" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+                <text x="170" y="306" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">x</text>
+                <rect x="195" y="280" width="40" height="40" rx="6" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+                <text x="215" y="306" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">x</text>
+                <!-- 5 unit dots -->
+                <g id="left-5-units">
+                  <circle cx="160" cy="265" r="7" fill="#f59e0b"/>
+                  <circle cx="180" cy="265" r="7" fill="#f59e0b"/>
+                  <circle cx="200" cy="265" r="7" fill="#f59e0b"/>
+                  <circle cx="220" cy="265" r="7" fill="#f59e0b"/>
+                  <circle cx="240" cy="265" r="7" fill="#f59e0b"/>
+                  <text x="200" y="250" fill="#fde68a" font-size="12" font-weight="800" text-anchor="middle">+5 units</text>
+                </g>
+              </g>
+
+              <!-- Right Pan Strings & Tray -->
+              <line x1="600" y1="240" x2="560" y2="330" stroke="#94a3b8" stroke-width="2"/>
+              <line x1="600" y1="240" x2="640" y2="330" stroke="#94a3b8" stroke-width="2"/>
+              <ellipse cx="600" cy="330" rx="70" ry="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+
+              <!-- Right Pan Weights -->
+              <g id="right-pan-weights">
+                <rect x="560" y="280" width="80" height="40" rx="6" fill="#22c55e" stroke="#4ade80" stroke-width="2"/>
+                <text id="right-weight-text" x="600" y="306" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">15</text>
+              </g>
+            </g>
+
+            <!-- Status Indicator -->
+            <rect x="250" y="440" width="300" height="30" rx="6" fill="rgba(34, 197, 94, 0.15)" stroke="#22c55e" stroke-width="1"/>
+            <text id="balance-status" x="400" y="460" fill="#4ade80" font-size="13" font-weight="800" text-anchor="middle">⚖️ Scale Balanced &bull; Left (15) = Right (15)</text>
+          </svg>
+        `;
+        return {
+          beam: container.querySelector('#balance-beam'),
+          eqDisplay: container.querySelector('#eq-display'),
+          left5Units: container.querySelector('#left-5-units'),
+          rightWeightText: container.querySelector('#right-weight-text'),
+          balanceStatus: container.querySelector('#balance-status')
+        };
+      },
+      update(t, elements) {
+        if (!elements) return;
+        // Step progression:
+        // 0.0 - 0.35: 2x + 5 = 15 (Balanced)
+        // 0.35 - 0.70: 2x = 10 (5 removed from both sides)
+        // 0.70 - 1.00: x = 5 (Divided by 2)
+        if (t < 0.35) {
+          if (elements.eqDisplay) elements.eqDisplay.textContent = '2x + 5 = 15';
+          if (elements.left5Units) elements.left5Units.style.display = 'block';
+          if (elements.rightWeightText) elements.rightWeightText.textContent = '15';
+          if (elements.balanceStatus) elements.balanceStatus.textContent = '⚖️ Scale Balanced • Left (2x + 5) = Right (15)';
+        } else if (t < 0.70) {
+          if (elements.eqDisplay) elements.eqDisplay.textContent = 'Step 1: 2x = 10 (-5 from both sides)';
+          if (elements.left5Units) elements.left5Units.style.display = 'none';
+          if (elements.rightWeightText) elements.rightWeightText.textContent = '10';
+          if (elements.balanceStatus) elements.balanceStatus.textContent = '⚖️ Scale Balanced • Left (2x) = Right (10)';
+        } else {
+          if (elements.eqDisplay) elements.eqDisplay.textContent = 'Step 2: x = 5 (Divide both sides by 2)';
+          if (elements.left5Units) elements.left5Units.style.display = 'none';
+          if (elements.rightWeightText) elements.rightWeightText.textContent = '5';
+          if (elements.balanceStatus) elements.balanceStatus.textContent = '⭐ Solved! Each x = 5 units (5 + 5 + 5 = 15)';
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#090d16"/><text x="400" y="240" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">Algebraic Balance Scale</text>`;
+      }
+    },
+
+    'electric-circuits': {
+      id: 'electric-circuits',
+      stage: 'KS2/KS3 PHYSICS',
+      title: '💡 Electrical Circuits & Ohm\'s Law (V = I × R)',
+      duration: 12.0,
+      keyframes: [
+        { t: 0.00, title: 'Closed Loop Circuit', rule: 'Current (I) only flows through an unbroken conductive loop from positive to negative terminal.' },
+        { t: 0.35, title: 'Voltage Drives Potential', rule: 'Voltage (V) is electrical pressure. Higher voltage pushes more coulombs per second.' },
+        { t: 0.70, title: 'Resistance Opposes Flow', rule: 'Resistance (R) in ohms restricts electron velocity. Ohm’s Law: I = V / R.' },
+        { t: 1.00, title: 'Energy Dissipation', rule: 'Electrons collide with tungsten filament atoms, converting electrical energy into radiant photon light (Power P = I²R)!' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.35, en: "An electrical circuit is a closed loop! The battery voltage pushes electrons through the copper wires.", es: "¡Un circuito eléctrico es un lazo cerrado! El voltaje de la batería empuja electrones por los cables." },
+        { start: 0.35, end: 0.70, en: "Watch the yellow electrons move! Current is the rate of charge flow: I = Voltage divided by Resistance.", es: "¡Mira cómo se mueven los electrones! La corriente es la tasa de flujo: I = Voltaje dividido entre Resistencia." },
+        { start: 0.70, end: 1.00, en: "Inside the lightbulb, resistance forces electrons to collide, heating the filament into brilliant glowing light!", es: "Dentro de la bombilla, la resistencia hace chocar los electrones, ¡calentando el filamento y emitiendo luz!" }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.34,
+            title: 'Ohm’s Law Formula',
+            prompt: 'According to Ohm’s Law (I = V / R), what happens if we double the battery voltage while keeping resistance the same?',
+            options: [
+              'The electrical current (I) doubles and the lightbulb shines brighter',
+              'The electrical current is cut in half',
+              'The resistance increases automatically'
+            ],
+            answer: 0,
+            explanation: 'Current is directly proportional to voltage. Doubling the voltage doubles the rate of electron flow (amperage).'
+          },
+          {
+            t: 0.85,
+            title: 'Energy Transformation',
+            prompt: 'What form of energy is electrical energy converted into inside the incandescent lightbulb?',
+            options: [
+              'Thermal (heat) and Radiant (light) energy',
+              'Nuclear potential energy',
+              'Chemical bonding energy'
+            ],
+            answer: 0,
+            explanation: 'High resistance in the filament causes electrons to collide with tungsten ions, releasing intense thermal heat and visible light photons.'
+          }
+        ]
+      },
+      mount(container) {
+        container.innerHTML = `
+          <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="bulbGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+                <stop offset="60%" stop-color="#facc15" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="800" height="480" fill="#090d16"/>
+            <!-- Title -->
+            <text x="400" y="40" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle">Electrical Circuit: Ohm's Law (V = I &times; R)</text>
+            <text id="telemetry-display" x="400" y="70" fill="#38bdf8" font-size="16" font-weight="700" text-anchor="middle">Voltage: 12V | Resistance: 4&Omega; | Current: 3.0A | Power: 36W</text>
+
+            <!-- Circuit Wire Loop (Rounded Rect) -->
+            <rect x="150" y="110" width="500" height="260" rx="30" fill="none" stroke="#475569" stroke-width="8"/>
+            <rect x="150" y="110" width="500" height="260" rx="30" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8 8"/>
+
+            <!-- Moving Electron Dots Group -->
+            <g id="electron-charges">
+              <circle class="e-dot" cx="150" cy="180" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="150" cy="240" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="250" cy="110" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="350" cy="110" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="450" cy="110" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="550" cy="110" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="650" cy="180" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="650" cy="280" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="550" cy="370" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="450" cy="370" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="350" cy="370" r="5" fill="#fde047"/>
+              <circle class="e-dot" cx="250" cy="370" r="5" fill="#fde047"/>
+            </g>
+
+            <!-- Component 1: DC Battery (Left side) -->
+            <g transform="translate(110, 200)">
+              <rect x="0" y="0" width="80" height="70" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+              <text x="40" y="28" fill="#f8fafc" font-size="14" font-weight="800" text-anchor="middle">BATTERY</text>
+              <text x="40" y="52" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle">12V</text>
+              <line x1="40" y1="-10" x2="40" y2="0" stroke="#ef4444" stroke-width="4"/>
+              <text x="55" y="-2" fill="#ef4444" font-size="14" font-weight="900">+</text>
+              <line x1="40" y1="70" x2="40" y2="80" stroke="#38bdf8" stroke-width="4"/>
+              <text x="55" y="80" fill="#38bdf8" font-size="16" font-weight="900">-</text>
+            </g>
+
+            <!-- Component 2: Resistor (Top side) -->
+            <g transform="translate(360, 80)">
+              <rect x="0" y="10" width="80" height="40" rx="6" fill="#334155" stroke="#f59e0b" stroke-width="2"/>
+              <text x="40" y="28" fill="#f8fafc" font-size="11" font-weight="800" text-anchor="middle">RESISTOR</text>
+              <text x="40" y="44" fill="#fde047" font-size="13" font-weight="900" text-anchor="middle">4 &Omega;</text>
+            </g>
+
+            <!-- Component 3: Lightbulb (Right side) -->
+            <g transform="translate(650, 240)">
+              <!-- Bulb Glow Aura -->
+              <circle id="bulb-halo" cx="0" cy="0" r="60" fill="url(#bulbGlow)" opacity="0.8"/>
+              <!-- Glass Dome -->
+              <circle cx="0" cy="0" r="26" fill="rgba(255, 255, 255, 0.2)" stroke="#facc15" stroke-width="2"/>
+              <!-- Filament -->
+              <path d="M -8 10 L -4 -6 L 0 6 L 4 -6 L 8 10" fill="none" stroke="#fef08a" stroke-width="2"/>
+              <text x="0" y="45" fill="#facc15" font-size="12" font-weight="800" text-anchor="middle">LIGHTBULB</text>
+            </g>
+
+            <!-- Component 4: Switch (Bottom side) -->
+            <g transform="translate(370, 350)">
+              <circle cx="0" cy="20" r="5" fill="#22c55e"/>
+              <line x1="0" y1="20" x2="60" y2="20" stroke="#22c55e" stroke-width="4"/>
+              <circle cx="60" cy="20" r="5" fill="#22c55e"/>
+              <text x="30" y="48" fill="#4ade80" font-size="11" font-weight="800" text-anchor="middle">SWITCH: CLOSED</text>
+            </g>
+
+            <!-- Legend Card -->
+            <rect x="180" y="420" width="440" height="40" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#1e293b" stroke-width="1"/>
+            <text x="400" y="445" fill="#cbd5e1" font-size="12" font-weight="700" text-anchor="middle">
+              Formula: Current I = 12V &divide; 4&Omega; = 3.0 Amperes &bull; Power P = 12V &times; 3.0A = 36 Watts
+            </text>
+          </svg>
+        `;
+        return {
+          glow: container.querySelector('#bulb-halo'),
+          dots: container.querySelectorAll('.e-dot')
+        };
+      },
+      update(t, elements) {
+        if (!elements || !elements.dots) return;
+        const pulse = Math.sin(t * 12) * 0.15 + 0.85;
+        if (elements.glow) {
+          elements.glow.setAttribute('opacity', pulse.toFixed(2));
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#090d16"/><text x="400" y="240" fill="#facc15" font-size="20" font-weight="bold" text-anchor="middle">Electrical Circuits &amp; Ohm's Law</text>`;
+      }
     }
   };
 
@@ -2205,7 +2489,16 @@
         'mathfishing': 'math-fishing',
         'fishing': 'math-fishing',
         'pond': 'math-fishing',
-        'number-bonds': 'math-fishing'
+        'number-bonds': 'math-fishing',
+        'balance': 'algebra-balance',
+        'algebra': 'algebra-balance',
+        'algebra-balance': 'algebra-balance',
+        'scale': 'algebra-balance',
+        'circuits': 'electric-circuits',
+        'circuit': 'electric-circuits',
+        'ohms-law': 'electric-circuits',
+        'electric-circuits': 'electric-circuits',
+        'electricity': 'electric-circuits'
       };
       return aliases[clean] || clean;
     },

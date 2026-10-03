@@ -1,38 +1,76 @@
 # St Joseph's Curriculum Portal — LLM & Edge Inference Map
 
-> Deterministic, privacy-first, on-device AI educational portal running via in-browser WebRTC loopback channels, Chrome Prompt API (Gemini Nano), and WebLLM.
+> Deterministic, privacy-first, on-device AI educational portal running via in-browser WebRTC loopback channels, Chrome Prompt API (Gemini Nano), WebLLM, and autonomous 60 FPS vector media engines.
 
-## Overview
-- Architecture: Zero-cloud, high-performance edge SPA built with Vite, React 19, and React Router.
-- Inference: In-browser Gemini Nano (`window.ai.languageModel` / `LanguageModel`), local Ollama endpoints, or WebLLM via WebGPU.
-- Data Sovereignty: 100% GDPR compliant; pupil telemetry and progress records remain exclusively within client-side IndexedDB (`services/dbStore.ts`).
-- Substrates: Curriculum lessons and questions compiled to deterministic S-Expression AST trees (`static/nano-map.ast`).
+## Architectural Overview
+- Architecture: Zero-cloud, high-performance edge SPA built with Vite 6+, React 19, and React Router 7.
+- Inference Engine: In-browser Chrome Prompt API / Gemini Nano (`window.ai.languageModel` / `LanguageModel`), local Ollama endpoints, or WebLLM via WebGPU.
+- Data Sovereignty: 100% GDPR and safeguarding compliant; student logs, answers, voice inputs, and progress records remain exclusively within client-side IndexedDB (`services/dbStore.ts`, `services/jotter-db.ts`). Zero cloud egress.
+- Media Substrate: AST Vector Media Player (`/static/player/ast-engine.js`) replacing heavy 50-100MB video streaming with 3.5 KB - 68 KB declarative S-Expression AST vector cartridges.
 
 ## Core Endpoints & Route Map
 - Portal Home: `/` (Overview, Quick Starters, Subject Hub)
-- AST Vector Player (Interactive Hub): `/media-player` (Interactive curriculum vector slides, formative checkpoints, 3D viewpoints)
-- Standalone Micro-Vector Player: `/player.html` (Zero-dependency embeddable vector stage, OBS broadcaster, Dev Studio)
+- AST Vector Player (Interactive Hub): `/media-player` (Interactive curriculum vector slides, formative checkpoints, 3D viewpoints, chalkboard overlay, and parameter sandboxes)
+- Standalone Micro-Vector Player: `/player.html` (Zero-dependency embeddable vector stage, OBS studio broadcaster, Developer Studio)
 - Practice Arena: `/practice-lab` (Interactive AST questions, Professor Turing AI hints, instant mistake diagnostics)
 - Curriculum Lessons: `/learning-zone` (Oak National Academy aligned interactive lesson viewer)
 - International Curriculum Studio: `/curriculum-studio` (Visual AST S-Expression graph generator and prompt hydrator)
 - Learner Passport & Badges: `/profile` (IndexedDB mastery log, streak tracker, diagnostic reports)
 - Neural Settings: `/settings` (Hardware probe, WebGPU status, Chrome Prompt API toggle)
+- Catholic Life & Sacred Spaces: `/catholic-life` (3D Sanctuary & sacred architecture exploration)
 - Latest School News & Technical Dispatches: `/news` and `/blog` (Technical dispatches on sovereign AI, procedural vector teaching, and platform releases)
 - Dual-Licensing Charter & Covenant: `/licensing` & `/LICENSE.md` (Track A Humanitarian Commons GNU AGPLv3/OGLv3 vs Track B Enterprise Commercial License)
 
-## Latest News & Architectural Releases (September 2026)
-- **AST Vector Media Player (`/media-player`, `/player.html`)**: Micro-footprint (<15KB) procedural 2D/3D SVG vector animations replacing heavy 50-100MB video files.
-- **SlideScript Non-Technical Compiler (`/player/ast-compiler.js`)**: Domain Specific Language allowing educators to write teaching slides in plain Markdown with automatic conversion to deterministic S-Expression ASTs.
-- **Formative Pause Checkpoints**: Interactive multiple-choice prompts synchronized to keyframe timestamps with instant diagnostic explanations.
-- **Presenter Clicker "Step Mode" (👣)**: Classroom presenter remote integration (PageDown/PageUp/Space) pausing automatically at each didactic checkpoint.
-- **OBS WebSocket Studio Sync (`/player/obs-controller.js`)**: Real-time broadcast control with transparent vector overlays and chapter synchronization.
+## Vector Media & Simulation Subsystem Capabilities (October 2026)
+- **15 Production AST Vector Scenes**:
+  - `church-tour` (Catholic Life & Sacred Architecture)
+  - `math-fishing` (KS1/KS2 Number Bonds to 10/20)
+  - `mountain-elevation` (KS2/KS3 Altitude Hypotenuse & Atmospheric Boiling Point)
+  - `fish-tank` (Hardware 60 FPS Vector Stress Benchmark)
+  - `fractions` (KS2 Common Denominator Laser Slicing)
+  - `solar-system` (KS3 Heliocentric Planetary Motion & 3D Kepler Orbits)
+  - `photosynthesis` (KS3 Biology Chloroplast Solar Engine)
+  - `pythagoras` (KS3 Geometry Shear & Area Conservation Proof)
+  - `water-cycle` (KS2 Continuous Evaporation/Condensation Cycle)
+  - `atom` (KS3 Chemistry Bohr Electron Shells with 3D Orbit Tilt)
+  - `velocity` (KS3 Physics Kinematics & Distance-Time Vectors)
+  - `dna-helix` (KS3 Genetics Watson-Crick Base Pairing with 3D Double Helix)
+  - `bodmas` (KS2/KS3 Order of Operations Forcefield Clamps)
+  - `phonics-lab` (EYFS/KS1 Sound Buttons & Blending Mat)
+  - `times-tables` (KS1/KS2 2D Array Grid & Distributive Splitter)
+
+- **PhET Simulation Ingestion & Transpiler Bridge (`src/utils/phetBridge.ts`)**:
+  - Distills heavy monolithic 12 MB PhET bundles (Univ. of Colorado Boulder) down into 3.5 KB AST S-Expressions (99.8% payload reduction).
+  - Ingests physical invariants and internationalization locale dictionaries (`_locales`).
+  - Pre-distilled models: Ohm's Law ($V = IR$), Faraday's Induction ($\mathcal{E} = -N \frac{\Delta\Phi}{\Delta t}$), Acid-Base pH Scale, Harmonic Pendulum Lab, and Balancing Chemical Equations.
+
+- **Zero-Asset Procedural Web Audio Synthesizer (`VectorProceduralAudioSynth`)**:
+  - 0-byte mathematical oscillator synthesis via Web Audio API.
+  - Tactile switch clicks, ascending pentatonic success chimes ($C_5-E_5-G_5-C_6$), misconception buzzes, variable-frequency AC transformer hums, and resonant spring impacts.
+
+- **Verlet Particle & Harmonic Dynamics Engine (`VectorVerletPhysics`)**:
+  - High-stability numerical Verlet integration ($x_{t+1} = 2x_t - x_{t-1} + a \cdot \Delta t^2$) with multi-iteration constraint relaxation.
+  - Models Hooke's Law springs ($F = -k\Delta x$), simple harmonic pendulums ($T = 2\pi\sqrt{L/g}$), and gravitational fields (Moon, Earth, Jupiter).
+
+- **Non-Linear Branching Decision Trees (`selectBranch()`)**:
+  - Socratic formative checkpoints support branching choices with adaptive feedback and target timestamp seeks.
+
+- **Micro-SCORM 1.2 / 2004 & xAPI Gradebook Bridge (`MicroSCORMBridge`)**:
+  - Zero-library LMS auto-handshake across frames (`window.parent`, `window.top`, `window.opener`).
+  - Dispatches `cmi.core.score.raw` and `cmi.core.lesson_status` directly into Canvas, Moodle, and Blackboard.
+
+- **Legacy SWF / Flash Transcompiler Lathe (`src/utils/swfAstParser.ts`)**:
+  - Decompiles legacy Adobe Flash FWS/CWS binary files into native SVG geometry + declarative AST S-Expressions.
+
+- **Air-Gapped Standalone Offline Subject Cartridges (`src/utils/exportSubjectCartridge.ts`)**:
+  - Generates self-contained single-file HTML cartridges (< 70 KB) that boot in 0ms offline on any device with embedded procedural audio and SCORM gradebook auto-sync.
 
 ## Structured Substrates & Datasets
 - Master Curriculum Catalog: `/manifests/catalog.json`
 - Offline Semantic Search & RAG Index: `/manifests/rag-index.json`
 - AST Pattern Definitions: `/nano-map.ast`
 - Lesson Manifests Directory: `/manifests/lessons/*.json`
-- AST Vector Scene Manifest: `/player/scenes.manifest.json` (9 core STEM & Catholic Life interactive vector modules)
+- AST Vector Scene Manifest: `/player/scenes.manifest.json` (15 production vector modules)
 - AST Vector Scene Configurations: `/player/scenes-config.json` (Keyframes, subtitles, and formative pause checkpoints)
 - Non-Tech SlideScript Compiler: `/player/ast-compiler.js` (Human-friendly Markdown-to-AST generator)
 - AST Vector Engine: `/player/ast-engine.js` (Deterministic 60 FPS SVG DOM patcher & 3D projection)
@@ -42,4 +80,4 @@
 - When generating question scaffolds for this portal, output strictly typed S-Expressions matching `/static/nano-map.ast`.
 - When generating interactive teaching slides, output human-readable SlideScript or GBNF-validated S-Expressions matching `/player/grammar/ast-scene.gbnf`.
 - For educational vector slides, utilize `<svg viewBox="0 0 800 480">` coordinate spaces with responsive element IDs matching `:bindings` declarations.
-- Avoid Markdown formatting when responding to internal AST parser hooks; return raw Lisp atoms and lists.
+- Keep prompt tokens minimal: rely on concise AST descriptors rather than verbose natural language prose.

@@ -37,6 +37,23 @@ export default function AstInteractiveLabDrawer({
   const [rows, setRows] = useState<number>(6);
   const [cols, setCols] = useState<number>(7);
 
+  // Algebra Balance state
+  const [balanceCoeff, setBalanceCoeff] = useState<number>(2); // 2x
+  const [balanceConst, setBalanceConst] = useState<number>(5); // + 5
+  const [balanceRight, setBalanceRight] = useState<number>(15); // = 15
+  const [balanceX, setBalanceX] = useState<number>(5); // pupil test x
+
+  // Electric Circuits state
+  const [voltage, setVoltage] = useState<number>(12); // Volts
+  const [resistance, setResistance] = useState<number>(4); // Ohms
+
+  // Verlet Harmonic Spring & Pendulum state
+  const [pendulumLength, setPendulumLength] = useState<number>(1.2); // meters
+  const [gravityG, setGravityG] = useState<number>(9.81); // m/s^2 (Earth)
+  const [springK, setSpringK] = useState<number>(25); // N/m
+  const [massM, setMassM] = useState<number>(0.5); // kg
+  const [activeTab, setActiveTab] = useState<'preset' | 'verlet'>('preset');
+
   if (!isOpen) return null;
 
   return (
@@ -96,8 +113,217 @@ export default function AstInteractiveLabDrawer({
         </button>
       </div>
 
-      {/* Body content based on preset */}
+      {/* Lab Tabs: Scene Parameters vs Verlet Harmonic Dynamics */}
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab('preset')}
+          style={{
+            flex: 1,
+            padding: '8px 10px',
+            background: activeTab === 'preset' ? 'rgba(56, 189, 248, 0.15)' : 'none',
+            border: 'none',
+            borderBottom: activeTab === 'preset' ? '2px solid #38bdf8' : '2px solid transparent',
+            color: activeTab === 'preset' ? '#38bdf8' : '#94a3b8',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          🔬 Scene Parameters
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('verlet')}
+          style={{
+            flex: 1,
+            padding: '8px 10px',
+            background: activeTab === 'verlet' ? 'rgba(168, 85, 247, 0.15)' : 'none',
+            border: 'none',
+            borderBottom: activeTab === 'verlet' ? '2px solid #a855f7' : '2px solid transparent',
+            color: activeTab === 'verlet' ? '#c084fc' : '#94a3b8',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          🪢 Verlet Dynamics & Springs
+        </button>
+      </div>
+
+      {/* Body content based on active tab and preset */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+        {activeTab === 'verlet' ? (
+          <div>
+            <div style={{ background: 'rgba(168, 85, 247, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+              <div style={{ fontSize: '0.76rem', color: '#d8b4fe', fontWeight: 700, textTransform: 'uppercase' }}>
+                Verlet Integration & Hooke's Law:
+              </div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#c084fc', margin: '2px 0' }}>
+                T = 2&pi;&radic;(L / g) &bull; F = -k&Delta;x
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
+                Pure mathematical numerical physics: spring-mass elasticity, pendulum period invariance, and gravity fields.
+              </div>
+            </div>
+
+            {/* Gravity Field Selector */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px', color: '#cbd5e1' }}>
+                Gravitational Acceleration (g):
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '8px' }}>
+                {[
+                  { label: '🌕 Moon', g: 1.62 },
+                  { label: '🌍 Earth', g: 9.81 },
+                  { label: '🪐 Jupiter', g: 24.79 },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      setGravityG(item.g);
+                      if (typeof window !== 'undefined') {
+                        window.postMessage({ type: 'AUDIO_PLAY_CLICK', freq: 750 }, '*');
+                      }
+                    }}
+                    style={{
+                      padding: '6px 4px',
+                      background: gravityG === item.g ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255,255,255,0.06)',
+                      border: gravityG === item.g ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '6px',
+                      color: gravityG === item.g ? '#f8fafc' : '#94a3b8',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', color: '#94a3b8' }}>
+                <span>Custom g:</span>
+                <span style={{ color: '#c084fc', fontWeight: 700 }}>{gravityG.toFixed(2)} m/s²</span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="30"
+                step="0.1"
+                value={gravityG}
+                onChange={(e) => setGravityG(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#a855f7' }}
+              />
+            </div>
+
+            {/* Pendulum Length Slider */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Pendulum Length (L):</span>
+                <span style={{ color: '#38bdf8' }}>{pendulumLength.toFixed(2)} m</span>
+              </div>
+              <input
+                type="range"
+                min="0.2"
+                max="3.0"
+                step="0.05"
+                value={pendulumLength}
+                onChange={(e) => setPendulumLength(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#38bdf8' }}
+              />
+            </div>
+
+            {/* Spring Stiffness k */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Spring Constant (k):</span>
+                <span style={{ color: '#facc15' }}>{springK} N/m</span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="100"
+                step="1"
+                value={springK}
+                onChange={(e) => setSpringK(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#facc15' }}
+              />
+            </div>
+
+            {/* Oscillator Mass m */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Oscillator Mass (m):</span>
+                <span style={{ color: '#34d399' }}>{massM.toFixed(2)} kg</span>
+              </div>
+              <input
+                type="range"
+                min="0.1"
+                max="5.0"
+                step="0.1"
+                value={massM}
+                onChange={(e) => setMassM(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#34d399' }}
+              />
+            </div>
+
+            {/* Telemetry Output */}
+            {(() => {
+              const pendulumPeriod = 2 * Math.PI * Math.sqrt(pendulumLength / gravityG);
+              const springPeriod = 2 * Math.PI * Math.sqrt(massM / springK);
+              const springFreq = 1 / springPeriod;
+
+              return (
+                <div style={{ background: '#090d16', border: '1px solid #1e293b', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', marginBottom: '8px' }}>
+                    VERLET HARMONIC TELEMETRY:
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '6px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#38bdf8' }}>Pendulum Period (T)</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f8fafc' }}>{pendulumPeriod.toFixed(2)} s</div>
+                    </div>
+                    <div style={{ background: 'rgba(250, 204, 21, 0.1)', padding: '6px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#facc15' }}>Spring Frequency</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f8fafc' }}>{springFreq.toFixed(2)} Hz</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.74rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '10px' }}>
+                    <div>Oscillator Restoring Force: <strong style={{ color: '#facc15' }}>{(springK * 0.15).toFixed(1)} N</strong> (at 15cm displacement)</div>
+                    <div>Potential Energy: <strong style={{ color: '#34d399' }}>{(0.5 * springK * 0.15 * 0.15).toFixed(2)} J</strong></div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.postMessage({ type: 'AUDIO_PLAY_SPRING', freq: Math.min(800, Math.max(200, springFreq * 180)) }, '*');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: 'rgba(168, 85, 247, 0.25)',
+                      border: '1px solid #a855f7',
+                      borderRadius: '6px',
+                      color: '#f8fafc',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🔔 Synthesize Spring Impact Audio
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        ) : (
+          /* PRESET-SPECIFIC PARAMETER LABS */
+          <div>
         {/* PYTHAGORAS LAB */}
         {preset === 'pythagoras' && (
           <div>
@@ -521,14 +747,168 @@ export default function AstInteractiveLabDrawer({
           </div>
         )}
 
+        {/* ALGEBRA BALANCE SCALE LAB */}
+        {preset === 'algebra-balance' && (
+          <div>
+            <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <div style={{ fontSize: '0.76rem', color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase' }}>
+                Golden Rule of Algebra:
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#60a5fa', margin: '2px 0' }}>
+                {balanceCoeff}x + {balanceConst} = {balanceRight}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
+                Whatever operation you apply to the left pan, you MUST apply to the right pan to preserve equilibrium.
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Test Value for x:</span>
+                <span style={{ color: '#38bdf8', fontWeight: 900 }}>x = {balanceX}</span>
+              </div>
+              <input type="range" min="1" max="15" value={balanceX} onChange={(e) => setBalanceX(Number(e.target.value))} style={{ width: '100%', accentColor: '#38bdf8' }} />
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Constant Added (+C):</span>
+                <span style={{ color: '#f59e0b' }}>+{balanceConst}</span>
+              </div>
+              <input type="range" min="0" max="10" value={balanceConst} onChange={(e) => setBalanceConst(Number(e.target.value))} style={{ width: '100%', accentColor: '#f59e0b' }} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Target Right Pan Weight:</span>
+                <span style={{ color: '#22c55e' }}>{balanceRight}</span>
+              </div>
+              <input type="range" min="5" max="30" value={balanceRight} onChange={(e) => setBalanceRight(Number(e.target.value))} style={{ width: '100%', accentColor: '#22c55e' }} />
+            </div>
+
+            {(() => {
+              const leftTotal = balanceCoeff * balanceX + balanceConst;
+              const rightTotal = balanceRight;
+              const isBalanced = leftTotal === rightTotal;
+              const trueX = (balanceRight - balanceConst) / balanceCoeff;
+              const isIntegerSolution = Number.isInteger(trueX);
+
+              return (
+                <div style={{ background: '#090d16', border: '1px solid #1e293b', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', marginBottom: '8px' }}>
+                    PHYSICAL SCALE EQUILIBRIUM:
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#38bdf8' }}>Left Pan Total</div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc' }}>{leftTotal}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>({balanceCoeff}&times;{balanceX} + {balanceConst})</div>
+                    </div>
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#4ade80' }}>Right Pan Total</div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc' }}>{rightTotal}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Target Weight</div>
+                    </div>
+                  </div>
+
+                  {isBalanced ? (
+                    <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.2)', border: '1px solid rgba(34, 197, 94, 0.4)', textAlign: 'center', color: '#4ade80', fontWeight: 800, fontSize: '0.8rem' }}>
+                      ⚖️ PERFECT EQUILIBRIUM! x = {balanceX} is the exact solution.
+                    </div>
+                  ) : (
+                    <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', fontSize: '0.75rem' }}>
+                      {leftTotal > rightTotal ? '⚠️ Tilted Left: Left pan is heavier by ' + (leftTotal - rightTotal) : '⚠️ Tilted Right: Right pan is heavier by ' + (rightTotal - leftTotal)}
+                      <div style={{ marginTop: '4px', color: '#facc15', fontWeight: 700 }}>
+                        Correct Solution: x = ({balanceRight} - {balanceConst}) &divide; {balanceCoeff} = {isIntegerSolution ? trueX : trueX.toFixed(2)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ELECTRIC CIRCUITS LAB */}
+        {preset === 'electric-circuits' && (
+          <div>
+            <div style={{ background: 'rgba(234, 179, 8, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+              <div style={{ fontSize: '0.76rem', color: '#fde047', fontWeight: 700, textTransform: 'uppercase' }}>
+                Ohm's Law Invariant:
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#facc15', margin: '2px 0' }}>
+                Current I = Voltage (V) &divide; Resistance (R)
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
+                Electrical pressure drives electron flow; circuit resistance dissipates energy into heat and light.
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Battery Voltage (V):</span>
+                <span style={{ color: '#38bdf8' }}>{voltage} Volts</span>
+              </div>
+              <input type="range" min="1.5" max="24" step="0.5" value={voltage} onChange={(e) => setVoltage(Number(e.target.value))} style={{ width: '100%', accentColor: '#38bdf8' }} />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Resistor (R):</span>
+                <span style={{ color: '#f59e0b' }}>{resistance} &Omega;</span>
+              </div>
+              <input type="range" min="1" max="20" value={resistance} onChange={(e) => setResistance(Number(e.target.value))} style={{ width: '100%', accentColor: '#f59e0b' }} />
+            </div>
+
+            {(() => {
+              const current = voltage / resistance;
+              const power = voltage * current;
+              const isOvercurrent = current > 6.0;
+
+              return (
+                <div style={{ background: '#090d16', border: '1px solid #1e293b', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', marginBottom: '8px' }}>
+                    CIRCUIT TELEMETRY:
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '6px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#38bdf8' }}>Current (I)</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f8fafc' }}>{current.toFixed(2)} A</div>
+                    </div>
+                    <div style={{ background: 'rgba(234, 179, 8, 0.1)', padding: '6px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#facc15' }}>Power (P)</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#f8fafc' }}>{power.toFixed(1)} W</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '8px' }}>
+                    <div>Electron Drift Velocity: <strong style={{ color: '#38bdf8' }}>{(current * 0.4).toFixed(2)} mm/s</strong></div>
+                    <div>Filament Dissipation: <strong style={{ color: '#facc15' }}>{power.toFixed(0)} Joules/sec</strong></div>
+                  </div>
+
+                  {isOvercurrent && (
+                    <div style={{ padding: '6px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', fontSize: '0.72rem', fontWeight: 800, textAlign: 'center' }}>
+                      ⚡ Warning: Current exceeds 6A safety threshold! Increase resistance.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* Default fallback for other presets */}
-        {!['pythagoras', 'bodmas', 'photosynthesis', 'velocity', 'mountain-elevation', 'times-tables'].includes(preset) && (
+        {!['pythagoras', 'bodmas', 'photosynthesis', 'velocity', 'mountain-elevation', 'times-tables', 'algebra-balance', 'electric-circuits'].includes(preset) && (
           <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
             <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🔬</span>
             <h4 style={{ margin: '0 0 6px 0', color: '#f8fafc', fontSize: '0.95rem' }}>General AST Telemetry Active</h4>
             <p style={{ margin: 0, fontSize: '0.78rem', lineHeight: 1.5 }}>
               This scene runs on declarative S-expression keyframes with real-time coordinate physics. Switch to Pythagoras, BODMAS, Photosynthesis, or Velocity to engage reactive mathematical parameter sliders!
             </p>
+          </div>
+        )}
           </div>
         )}
       </div>

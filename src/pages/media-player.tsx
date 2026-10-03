@@ -22,6 +22,22 @@ interface PresetItem {
 
 const PRESET_LIBRARY: PresetItem[] = [
   {
+    id: 'algebra-balance',
+    title: 'Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)',
+    stage: 'KS2/KS3 MATHS',
+    category: 'Mathematics',
+    desc: 'Physical 2-pan balance scale demystifying linear equations. Whatever operation you apply to one side, you must apply to the other to preserve equilibrium.',
+    icon: '⚖️',
+  },
+  {
+    id: 'electric-circuits',
+    title: "Electrical Circuits & Ohm's Law (V = I × R)",
+    stage: 'KS2/KS3 PHYSICS',
+    category: 'Science',
+    desc: 'Live closed-loop circuit with electron charge kinematics, battery electromotive force, resistance dissipation, and lightbulb filament luminance.',
+    icon: '💡',
+  },
+  {
     id: 'bodmas',
     title: 'BODMAS / BIDMAS: Forcefield & Magnetic Clamping',
     stage: 'KS2/KS3 MATHS',

@@ -8,9 +8,10 @@
 import React from 'react';
 import SvgInspectorDrawer, { InspectedElementData } from './SvgInspectorDrawer';
 import SwfTranspilerDrawer from './SwfTranspilerDrawer';
+import { PhetTranspilerDrawer } from './PhetTranspilerDrawer';
 import { type SwfTranspileResult } from '../../utils/swfAstParser';
 
-export type StudioTabType = 'inspector' | 'svg' | 'ast' | 'templates' | 'swf';
+export type StudioTabType = 'inspector' | 'svg' | 'ast' | 'templates' | 'swf' | 'phet';
 
 export interface DevStudioDrawerProps {
   isOpen: boolean;
@@ -124,6 +125,15 @@ export const DevStudioDrawer: React.FC<DevStudioDrawerProps> = ({
             title="Transpile legacy Adobe Flash (.swf) into modern SVG + AST vectors"
           >
             📦 SWF / Flash Importer
+          </button>
+          <button
+            type="button"
+            onClick={() => setStudioTab('phet')}
+            className={`stj-btn ${studioTab === 'phet' ? 'stj-btn-primary' : 'stj-btn-ghost'} stj-btn-sm`}
+            style={{ fontSize: '0.76rem' }}
+            title="Transpile PhET simulations into lightweight 3.5 KB AST S-Expressions"
+          >
+            ⚛️ PhET Importer
           </button>
         </div>
 
@@ -404,6 +414,16 @@ export const DevStudioDrawer: React.FC<DevStudioDrawerProps> = ({
           setSwfError={setSwfError}
           swfDragActive={swfDragActive}
           setSwfDragActive={setSwfDragActive}
+          setCustomSvgCode={setCustomSvgCode}
+          setCustomAstCode={setCustomAstCode}
+          postToPlayer={postToPlayer}
+          setHotReloadFlash={setHotReloadFlash}
+        />
+      )}
+
+      {/* Tab 6: PhET Transcompiler & Bridge */}
+      {studioTab === 'phet' && (
+        <PhetTranspilerDrawer
           setCustomSvgCode={setCustomSvgCode}
           setCustomAstCode={setCustomAstCode}
           postToPlayer={postToPlayer}
