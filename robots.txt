@@ -1,18 +1,41 @@
 User-agent: *
 Allow: /
-Allow: /news
-Allow: /blog
 Allow: /media-player
 Allow: /player.html
-Allow: /catholic-life
 Allow: /practice-lab
 Allow: /learning-zone
 Allow: /curriculum-studio
+Allow: /catholic-life
+Allow: /news
+Allow: /blog
+Allow: /licensing
+Allow: /profile
+Allow: /settings
 Allow: /llms.txt
+Allow: /sitemap.xml
+Allow: /player/scenes.manifest.json
 
-# Disallow indexing of internal raw workers and test fixtures
+# Disallow internal raw workers and test fixtures
 Disallow: /worker.html
 Disallow: /scripts/
 
-# AI and LLM Agent Map
-# See /llms.txt for deterministic AST substrate definitions and API routes
+# AI, LLM & Web Agent Discovery
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Allow: /player/scenes.manifest.json
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+
+# Sitemap
+Sitemap: /sitemap.xml

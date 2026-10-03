@@ -730,10 +730,20 @@
         const sub = this.engine.getCurrentSubtitle();
         if (sub) {
           this.elements.subtitleOverlay.style.opacity = '1';
-          this.elements.subtitleOverlay.textContent = sub;
-          if (this.obs && this.obs.isConnected && this.obs.settings.syncSubtitles && sub !== this._lastSentObsSubtitle) {
-            this._lastSentObsSubtitle = sub;
-            this.obs.updateTextSource(this.obs.settings.subtitleSource, sub);
+          if (typeof sub === 'object' && sub !== null && sub.localized && sub.en) {
+            this.elements.subtitleOverlay.innerHTML = `
+              <div style="font-size: 0.95em; color: #f8fafc; font-weight: 700; line-height: 1.3;">${sub.en}</div>
+              <div style="font-size: 0.84em; color: #38bdf8; font-weight: 600; line-height: 1.3; margin-top: 3px;">🌐 ${sub.localized}</div>
+            `;
+          } else {
+            this.elements.subtitleOverlay.textContent = typeof sub === 'string' ? sub : (sub.localized || sub.en || '');
+          }
+          if (this.obs && this.obs.isConnected && this.obs.settings.syncSubtitles) {
+            const obsText = typeof sub === 'object' && sub !== null ? `${sub.en}\n(${sub.localized})` : String(sub);
+            if (obsText !== this._lastSentObsSubtitle) {
+              this._lastSentObsSubtitle = obsText;
+              this.obs.updateTextSource(this.obs.settings.subtitleSource, obsText);
+            }
           }
         } else {
           this.elements.subtitleOverlay.style.opacity = '0.7';
