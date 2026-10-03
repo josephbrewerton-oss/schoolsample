@@ -7,6 +7,8 @@ import MountainClimberGame from '../components/MountainClimberGame';
 import MathFishingGame from '../components/MathFishingGame';
 import ShakespeareGlobeLab from '../components/ShakespeareGlobeLab';
 import MflLanguageLab from '../components/MflLanguageLab';
+import EarlyPhonicsLab from '../components/EarlyPhonicsLab';
+import MathsFundamentalsLab from '../components/MathsFundamentalsLab';
 import { resolvePresetForTopic } from '../services/playerLauncher';
 
 interface PresetItem {
@@ -19,6 +21,22 @@ interface PresetItem {
 }
 
 const PRESET_LIBRARY: PresetItem[] = [
+  {
+    id: 'bodmas',
+    title: 'BODMAS / BIDMAS: Forcefield & Magnetic Clamping',
+    stage: 'KS2/KS3 MATHS',
+    category: 'Mathematics',
+    desc: 'Interactive operator physics: titanium bracket shields, magnetic multiplication clamps, and the concrete Area Model showing why 5 + 3 × 4 ≠ 32.',
+    icon: '🧮',
+  },
+  {
+    id: 'times-tables',
+    title: 'Times Tables Arrays & Distributive Splitter (12×12)',
+    stage: 'KS1/KS2 MATHS',
+    category: 'Mathematics',
+    desc: 'Visual 2D arrays, 90° commutative rotation, and mental arithmetic decomposition: 7 × 8 = (7 × 5) + (7 × 3) = 56.',
+    icon: '📐',
+  },
   {
     id: 'fractions',
     title: 'Fractions & Proportions',
@@ -108,6 +126,14 @@ const PRESET_LIBRARY: PresetItem[] = [
     icon: '🌍',
   },
   {
+    id: 'phonics-lab',
+    title: 'EYFS & KS1 Phonics: Soundboard & Screening Check',
+    stage: 'EYFS/KS1 PHONICS',
+    category: 'Early Literacy & Phonics',
+    desc: 'DfE Letters and Sounds synthetic phonics: Phase 2–5 pure soundboard with mouth tips, interactive sound button blending mat, tricky words, and statutory Year 1 Alien Words Screening Check.',
+    icon: '🔤',
+  },
+  {
     id: 'math-fishing',
     title: 'Math Pond: Number Bonds Fishing Game',
     stage: 'KS1/KS2 MATHS',
@@ -168,7 +194,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
   useEffect(() => {
     if (urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset) && urlPreset !== activePreset) {
       setActivePreset(urlPreset);
-      if (urlMode === 'game' || urlPreset === 'mountain-elevation' || urlPreset === 'math-fishing') {
+      if (urlMode === 'game' || urlPreset === 'mountain-elevation' || urlPreset === 'math-fishing' || urlPreset === 'shakespeare' || urlPreset === 'languages' || urlPreset === 'phonics-lab' || urlPreset === 'bodmas' || urlPreset === 'times-tables') {
         setPlayMode('game');
       }
     } else if (urlMode && (urlMode === 'game' || urlMode === 'video') && urlMode !== playMode) {
@@ -178,7 +204,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
   const handleSelectPreset = (id: VectorPresetType, targetMode?: 'video' | 'game') => {
     setActivePreset(id);
-    const chosenMode = targetMode || (id === 'mountain-elevation' || id === 'math-fishing' ? 'game' : playMode);
+    const chosenMode = targetMode || (id === 'mountain-elevation' || id === 'math-fishing' || id === 'shakespeare' || id === 'languages' || id === 'phonics-lab' || id === 'bodmas' || id === 'times-tables' ? 'game' : playMode);
     setPlayMode(chosenMode);
     setSearchParams({ preset: id, mode: chosenMode });
   };
@@ -523,8 +549,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
           </div>
         )}
 
-        {/* Embedded AST Player (Hidden when in standalone interactive full-stage labs like Languages) */}
-        {!(activePreset === 'languages' && playMode === 'game') && (
+        {/* Embedded AST Player (Hidden when in standalone interactive full-stage labs like Languages or Phonics) */}
+        {!((activePreset === 'languages' || activePreset === 'phonics-lab' || activePreset === 'bodmas' || activePreset === 'times-tables') && playMode === 'game') && (
           <AstVectorMediaPlayer
             ref={playerRef}
             preset={activePreset}
@@ -534,7 +560,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
             onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
             onPlayModeToggle={() => {
               const nextMode = playMode === 'game' ? 'video' : 'game';
-              if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare' && activePreset !== 'languages') {
+              if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare' && activePreset !== 'languages' && activePreset !== 'phonics-lab' && activePreset !== 'bodmas' && activePreset !== 'times-tables') {
                 handleSelectPreset('languages', 'game');
               } else {
                 setPlayMode(nextMode);
@@ -587,6 +613,31 @@ export default function MediaPlayerPage(): React.JSX.Element {
         {activePreset === 'languages' && playMode === 'game' && (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
             <MflLanguageLab
+              onClose={() => {
+                setPlayMode('video');
+                setSearchParams({ preset: activePreset, mode: 'video' });
+                playerRef.current?.play();
+              }}
+            />
+          </div>
+        )}
+
+        {activePreset === 'phonics-lab' && playMode === 'game' && (
+          <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
+            <EarlyPhonicsLab
+              onClose={() => {
+                setPlayMode('video');
+                setSearchParams({ preset: activePreset, mode: 'video' });
+                playerRef.current?.play();
+              }}
+            />
+          </div>
+        )}
+
+        {(activePreset === 'bodmas' || activePreset === 'times-tables') && playMode === 'game' && (
+          <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
+            <MathsFundamentalsLab
+              initialTab={activePreset === 'times-tables' ? 'times-tables' : 'bodmas'}
               onClose={() => {
                 setPlayMode('video');
                 setSearchParams({ preset: activePreset, mode: 'video' });

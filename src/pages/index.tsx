@@ -4,6 +4,7 @@ if (typeof window !== 'undefined' && !(window as any).process) {
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
+import ExpressLessonLaunchpad from '../components/ExpressLessonLaunchpad';
 import HomeLearnerGuidedCard from '../components/HomeLearnerGuidedCard';
 
 export default function Home() {
@@ -69,6 +70,27 @@ export default function Home() {
           {/* Action Hub CTAs */}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
+              href="#express-lesson-launchpad"
+              style={{
+                padding: '0.9rem 2.25rem',
+                fontSize: '1.1rem',
+                borderRadius: '10px',
+                background: '#2563eb',
+                color: '#ffffff',
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px 0 rgba(37, 99, 235, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span>⚡ Fast-Track: Jump Straight to Lessons</span>
+              <span>↓</span>
+            </a>
+
+            <a
               href="#home-learner-guided-pathway"
               style={{
                 padding: '0.9rem 2.25rem',
@@ -85,7 +107,7 @@ export default function Home() {
                 transition: 'all 0.2s ease',
               }}
             >
-              <span>🕊️ Start Here: Guided Learning</span>
+              <span>🕊️ Guided Learning Pathway</span>
               <span>↓</span>
             </a>
 
@@ -126,27 +148,13 @@ export default function Home() {
                 transition: 'all 0.2s ease',
               }}
             >
-              ⚡ Start Practicing Questions
-            </Link>
-
-            <Link
-              to="/learning-zone"
-              className="button button--secondary button--lg"
-              style={{
-                padding: '0.9rem 2.25rem',
-                fontSize: '1.1rem',
-                borderRadius: '10px',
-                border: '2px solid #0369a1',
-                color: '#0369a1',
-                background: '#ffffff',
-                fontWeight: 700,
-                transition: 'all 0.2s ease',
-              }}
-            >
-              📖 Explore Lesson Walkthroughs
+              ⚡ All Practice Questions
             </Link>
           </div>
         </section>
+
+        {/* 2-Click Express Lesson Launchpad */}
+        <ExpressLessonLaunchpad />
 
         {/* Home-Learner Guided Pathway (For Disadvantaged & Out-of-School Children) */}
         <HomeLearnerGuidedCard />

@@ -257,6 +257,12 @@ export default function PersistentNavbar(): React.JSX.Element {
       desc: 'Spanish, French & Latin phonics soundboard, verb wheels & vocab sprints',
     },
     {
+      to: '/player?preset=phonics-lab&mode=game',
+      icon: '🔤',
+      title: 'EYFS & KS1 Phonics Lab',
+      desc: 'DfE Phases 2–5 soundboard, sound buttons blending mat & screening check',
+    },
+    {
       to: '/practice-lab',
       icon: '⚡',
       title: 'Practice Lab',

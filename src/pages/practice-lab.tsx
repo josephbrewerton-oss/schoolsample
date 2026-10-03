@@ -342,6 +342,56 @@ export default function PracticeLabPage() {
               </div>
             </div>
 
+            {/* Early Phonics Lab Booster Card */}
+            <div
+              style={{
+                marginTop: '12px',
+                background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(6, 78, 59, 0.25) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.25rem' }}>🔤</span>
+                <div>
+                  <span style={{ fontSize: '0.86rem', color: '#a7f3d0', fontWeight: 700 }}>
+                    Early Years &amp; KS1 Systematic Synthetic Phonics (SSP):
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: '#cbd5e1', marginLeft: '6px' }}>
+                    DfE Phases 2–5 pure sounds, sound buttons blending mat &amp; Year 1 Alien Words Screening Check.
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link
+                  to="/player?preset=phonics-lab&mode=game"
+                  style={{
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    color: '#ffffff',
+                    textDecoration: 'none',
+                    borderRadius: '8px',
+                    padding: '6px 14px',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+                  }}
+                >
+                  <span>🚀 Launch Phonics Lab</span>
+                  <span>➔</span>
+                </Link>
+              </div>
+            </div>
+
             <ComponentGuard label="NeuralLabCanvas">
               <NeuralLabCanvas
                 initialKeyStage={activeStage}

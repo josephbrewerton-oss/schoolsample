@@ -349,8 +349,14 @@
     }
 
     renderErrorState(identifier, message) {
-      const safeId = String(identifier || 'Unknown').replace(/<[^>]+>/g, '');
-      const safeMsg = String(message || 'Failed to load asset').replace(/<[^>]+>/g, '');
+      const escapeXml = (str) => String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+      const safeId = escapeXml(identifier || 'Unknown');
+      const safeMsg = escapeXml(message || 'Failed to load asset');
       this.$layer.innerHTML = `
         <rect x="50" y="50" width="700" height="380" rx="16" fill="#0f172a" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 6"/>
         <circle cx="400" cy="180" r="38" fill="#ef4444" fill-opacity="0.12" stroke="#ef4444" stroke-width="2"/>

@@ -16,7 +16,8 @@ export type ChallengeType =
   | 'neural-logic'       // Logic Gates, Binary & Computational Thinking
   | 'vector-lab'         // Interactive Vector Lab with Socratic Checkpoints
   | 'shakespeare-theatre' // 1599 Globe Theatre, Iambic Scansion & Soliloquy Director
-  | 'language-mastery';  // MFL & Polyglot Studio: Phonics, Conjugation & Vocab
+  | 'language-mastery'  // MFL & Polyglot Studio: Phonics, Conjugation & Vocab
+  | 'early-phonics';     // EYFS & KS1 Synthetic Systematic Phonics & Screening Check
 
 export interface ChallengeMetadata {
   type: ChallengeType;
@@ -134,6 +135,32 @@ export function resolveChallengeForTopic(
       subject: subject || 'Modern Foreign Languages',
       unit: unit || 'Language Acquisition',
       keyStage,
+    };
+  }
+
+  // 1d. Early Years & Key Stage 1 Synthetic Systematic Phonics (SSP) & Screening Check
+  if (
+    combined.includes('early phonics') ||
+    combined.includes('phonics screening') ||
+    combined.includes('synthetic phonics') ||
+    combined.includes('blending') ||
+    combined.includes('alien words') ||
+    combined.includes('tricky words') ||
+    combined.includes('eyfs') ||
+    combined.includes('reception') ||
+    (combined.includes('phonics') && (combined.includes('ks1') || combined.includes('year 1') || combined.includes('year 2') || combined.includes('english') || combined.includes('reading')))
+  ) {
+    return {
+      type: 'early-phonics',
+      title: 'EYFS & KS1 Phonics Mastery & Screening Lab',
+      badge: 'Synthetic Systematic Phonics (SSP)',
+      badgeColor: '#059669',
+      icon: '🔤',
+      description: 'Master DfE Phases 2–5 pure sounds, interactive sound button blending mats, tricky words, and the official Year 1 Alien Words Screening Check.',
+      preset: 'phonics-lab',
+      subject: subject || 'English & Early Literacy',
+      unit: unit || 'Systematic Synthetic Phonics',
+      keyStage: keyStage || 'Key Stage 1 / EYFS',
     };
   }
 

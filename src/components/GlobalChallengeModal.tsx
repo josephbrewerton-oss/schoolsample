@@ -11,6 +11,7 @@ import FirstCommunionMasteryLab from './FirstCommunionMasteryLab';
 import NeuralLabCanvas from './NeuralLabCanvas';
 import ShakespeareGlobeLab from './ShakespeareGlobeLab';
 import MflLanguageLab from './MflLanguageLab';
+import EarlyPhonicsLab from './EarlyPhonicsLab';
 import AstVectorMediaPlayer, { AstVectorMediaPlayerHandle } from './AstVectorMediaPlayer';
 
 export default function GlobalChallengeModal(): React.JSX.Element | null {
@@ -213,6 +214,10 @@ export default function GlobalChallengeModal(): React.JSX.Element | null {
 
           {challenge.type === 'language-mastery' && (
             <MflLanguageLab onClose={closeChallengeModal} />
+          )}
+
+          {challenge.type === 'early-phonics' && (
+            <EarlyPhonicsLab onClose={closeChallengeModal} />
           )}
 
           {challenge.type === 'vector-lab' && (

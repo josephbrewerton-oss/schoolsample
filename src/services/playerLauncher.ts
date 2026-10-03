@@ -7,6 +7,8 @@
 
 export type VectorPresetId =
   | 'fractions'
+  | 'bodmas'
+  | 'times-tables'
   | 'solar-system'
   | 'church-tour'
   | 'photosynthesis'
@@ -17,7 +19,8 @@ export type VectorPresetId =
   | 'dna-helix'
   | 'mountain-elevation'
   | 'shakespeare'
-  | 'languages';
+  | 'languages'
+  | 'phonics-lab';
 
 export interface PlayerCallOptions {
   preset?: VectorPresetId;
@@ -69,6 +72,12 @@ export function resolvePresetForTopic(subject?: string, unit?: string, topic?: s
   }
   if (combined.includes('dna') || combined.includes('helix') || combined.includes('genet') || combined.includes('chromosome') || combined.includes('nucleotide')) {
     return 'dna-helix';
+  }
+  if (combined.includes('bodmas') || combined.includes('bidmas') || combined.includes('order of operation') || combined.includes('bracket') || combined.includes('parenthes')) {
+    return 'bodmas';
+  }
+  if (combined.includes('times table') || combined.includes('multiplication') || combined.includes('array') || combined.includes('distributive') || combined.includes('mtc')) {
+    return 'times-tables';
   }
   if (combined.includes('math') || combined.includes('fraction') || combined.includes('decimal') || combined.includes('ratio')) {
     return 'fractions';

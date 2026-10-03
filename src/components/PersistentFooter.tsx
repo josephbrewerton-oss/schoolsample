@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import AntiSlopQualityMark from './AntiSlopQualityMark';
 
 export default function PersistentFooter(): React.JSX.Element {
   const logoUrl = `${import.meta.env.BASE_URL}img/logo.svg`;
@@ -117,6 +118,28 @@ export default function PersistentFooter(): React.JSX.Element {
             </li>
           </ul>
         </div>
+      </div>
+
+      {/* Human-Led Anti-Slop AI Quality Mark & Live Telemetry Strip */}
+      <div
+        style={{
+          maxWidth: '1200px',
+          margin: '0 auto 1.5rem',
+          padding: '0.65rem 1rem',
+          background: 'rgba(2, 6, 23, 0.4)',
+          border: '1px solid rgba(16, 185, 129, 0.25)',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+        }}
+      >
+        <AntiSlopQualityMark />
+        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+          Human-Directed • Bounded AST Compilation • DfE &amp; Catholic CES Grounded
+        </span>
       </div>
 
       <div
