@@ -22,7 +22,8 @@
 - Dual-Licensing Charter & Covenant: `/licensing` & `/LICENSE.md` (Track A Humanitarian Commons GNU AGPLv3/OGLv3 vs Track B Enterprise Commercial License)
 
 ## Vector Media & Simulation Subsystem Capabilities (October 2026)
-- **15 Production AST Vector Scenes**:
+- **16 Production AST Vector Scenes**:
+  - `kinetic-gas` (KS3/KS4 Kinetic Molecular Gas Theory, Boyle's Law $PV = nRT$, Thermal Speeds & Phase Changes)
   - `church-tour` (Catholic Life & Sacred Architecture)
   - `math-fishing` (KS1/KS2 Number Bonds to 10/20)
   - `mountain-elevation` (KS2/KS3 Altitude Hypotenuse & Atmospheric Boiling Point)
@@ -38,6 +39,12 @@
   - `bodmas` (KS2/KS3 Order of Operations Forcefield Clamps)
   - `phonics-lab` (EYFS/KS1 Sound Buttons & Blending Mat)
   - `times-tables` (KS1/KS2 2D Array Grid & Distributive Splitter)
+
+- **Kinetic Gas Theory & Thermal Particle Engine (`src/utils/kineticGasPhysics.ts`)**:
+  - Micro-second elastic particle-wall collision accumulator calculating wall momentum impulse ($\Delta p = 2mv$).
+  - Real-time empirical pressure gauge calculation: $P = \frac{\sum \Delta p}{A \Delta t}$.
+  - Demonstrates Boyle's Law ($P \propto 1/V$), Gay-Lussac's Law ($P \propto T$), and root-mean-square thermal velocities ($v_{\text{rms}} = \sqrt{3kT/m}$).
+  - Micro-scale states of matter transitions: Solid (crystal lattice spring vibration), Liquid (slipping van der Waals cohesion), Gas (elastic chaos), and Brownian pollen motion.
 
 - **PhET Simulation Ingestion & Transpiler Bridge (`src/utils/phetBridge.ts`)**:
   - Distills heavy monolithic 12 MB PhET bundles (Univ. of Colorado Boulder) down into 3.5 KB AST S-Expressions (99.8% payload reduction).

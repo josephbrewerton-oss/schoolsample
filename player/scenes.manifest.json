@@ -1,7 +1,7 @@
 {
   "version": "2.2.0",
-  "generatedAt": "2026-10-03T17:07:43.787Z",
-  "totalScenes": 15,
+  "generatedAt": "2026-10-03T17:34:50.519Z",
+  "totalScenes": 16,
   "scenes": [
     {
       "id": "church-tour",
@@ -184,6 +184,19 @@
       "keyframeCount": 5,
       "subtitleCount": 3,
       "bindingsCount": 6
+    },
+    {
+      "id": "kinetic-gas",
+      "title": "Kinetic Gas Theory & Boyle's Law",
+      "stage": "KS3/KS4 PHYSICS & CHEMISTRY",
+      "duration": 14,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/kinetic-gas.svg",
+      "astFile": "scenes/kinetic-gas.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 4,
+      "bindingsCount": 11
     },
     {
       "id": "times-tables",
