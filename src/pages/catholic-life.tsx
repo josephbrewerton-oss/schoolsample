@@ -10,12 +10,14 @@ import CommandmentsMoralGuide from '../components/CommandmentsMoralGuide';
 import RosaryMysteryWalk from '../components/RosaryMysteryWalk';
 import AstVectorMediaPlayer from '../components/AstVectorMediaPlayer';
 import SanctuaryPilgrimQuest from '../components/SanctuaryPilgrimQuest';
+import CatholicRitesExplorer from '../components/CatholicRitesExplorer';
 import { speakInLanguage, cancelSpeech } from '../engine/translationService';
 import { playSuccessChime, triggerHapticSuccess } from '../services/soundHaptics';
 
 export type CatholicLifeTab =
   | 'overview'
   | 'church-tour'
+  | 'rites'
   | 'mass'
   | 'sacraments'
   | 'first-communion'
@@ -47,6 +49,7 @@ export default function CatholicLifePage(): React.JSX.Element {
       [
         'overview',
         'church-tour',
+        'rites',
         'mass',
         'sacraments',
         'first-communion',
@@ -76,6 +79,7 @@ export default function CatholicLifePage(): React.JSX.Element {
         [
           'overview',
           'church-tour',
+          'rites',
           'mass',
           'sacraments',
           'first-communion',
@@ -109,6 +113,15 @@ export default function CatholicLifePage(): React.JSX.Element {
       color: '#0284c7',
       bg: '#f0f9ff',
       badge: 'Interactive Tour (< 4 KB)',
+    },
+    {
+      tab: 'rites' as CatholicLifeTab,
+      icon: '🌍',
+      title: 'The 6 Rites & 24 Catholic Churches',
+      desc: 'Eastern Catholic Churches in the Middle East, India, Africa & Eastern Europe. Discover the Church breathing with two lungs (CCC 1200–1209).',
+      color: '#047857',
+      bg: '#ecfdf5',
+      badge: 'Global South & Eastern Rites',
     },
     {
       tab: 'mass' as CatholicLifeTab,
@@ -345,6 +358,25 @@ export default function CatholicLifePage(): React.JSX.Element {
 
               <button
                 type="button"
+                onClick={() => handleTabChange('rites')}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  background: activeTab === 'rites' ? '#facc15' : 'rgba(255, 255, 255, 0.15)',
+                  color: activeTab === 'rites' ? '#1e1b4b' : '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.88rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: activeTab === 'rites' ? '0 2px 8px rgba(250, 204, 21, 0.4)' : 'none',
+                }}
+              >
+                🌍 6 Rites &amp; 24 Churches
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleTabChange('mass')}
                 style={{
                   padding: '8px 18px',
@@ -434,6 +466,7 @@ export default function CatholicLifePage(): React.JSX.Element {
           {[
             { id: 'overview', label: '🏠 Overview' },
             { id: 'church-tour', label: '⛪ Church Tour' },
+            { id: 'rites', label: '🌍 6 Rites & 24 Churches' },
             { id: 'mass', label: '⛪ The Mass' },
             { id: 'sacraments', label: '🕊️ 7 Sacraments' },
             { id: 'first-communion', label: '🍞 First Communion' },
@@ -518,6 +551,25 @@ export default function CatholicLifePage(): React.JSX.Element {
                   }}
                 >
                   ⛪ Interactive Church Tour &rarr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('rites')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: '#047857',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  🌍 6 Rites &amp; 24 Churches &rarr;
                 </button>
                 <button
                   type="button"
@@ -1027,6 +1079,12 @@ export default function CatholicLifePage(): React.JSX.Element {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'rites' && (
+              <div style={{ marginBottom: '2.5rem' }}>
+                <CatholicRitesExplorer />
               </div>
             )}
 
