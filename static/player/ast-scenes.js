@@ -183,6 +183,117 @@
       }
     },
 
+    'bodmas': {
+      id: 'bodmas',
+      stage: 'KS2/KS3 MATHS',
+      title: 'BODMAS / BIDMAS: Forcefield Clamping & Area Physics',
+      duration: 14.0,
+      svgFile: 'scenes/bodmas.svg',
+      astFile: 'scenes/bodmas.ast',
+      keyframes: [
+        { t: 0.00, title: 'Step 1: The Equation', rule: 'Analyze 5 + 3 × 4: Identify loose units versus grouped area multiplication.' },
+        { t: 0.35, title: 'Step 2: Magnetic Clamping', rule: '3 × 4 binds into an unbroken 2D rectangular array of 12 tiles.' },
+        { t: 0.65, title: 'Step 3: The Left-to-Right Trap', rule: '5 + 3 = 8 ➔ 8 × 4 = 32 is FALSE. It destroys the area model and invents 20 extra tiles.' },
+        { t: 0.85, title: 'Step 4: Vector Addition', rule: 'Evaluate clamp: 3 × 4 = 12. Combine 5 loose coins + 12 tiles = 17.' },
+        { t: 1.00, title: 'Step 5: Verified Proof', rule: '5 + 3 × 4 = 17. Q.E.D. Order of Operations mastered.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.35, en: "Look at 5 + 3 × 4. Many students make the classic mistake of adding 5 + 3 first. But watch what happens in physical geometry!", es: "Mira 5 + 3 × 4. Muchos cometen el error de sumar 5 + 3 primero. ¡Pero mira qué sucede en la geometría física!" },
+        { start: 0.35, end: 0.70, en: "Multiplication creates a solid 3 by 4 rectangular array of 12 tiles! If you add 5 + 3 to get 8, you turn 3 groups into 8 groups, inventing 20 extra tiles from nothing!", es: "¡La multiplicación crea un bloque rectangular de 3 por 4 con 12 baldosas! ¡Si sumas 5 + 3 para hacer 8, inventas 20 baldosas de la nada!" },
+        { start: 0.70, end: 1.00, en: "The high-voltage multiplication clamp evaluates first: 3 × 4 = 12. Then we add the 5 loose coins: 5 + 12 = 17! Solved correctly.", es: "La multiplicación se calcula primero: 3 × 4 = 12. Luego sumamos las 5 monedas sueltas: 5 + 12 = 17. ¡Resuelto correctamente!" }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.40,
+            title: 'BODMAS Area Model Check',
+            prompt: 'Why must 3 × 4 be calculated before adding 5?',
+            options: [
+              'Because 3 × 4 forms a solid 2D rectangular array of 12 tiles that cannot be broken by loose units',
+              'Because multiplication is harder so we do it first',
+              'Because 5 + 3 always equals 32'
+            ],
+            answer: 0,
+            explanation: 'Multiplication represents geometric grouping (3 rows of 4). Adding 5 first would turn 3 groups into 8 groups, inventing 20 non-existent tiles!'
+          }
+        ]
+      }
+    },
+
+    'times-tables': {
+      id: 'times-tables',
+      stage: 'KS1/KS2 MATHS',
+      title: 'Times Tables: 2D Array & Distributive Splitter',
+      duration: 14.0,
+      svgFile: 'scenes/times-tables.svg',
+      astFile: 'scenes/times-tables.ast',
+      keyframes: [
+        { t: 0.00, title: 'Step 1: The 7×8 Array', rule: 'A 2D matrix of 7 rows by 8 columns representing 56 total area units.' },
+        { t: 0.35, title: 'Step 2: The Distributive Cut', rule: 'Decompose 8 into friendly chunks: 8 = 5 + 3.' },
+        { t: 0.55, title: 'Step 3: Friendly 5s', rule: 'Evaluate the first block: 7 × 5 = 35 emerald units.' },
+        { t: 0.75, title: 'Step 4: Remaining 3s', rule: 'Evaluate the second block: 7 × 3 = 21 amber units.' },
+        { t: 1.00, title: 'Step 5: Mental Addition', rule: 'Combine: 35 + 21 = 56. 7 × 8 = 56 Q.E.D.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.35, en: "Memorizing times tables like 7 × 8 can feel intimidating. But you never need to panic when you understand the Distributive Property!", es: "Memorizar tablas de multiplicar como 7 × 8 puede dar miedo. ¡Pero nunca debes asustarte si comprendes la propiedad distributiva!" },
+        { start: 0.35, end: 0.70, en: "Watch the splitter cut 8 columns into friendly chunks: 5 columns and 3 columns. 7 × 5 is easy: 35! And 7 × 3 is 21.", es: "Mira cómo la línea divide 8 columnas en partes fáciles: 5 columnas y 3 columnas. 7 × 5 es fácil: ¡35! Y 7 × 3 es 21." },
+        { start: 0.70, end: 1.00, en: "Now simply combine the green and amber areas: 35 + 21 = 56! Any tricky table can be conquered using 5s and 2s.", es: "¡Ahora solo suma las áreas verde y ámbar: 35 + 21 = 56! Cualquier tabla difícil se resuelve usando 5 y 2." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.50,
+            title: 'Distributive Decomposition',
+            prompt: 'How can you mentally solve 7 × 8 without panic?',
+            options: [
+              'Split 8 into (5 + 3) to calculate (7 × 5 = 35) + (7 × 3 = 21) = 56',
+              'Guess between 50 and 60',
+              'Only calculate the odd numbers'
+            ],
+            answer: 0,
+            explanation: 'The distributive property lets you split any difficult factor into friendly numbers like 5 and 2. 35 + 21 = 56!'
+          }
+        ]
+      }
+    },
+
+    'phonics-lab': {
+      id: 'phonics-lab',
+      stage: 'EYFS/KS1 ENGLISH',
+      title: 'Early Phonics: Sound Buttons & Blending Mat',
+      duration: 12.0,
+      svgFile: 'scenes/phonics-lab.svg',
+      astFile: 'scenes/phonics-lab.ast',
+      keyframes: [
+        { t: 0.00, title: 'Step 1: Sound Buttons', rule: 'Place a dot under single letters (c, a, t) to isolate pure phonemes.' },
+        { t: 0.25, title: 'Step 2: First Sound /k/', rule: 'Pronounce pure unvoiced /k/ — do not say "cuh".' },
+        { t: 0.50, title: 'Step 3: Middle Vowel /æ/', rule: 'Short open vowel /a/ as in apple.' },
+        { t: 0.75, title: 'Step 4: End Sound /t/', rule: 'Crisp unvoiced /t/ — do not say "tuh".' },
+        { t: 1.00, title: 'Step 5: Blending Sweep', rule: 'Sweep across the arrow: /k/ - /a/ - /t/ ➔ "cat"!' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 0.35, en: "In primary school, we read words using Sound Buttons! Under single sounds, we put a dot. Listen to the pure sounds: /k/ ... /a/ ... /t/.", es: "¡En la escuela primaria, leemos palabras con botones de sonido! Ponemos un punto bajo cada sonido puro: /k/ ... /a/ ... /t/." },
+        { start: 0.35, end: 0.70, en: "Never add 'uh' at the end: say crisp /k/, not 'kuh'! Now sweep your finger along the arrow to blend the sounds together.", es: "¡Nunca agregues 'uh' al final: di /k/ nítido, no 'cuh'! Ahora desliza el dedo a lo largo de la flecha para unir los sonidos." },
+        { start: 0.70, end: 1.00, en: "/k/ ... /a/ ... /t/ blends into 'cat'! 🐱 And remember: tricky words like 'said' have parts that cannot be sounded out.", es: "¡/k/ ... /a/ ... /t/ se une en 'cat' (gato)! Y recuerda: las palabras difíciles como 'said' tienen letras que no siguen la regla usual." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.30,
+            title: 'Pure Phoneme Articulation',
+            prompt: 'Why must we avoid saying "cuh" and instead say a crisp /k/?',
+            options: [
+              'Because adding "uh" (schwa) makes blending into words like "cat" impossible',
+              'Because loud sounds are forbidden',
+              'Because letters must always be whispered'
+            ],
+            answer: 0,
+            explanation: 'Adding the schwa vowel ("cuh-a-tuh") results in "cuhatuh" instead of "cat". Pure sounds ensure clean blending.'
+          }
+        ]
+      }
+    },
+
     'solar-system': {
       id: 'solar-system',
       stage: 'KS3 SCIENCE',

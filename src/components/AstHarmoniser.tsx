@@ -27,12 +27,39 @@ function AstHarmoniserClient(): React.JSX.Element {
   const [diagnosticAnswer, setDiagnosticAnswer] = useState<number | null>(null);
   const [diagnosticFeedback, setDiagnosticFeedback] = useState<string | null>(null);
 
-  // Countdown timer
+  // Prevent competing with React Router 7 client-side navigation or back-forward browser cache (bfcache)
+  useEffect(() => {
+    try {
+      const navEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+      if (navEntries && navEntries[0]?.type === 'back_forward') {
+        setIsPaused(true);
+      }
+    } catch {
+      // Ignore if Navigation Timing API unavailable
+    }
+
+    const handlePopState = () => {
+      // Pause countdown immediately on browser back/forward to avoid trapping user
+      setIsPaused(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Countdown timer with idempotent replace navigation
   useEffect(() => {
     if (isPaused) return;
 
+    // Prevent redundant self-redirect loops
+    if (rawPath === resolution.targetPath) {
+      setIsPaused(true);
+      return;
+    }
+
     if (countdown <= 0) {
-      navigate(resolution.targetPath);
+      // Use replace: true so we don't pollute the browser history stack
+      navigate(resolution.targetPath, { replace: true });
       return;
     }
 
@@ -41,7 +68,7 @@ function AstHarmoniserClient(): React.JSX.Element {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [countdown, isPaused, resolution.targetPath, navigate]);
+  }, [countdown, isPaused, resolution.targetPath, rawPath, navigate]);
 
   // Construct S-Expression AST representing this harmonised route
   const harmonisedAstSource = useMemo(() => {
@@ -73,7 +100,7 @@ function AstHarmoniserClient(): React.JSX.Element {
 
   const handleAstAction = (action: string) => {
     if (action === 'navigate:target') {
-      navigate(resolution.targetPath);
+      navigate(resolution.targetPath, { replace: true });
     } else if (action === 'navigate:home') {
       navigate('/');
     }

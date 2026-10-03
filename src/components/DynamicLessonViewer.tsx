@@ -16,7 +16,22 @@ interface EngineProps {
   defaultStream?: LearningStream | string;
 }
 
-const GENERATING_PLACEHOLDER_VIEW = `(view :className "card padding--md margin-vert--md"
+/**
+ * Escapes characters for clean inclusion in S-Expression string literals
+ */
+function escapeSExprString(str?: string): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\r?\n/g, ' ')
+    .trim();
+}
+
+/**
+ * Constant placeholder view when generating dynamic practice nodes
+ */
+export const GENERATING_PLACEHOLDER_VIEW = `(view :className "card padding--md margin-vert--md"
   (header :level 3 "⚡ Synthesizing Practice Node...")
   (callout :variant "warning" "Formulating pedagogical distractors and verifying AST constraints.")
   (stepper
@@ -24,6 +39,66 @@ const GENERATING_PLACEHOLDER_VIEW = `(view :className "card padding--md margin-v
     (step (text "Dispatching prompt to browser runtime..."))
     (step (text "Compiling S-Expression AST...")))
   (ai-tutor :persona "Local Governor" :engine "Gemini Nano" :greeting "Generating your question now..."))`;
+
+/**
+ * Builds formatted S-Expression AST from Oak Manifest challenge data
+ */
+export function buildManifestLessonAst(
+  title: string,
+  axiom: string,
+  trap: string,
+  prompt: string,
+  keyConcept: string,
+  subject: string
+): string {
+  const safeTitle = escapeSExprString(title);
+  const safeAxiom = escapeSExprString(axiom);
+  const safeTrap = escapeSExprString(trap);
+  const safePrompt = escapeSExprString(prompt);
+  const safeKeyConcept = escapeSExprString(keyConcept || 'Analyze the rules and evidence.');
+  const safeSubject = escapeSExprString(subject);
+
+  return `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "${safeTitle}")
+  (callout :variant "info" "${safeAxiom}")
+  (callout :variant "warning" "${safeTrap}")
+  (stepper
+    (step (text "Step 1: Inquiry Hook — ${safePrompt}"))
+    (step (text "Step 2: Key Concept — ${safeKeyConcept}"))
+    (step (text "Step 3: Verification — Confirm understanding.")))
+  (ai-tutor :persona "${safeSubject} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${safeTitle}! Ask me if you need help with this lesson."))`;
+}
+
+/**
+ * Builds formatted S-Expression AST from segregated On-Device EngineFlow generation
+ */
+export function buildEngineFlowLessonAst(
+  title: string,
+  axiom: string,
+  trap: string,
+  hook: string,
+  guidedStep: string,
+  socraticCheck: string,
+  subject: string
+): string {
+  const safeTitle = escapeSExprString(title);
+  const safeAxiom = escapeSExprString(axiom);
+  const safeTrap = escapeSExprString(trap);
+  const safeHook = escapeSExprString(hook);
+  const safeGuided = escapeSExprString(guidedStep);
+  const safeSocratic = escapeSExprString(socraticCheck);
+  const safeSubject = escapeSExprString(subject);
+
+  return `(view :className "card padding--md margin-vert--md"
+  (header :level 3 "${safeTitle}")
+  (callout :variant "info" "${safeAxiom}")
+  (callout :variant "warning" "${safeTrap}")
+  (stepper
+    (step (text "Step 1: Inquiry Hook — ${safeHook}"))
+    (step (text "Step 2: Guided Practice — ${safeGuided}"))
+    (step (text "Step 3: Socratic Check — ${safeSocratic}")))
+  (ai-tutor :persona "${safeSubject} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${safeTitle}! How can I help you master this concept?"))`;
+}
 
 export default function DynamicLessonViewer({
   defaultPhase,
@@ -151,15 +226,14 @@ export default function DynamicLessonViewer({
             const trap = ch.r?.[0]?.[1] || `Common misconceptions regarding ${catalogItem.title}.`;
             const prompt = ch.p || `Examine the core concepts of ${catalogItem.title}.`;
 
-            content = `(view :className "card padding--md margin-vert--md"
-  (header :level 3 "${manifest.m.n}")
-  (callout :variant "info" "${axiom}")
-  (callout :variant "warning" "${trap}")
-  (stepper
-    (step (text "Step 1: Inquiry Hook — ${prompt}"))
-    (step (text "Step 2: Key Concept — ${ch.h || 'Analyze the rules and evidence.'}"))
-    (step (text "Step 3: Verification — Confirm understanding.")))
-  (ai-tutor :persona "${catalogItem.subject} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${catalogItem.title}! Ask me if you need help with this lesson."))`;
+            content = buildManifestLessonAst(
+              manifest.m?.n || catalogItem.title,
+              axiom,
+              trap,
+              prompt,
+              ch.h || 'Analyze the rules and evidence.',
+              catalogItem.subject || selectedSubject
+            );
           }
         }
 
@@ -171,15 +245,15 @@ export default function DynamicLessonViewer({
             topic: catalogItem.title,
           });
 
-          content = `(view :className "card padding--md margin-vert--md"
-  (header :level 3 "${generated.title}")
-  (callout :variant "info" "${generated.axiom}")
-  (callout :variant "warning" "${generated.trap}")
-  (stepper
-    (step (text "Step 1: Inquiry Hook — ${generated.hook}"))
-    (step (text "Step 2: Guided Practice — ${generated.guidedStep}"))
-    (step (text "Step 3: Socratic Check — ${generated.socraticCheck}")))
-  (ai-tutor :persona "${selectedSubject} Tutor" :engine "Gemini Nano" :greeting "Welcome to ${generated.title}! How can I help you master this concept?"))`;
+          content = buildEngineFlowLessonAst(
+            generated.title,
+            generated.axiom,
+            generated.trap,
+            generated.hook,
+            generated.guidedStep,
+            generated.socraticCheck,
+            selectedSubject
+          );
         }
 
         if (content) {

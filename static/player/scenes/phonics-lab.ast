@@ -1,0 +1,22 @@
+(:scene :id "phonics-lab" :title "Early Phonics: Sound Buttons & Blending Mat" :stage "EYFS/KS1 ENGLISH" :duration 12.0
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "In primary school, we read words using Sound Buttons! Under single sounds, we put a dot. Listen to the pure sounds: /k/ ... /a/ ... /t/." :es "¡En la escuela primaria, leemos palabras con botones de sonido! Ponemos un punto bajo cada sonido puro: /k/ ... /a/ ... /t/.")
+    (:start 0.35 :end 0.70 :en "Never add 'uh' at the end: say crisp /k/, not 'kuh'! Now sweep your finger along the arrow to blend the sounds together." :es "¡Nunca agregues 'uh' al final: di /k/ nítido, no 'cuh'! Ahora desliza el dedo a lo largo de la flecha para unir los sonidos.")
+    (:start 0.70 :end 1.00 :en "/k/ ... /a/ ... /t/ blends into 'cat'! 🐱 And remember: tricky words like 'said' have parts that cannot be sounded out." :es "¡/k/ ... /a/ ... /t/ se une en 'cat' (gato)! Y recuerda: las palabras difíciles como 'said' tienen letras que no siguen la regla usual.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Step 1: Sound Buttons" :rule "Place a dot under single letters (c, a, t) to isolate pure phonemes.")
+    (:t 0.25 :title "Step 2: First Sound /k/" :rule "Pronounce pure unvoiced /k/ — do not say 'cuh'.")
+    (:t 0.50 :title "Step 3: Middle Vowel /æ/" :rule "Short open vowel /a/ as in apple.")
+    (:t 0.75 :title "Step 4: End Sound /t/" :rule "Crisp unvoiced /t/ — do not say 'tuh'.")
+    (:t 1.00 :title "Step 5: Blending Sweep" :rule "Sweep across the arrow: /k/ - /a/ - /t/ ➔ 'cat'!")
+  ))
+  (:bindings (
+    (:target "#ph-finger-cursor" :attr "cx" :expr "20 + Math.min(1, Math.max(0, (t - 0.20) / 0.60)) * 280")
+    (:target "#ph-btn-c" :attr "fill" :expr "(t >= 0.15 && t < 0.40) ? '#38bdf8' : '#0284c7'")
+    (:target "#ph-btn-a" :attr "fill" :expr "(t >= 0.40 && t < 0.65) ? '#38bdf8' : '#0284c7'")
+    (:target "#ph-btn-t" :attr "fill" :expr "(t >= 0.65 && t < 0.80) ? '#38bdf8' : '#0284c7'")
+    (:target "#ph-blended-result" :attr "opacity" :expr "t >= 0.80 ? Math.min(1, (t - 0.80) / 0.15) : 0")
+    (:target "#ph-banner-txt" :attr "textContent" :expr "t < 0.20 ? 'Sound Buttons: Press each pure sound button in order.' : (t < 0.80 ? 'Pure phonemes: /k/ ... /a/ ... /t/ (No schwa!).' : 'Blended reading: /k/ - /a/ - /t/ = \"cat\"! 🐱')")
+  ))
+)

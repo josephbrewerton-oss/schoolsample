@@ -6,6 +6,7 @@ import { getComplianceCaveat } from '../data/complianceCaveats';
 import { isDataSaverActive, setDataSaverMode, listenToDataSaverChanges } from '../services/dataSaverStore';
 import { isOfflineSyncComplete } from '../services/offlineSync';
 import { OfflineStorageManager } from './OfflineStorageManager';
+import { getEnergyAuditReport } from '../engine/energyMatrix';
 
 export default function PersistentNavbar(): React.JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -815,7 +816,7 @@ export default function PersistentNavbar(): React.JSX.Element {
                       </div>
 
                       <div style={{
-                        marginBottom: '10px',
+                        marginBottom: '8px',
                         fontSize: '0.75rem',
                         color: colorMode === 'dark' ? '#cbd5e1' : '#64748b',
                         background: colorMode === 'dark' ? '#0f172a' : '#f8fafc',
@@ -832,6 +833,45 @@ export default function PersistentNavbar(): React.JSX.Element {
                           <span style={{ color: colorMode === 'dark' ? '#94a3b8' : '#64748b' }}>{caveat.deviceUnsupportedText}</span>
                         )}
                       </div>
+
+                      {/* Energy Matrix & 0 bps SLA Telemetry */}
+                      {(() => {
+                        const energy = getEnergyAuditReport();
+                        return (
+                          <div style={{
+                            marginBottom: '10px',
+                            fontSize: '0.72rem',
+                            color: colorMode === 'dark' ? '#38bdf8' : '#0369a1',
+                            background: colorMode === 'dark' ? 'rgba(2, 132, 199, 0.12)' : '#f0f9ff',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            border: `1px solid ${colorMode === 'dark' ? '#0369a1' : '#bae6fd'}`,
+                            lineHeight: 1.4
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 800, marginBottom: '2px' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span>⚡</span> Energy Matrix Audit
+                              </span>
+                              <span style={{
+                                fontSize: '0.66rem',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                background: colorMode === 'dark' ? '#064e3b' : '#dcfce7',
+                                color: colorMode === 'dark' ? '#6ee7b7' : '#15803d',
+                                fontWeight: 800
+                              }}>
+                                0 bps SLA
+                              </span>
+                            </div>
+                            <div style={{ color: colorMode === 'dark' ? '#cbd5e1' : '#334155' }}>
+                              <strong>Energy Footprint:</strong> ~{energy.joulesPerLessonObjective} J / lesson objective
+                            </div>
+                            <div style={{ fontSize: '0.67rem', color: colorMode === 'dark' ? '#94a3b8' : '#64748b' }}>
+                              {energy.energyReductionPercent}% greener than 10.8 kJ cloud server calls • Sub-millisecond metal tier
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <button
                         type="button"

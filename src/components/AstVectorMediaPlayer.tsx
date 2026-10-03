@@ -78,6 +78,9 @@ export interface AstVectorMediaPlayerHandle {
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
+  { id: 'bodmas', label: '🧮 BODMAS / BIDMAS: Forcefield Clamps & Area Physics', stage: 'KS2/KS3 MATHS' },
+  { id: 'times-tables', label: '📐 Times Tables: 2D Array & Distributive Splitter', stage: 'KS1/KS2 MATHS' },
+  { id: 'phonics-lab', label: '🔤 Early Phonics: Sound Buttons & Blending Mat', stage: 'EYFS/KS1 ENGLISH' },
   { id: 'math-fishing', label: '🎣 Math Pond: Number Bonds Fishing Game', stage: 'KS1/KS2 MATHS' },
   { id: 'mountain-elevation', label: '🧗 Mountain Altitude: Climber Game (Elevation & Slope)', stage: 'KS2/KS3 MATHS & GEOGRAPHY' },
   { id: 'fish-tank', label: '🐠 Aquarium Stress Benchmark: Vector Point & FPS Limiter', stage: 'BENCHMARK & STRESS LAB' },

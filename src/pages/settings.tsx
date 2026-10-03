@@ -27,6 +27,11 @@ import {
   setStrictAirGapMode,
   listenToAirGapChanges,
 } from '../services/privacyGuard';
+import {
+  getEnergyAuditReport,
+  measureLiveEnergyFootprint,
+  type EnergyAuditReport,
+} from '../engine/energyMatrix';
 
 export default function SettingsPage() {
   // 1. Synchronous lazy initializers (eliminates frame-0 flash)
@@ -64,6 +69,7 @@ export default function SettingsPage() {
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(() => isSoundEnabled());
   const [hapticsEnabled, setHapticsEnabledState] = useState<boolean>(() => isHapticsEnabled());
   const [strictAirGap, setStrictAirGapState] = useState<boolean>(() => isStrictAirGapMode());
+  const [energyReport, setEnergyReport] = useState<EnergyAuditReport>(() => getEnergyAuditReport());
 
   useEffect(() => {
     getOfflineStatus().then(setOfflineStatus);
@@ -334,6 +340,78 @@ export default function SettingsPage() {
                 <strong>💻 How does it work on Chromebooks?</strong>
                 <br />
                 School Chromebooks and modern PCs can run AI models right inside Chrome! When supported, Chrome downloads the model once to the device cache. After that, it generates customized practice questions and Socratic hints <strong>completely offline</strong> without needing school Wi-Fi or sending data to the cloud.
+              </div>
+
+              {/* Energy Matrix & 0 bps SLA Self-Auditing Telemetry Tray */}
+              <div
+                style={{
+                  marginTop: '1rem',
+                  padding: '1rem 1.25rem',
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                    <div>
+                      <strong style={{ color: '#0369a1', fontSize: '0.96rem' }}>
+                        Energy Matrix &amp; 0 bps Network SLA Audit
+                      </strong>
+                      <div style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                        Continuous self-auditing proof on the metal (Local AST vs. Cloud Server Farm)
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = measureLiveEnergyFootprint();
+                      setEnergyReport(updated);
+                      playSuccessChime();
+                      triggerHapticSuccess();
+                    }}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🔄 Re-Benchmark Metal
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', marginTop: '10px' }}>
+                  <div style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e0f2fe' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>NETWORK EGRESS SLA</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#10b981' }}>{energyReport.networkSlaBps} bps</div>
+                    <div style={{ fontSize: '0.66rem', color: '#059669' }}>0 tokens leaked to cloud</div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e0f2fe' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>ENERGY FOOTPRINT</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0284c7' }}>~{energyReport.joulesPerLessonObjective} J</div>
+                    <div style={{ fontSize: '0.66rem', color: '#0369a1' }}>per lesson objective</div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e0f2fe' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>CLOUD REDUCTION</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#16a34a' }}>{energyReport.energyReductionPercent}%</div>
+                    <div style={{ fontSize: '0.66rem', color: '#15803d' }}>vs 10,800 J cloud APIs</div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '8px', border: '1px solid #e0f2fe' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600 }}>EXECUTION TIER</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>{energyReport.latencyMs} ms</div>
+                    <div style={{ fontSize: '0.66rem', color: '#64748b' }}>{energyReport.executionTier}</div>
+                  </div>
+                </div>
               </div>
 
               {/* Explicit UK GDPR / Resource Consent Card */}
