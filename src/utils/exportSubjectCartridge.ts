@@ -27,6 +27,7 @@ export const AVAILABLE_CARTRIDGES: CartridgePackage[] = [
       { id: 'fractions', title: '🥧 Fractions & Common Denominators', category: 'Maths' },
       { id: 'photosynthesis', title: '🌱 Photosynthesis Leaf Factory', category: 'Biology' },
       { id: 'velocity', title: '🏎️ Velocity Vectors & Kinematics', category: 'Physics' },
+      { id: 'kinetic-gas', title: '🌡️ Kinetic Gas Theory & Boyle\'s Law', category: 'Physics & Chemistry' },
     ],
   },
   {
@@ -43,10 +44,11 @@ export const AVAILABLE_CARTRIDGES: CartridgePackage[] = [
   },
   {
     id: 'science-physics',
-    title: 'Physical & Natural Sciences Cartridge (4-in-1)',
-    description: 'Circuits, Photosynthesis, Velocity vectors, and Planetary orbits.',
+    title: 'Physical & Natural Sciences Cartridge (5-in-1)',
+    description: 'Circuits, Kinetic Gas Laws, Photosynthesis, Velocity vectors, and Planetary orbits.',
     scenes: [
       { id: 'electric-circuits', title: '💡 Circuits & Ohm\'s Law', category: 'Physics' },
+      { id: 'kinetic-gas', title: '🌡️ Kinetic Gas Theory & Boyle\'s Law (PV = nRT)', category: 'Physics & Chemistry' },
       { id: 'photosynthesis', title: '🌱 Photosynthesis Rate Limiter', category: 'Biology' },
       { id: 'velocity', title: '🏎️ Velocity Vectors', category: 'Physics' },
       { id: 'solar-system', title: '🪐 Solar System Orbits', category: 'Astronomy' },

@@ -52,7 +52,16 @@ export default function AstInteractiveLabDrawer({
   const [gravityG, setGravityG] = useState<number>(9.81); // m/s^2 (Earth)
   const [springK, setSpringK] = useState<number>(25); // N/m
   const [massM, setMassM] = useState<number>(0.5); // kg
-  const [activeTab, setActiveTab] = useState<'preset' | 'verlet'>('preset');
+
+  // Kinetic Gas & Thermodynamics state (PV = nRT)
+  const [gasTempK, setGasTempK] = useState<number>(300); // Kelvin
+  const [gasVolumeRatio, setGasVolumeRatio] = useState<number>(1.0); // 100% volume
+  const [gasState, setGasState] = useState<'solid' | 'liquid' | 'gas' | 'brownian'>('gas');
+  const [gasParticlesCount, setGasParticlesCount] = useState<number>(50);
+
+  const [activeTab, setActiveTab] = useState<'preset' | 'verlet' | 'kinetic-gas'>(
+    preset === 'kinetic-gas' ? 'kinetic-gas' : 'preset'
+  );
 
   if (!isOpen) return null;
 
@@ -147,13 +156,185 @@ export default function AstInteractiveLabDrawer({
             cursor: 'pointer',
           }}
         >
-          🪢 Verlet Dynamics & Springs
+          🪢 Verlet Springs
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('kinetic-gas')}
+          style={{
+            flex: 1,
+            padding: '8px 10px',
+            background: activeTab === 'kinetic-gas' ? 'rgba(239, 68, 68, 0.15)' : 'none',
+            border: 'none',
+            borderBottom: activeTab === 'kinetic-gas' ? '2px solid #ef4444' : '2px solid transparent',
+            color: activeTab === 'kinetic-gas' ? '#f87171' : '#94a3b8',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          🌡️ Gas Laws (PV=nRT)
         </button>
       </div>
 
       {/* Body content based on active tab and preset */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-        {activeTab === 'verlet' ? (
+        {activeTab === 'kinetic-gas' ? (
+          <div>
+            {/* Header Badge */}
+            <div style={{ background: 'rgba(239, 68, 68, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <div style={{ fontSize: '0.76rem', color: '#fca5a5', fontWeight: 700, textTransform: 'uppercase' }}>
+                Ideal Gas Law & Kinetic Theory:
+              </div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f87171', margin: '2px 0' }}>
+                P &times; V = n R T &bull; P &prop; 1 / V
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
+                Microscopic collisions with container walls exert macroscopically measurable pressure.
+              </div>
+            </div>
+
+            {/* States of Matter Selector */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px', color: '#cbd5e1' }}>
+                Phase State & Micro-Dynamics:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
+                {[
+                  { id: 'gas', label: '💨 Gas', desc: 'Elastic chaos' },
+                  { id: 'liquid', label: '💧 Liquid', desc: 'Fluid slipping' },
+                  { id: 'solid', label: '🧊 Solid', desc: 'Lattice springs' },
+                  { id: 'brownian', label: '🔬 Brownian', desc: 'Pollen walk' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setGasState(item.id as any);
+                      if (item.id === 'solid') setGasTempK(80);
+                      else if (item.id === 'liquid') setGasTempK(220);
+                      else if (item.id === 'gas') setGasTempK(300);
+                      if (typeof window !== 'undefined') {
+                        window.postMessage({ type: 'AUDIO_PLAY_CLICK', freq: 880 }, '*');
+                      }
+                    }}
+                    style={{
+                      padding: '8px',
+                      background: gasState === item.id ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255,255,255,0.06)',
+                      border: gasState === item.id ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '6px',
+                      color: gasState === item.id ? '#f8fafc' : '#94a3b8',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.76rem', fontWeight: 800 }}>{item.label}</div>
+                    <div style={{ fontSize: '0.64rem', color: '#94a3b8' }}>{item.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Piston Volume Slider (Boyle's Law) */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Chamber Volume (V):</span>
+                <span style={{ color: '#38bdf8' }}>{Math.round(gasVolumeRatio * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.25"
+                max="1.0"
+                step="0.05"
+                value={gasVolumeRatio}
+                onChange={(e) => setGasVolumeRatio(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#38bdf8' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#94a3b8', marginTop: '2px' }}>
+                <span>25% (High Compression)</span>
+                <span>100% (Full Chamber)</span>
+              </div>
+            </div>
+
+            {/* Temperature Slider (Gay-Lussac's Law) */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Temperature (T):</span>
+                <span style={{ color: '#f87171' }}>{gasTempK} K ({(gasTempK - 273.15).toFixed(0)}°C)</span>
+              </div>
+              <input
+                type="range"
+                min="50"
+                max="800"
+                step="10"
+                value={gasTempK}
+                onChange={(e) => setGasTempK(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#ef4444' }}
+              />
+              <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
+                {[
+                  { label: '❄️ 77K', temp: 77 },
+                  { label: '🧊 273K', temp: 273 },
+                  { label: '☕ 298K', temp: 298 },
+                  { label: '🔥 373K', temp: 373 },
+                  { label: '🌋 650K', temp: 650 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setGasTempK(preset.temp)}
+                    style={{
+                      flex: 1,
+                      padding: '4px 2px',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '4px',
+                      color: '#cbd5e1',
+                      fontSize: '0.64rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mathematical Readouts */}
+            {(() => {
+              const pressure = (101.3 * (gasTempK / 300)) / Math.max(0.25, gasVolumeRatio);
+              const vrms = Math.round(Math.sqrt((3 * 8.314 * gasTempK) / 0.028));
+              const wallCollisions = Math.round((gasParticlesCount * (vrms / 500) * (1 / gasVolumeRatio)) * 9.6);
+              const pvConst = (pressure * gasVolumeRatio).toFixed(1);
+
+              return (
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.74rem', color: '#94a3b8', fontWeight: 800 }}>THERMAL TELEMETRY:</span>
+                    <span style={{ fontSize: '0.74rem', color: '#22c55e', fontWeight: 900 }}>Boyle's P&times;V = {pvConst}</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#38bdf8' }}>Measured Pressure</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc' }}>{pressure.toFixed(1)} kPa</div>
+                    </div>
+                    <div style={{ background: 'rgba(234, 179, 8, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#facc15' }}>Thermal Speed (v_rms)</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f8fafc' }}>{vrms} m/s</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.74rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    <div>Wall Impulses: <strong style={{ color: '#38bdf8' }}>{wallCollisions} collisions/sec</strong></div>
+                    <div>Molar Kinetic Energy: <strong style={{ color: '#facc15' }}>{(1.5 * 8.314 * gasTempK).toFixed(0)} J/mol</strong></div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        ) : activeTab === 'verlet' ? (
           <div>
             <div style={{ background: 'rgba(168, 85, 247, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
               <div style={{ fontSize: '0.76rem', color: '#d8b4fe', fontWeight: 700, textTransform: 'uppercase' }}>

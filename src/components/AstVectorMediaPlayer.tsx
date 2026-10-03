@@ -50,6 +50,7 @@ export type VectorPresetType =
   | 'mountain-elevation'
   | 'fish-tank'
   | 'math-fishing'
+  | 'kinetic-gas'
   | string;
 
 export interface AstVectorMediaPlayerProps {
@@ -83,6 +84,7 @@ export interface AstVectorMediaPlayerHandle {
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
+  { id: 'kinetic-gas', label: '🌡️ Kinetic Gas Theory & Boyle\'s Law (PV = nRT)', stage: 'KS3/KS4 PHYSICS & CHEMISTRY' },
   { id: 'algebra-balance', label: '⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)', stage: 'KS2/KS3 MATHS' },
   { id: 'electric-circuits', label: '💡 Electrical Circuits: Ohm\'s Law & Electron Physics (V = I × R)', stage: 'KS2/KS3 PHYSICS' },
   { id: 'bodmas', label: '🧮 BODMAS / BIDMAS: Forcefield Clamps & Area Physics', stage: 'KS2/KS3 MATHS' },

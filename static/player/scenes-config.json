@@ -1,7 +1,7 @@
 {
-  "version": "2.3.0",
-  "generatedAt": "2026-10-03T10:30:00.000Z",
-  "totalScenes": 15,
+  "version": "2.4.0",
+  "generatedAt": "2026-10-03T17:10:00.000Z",
+  "totalScenes": 16,
   "scenes": [
     {
       "id": "bodmas",
@@ -197,6 +197,19 @@
       "keyframeCount": 4,
       "subtitleCount": 3,
       "bindingsCount": 18
+    },
+    {
+      "id": "kinetic-gas",
+      "title": "Kinetic Gas Theory & Boyle's Law (PV = nRT)",
+      "stage": "KS3/KS4 PHYSICS & CHEMISTRY",
+      "duration": 14,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/kinetic-gas.svg",
+      "astFile": "scenes/kinetic-gas.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 4,
+      "bindingsCount": 11
     }
   ]
 }
