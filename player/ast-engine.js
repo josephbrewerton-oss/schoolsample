@@ -1281,16 +1281,20 @@
       }
 
       // 2. Strip dangerous executable containers from raw string prior to DOM reinterpretation
-      clean = clean
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-        .replace(/<object[\s\S]*?<\/object>/gi, '')
-        .replace(/<embed[\s\S]*?<\/embed>/gi, '');
+      //    Apply repeatedly until stable to avoid incomplete multi-character sanitization bypasses.
+      let prevClean;
+      do {
+        prevClean = clean;
+        clean = clean
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
+          .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+          .replace(/<object[\s\S]*?<\/object>/gi, '')
+          .replace(/<embed[\s\S]*?<\/embed>/gi, '');
+      } while (clean !== prevClean);
 
       // 3. Strip inline event handlers (onload, onerror, onclick, etc.) from tag definitions
       //    Apply repeatedly until stable to avoid incomplete multi-character sanitization bypasses.
-      let prevClean;
       do {
         prevClean = clean;
         clean = clean.replace(/\s+on[a-z0-9_-]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '');
