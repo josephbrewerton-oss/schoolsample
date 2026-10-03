@@ -1286,11 +1286,11 @@
       do {
         prevClean = clean;
         clean = clean
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-          .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-          .replace(/<object[\s\S]*?<\/object>/gi, '')
-          .replace(/<embed[\s\S]*?<\/embed>/gi, '');
+          .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, '')
+          .replace(/<foreignObject\b[\s\S]*?<\/foreignObject\b[^>]*>/gi, '')
+          .replace(/<iframe\b[\s\S]*?<\/iframe\b[^>]*>/gi, '')
+          .replace(/<object\b[\s\S]*?<\/object\b[^>]*>/gi, '')
+          .replace(/<embed\b[\s\S]*?<\/embed\b[^>]*>/gi, '');
       } while (clean !== prevClean);
 
       // 3. Strip inline event handlers (onload, onerror, onclick, etc.) from tag definitions
