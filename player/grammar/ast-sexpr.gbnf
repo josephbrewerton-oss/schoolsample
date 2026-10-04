@@ -2,7 +2,11 @@
 # GGML BNF Grammar for Constraining Local LLMs to Token-Efficient S-Expression ASTs with 3D Node Subsystem
 # Produces valid Lisp-like (scene ...) structures parsed directly by AST Vector Player.
 
-root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? ("(:vars" ws "(" ws (variable ws)* ")" ws ")")? ws ("(:inputs" ws "(" ws (input ws)* ")" ws ")")? ws ("(:computed" ws "(" ws (computed ws)* ")" ws ")")? ws "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ("(:interactive" ws "(" ws (checkpoint ws)* ")" ws ")")? ws ("(:gestures" ws "(" ws (gesture ws)* ")" ws ")")? ws ")"
+root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? ("(:static" ws "(" ws (staticItem ws)* ")" ws ")")? ws ("(:actors" ws "(" ws (actorItem ws)* ")" ws ")")? ws ("(:vars" ws "(" ws (variable ws)* ")" ws ")")? ws ("(:inputs" ws "(" ws (input ws)* ")" ws ")")? ws ("(:computed" ws "(" ws (computed ws)* ")" ws ")")? ws "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ("(:interactive" ws "(" ws (checkpoint ws)* ")" ws ")")? ws ("(:gestures" ws "(" ws (gesture ws)* ")" ws ")")? ws ")"
+
+staticItem ::= "(:element" ws ":target" ws string (ws ":layer" ws string)? (ws ":cache" ws boolean)? ")"
+
+actorItem ::= "(:actor" ws ":target" ws string (ws ":kinematic" ws boolean)? (ws ":will-change" ws boolean)? ")"
 
 camera ::= "(:camera" ws ":distance" ws number ws ":pitch" ws number ws ":yaw" ws (string | number) ws ":fov" ws number ")"
 

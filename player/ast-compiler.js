@@ -540,6 +540,30 @@
     static _generateAstSexpr(parsed) {
       let ast = `(:scene :id "${parsed.id || 'slide'}" :title "${this._escapeQuotes(parsed.title || 'Slide')}" :stage "${parsed.stage || 'CURRICULUM'}" :duration ${parsed.duration.toFixed(1)}\n`;
 
+      // Dynamic Actors vs Static Primitives Partitioning
+      const dynamicTargets = new Set();
+      if (parsed.bindings && parsed.bindings.length > 0) {
+        parsed.bindings.forEach(b => dynamicTargets.add(b.target));
+      } else {
+        dynamicTargets.add('#orbit-node');
+        dynamicTargets.add('#status-txt');
+      }
+
+      const staticShapes = (parsed.shapes || []).filter(s => !dynamicTargets.has(`#${s.id}`));
+      if (staticShapes.length > 0) {
+        ast += `  (:static (\n`;
+        staticShapes.forEach(s => {
+          ast += `    (:element :target "#${s.id}" :cache true)\n`;
+        });
+        ast += `  ))\n`;
+      }
+
+      ast += `  (:actors (\n`;
+      dynamicTargets.forEach(t => {
+        ast += `    (:actor :target "${t}" :kinematic true :will-change true)\n`;
+      });
+      ast += `  ))\n`;
+
       // 1. Keyframes
       ast += `  (:keyframes (\n`;
       parsed.keyframes.forEach(kf => {
