@@ -314,107 +314,389 @@
         { start: 0.66, end: 1.00, en: "Earth completes 1 orbit per year with a 23.5° axial tilt creating our seasons.", es: "La Tierra completa una órbita al año con una inclinación de 23.5° que crea las estaciones." }
       ],
       mount(container) {
-        const cx = 400, cy = 240;
-        let html = '';
-        for (let i = 0; i < 40; i++) {
-          const sx = (i * 97) % 800;
-          const sy = (i * 71) % 480;
-          html += `<circle class="sol-star" cx="${sx}" cy="${sy}" r="1" fill="#ffffff" opacity="0.4" />`;
-        }
-        html += `<circle cx="${cx}" cy="${cy}" r="32" fill="url(#grad-sun)" filter="url(#glow)" />`;
-        html += `<circle cx="${cx}" cy="${cy}" r="26" fill="#f59e0b" />`;
+        const cx = 400, cy = 230;
+        let simTimeYears = 0;
+        let speedMultiplier = 1.0;
+        let isPaused = false;
+        let showOrbits = true;
+        let showLabels = true;
 
-        const planetDefs = [
-          { id: 'mercury', name: 'Mercury', r: 5, orbR: 65, speed: 4.15, col: '#94a3b8' },
-          { id: 'venus',   name: 'Venus',   r: 8, orbR: 105, speed: 1.62, col: '#fde047' },
-          { id: 'earth',   name: 'Earth',   r: 9, orbR: 155, speed: 1.00, col: '#38bdf8' },
-          { id: 'mars',    name: 'Mars',    r: 6, orbR: 205, speed: 0.53, col: '#ef4444' }
+        const defaultPlanets = [
+          { id: 'mercury', name: 'Mercury', r: 5, orbR: 65, baseSpeed: 4.15, col: '#cbd5e1', symbol: '☿' },
+          { id: 'venus',   name: 'Venus',   r: 8, orbR: 105, baseSpeed: 1.62, col: '#fde047', symbol: '♀' },
+          { id: 'earth',   name: 'Earth',   r: 9, orbR: 155, baseSpeed: 1.00, col: '#38bdf8', symbol: '♁' },
+          { id: 'mars',    name: 'Mars',    r: 6, orbR: 205, baseSpeed: 0.53, col: '#ef4444', symbol: '♂' }
         ];
 
-        planetDefs.forEach(p => {
-          html += `<circle cx="${cx}" cy="${cy}" r="${p.orbR}" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />`;
-          html += `<circle id="sol-planet-${p.id}" cx="${cx + p.orbR}" cy="${cy}" r="${p.r}" fill="${p.col}" />`;
-          html += `<text id="sol-txt-${p.id}" x="${cx + p.orbR}" y="${cy + p.r + 13}" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">${p.name}</text>`;
+        let html = `
+          <svg id="sol-interactive-svg" viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#050811; user-select:none; touch-action:none;">
+            <defs>
+              <radialGradient id="sol-sun-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fef08a" stop-opacity="1"/>
+                <stop offset="35%" stop-color="#f59e0b" stop-opacity="0.9"/>
+                <stop offset="70%" stop-color="#ea580c" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="sol-earth-atm" cx="35%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="#93c5fd"/>
+                <stop offset="40%" stop-color="#3b82f6"/>
+                <stop offset="100%" stop-color="#1e3a8a"/>
+              </radialGradient>
+            </defs>
+
+            <!-- Starfield -->
+            <g id="sol-starfield-group">`;
+
+        for (let i = 0; i < 55; i++) {
+          const sx = (i * 127 + 31) % 800;
+          const sy = (i * 97 + 17) % 480;
+          const r = (i % 5 === 0) ? 1.6 : 1.0;
+          html += `<circle class="sol-star" cx="${sx}" cy="${sy}" r="${r}" fill="#ffffff" opacity="${0.2 + (i % 7) * 0.1}"/>`;
+        }
+
+        html += `
+            </g>
+
+            <!-- Top HUD: Time & Astronomical Calendar -->
+            <g transform="translate(400, 32)">
+              <rect x="-370" y="-20" width="740" height="40" rx="10" fill="#0f172a" fill-opacity="0.9" stroke="#334155" stroke-width="1.5"/>
+              
+              <!-- Elapsed Time Readout -->
+              <text id="sol-time-readout" x="-350" y="5" fill="#f8fafc" font-size="13" font-weight="800">
+                ⏱ Time: 0.00 Earth Yrs (0 Days)
+              </text>
+
+              <!-- Earth Season Badge -->
+              <g transform="translate(40, 0)">
+                <rect id="sol-season-box" x="-70" y="-12" width="140" height="24" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+                <text id="sol-season-text" x="0" y="4" fill="#38bdf8" font-size="11" font-weight="800" text-anchor="middle">🌱 Vernal Equinox</text>
+              </g>
+
+              <!-- Kepler Harmonic Law Banner -->
+              <text id="sol-kepler-text" x="350" y="5" fill="#94a3b8" font-size="11" font-weight="700" text-anchor="end">
+                Kepler III: T² ∝ a³ (Orbital Resonance)
+              </text>
+            </g>
+
+            <!-- Orbits Group -->
+            <g id="sol-orbits-group">`;
+
+        defaultPlanets.forEach(p => {
+          html += `<circle id="sol-orbit-${p.id}" cx="${cx}" cy="${cy}" r="${p.orbR}" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="4 4"/>`;
         });
 
-        html += `<circle id="sol-moon" cx="${cx + 155 + 18}" cy="${cy}" r="2.5" fill="#f8fafc" />`;
+        html += `
+            </g>
+
+            <!-- Sun Center -->
+            <g id="sol-sun-group" transform="translate(${cx}, ${cy})">
+              <!-- Corona Aura -->
+              <circle r="46" fill="url(#sol-sun-glow)"/>
+              <circle r="26" fill="#f59e0b" stroke="#fef08a" stroke-width="2"/>
+              <text y="4" fill="#78350f" font-size="11" font-weight="900" text-anchor="middle">SUN</text>
+            </g>
+
+            <!-- Planets & Labels Layer -->
+            <g id="sol-planets-group">`;
+
+        defaultPlanets.forEach(p => {
+          html += `
+            <g id="sol-planet-node-${p.id}" style="cursor:grab;">
+              <!-- Radial guide line on drag -->
+              <line id="sol-radial-${p.id}" x1="${cx}" y1="${cy}" x2="${cx + p.orbR}" y2="${cy}" stroke="${p.col}" stroke-width="1" stroke-dasharray="2 2" opacity="0.4"/>
+              <!-- Planet Body -->
+              <circle id="sol-body-${p.id}" cx="${cx + p.orbR}" cy="${cy}" r="${p.r}" fill="${p.id === 'earth' ? 'url(#sol-earth-atm)' : p.col}" stroke="#ffffff" stroke-width="1"/>
+              <!-- Label -->
+              <text id="sol-label-${p.id}" x="${cx + p.orbR}" y="${cy + p.r + 14}" fill="#e2e8f0" font-size="11" font-weight="800" text-anchor="middle">
+                ${p.symbol} ${p.name}
+              </text>
+            </g>
+          `;
+        });
+
+        // Earth's Moon
+        html += `<circle id="sol-moon-node" cx="${cx + 155 + 18}" cy="${cy}" r="2.5" fill="#f8fafc" stroke="#64748b" stroke-width="0.5"/>`;
+
+        html += `
+            </g>
+
+            <!-- Bottom Interactive PhET Control Dock -->
+            <g id="sol-dock" transform="translate(400, 442)">
+              <rect x="-375" y="-24" width="750" height="48" rx="12" fill="#0f172a" fill-opacity="0.95" stroke="#334155" stroke-width="1.5"/>
+
+              <!-- Speed Multiplier Buttons -->
+              <g transform="translate(-320, 0)">
+                <text x="-40" y="5" fill="#94a3b8" font-size="11" font-weight="800">Speed:</text>
+                <rect id="sol-spd-025" x="2" y="-12" width="38" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="21" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">0.25x</text>
+
+                <rect id="sol-spd-1" x="44" y="-12" width="34" height="24" rx="5" fill="#38bdf8" stroke="#38bdf8" style="cursor:pointer;"/>
+                <text x="61" y="4" fill="#090d16" font-size="10" font-weight="900" text-anchor="middle" pointer-events="none">1x</text>
+
+                <rect id="sol-spd-5" x="82" y="-12" width="34" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="99" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">5x</text>
+
+                <rect id="sol-spd-25" x="120" y="-12" width="38" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="139" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">25x</text>
+              </g>
+
+              <!-- Step & Play/Pause Controls -->
+              <g transform="translate(-60, 0)">
+                <!-- -30 Days -->
+                <rect id="sol-step-back" x="-42" y="-12" width="36" height="24" rx="5" fill="#1e293b" stroke="#475569" style="cursor:pointer;"/>
+                <text x="-24" y="4" fill="#cbd5e1" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">⏪</text>
+
+                <!-- Play/Pause -->
+                <rect id="sol-btn-playpause" x="0" y="-14" width="46" height="28" rx="6" fill="#10b981" stroke="#34d399" style="cursor:pointer;"/>
+                <text id="sol-playpause-icon" x="23" y="5" fill="#022c22" font-size="13" font-weight="900" text-anchor="middle" pointer-events="none">⏸</text>
+
+                <!-- +30 Days -->
+                <rect id="sol-step-fwd" x="52" y="-12" width="36" height="24" rx="5" fill="#1e293b" stroke="#475569" style="cursor:pointer;"/>
+                <text x="70" y="4" fill="#cbd5e1" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">⏩</text>
+              </g>
+
+              <!-- Toggles: Orbits & Reset -->
+              <g transform="translate(190, 0)">
+                <rect id="sol-btn-orbits" x="0" y="-12" width="68" height="24" rx="5" fill="#1e293b" stroke="#38bdf8" style="cursor:pointer;"/>
+                <text id="sol-txt-orbits" x="34" y="4" fill="#38bdf8" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">Orbits: ON</text>
+
+                <rect id="sol-btn-reset" x="74" y="-12" width="60" height="24" rx="5" fill="#1e293b" stroke="#e2e8f0" style="cursor:pointer;"/>
+                <text x="104" y="4" fill="#e2e8f0" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">Reset</text>
+              </g>
+            </g>
+          </svg>
+        `;
+
         container.innerHTML = html;
 
-        return {
+        const svgEl = container.querySelector('#sol-interactive-svg');
+        const elements = {
+          svg: svgEl,
           stars: Array.from(container.querySelectorAll('.sol-star')),
-          planets: planetDefs.map(p => ({
+          timeReadout: container.querySelector('#sol-time-readout'),
+          seasonText: container.querySelector('#sol-season-text'),
+          seasonBox: container.querySelector('#sol-season-box'),
+          keplerText: container.querySelector('#sol-kepler-text'),
+          orbitsGroup: container.querySelector('#sol-orbits-group'),
+          moon: container.querySelector('#sol-moon-node'),
+          btnPlayPause: container.querySelector('#sol-btn-playpause'),
+          playPauseIcon: container.querySelector('#sol-playpause-icon'),
+          spd025: container.querySelector('#sol-spd-025'),
+          spd1: container.querySelector('#sol-spd-1'),
+          spd5: container.querySelector('#sol-spd-5'),
+          spd25: container.querySelector('#sol-spd-25'),
+          stepBack: container.querySelector('#sol-step-back'),
+          stepFwd: container.querySelector('#sol-step-fwd'),
+          btnOrbits: container.querySelector('#sol-btn-orbits'),
+          txtOrbits: container.querySelector('#sol-txt-orbits'),
+          btnReset: container.querySelector('#sol-btn-reset'),
+          planets: defaultPlanets.map(p => ({
             ...p,
-            circle: container.querySelector(`#sol-planet-${p.id}`),
-            txt: container.querySelector(`#sol-txt-${p.id}`),
+            node: container.querySelector(`#sol-planet-node-${p.id}`),
+            orbitCircle: container.querySelector(`#sol-orbit-${p.id}`),
+            radial: container.querySelector(`#sol-radial-${p.id}`),
+            body: container.querySelector(`#sol-body-${p.id}`),
+            label: container.querySelector(`#sol-label-${p.id}`),
           })),
-          moon: container.querySelector('#sol-moon'),
+          cx,
+          cy,
+          simTimeYears: 0,
+          speedMultiplier: 1.0,
+          isPaused: false,
+          showOrbits: true,
+          activeDragPlanet: null,
         };
+
+        // Speed multi helper
+        const setSpeed = (spd, activeBtn) => {
+          elements.speedMultiplier = spd;
+          [elements.spd025, elements.spd1, elements.spd5, elements.spd25].forEach(btn => {
+            btn.setAttribute('fill', '#1e293b');
+            btn.setAttribute('stroke', '#334155');
+            const txt = btn.nextElementSibling;
+            if (txt) txt.setAttribute('fill', '#cbd5e1');
+          });
+          activeBtn.setAttribute('fill', '#38bdf8');
+          activeBtn.setAttribute('stroke', '#38bdf8');
+          const actTxt = activeBtn.nextElementSibling;
+          if (actTxt) actTxt.setAttribute('fill', '#090d16');
+        };
+
+        elements.spd025.onclick = (e) => { e.stopPropagation(); setSpeed(0.25, elements.spd025); };
+        elements.spd1.onclick = (e) => { e.stopPropagation(); setSpeed(1.0, elements.spd1); };
+        elements.spd5.onclick = (e) => { e.stopPropagation(); setSpeed(5.0, elements.spd5); };
+        elements.spd25.onclick = (e) => { e.stopPropagation(); setSpeed(25.0, elements.spd25); };
+
+        // Play/Pause
+        elements.btnPlayPause.onclick = (e) => {
+          e.stopPropagation();
+          elements.isPaused = !elements.isPaused;
+          elements.playPauseIcon.textContent = elements.isPaused ? '▶' : '⏸';
+          elements.btnPlayPause.setAttribute('fill', elements.isPaused ? '#3b82f6' : '#10b981');
+        };
+
+        // Step Day Buttons
+        elements.stepBack.onclick = (e) => {
+          e.stopPropagation();
+          elements.simTimeYears = Math.max(0, elements.simTimeYears - 30 / 365.25);
+          elements.updatePositions();
+        };
+        elements.stepFwd.onclick = (e) => {
+          e.stopPropagation();
+          elements.simTimeYears += 30 / 365.25;
+          elements.updatePositions();
+        };
+
+        // Orbits Toggle
+        elements.btnOrbits.onclick = (e) => {
+          e.stopPropagation();
+          elements.showOrbits = !elements.showOrbits;
+          elements.orbitsGroup.style.display = elements.showOrbits ? 'block' : 'none';
+          elements.txtOrbits.textContent = elements.showOrbits ? 'Orbits: ON' : 'Orbits: OFF';
+        };
+
+        // Reset
+        elements.btnReset.onclick = (e) => {
+          e.stopPropagation();
+          elements.simTimeYears = 0;
+          defaultPlanets.forEach((p, idx) => {
+            elements.planets[idx].orbR = p.orbR;
+            elements.planets[idx].orbitCircle.setAttribute('r', p.orbR);
+          });
+          setSpeed(1.0, elements.spd1);
+          elements.updatePositions();
+        };
+
+        // Drag to resize planet orbits (Keplerian physics playground)
+        const getSvgPoint = (evt) => {
+          const pt = svgEl.createSVGPoint();
+          const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+          const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+          pt.x = clientX;
+          pt.y = clientY;
+          const ctm = svgEl.getScreenCTM();
+          return ctm ? pt.matrixTransform(ctm.inverse()) : { x: 0, y: 0 };
+        };
+
+        elements.planets.forEach(p => {
+          p.node.onpointerdown = (e) => {
+            e.stopPropagation();
+            elements.activeDragPlanet = p;
+            p.node.setPointerCapture(e.pointerId);
+          };
+        });
+
+        svgEl.onpointermove = (e) => {
+          if (!elements.activeDragPlanet) return;
+          const pt = getSvgPoint(e);
+          const dx = pt.x - cx;
+          const dy = pt.y - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const clampedR = Math.max(50, Math.min(235, Math.round(dist)));
+          elements.activeDragPlanet.orbR = clampedR;
+          elements.activeDragPlanet.orbitCircle.setAttribute('r', clampedR);
+          elements.updatePositions();
+        };
+
+        svgEl.onpointerup = (e) => {
+          if (elements.activeDragPlanet) {
+            try {
+              elements.activeDragPlanet.node.releasePointerCapture(e.pointerId);
+            } catch {}
+            elements.activeDragPlanet = null;
+          }
+        };
+
+        // Position Updater
+        elements.updatePositions = () => {
+          const tYears = elements.simTimeYears;
+          const totalDays = Math.round(tYears * 365.25);
+
+          // Update Time Readout
+          elements.timeReadout.textContent = `⏱ Time: ${tYears.toFixed(2)} Earth Yrs (${totalDays} Days)`;
+
+          // Compute Earth Angle & Season
+          const earthSpeed = Math.pow(155 / elements.planets[2].orbR, 1.5);
+          const earthAngleRad = (tYears * earthSpeed * Math.PI * 2) % (Math.PI * 2);
+          const earthDeg = (earthAngleRad * 180 / Math.PI + 360) % 360;
+
+          let seasonName = '🌱 Vernal Equinox (Spring)';
+          let seasonColor = '#38bdf8';
+          if (earthDeg >= 90 && earthDeg < 180) {
+            seasonName = '☀️ Summer Solstice';
+            seasonColor = '#facc15';
+          } else if (earthDeg >= 180 && earthDeg < 270) {
+            seasonName = '🍂 Autumnal Equinox';
+            seasonColor = '#fb923c';
+          } else if (earthDeg >= 270) {
+            seasonName = '❄️ Winter Solstice';
+            seasonColor = '#a5b4fc';
+          }
+
+          elements.seasonText.textContent = seasonName;
+          elements.seasonText.setAttribute('fill', seasonColor);
+          elements.seasonBox.setAttribute('stroke', seasonColor);
+
+          let earthX = 0, earthY = 0;
+
+          // Update Planets
+          elements.planets.forEach(p => {
+            // Kepler's Third Law: T² ∝ a³ ➔ angular velocity ω ∝ a^(-1.5)
+            // Baseline: 155px = 1.00 speed
+            const keplerSpeed = Math.pow(155 / p.orbR, 1.5);
+            const angle = tYears * Math.PI * 2 * keplerSpeed;
+            const px = cx + Math.cos(angle) * p.orbR;
+            const py = cy + Math.sin(angle) * p.orbR;
+
+            p.body.setAttribute('cx', px.toFixed(1));
+            p.body.setAttribute('cy', py.toFixed(1));
+            p.label.setAttribute('x', px.toFixed(1));
+            p.label.setAttribute('y', (py + p.r + 14).toFixed(1));
+
+            p.radial.setAttribute('x2', px.toFixed(1));
+            p.radial.setAttribute('y2', py.toFixed(1));
+
+            if (p.id === 'earth') {
+              earthX = px;
+              earthY = py;
+            }
+          });
+
+          // Moon orbit around Earth
+          if (elements.moon && earthX) {
+            const moonAngle = tYears * Math.PI * 2 * 13.37; // ~13.4 lunar months per year
+            const mx = earthX + Math.cos(moonAngle) * 17;
+            const my = earthY + Math.sin(moonAngle) * 17;
+            elements.moon.setAttribute('cx', mx.toFixed(1));
+            elements.moon.setAttribute('cy', my.toFixed(1));
+          }
+        };
+
+        elements.lastT = 0;
+        return elements;
       },
       update(t, el) {
-        if (!el || !el.planets) return;
-        const cx = 400, cy = 240;
+        if (!el || !el.updatePositions) return;
 
+        // Advance simulation time smoothly based on delta-t and speedMultiplier if not paused
+        const dt = Math.max(0, t - (el.lastT || 0));
+        el.lastT = t;
+
+        if (!el.isPaused) {
+          // 1 full timeline loop = 2.0 Earth years at 1x
+          el.simTimeYears += dt * 2.0 * (el.speedMultiplier || 1.0);
+        }
+
+        // Twinkle starfield
         for (let i = 0; i < el.stars.length; i++) {
-          const op = 0.2 + ((i + t * 5) % 1) * 0.6;
+          const op = 0.2 + ((i * 13 + t * 4) % 1) * 0.7;
           el.stars[i].setAttribute('opacity', op.toFixed(2));
         }
 
-        let earthX = 0, earthY = 0;
-        el.planets.forEach(p => {
-          const angle = t * Math.PI * 2 * p.speed;
-          const px = cx + Math.cos(angle) * p.orbR;
-          const py = cy + Math.sin(angle) * p.orbR;
-          p.circle.setAttribute('cx', px.toFixed(1));
-          p.circle.setAttribute('cy', py.toFixed(1));
-          p.txt.setAttribute('x', px.toFixed(1));
-          p.txt.setAttribute('y', (py + p.r + 13).toFixed(1));
-
-          if (p.id === 'earth') {
-            earthX = px;
-            earthY = py;
-          }
-        });
-
-        if (el.moon && earthX) {
-          const moonAngle = t * Math.PI * 2 * 12;
-          const mx = earthX + Math.cos(moonAngle) * 18;
-          const my = earthY + Math.sin(moonAngle) * 18;
-          el.moon.setAttribute('cx', mx.toFixed(1));
-          el.moon.setAttribute('cy', my.toFixed(1));
-        }
+        el.updatePositions();
       },
       render(t) {
-        const cx = 400, cy = 240;
-        let svg = '';
-        for (let i = 0; i < 40; i++) {
-          const sx = (i * 97) % 800;
-          const sy = (i * 71) % 480;
-          const op = 0.2 + ((i + t * 5) % 1) * 0.6;
-          svg += `<circle cx="${sx}" cy="${sy}" r="1" fill="#ffffff" opacity="${op.toFixed(2)}" />`;
-        }
-        svg += `<circle cx="${cx}" cy="${cy}" r="32" fill="url(#grad-sun)" filter="url(#glow)" />`;
-        svg += `<circle cx="${cx}" cy="${cy}" r="26" fill="#f59e0b" />`;
-        const planets = [
-          { name: 'Mercury', r: 5, orbR: 65, speed: 4.15, col: '#94a3b8' },
-          { name: 'Venus',   r: 8, orbR: 105, speed: 1.62, col: '#fde047' },
-          { name: 'Earth',   r: 9, orbR: 155, speed: 1.00, col: '#38bdf8' },
-          { name: 'Mars',    r: 6, orbR: 205, speed: 0.53, col: '#ef4444' }
-        ];
-        planets.forEach((p) => {
-          svg += `<circle cx="${cx}" cy="${cy}" r="${p.orbR}" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 4" />`;
-          const angle = t * Math.PI * 2 * p.speed;
-          const px = cx + Math.cos(angle) * p.orbR;
-          const py = cy + Math.sin(angle) * p.orbR;
-          svg += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${p.r}" fill="${p.col}" />`;
-          svg += `<text x="${px.toFixed(1)}" y="${(py + p.r + 13).toFixed(1)}" fill="#cbd5e1" font-size="11" font-weight="600" text-anchor="middle">${p.name}</text>`;
-          if (p.name === 'Earth') {
-            const moonAngle = t * Math.PI * 2 * 12;
-            const mx = px + Math.cos(moonAngle) * 18;
-            const my = py + Math.sin(moonAngle) * 18;
-            svg += `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="2.5" fill="#f8fafc" />`;
-          }
-        });
-        return svg;
+        return `<svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#050811;"><text x="400" y="240" fill="#f8fafc" font-size="20" text-anchor="middle">Solar System Living Simulation Stage</text></svg>`;
       }
     },
 
@@ -521,54 +803,356 @@
         ]
       },
       mount(container) {
-        const ox = 360, oy = 280, a = 90, b = 120;
+        let curA = 3;
+        let curB = 4;
+        const ox = 330, oy = 290, s = 22;
+
         container.innerHTML = `
-          <polygon points="${ox},${oy} ${ox + b},${oy} ${ox},${oy - a}" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />
-          <rect x="${ox}" y="${oy - 16}" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.5" />
-          <rect id="pyth-rect-b" x="${ox}" y="${oy}" width="${b}" height="0" fill="#3b82f6" fill-opacity="0.6" stroke="#60a5fa" stroke-width="2" />
-          <text id="pyth-txt-b" x="${ox + b/2}" y="${oy + b/2}" fill="#ffffff" font-size="18" font-weight="bold" text-anchor="middle" opacity="0">b² = 16</text>
-          <rect id="pyth-rect-a" x="${ox}" y="${oy - a}" width="0" height="${a}" fill="#10b981" fill-opacity="0.6" stroke="#34d399" stroke-width="2" />
-          <text id="pyth-txt-a" x="${ox - a/2}" y="${oy - a/2}" fill="#ffffff" font-size="18" font-weight="bold" text-anchor="middle" opacity="0">a² = 9</text>
-          <rect x="230" y="24" width="340" height="40" rx="8" fill="#1e293b" stroke="#334155" />
-          <text x="400" y="49" fill="#f59e0b" font-size="18" font-weight="bold" text-anchor="middle">3² + 4² = 5² ➔ 9 + 16 = 25</text>
+          <svg id="pyth-interactive-svg" viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; user-select:none; touch-action:none;">
+            <defs>
+              <linearGradient id="pythA-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#059669" stop-opacity="0.6"/>
+              </linearGradient>
+              <linearGradient id="pythB-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.6"/>
+              </linearGradient>
+              <linearGradient id="pythC-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#d97706" stop-opacity="0.6"/>
+              </linearGradient>
+              <filter id="pyth-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              </filter>
+            </defs>
+
+            <!-- Background Grid -->
+            <g opacity="0.08" stroke="#38bdf8" stroke-width="1">
+              <line x1="0" y1="120" x2="800" y2="120"/><line x1="0" y1="200" x2="800" y2="200"/><line x1="0" y1="280" x2="800" y2="280"/><line x1="0" y1="360" x2="800" y2="360"/>
+              <line x1="160" y1="0" x2="160" y2="480"/><line x1="320" y1="0" x2="320" y2="480"/><line x1="480" y1="0" x2="480" y2="480"/><line x1="640" y1="0" x2="640" y2="480"/>
+            </g>
+
+            <!-- Live Algebra Equation Banner -->
+            <g transform="translate(400, 36)">
+              <rect x="-310" y="-22" width="620" height="44" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+              <text id="pyth-formula-text" x="0" y="6" fill="#f8fafc" font-size="16" font-weight="800" text-anchor="middle">
+                a² + b² = c²  ➔  3² + 4² = 9 + 16 = 25  ➔  c = √25 = 5.00
+              </text>
+            </g>
+
+            <!-- Pythagorean Triple Badge -->
+            <g id="pyth-triple-badge" transform="translate(680, 36)" style="display:block;">
+              <rect x="-65" y="-14" width="130" height="28" rx="14" fill="#854d0e" stroke="#facc15" stroke-width="1.5"/>
+              <text x="0" y="5" fill="#fef08a" font-size="11" font-weight="900" text-anchor="middle">★ INTEGER TRIPLE</text>
+            </g>
+
+            <!-- Squares & Shapes Layer -->
+            <g id="pyth-geometry-root">
+              <!-- Square A (Green) -->
+              <polygon id="pyth-poly-a" fill="url(#pythA-grad)" stroke="#34d399" stroke-width="2"/>
+              <text id="pyth-label-a" fill="#ecfdf5" font-size="16" font-weight="900" text-anchor="middle">a² = 9</text>
+
+              <!-- Square B (Blue) -->
+              <polygon id="pyth-poly-b" fill="url(#pythB-grad)" stroke="#60a5fa" stroke-width="2"/>
+              <text id="pyth-label-b" fill="#eff6ff" font-size="16" font-weight="900" text-anchor="middle">b² = 16</text>
+
+              <!-- Square C (Gold/Orange Hypotenuse) -->
+              <polygon id="pyth-poly-c" fill="url(#pythC-grad)" stroke="#fbbf24" stroke-width="2"/>
+              <text id="pyth-label-c" fill="#fffbeb" font-size="16" font-weight="900" text-anchor="middle">c² = 25</text>
+
+              <!-- Main Right-Angled Triangle -->
+              <polygon id="pyth-triangle" fill="#0f172a" stroke="#38bdf8" stroke-width="3.5" filter="url(#pyth-glow)"/>
+
+              <!-- Right-Angle Indicator Box -->
+              <rect id="pyth-right-angle" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+
+              <!-- Dimension Labels on Legs -->
+              <text id="pyth-side-a-lbl" fill="#34d399" font-size="14" font-weight="800" text-anchor="end">a = 3</text>
+              <text id="pyth-side-b-lbl" fill="#60a5fa" font-size="14" font-weight="800" text-anchor="middle">b = 4</text>
+              <text id="pyth-side-c-lbl" fill="#fbbf24" font-size="14" font-weight="800" text-anchor="middle">c = 5.00</text>
+
+              <!-- Draggable Vertex Handles -->
+              <!-- Top Vertex Handle (controls side a) -->
+              <g id="pyth-handle-a" style="cursor:ns-resize;">
+                <circle id="pyth-handle-a-glow" r="16" fill="#10b981" fill-opacity="0.3"/>
+                <circle id="pyth-handle-a-dot" r="9" fill="#10b981" stroke="#ffffff" stroke-width="2.5"/>
+                <text x="18" y="5" fill="#34d399" font-size="11" font-weight="800">DRAG (a)</text>
+              </g>
+
+              <!-- Right Vertex Handle (controls side b) -->
+              <g id="pyth-handle-b" style="cursor:ew-resize;">
+                <circle id="pyth-handle-b-glow" r="16" fill="#3b82f6" fill-opacity="0.3"/>
+                <circle id="pyth-handle-b-dot" r="9" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5"/>
+                <text x="0" y="24" fill="#60a5fa" font-size="11" font-weight="800" text-anchor="middle">DRAG (b)</text>
+              </g>
+            </g>
+
+            <!-- Bottom Interactive Control Dock (PhET-Caliber Dimension Adjusters) -->
+            <g id="pyth-control-dock" transform="translate(400, 442)">
+              <rect x="-370" y="-24" width="740" height="48" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+
+              <!-- Side A Stepper -->
+              <g transform="translate(-270, 0)">
+                <text x="-48" y="5" fill="#34d399" font-size="13" font-weight="800">Side a:</text>
+                <!-- Dec Button -->
+                <rect id="pyth-btn-dec-a" x="6" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="20" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
+                <!-- Val -->
+                <text id="pyth-val-a" x="50" y="5" fill="#ffffff" font-size="15" font-weight="900" text-anchor="middle">3</text>
+                <!-- Inc Button -->
+                <rect id="pyth-btn-inc-a" x="64" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="78" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
+              </g>
+
+              <!-- Side B Stepper -->
+              <g transform="translate(-80, 0)">
+                <text x="-48" y="5" fill="#60a5fa" font-size="13" font-weight="800">Side b:</text>
+                <!-- Dec Button -->
+                <rect id="pyth-btn-dec-b" x="6" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="20" y="5" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
+                <!-- Val -->
+                <text id="pyth-val-b" x="50" y="5" fill="#ffffff" font-size="15" font-weight="900" text-anchor="middle">4</text>
+                <!-- Inc Button -->
+                <rect id="pyth-btn-inc-b" x="64" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="78" y="5" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
+              </g>
+
+              <!-- Presets -->
+              <g transform="translate(130, 0)">
+                <text x="-40" y="5" fill="#94a3b8" font-size="11" font-weight="700">Triples:</text>
+                <!-- Preset 3-4-5 -->
+                <rect id="pyth-pre-345" x="8" y="-13" width="56" height="26" rx="6" fill="#1e293b" stroke="#facc15" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="36" y="4" fill="#facc15" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">3-4-5</text>
+                <!-- Preset 5-12-13 (scaled) -->
+                <rect id="pyth-pre-6810" x="72" y="-13" width="60" height="26" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="102" y="4" fill="#38bdf8" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">6-8-10</text>
+                <!-- Preset 5-5 (isosceles) -->
+                <rect id="pyth-pre-55" x="140" y="-13" width="68" height="26" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5" style="cursor:pointer;"/>
+                <text x="174" y="4" fill="#c084fc" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">5-5-√50</text>
+              </g>
+            </g>
+          </svg>
         `;
-        return {
-          rectB: container.querySelector('#pyth-rect-b'),
-          txtB: container.querySelector('#pyth-txt-b'),
-          rectA: container.querySelector('#pyth-rect-a'),
-          txtA: container.querySelector('#pyth-txt-a'),
+
+        const svgEl = container.querySelector('#pyth-interactive-svg');
+        const elements = {
+          svg: svgEl,
+          polyA: container.querySelector('#pyth-poly-a'),
+          polyB: container.querySelector('#pyth-poly-b'),
+          polyC: container.querySelector('#pyth-poly-c'),
+          triangle: container.querySelector('#pyth-triangle'),
+          labelA: container.querySelector('#pyth-label-a'),
+          labelB: container.querySelector('#pyth-label-b'),
+          labelC: container.querySelector('#pyth-label-c'),
+          sideLblA: container.querySelector('#pyth-side-a-lbl'),
+          sideLblB: container.querySelector('#pyth-side-b-lbl'),
+          sideLblC: container.querySelector('#pyth-side-c-lbl'),
+          handleA: container.querySelector('#pyth-handle-a'),
+          handleB: container.querySelector('#pyth-handle-b'),
+          rightAngle: container.querySelector('#pyth-right-angle'),
+          formulaText: container.querySelector('#pyth-formula-text'),
+          tripleBadge: container.querySelector('#pyth-triple-badge'),
+          valA: container.querySelector('#pyth-val-a'),
+          valB: container.querySelector('#pyth-val-b'),
+          btnDecA: container.querySelector('#pyth-btn-dec-a'),
+          btnIncA: container.querySelector('#pyth-btn-inc-a'),
+          btnDecB: container.querySelector('#pyth-btn-dec-b'),
+          btnIncB: container.querySelector('#pyth-btn-inc-b'),
+          pre345: container.querySelector('#pyth-pre-345'),
+          pre6810: container.querySelector('#pyth-pre-6810'),
+          pre55: container.querySelector('#pyth-pre-55'),
+          curA,
+          curB,
+          ox,
+          oy,
+          s,
+          tProgress: 1.0,
         };
+
+        // Render Geometry Function
+        function renderPythagorasGeometry() {
+          const a = elements.curA;
+          const b = elements.curB;
+          const aLen = a * s;
+          const bLen = b * s;
+          const c = Math.sqrt(a * a + b * b);
+          const cLen = c * s;
+
+          const topX = ox;
+          const topY = oy - aLen;
+          const rightX = ox + bLen;
+          const rightY = oy;
+
+          // Triangle Points
+          elements.triangle.setAttribute('points', `${ox},${oy} ${rightX},${rightY} ${topX},${topY}`);
+
+          // Right Angle Box
+          elements.rightAngle.setAttribute('x', ox);
+          elements.rightAngle.setAttribute('y', oy - 16);
+
+          // Square A Points (Left of vertical leg)
+          const pA1 = `${ox},${oy}`;
+          const pA2 = `${topX},${topY}`;
+          const pA3 = `${topX - aLen},${topY}`;
+          const pA4 = `${ox - aLen},${oy}`;
+          elements.polyA.setAttribute('points', `${pA1} ${pA2} ${pA3} ${pA4}`);
+          elements.labelA.setAttribute('x', (ox - aLen / 2).toFixed(1));
+          elements.labelA.setAttribute('y', (topY + aLen / 2 + 5).toFixed(1));
+          elements.labelA.textContent = `a² = ${(a * a).toFixed(0)}`;
+
+          // Square B Points (Below horizontal leg)
+          const pB1 = `${ox},${oy}`;
+          const pB2 = `${rightX},${rightY}`;
+          const pB3 = `${rightX},${rightY + bLen}`;
+          const pB4 = `${ox},${oy + bLen}`;
+          elements.polyB.setAttribute('points', `${pB1} ${pB2} ${pB3} ${pB4}`);
+          elements.labelB.setAttribute('x', (ox + bLen / 2).toFixed(1));
+          elements.labelB.setAttribute('y', (oy + bLen / 2 + 5).toFixed(1));
+          elements.labelB.textContent = `b² = ${(b * b).toFixed(0)}`;
+
+          // Square C Points (Outward along hypotenuse)
+          // Vector along hyp from right to top: (-bLen, -aLen)
+          // Outward normal: (aLen, -bLen)
+          const pC1 = `${rightX},${rightY}`;
+          const pC2 = `${topX},${topY}`;
+          const pC3 = `${topX + aLen},${topY - bLen}`;
+          const pC4 = `${rightX + aLen},${rightY - bLen}`;
+          elements.polyC.setAttribute('points', `${pC1} ${pC2} ${pC3} ${pC4}`);
+
+          const centerCX = (rightX + topX + aLen) / 2;
+          const centerCY = (rightY + topY - bLen) / 2;
+          elements.labelC.setAttribute('x', centerCX.toFixed(1));
+          elements.labelC.setAttribute('y', (centerCY + 5).toFixed(1));
+          elements.labelC.textContent = `c² = ${(c * c).toFixed(1).replace('.0', '')}`;
+
+          // Leg Dimension Labels
+          elements.sideLblA.setAttribute('x', (ox - 8).toFixed(1));
+          elements.sideLblA.setAttribute('y', (oy - aLen / 2 + 5).toFixed(1));
+          elements.sideLblA.textContent = `a = ${a}`;
+
+          elements.sideLblB.setAttribute('x', (ox + bLen / 2).toFixed(1));
+          elements.sideLblB.setAttribute('y', (oy - 8).toFixed(1));
+          elements.sideLblB.textContent = `b = ${b}`;
+
+          const midHypX = (topX + rightX) / 2;
+          const midHypY = (topY + rightY) / 2;
+          elements.sideLblC.setAttribute('x', (midHypX + 16).toFixed(1));
+          elements.sideLblC.setAttribute('y', (midHypY - 10).toFixed(1));
+          elements.sideLblC.textContent = `c = ${c.toFixed(2)}`;
+
+          // Draggable Handles Placement
+          elements.handleA.setAttribute('transform', `translate(${topX}, ${topY})`);
+          elements.handleB.setAttribute('transform', `translate(${rightX}, ${rightY})`);
+
+          // Control Val Display
+          elements.valA.textContent = a;
+          elements.valB.textContent = b;
+
+          // Formula Update
+          const a2 = (a * a).toFixed(0);
+          const b2 = (b * b).toFixed(0);
+          const c2 = (c * c).toFixed(1).replace('.0', '');
+          const isInt = Math.abs(c - Math.round(c)) < 0.001;
+          const cDisplay = isInt ? Math.round(c) : c.toFixed(2);
+
+          elements.formulaText.textContent = `a² + b² = c²  ➔  ${a}² + ${b}² = ${a2} + ${b2} = ${c2}  ➔  c = √${c2} = ${cDisplay}`;
+          elements.tripleBadge.style.display = isInt ? 'block' : 'none';
+        }
+
+        elements.renderGeometry = renderPythagorasGeometry;
+        renderPythagorasGeometry();
+
+        // Attach Stepper Button Handlers
+        const updateA = (delta) => {
+          elements.curA = Math.max(2, Math.min(7, elements.curA + delta));
+          renderPythagorasGeometry();
+        };
+        const updateB = (delta) => {
+          elements.curB = Math.max(2, Math.min(8, elements.curB + delta));
+          renderPythagorasGeometry();
+        };
+
+        elements.btnDecA.onclick = (e) => { e.stopPropagation(); updateA(-1); };
+        elements.btnIncA.onclick = (e) => { e.stopPropagation(); updateA(1); };
+        elements.btnDecB.onclick = (e) => { e.stopPropagation(); updateB(-1); };
+        elements.btnIncB.onclick = (e) => { e.stopPropagation(); updateB(1); };
+
+        elements.pre345.onclick = (e) => { e.stopPropagation(); elements.curA = 3; elements.curB = 4; renderPythagorasGeometry(); };
+        elements.pre6810.onclick = (e) => { e.stopPropagation(); elements.curA = 6; elements.curB = 8; renderPythagorasGeometry(); };
+        elements.pre55.onclick = (e) => { e.stopPropagation(); elements.curA = 5; elements.curB = 5; renderPythagorasGeometry(); };
+
+        // Draggable Vertex Handle Gestures (Direct SVG Manipulation)
+        let activeDrag = null;
+
+        const getSvgPoint = (evt) => {
+          const pt = svgEl.createSVGPoint();
+          const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+          const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+          pt.x = clientX;
+          pt.y = clientY;
+          const ctm = svgEl.getScreenCTM();
+          return ctm ? pt.matrixTransform(ctm.inverse()) : { x: 0, y: 0 };
+        };
+
+        elements.handleA.onpointerdown = (e) => {
+          e.stopPropagation();
+          activeDrag = 'a';
+          elements.handleA.setPointerCapture(e.pointerId);
+        };
+
+        elements.handleB.onpointerdown = (e) => {
+          e.stopPropagation();
+          activeDrag = 'b';
+          elements.handleB.setPointerCapture(e.pointerId);
+        };
+
+        svgEl.onpointermove = (e) => {
+          if (!activeDrag) return;
+          const pt = getSvgPoint(e);
+          if (activeDrag === 'a') {
+            const rawA = (oy - pt.y) / s;
+            elements.curA = Math.max(2, Math.min(7, Math.round(rawA)));
+            renderPythagorasGeometry();
+          } else if (activeDrag === 'b') {
+            const rawB = (pt.x - ox) / s;
+            elements.curB = Math.max(2, Math.min(8, Math.round(rawB)));
+            renderPythagorasGeometry();
+          }
+        };
+
+        svgEl.onpointerup = (e) => {
+          if (activeDrag) {
+            try {
+              if (activeDrag === 'a') elements.handleA.releasePointerCapture(e.pointerId);
+              if (activeDrag === 'b') elements.handleB.releasePointerCapture(e.pointerId);
+            } catch {}
+            activeDrag = null;
+          }
+        };
+
+        return elements;
       },
       update(t, el) {
-        if (!el || !el.rectB) return;
-        const ox = 360, oy = 280, a = 90, b = 120;
-        const fillB = Math.min(1, t / 0.5);
-        el.rectB.setAttribute('height', (b * fillB).toFixed(1));
-        el.txtB.setAttribute('opacity', fillB > 0.5 ? '1' : '0');
+        if (!el || !el.renderGeometry) return;
+        el.tProgress = t;
+        // Fade in squares according to pedagogical timeline if playing
+        const fillB = Math.min(1, t / 0.4);
+        const fillA = Math.min(1, Math.max(0, (t - 0.25) / 0.4));
+        const fillC = Math.min(1, Math.max(0, (t - 0.6) / 0.4));
 
-        const fillA = Math.min(1, Math.max(0, (t - 0.25) / 0.5));
-        el.rectA.setAttribute('x', (ox - a * fillA).toFixed(1));
-        el.rectA.setAttribute('width', (a * fillA).toFixed(1));
-        el.txtA.setAttribute('opacity', fillA > 0.5 ? '1' : '0');
+        if (el.polyB) el.polyB.setAttribute('opacity', (fillB * 0.9 + 0.1).toFixed(2));
+        if (el.labelB) el.labelB.setAttribute('opacity', fillB > 0.4 ? '1' : '0');
+
+        if (el.polyA) el.polyA.setAttribute('opacity', (fillA * 0.9 + 0.1).toFixed(2));
+        if (el.labelA) el.labelA.setAttribute('opacity', fillA > 0.4 ? '1' : '0');
+
+        if (el.polyC) el.polyC.setAttribute('opacity', (fillC * 0.9 + 0.1).toFixed(2));
+        if (el.labelC) el.labelC.setAttribute('opacity', fillC > 0.4 ? '1' : '0');
       },
       render(t) {
-        const ox = 360, oy = 280, a = 90, b = 120;
-        let svg = '';
-        svg += `<polygon points="${ox},${oy} ${ox + b},${oy} ${ox},${oy - a}" fill="#1e293b" stroke="#38bdf8" stroke-width="3" />`;
-        svg += `<rect x="${ox}" y="${oy - 16}" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.5" />`;
-        const fillB = Math.min(1, t / 0.5);
-        svg += `<rect x="${ox}" y="${oy}" width="${b}" height="${b * fillB}" fill="#3b82f6" fill-opacity="0.6" stroke="#60a5fa" stroke-width="2" />`;
-        if (fillB > 0.5) {
-          svg += `<text x="${ox + b/2}" y="${oy + b/2}" fill="#ffffff" font-size="18" font-weight="bold" text-anchor="middle">b² = 16</text>`;
-        }
-        const fillA = Math.min(1, Math.max(0, (t - 0.25) / 0.5));
-        svg += `<rect x="${ox - a * fillA}" y="${oy - a}" width="${a * fillA}" height="${a}" fill="#10b981" fill-opacity="0.6" stroke="#34d399" stroke-width="2" />`;
-        if (fillA > 0.5) {
-          svg += `<text x="${ox - a/2}" y="${oy - a/2}" fill="#ffffff" font-size="18" font-weight="bold" text-anchor="middle">a² = 9</text>`;
-        }
-        svg += `<rect x="230" y="24" width="340" height="40" rx="8" fill="#1e293b" stroke="#334155" />`;
-        svg += `<text x="400" y="49" fill="#f59e0b" font-size="18" font-weight="bold" text-anchor="middle">3² + 4² = 5² ➔ 9 + 16 = 25</text>`;
-        return svg;
+        return `<svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16;"><text x="400" y="240" fill="#f8fafc" font-size="20" text-anchor="middle">Pythagoras Living Simulation Stage</text></svg>`;
       }
     },
 
@@ -586,76 +1170,505 @@
         { t: 1.00, title: 'Runoff & Collection', rule: 'Rivers carry precipitation back to oceans, completing the closed cycle.' }
       ],
       subtitles: [
-        { start: 0.0, end: 0.35, en: "Solar energy heats water surfaces, causing evaporation into rising gas molecules.", es: "La energía solar calienta el agua provocando la evaporación en moléculas de gas." },
-        { start: 0.35, end: 0.70, en: "As vapor climbs into cold upper air, it condenses into visible fluffy clouds.", es: "Al subir al aire frío, el vapor se condensa en nubes esponjosas." },
-        { start: 0.70, end: 1.00, en: "When droplets become too heavy, gravity pulls them down as precipitation.", es: "Cuando las gotas son pesadas, la gravedad las hace caer en precipitación." }
+        { start: 0.0, end: 0.35, en: "Solar energy heats the ocean, driving evaporation into rising, invisible water vapor.", es: "La energía solar calienta el océano, impulsando la evaporación en vapor de agua." },
+        { start: 0.35, end: 0.70, en: "As warm moist air ascends over the cold mountain (orographic lift), it condenses into clouds.", es: "El aire cálido asciende sobre la montaña fría y se condensa en nubes." },
+        { start: 0.70, end: 1.00, en: "Droplets precipitate as rain or snow, feeding rivers and aquifers that cycle back to the sea.", es: "Las gotas caen como lluvia o nieve, alimentando ríos que regresan al mar." }
       ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.35,
+            title: 'Orographic Lift & Condensation',
+            prompt: 'Why does moist air rising over a mountain range form thick condensation clouds?',
+            options: [
+              'Because atmospheric temperature drops with altitude, cooling the vapor to its dew point',
+              'Because the mountain pushes the water vapor into outer space',
+              'Because mountain rocks emit steam'
+            ],
+            answer: 0,
+            explanation: 'As air is forced upward over mountain topography (orographic lift), it expands and adiabatically cools. When it hits its dew point temperature, water vapor condenses into liquid cloud droplets.'
+          },
+          {
+            t: 0.88,
+            title: 'Hydrological Mass Conservation',
+            prompt: 'In Earth\'s closed hydrological system, what happens to the total volume of water over time?',
+            options: [
+              'Total water is strictly conserved; water continuously cycles between ocean, atmosphere, and land',
+              'Water is permanently destroyed when it rains',
+              'The ocean is slowly running out of water because of rivers'
+            ],
+            answer: 0,
+            explanation: 'The water cycle is a closed planetary loop. Water changes physical states (liquid, vapor, ice) and moves between reservoirs, but Earth\'s total mass of H2O remains constant.'
+          }
+        ]
+      },
       mount(container) {
-        let html = '';
-        html += `<path d="M 0 340 Q 200 320, 450 350 L 800 350 L 800 480 L 0 480 Z" fill="#1d4ed8" />`;
-        html += `<path d="M 0 340 Q 200 240, 400 310 L 400 480 L 0 480 Z" fill="#334155" />`;
-        html += `<circle cx="700" cy="90" r="38" fill="url(#grad-sun)" filter="url(#glow)" />`;
+        let sunPower = 0.8; // 0.2 to 1.0
+        let isSnow = false;
+        let cloudX = 420;
+        let cloudY = 130;
+        let windSpeed = 1.0;
 
-        for (let i = 0; i < 6; i++) {
-          html += `<circle class="wc-vapor" id="wc-vapor-${i}" cx="${520 + i * 35}" cy="330" r="4" fill="#93c5fd" opacity="0.6" />`;
-        }
+        let html = `
+          <svg id="wc-interactive-svg" viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#030712; user-select:none; touch-action:none;">
+            <defs>
+              <linearGradient id="wcSkyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0f172a"/>
+                <stop offset="60%" stop-color="#1e293b"/>
+                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.3"/>
+              </linearGradient>
+              <linearGradient id="wcOceanGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0284c7"/>
+                <stop offset="30%" stop-color="#0369a1"/>
+                <stop offset="100%" stop-color="#082f49"/>
+              </linearGradient>
+              <linearGradient id="wcMountainGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#475569"/>
+                <stop offset="50%" stop-color="#334155"/>
+                <stop offset="100%" stop-color="#1e293b"/>
+              </linearGradient>
+              <linearGradient id="wcValleyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#15803d"/>
+                <stop offset="60%" stop-color="#166534"/>
+                <stop offset="100%" stop-color="#78350f"/>
+              </linearGradient>
+              <radialGradient id="wcSunGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fef08a" stop-opacity="1"/>
+                <stop offset="40%" stop-color="#f59e0b" stop-opacity="0.8"/>
+                <stop offset="75%" stop-color="#ea580c" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="wcSoftGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              </filter>
+            </defs>
 
-        html += `<path d="M 280 140 Q 320 100, 380 130 Q 420 90, 480 130 Q 520 110, 550 140 Q 560 170, 520 180 L 310 180 Z" fill="#e2e8f0" opacity="0.9" />`;
+            <!-- Sky Backdrop -->
+            <rect width="800" height="480" fill="url(#wcSkyGrad)"/>
 
-        for (let r = 0; r < 8; r++) {
-          html += `<line class="wc-rain" id="wc-rain-${r}" x1="${320 + r * 25}" y1="190" x2="${317 + r * 25}" y2="198" stroke="#60a5fa" stroke-width="2" style="display:none;" />`;
-        }
+            <!-- Top HUD: Live Hydrological Rates & Conservation -->
+            <g transform="translate(400, 32)">
+              <rect x="-375" y="-20" width="750" height="40" rx="10" fill="#0f172a" fill-opacity="0.92" stroke="#334155" stroke-width="1.5"/>
+              
+              <!-- Solar Irradiance -->
+              <text id="wc-solar-hud" x="-355" y="5" fill="#facc15" font-size="12" font-weight="800">
+                ☀️ Solar Irradiance: 850 W/m²
+              </text>
+
+              <!-- Evap Rate -->
+              <text id="wc-evap-hud" x="-120" y="5" fill="#38bdf8" font-size="12" font-weight="800">
+                ♨ Evaporation: 14.5 mm/day
+              </text>
+
+              <!-- Precipitation State -->
+              <g transform="translate(130, 0)">
+                <rect id="wc-precip-badge" x="-60" y="-12" width="120" height="24" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+                <text id="wc-precip-text" x="0" y="4" fill="#38bdf8" font-size="11" font-weight="800" text-anchor="middle">🌧️ Rain (18°C)</text>
+              </g>
+
+              <!-- Conservation Law -->
+              <text x="355" y="5" fill="#a7f3d0" font-size="11" font-weight="700" text-anchor="end">
+                Σ H₂O = 100% Conserved
+              </text>
+            </g>
+
+            <!-- Mountain Range -->
+            <!-- Back Mountain -->
+            <polygon points="440,360 580,180 720,360" fill="#1e293b" opacity="0.7"/>
+            <!-- Main Alpine Peak -->
+            <polygon points="520,380 670,140 820,380" fill="url(#wcMountainGrad)"/>
+            <!-- Snow Cap Peak -->
+            <polygon id="wc-snowcap" points="640,190 670,140 700,190 682,185 670,192 658,185" fill="#f8fafc" opacity="0.95"/>
+
+            <!-- Valley & Soil Cross-Section -->
+            <path d="M 280,360 Q 380,330 520,360 L 520,440 L 280,440 Z" fill="url(#wcValleyGrad)"/>
+            <!-- Underground Aquifer / Groundwater Bed -->
+            <rect x="0" y="400" width="800" height="80" fill="#1e1b4b" opacity="0.9"/>
+            <text x="400" y="425" fill="#818cf8" font-size="11" font-weight="800" text-anchor="middle" letter-spacing="2">
+              UNDERGROUND PERMEABLE AQUIFER &amp; GROUNDWATER WATER TABLE
+            </text>
+            <!-- Groundwater Seepage Arrows -->
+            <g stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.5">
+              <line x1="500" y1="410" x2="320" y2="410"/>
+              <line x1="300" y1="410" x2="160" y2="410"/>
+            </g>
+
+            <!-- Alpine Lake Reservoir -->
+            <ellipse cx="560" cy="340" rx="36" ry="12" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="560" y="344" fill="#e0f2fe" font-size="9" font-weight="800" text-anchor="middle">RESERVOIR</text>
+
+            <!-- Mountain River cascading down to Ocean -->
+            <path id="wc-river" d="M 540,346 Q 470,355 420,365 Q 360,375 290,380" fill="none" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+            <path id="wc-river-flow" d="M 540,346 Q 470,355 420,365 Q 360,375 290,380" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 8" stroke-linecap="round"/>
+
+            <!-- Trees in Valley -->
+            <g id="wc-trees-group">
+              <polygon points="340,350 332,365 348,365" fill="#15803d"/>
+              <polygon points="360,345 352,360 368,360" fill="#166534"/>
+              <polygon points="380,348 372,364 388,364" fill="#15803d"/>
+              <polygon points="410,346 402,362 418,362" fill="#166534"/>
+            </g>
+
+            <!-- Ocean Body with Dynamic Waves -->
+            <g id="wc-ocean-group">
+              <path id="wc-ocean-body" d="M 0,350 Q 75,346 150,350 T 300,350 L 300,440 L 0,440 Z" fill="url(#wcOceanGrad)"/>
+              <path id="wc-ocean-crest" d="M 0,350 Q 75,346 150,350 T 300,350" fill="none" stroke="#7dd3fc" stroke-width="2"/>
+              <text x="140" y="385" fill="#bae6fd" font-size="14" font-weight="900" text-anchor="middle" letter-spacing="1">
+                PACIFIC OCEAN
+              </text>
+            </g>
+
+            <!-- Interactive Sun Group -->
+            <g id="wc-sun-group" transform="translate(130, 110)" style="cursor:pointer;">
+              <!-- Outer Glow -->
+              <circle id="wc-sun-aura" r="54" fill="url(#wcSunGlow)"/>
+              <!-- Thermal Corona Rays -->
+              <g id="wc-sun-rays" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.8">
+                <line x1="0" y1="-38" x2="0" y2="-48"/>
+                <line x1="27" y1="-27" x2="34" y2="-34"/>
+                <line x1="38" y1="0" x2="48" y2="0"/>
+                <line x1="27" y1="27" x2="34" y2="34"/>
+                <line x1="0" y1="38" x2="0" y2="48"/>
+                <line x1="-27" y1="27" x2="-34" y2="34"/>
+                <line x1="-38" y1="0" x2="-48" y2="0"/>
+                <line x1="-27" y1="-27" x2="-34" y2="-34"/>
+              </g>
+              <!-- Sun Core -->
+              <circle r="30" fill="#f59e0b" stroke="#fef08a" stroke-width="2.5"/>
+              <text y="5" fill="#78350f" font-size="11" font-weight="900" text-anchor="middle">SUN</text>
+            </g>
+
+            <!-- Shimmering Rising Evaporation Vapor Particles -->
+            <g id="wc-vapor-group"></g>
+
+            <!-- Draggable Storm Cloud Group -->
+            <g id="wc-cloud-group" transform="translate(420, 130)" style="cursor:grab;">
+              <!-- Cloud Shadow / Base -->
+              <path id="wc-cloud-base" d="M -90,20 Q -60,-25 0,-15 Q 40,-45 80,-15 Q 110,-10 110,20 Q 110,35 80,35 L -70,35 Q -90,35 -90,20 Z" fill="#94a3b8" opacity="0.95" filter="url(#wcSoftGlow)"/>
+              <path id="wc-cloud-puff" d="M -85,18 Q -55,-22 5,-12 Q 45,-40 82,-12 Q 105,-8 105,18 Q 105,32 75,32 L -65,32 Q -85,32 -85,18 Z" fill="#e2e8f0"/>
+              <text x="0" y="15" fill="#334155" font-size="11" font-weight="900" text-anchor="middle">DRAG CLOUD</text>
+            </g>
+
+            <!-- Precipitation Layer (Rain or Snow) -->
+            <g id="wc-precip-layer"></g>
+
+            <!-- Bottom Interactive PhET Hydrology Dock -->
+            <g id="wc-dock" transform="translate(400, 442)">
+              <rect x="-375" y="-24" width="750" height="48" rx="12" fill="#0f172a" fill-opacity="0.95" stroke="#334155" stroke-width="1.5"/>
+
+              <!-- Solar Radiation Stepper -->
+              <g transform="translate(-310, 0)">
+                <text x="-48" y="5" fill="#facc15" font-size="11" font-weight="800">Sun Power:</text>
+                <rect id="wc-btn-sun-25" x="20" y="-12" width="36" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="38" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">25%</text>
+
+                <rect id="wc-btn-sun-50" x="60" y="-12" width="36" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="78" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">50%</text>
+
+                <rect id="wc-btn-sun-80" x="100" y="-12" width="36" height="24" rx="5" fill="#f59e0b" stroke="#f59e0b" style="cursor:pointer;"/>
+                <text x="118" y="4" fill="#090d16" font-size="10" font-weight="900" text-anchor="middle" pointer-events="none">80%</text>
+
+                <rect id="wc-btn-sun-100" x="140" y="-12" width="42" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="161" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">100%</text>
+              </g>
+
+              <!-- Temperature / Weather Mode Toggle -->
+              <g transform="translate(-30, 0)">
+                <rect id="wc-toggle-weather" x="-10" y="-14" width="130" height="28" rx="6" fill="#0284c7" stroke="#38bdf8" style="cursor:pointer;"/>
+                <text id="wc-toggle-weather-txt" x="55" y="5" fill="#f8fafc" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">
+                  Mode: 💧 Rain (18°C)
+                </text>
+              </g>
+
+              <!-- Wind Direction / Breeze Stepper -->
+              <g transform="translate(170, 0)">
+                <text x="-35" y="5" fill="#94a3b8" font-size="11" font-weight="800">Wind:</text>
+                <rect id="wc-btn-wind-low" x="5" y="-12" width="38" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="24" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">Calm</text>
+
+                <rect id="wc-btn-wind-med" x="48" y="-12" width="42" height="24" rx="5" fill="#38bdf8" stroke="#38bdf8" style="cursor:pointer;"/>
+                <text x="69" y="4" fill="#090d16" font-size="10" font-weight="900" text-anchor="middle" pointer-events="none">Breeze</text>
+
+                <rect id="wc-btn-wind-gale" x="95" y="-12" width="38" height="24" rx="5" fill="#1e293b" stroke="#334155" style="cursor:pointer;"/>
+                <text x="114" y="4" fill="#cbd5e1" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">Gale</text>
+              </g>
+            </g>
+          </svg>
+        `;
+
         container.innerHTML = html;
-        return {
-          vapors: Array.from(container.querySelectorAll('.wc-vapor')),
-          rains: Array.from(container.querySelectorAll('.wc-rain'))
+
+        const svgEl = container.querySelector('#wc-interactive-svg');
+        const elements = {
+          svg: svgEl,
+          solarHud: container.querySelector('#wc-solar-hud'),
+          evapHud: container.querySelector('#wc-evap-hud'),
+          precipBadge: container.querySelector('#wc-precip-badge'),
+          precipText: container.querySelector('#wc-precip-text'),
+          snowCap: container.querySelector('#wc-snowcap'),
+          riverFlow: container.querySelector('#wc-river-flow'),
+          oceanCrest: container.querySelector('#wc-ocean-crest'),
+          sunGroup: container.querySelector('#wc-sun-group'),
+          sunAura: container.querySelector('#wc-sun-aura'),
+          sunRays: container.querySelector('#wc-sun-rays'),
+          vaporGroup: container.querySelector('#wc-vapor-group'),
+          cloudGroup: container.querySelector('#wc-cloud-group'),
+          cloudBase: container.querySelector('#wc-cloud-base'),
+          cloudPuff: container.querySelector('#wc-cloud-puff'),
+          precipLayer: container.querySelector('#wc-precip-layer'),
+          btnSun25: container.querySelector('#wc-btn-sun-25'),
+          btnSun50: container.querySelector('#wc-btn-sun-50'),
+          btnSun80: container.querySelector('#wc-btn-sun-80'),
+          btnSun100: container.querySelector('#wc-btn-sun-100'),
+          toggleWeather: container.querySelector('#wc-toggle-weather'),
+          toggleWeatherTxt: container.querySelector('#wc-toggle-weather-txt'),
+          btnWindLow: container.querySelector('#wc-btn-wind-low'),
+          btnWindMed: container.querySelector('#wc-btn-wind-med'),
+          btnWindGale: container.querySelector('#wc-btn-wind-gale'),
+          sunPower,
+          isSnow,
+          cloudX,
+          cloudY,
+          windSpeed,
+          activeDragCloud: false,
+          vapors: [],
+          precipItems: [],
         };
+
+        // Create initial pool of 16 vapor particles
+        for (let i = 0; i < 16; i++) {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('r', (2.5 + (i % 3) * 1).toFixed(1));
+          circle.setAttribute('fill', '#93c5fd');
+          circle.setAttribute('opacity', '0.6');
+          elements.vaporGroup.appendChild(circle);
+          elements.vapors.push({
+            el: circle,
+            seedX: 50 + (i * 15) % 220,
+            speed: 0.8 + (i % 4) * 0.4,
+            offset: i / 16,
+          });
+        }
+
+        // Create initial pool of 20 precipitation items (rain lines or snow stars)
+        for (let i = 0; i < 20; i++) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('stroke', '#60a5fa');
+          line.setAttribute('stroke-width', '2');
+          line.setAttribute('stroke-linecap', 'round');
+          elements.precipLayer.appendChild(line);
+          elements.precipItems.push({
+            el: line,
+            offsetX: -70 + i * 7.5,
+            speed: 1.2 + (i % 3) * 0.5,
+            phase: (i * 0.17) % 1,
+          });
+        }
+
+        // Sun Power Buttons
+        const setSunPower = (pwr, activeBtn) => {
+          elements.sunPower = pwr;
+          [elements.btnSun25, elements.btnSun50, elements.btnSun80, elements.btnSun100].forEach(btn => {
+            btn.setAttribute('fill', '#1e293b');
+            btn.setAttribute('stroke', '#334155');
+            const txt = btn.nextElementSibling;
+            if (txt) txt.setAttribute('fill', '#cbd5e1');
+          });
+          activeBtn.setAttribute('fill', '#f59e0b');
+          activeBtn.setAttribute('stroke', '#f59e0b');
+          const actTxt = activeBtn.nextElementSibling;
+          if (actTxt) actTxt.setAttribute('fill', '#090d16');
+
+          const watts = Math.round(pwr * 1000);
+          const evap = (pwr * 18.2).toFixed(1);
+          elements.solarHud.textContent = `☀️ Solar Irradiance: ${watts} W/m²`;
+          elements.evapHud.textContent = `♨ Evaporation: ${evap} mm/day`;
+          elements.sunAura.setAttribute('r', (36 + pwr * 24).toFixed(0));
+        };
+
+        elements.btnSun25.onclick = (e) => { e.stopPropagation(); setSunPower(0.25, elements.btnSun25); };
+        elements.btnSun50.onclick = (e) => { e.stopPropagation(); setSunPower(0.50, elements.btnSun50); };
+        elements.btnSun80.onclick = (e) => { e.stopPropagation(); setSunPower(0.80, elements.btnSun80); };
+        elements.btnSun100.onclick = (e) => { e.stopPropagation(); setSunPower(1.00, elements.btnSun100); };
+
+        // Weather Toggle
+        elements.toggleWeather.onclick = (e) => {
+          e.stopPropagation();
+          elements.isSnow = !elements.isSnow;
+          if (elements.isSnow) {
+            elements.toggleWeather.setAttribute('fill', '#475569');
+            elements.toggleWeather.setAttribute('stroke', '#cbd5e1');
+            elements.toggleWeatherTxt.textContent = 'Mode: ❄️ Snow (-4°C)';
+            elements.precipText.textContent = '❄️ Alpine Snow (-4°C)';
+            elements.precipText.setAttribute('fill', '#cbd5e1');
+            elements.precipBadge.setAttribute('stroke', '#cbd5e1');
+            elements.cloudBase.setAttribute('fill', '#64748b');
+            elements.snowCap.setAttribute('opacity', '1');
+          } else {
+            elements.toggleWeather.setAttribute('fill', '#0284c7');
+            elements.toggleWeather.setAttribute('stroke', '#38bdf8');
+            elements.toggleWeatherTxt.textContent = 'Mode: 💧 Rain (18°C)';
+            elements.precipText.textContent = '🌧️ Rain (18°C)';
+            elements.precipText.setAttribute('fill', '#38bdf8');
+            elements.precipBadge.setAttribute('stroke', '#38bdf8');
+            elements.cloudBase.setAttribute('fill', '#94a3b8');
+            elements.snowCap.setAttribute('opacity', '0.7');
+          }
+        };
+
+        // Wind Speed Buttons
+        const setWind = (spd, activeBtn) => {
+          elements.windSpeed = spd;
+          [elements.btnWindLow, elements.btnWindMed, elements.btnWindGale].forEach(btn => {
+            btn.setAttribute('fill', '#1e293b');
+            btn.setAttribute('stroke', '#334155');
+            const txt = btn.nextElementSibling;
+            if (txt) txt.setAttribute('fill', '#cbd5e1');
+          });
+          activeBtn.setAttribute('fill', '#38bdf8');
+          activeBtn.setAttribute('stroke', '#38bdf8');
+          const actTxt = activeBtn.nextElementSibling;
+          if (actTxt) actTxt.setAttribute('fill', '#090d16');
+        };
+
+        elements.btnWindLow.onclick = (e) => { e.stopPropagation(); setWind(0.5, elements.btnWindLow); };
+        elements.btnWindMed.onclick = (e) => { e.stopPropagation(); setWind(1.0, elements.btnWindMed); };
+        elements.btnWindGale.onclick = (e) => { e.stopPropagation(); setWind(2.2, elements.btnWindGale); };
+
+        // Direct Stage Manipulations (Zero-Slider Natural Physics)
+        let activeDragTarget = null;
+
+        // 1. Direct Sun Drag (drag up/down to increase/decrease solar energy)
+        elements.sunGroup.onpointerdown = (e) => {
+          e.stopPropagation();
+          activeDragTarget = 'sun';
+          elements.sunGroup.setPointerCapture(e.pointerId);
+        };
+
+        // 2. Direct Snowcap Tap (touch snow to toggle snow mode)
+        elements.snowCap.style.cursor = 'pointer';
+        elements.snowCap.onclick = (e) => {
+          e.stopPropagation();
+          elements.toggleWeather.click();
+        };
+
+        // 3. Direct Cloud Drag
+        elements.cloudGroup.onpointerdown = (e) => {
+          e.stopPropagation();
+          activeDragTarget = 'cloud';
+          elements.activeDragCloud = true;
+          elements.cloudGroup.setPointerCapture(e.pointerId);
+        };
+
+        svgEl.onpointermove = (e) => {
+          if (!activeDragTarget) return;
+          const pt = getSvgPoint(e);
+
+          if (activeDragTarget === 'cloud') {
+            elements.cloudX = Math.max(160, Math.min(680, pt.x));
+            elements.cloudY = Math.max(70, Math.min(220, pt.y));
+            elements.cloudGroup.setAttribute('transform', `translate(${elements.cloudX}, ${elements.cloudY})`);
+          } else if (activeDragTarget === 'sun') {
+            // Dragging vertically alters solar power (higher = hotter, lower = cooler)
+            const rawPwr = (200 - pt.y) / 120;
+            const clampedPwr = Math.max(0.2, Math.min(1.0, rawPwr));
+            elements.sunPower = clampedPwr;
+            const watts = Math.round(clampedPwr * 1000);
+            const evap = (clampedPwr * 18.2).toFixed(1);
+            elements.solarHud.textContent = `☀️ Solar Irradiance: ${watts} W/m²`;
+            elements.evapHud.textContent = `♨ Evaporation: ${evap} mm/day`;
+            elements.sunAura.setAttribute('r', (36 + clampedPwr * 24).toFixed(0));
+          }
+        };
+
+        svgEl.onpointerup = (e) => {
+          if (activeDragTarget) {
+            try {
+              if (activeDragTarget === 'cloud') elements.cloudGroup.releasePointerCapture(e.pointerId);
+              if (activeDragTarget === 'sun') elements.sunGroup.releasePointerCapture(e.pointerId);
+            } catch {}
+            activeDragTarget = null;
+            elements.activeDragCloud = false;
+          }
+        };
+
+        return elements;
       },
       update(t, el) {
         if (!el || !el.vapors) return;
-        for (let i = 0; i < el.vapors.length; i++) {
-          const vt = (t * 2 + i / 6) % 1;
-          const y = 330 - vt * 160;
-          el.vapors[i].setAttribute('cy', y.toFixed(1));
+
+        // Animate Ocean waves
+        const waveShift = Math.sin(t * Math.PI * 4) * 4;
+        el.oceanCrest.setAttribute('d', `M 0,${(350 + waveShift).toFixed(1)} Q 75,${(344 - waveShift).toFixed(1)} 150,${(350 + waveShift).toFixed(1)} T 300,${(350 - waveShift).toFixed(1)}`);
+
+        // Animate River flow dashoffset
+        el.riverFlow.setAttribute('stroke-dashoffset', (-t * 60).toFixed(1));
+
+        // Animate Sun coronal rays pulsation
+        const rayScale = 1 + Math.sin(t * Math.PI * 6) * 0.08 * el.sunPower;
+        el.sunRays.setAttribute('transform', `scale(${rayScale.toFixed(3)})`);
+
+        // Natural cloud drift if user is not actively dragging it
+        if (!el.activeDragCloud) {
+          const drift = Math.sin(t * Math.PI * 2 * el.windSpeed) * 35;
+          const curCX = 420 + drift;
+          el.cloudX = curCX;
+          el.cloudGroup.setAttribute('transform', `translate(${curCX.toFixed(1)}, ${el.cloudY})`);
         }
 
-        const showRain = t > 0.45;
-        for (let r = 0; r < el.rains.length; r++) {
-          if (showRain) {
-            el.rains[r].style.display = 'inline';
-            const rt = (t * 3 + r / 8) % 1;
-            const rx = 320 + r * 25;
-            const ry = 190 + rt * 130;
-            el.rains[r].setAttribute('x1', rx.toFixed(1));
-            el.rains[r].setAttribute('y1', ry.toFixed(1));
-            el.rains[r].setAttribute('x2', (rx - 3).toFixed(1));
-            el.rains[r].setAttribute('y2', (ry + 8).toFixed(1));
+        // Animate Evaporation Vapor Particles ascending from sea to cloud
+        const activeVaporCount = Math.round(el.vapors.length * el.sunPower);
+        for (let i = 0; i < el.vapors.length; i++) {
+          const item = el.vapors[i];
+          if (i < activeVaporCount) {
+            item.el.style.display = 'inline';
+            const progress = (t * 2 * item.speed + item.offset) % 1;
+            const curY = 345 - progress * 190;
+            // Drifts rightwards toward cloud with wind
+            const curX = item.seedX + progress * (el.cloudX - item.seedX) * 0.7;
+            const op = Math.sin(progress * Math.PI) * 0.75 * el.sunPower;
+
+            item.el.setAttribute('cx', curX.toFixed(1));
+            item.el.setAttribute('cy', curY.toFixed(1));
+            item.el.setAttribute('opacity', op.toFixed(2));
           } else {
-            el.rains[r].style.display = 'none';
+            item.el.style.display = 'none';
+          }
+        }
+
+        // Animate Precipitation (Rain streaks or Snowflakes) falling from cloud base
+        const cloudBaseY = el.cloudY + 30;
+        const groundHitY = 360;
+
+        for (let i = 0; i < el.precipItems.length; i++) {
+          const drop = el.precipItems[i];
+          const progress = (t * 3 * drop.speed + drop.phase) % 1;
+          const dropX = el.cloudX + drop.offsetX;
+          const dropY = cloudBaseY + progress * (groundHitY - cloudBaseY);
+
+          if (el.isSnow) {
+            // Snow falls gently with fluttering horizontal drift
+            const snowDrift = Math.sin(t * 10 + i) * 6;
+            drop.el.setAttribute('stroke', '#f8fafc');
+            drop.el.setAttribute('stroke-width', '3');
+            drop.el.setAttribute('x1', (dropX + snowDrift).toFixed(1));
+            drop.el.setAttribute('y1', dropY.toFixed(1));
+            drop.el.setAttribute('x2', (dropX + snowDrift + 1).toFixed(1));
+            drop.el.setAttribute('y2', (dropY + 1).toFixed(1));
+          } else {
+            // Rain falls as fast angled streaks
+            drop.el.setAttribute('stroke', '#60a5fa');
+            drop.el.setAttribute('stroke-width', '2');
+            drop.el.setAttribute('x1', dropX.toFixed(1));
+            drop.el.setAttribute('y1', dropY.toFixed(1));
+            drop.el.setAttribute('x2', (dropX - 3).toFixed(1));
+            drop.el.setAttribute('y2', (dropY + 10).toFixed(1));
           }
         }
       },
       render(t) {
-        let svg = '';
-        svg += `<path d="M 0 340 Q 200 320, 450 350 L 800 350 L 800 480 L 0 480 Z" fill="#1d4ed8" />`;
-        svg += `<path d="M 0 340 Q 200 240, 400 310 L 400 480 L 0 480 Z" fill="#334155" />`;
-        svg += `<circle cx="700" cy="90" r="38" fill="url(#grad-sun)" filter="url(#glow)" />`;
-        for (let i = 0; i < 6; i++) {
-          const vt = (t * 2 + i / 6) % 1;
-          const x = 520 + i * 35;
-          const y = 330 - vt * 160;
-          svg += `<circle cx="${x}" cy="${y}" r="4" fill="#93c5fd" opacity="0.6" />`;
-        }
-        svg += `<path d="M 280 140 Q 320 100, 380 130 Q 420 90, 480 130 Q 520 110, 550 140 Q 560 170, 520 180 L 310 180 Z" fill="#e2e8f0" opacity="0.9" />`;
-        if (t > 0.45) {
-          for (let r = 0; r < 8; r++) {
-            const rt = (t * 3 + r / 8) % 1;
-            const rx = 320 + r * 25;
-            const ry = 190 + rt * 130;
-            svg += `<line x1="${rx}" y1="${ry}" x2="${rx - 3}" y2="${ry + 8}" stroke="#60a5fa" stroke-width="2" />`;
-          }
-        }
-        return svg;
+        return `<svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#030712;"><text x="400" y="240" fill="#f8fafc" font-size="20" text-anchor="middle">Water Cycle Living Simulation Stage</text></svg>`;
       }
     },
 
