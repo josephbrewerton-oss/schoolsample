@@ -6,7 +6,7 @@
  * and granular visibility flags for buttons, controls, and dev tools.
  */
 
-export type PlayerDisplayMode = 'classroom' | 'student' | 'broadcast' | 'developer' | 'custom';
+export type PlayerDisplayMode = 'suite' | 'classroom' | 'student' | 'broadcast' | 'developer' | 'custom';
 
 export interface PlayerDisplayConfig {
   mode: PlayerDisplayMode;
@@ -42,6 +42,12 @@ export interface PlayerDisplayConfig {
 }
 
 export const MODE_METADATA: Record<PlayerDisplayMode, { label: string; icon: string; tag: string; description: string }> = {
+  suite: {
+    label: 'Interactive Suite Mode',
+    icon: '⚡',
+    tag: 'PURE INSTRUMENT',
+    description: '100% edge-to-edge interactive apparatus. Hides external video scrubbers and frames so all temporal, physical, and spatial manipulation occurs directly inside the graphic.',
+  },
   classroom: {
     label: 'Classroom Mode',
     icon: '🎓',
@@ -72,6 +78,35 @@ export const MODE_METADATA: Record<PlayerDisplayMode, { label: string; icon: str
     tag: 'USER DEFINED',
     description: 'Granularly toggle individual links, toolbars, and controls to match your exact institutional or personal preferences.',
   },
+};
+
+export const SUITE_PRESET: PlayerDisplayConfig = {
+  mode: 'suite',
+  showPresetSelector: true,
+  showStageBadge: true,
+  showInteractiveCheckpoints: true,
+  show3DControls: true,
+  showDevInspect: false,
+  showDevStudio: false,
+  showExportSpa: false,
+  showStandaloneLink: true,
+  showObsLink: false,
+  showLmsEmbed: false,
+  showPrintWorksheet: true,
+  showCopySvg: false,
+  showThemeToggle: true,
+  showFullscreen: true,
+  showPipButton: true,
+  showTimelineScrubber: false,
+  showPlaybackControls: false,
+  showSpeedSelector: false,
+  showVoiceNarration: true,
+  showVoiceControl: true,
+  showLanguageSelector: true,
+  showSubtitles: false,
+  showLoopToggle: false,
+  showVolumeControl: false,
+  showPhysicsControls: false,
 };
 
 export const CLASSROOM_PRESET: PlayerDisplayConfig = {
@@ -194,6 +229,8 @@ export const CONFIG_STORAGE_KEY = 'stj_player_display_config';
 
 export function getPresetConfig(mode: PlayerDisplayMode): PlayerDisplayConfig {
   switch (mode) {
+    case 'suite':
+      return { ...SUITE_PRESET };
     case 'student':
       return { ...STUDENT_PRESET };
     case 'broadcast':
@@ -210,10 +247,10 @@ export function loadSavedPlayerConfig(): PlayerDisplayConfig {
   if (typeof window === 'undefined') return { ...CLASSROOM_PRESET };
 
   try {
-    // 1. Check URL parameters for explicit override (e.g. ?mode=student or ?mode=classroom or ?clean=1)
+    // 1. Check URL parameters for explicit override (e.g. ?mode=suite or ?mode=student or ?mode=classroom or ?clean=1)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMode = urlParams.get('mode') as PlayerDisplayMode | null;
-    if (urlMode && ['classroom', 'student', 'broadcast', 'developer'].includes(urlMode)) {
+    if (urlMode && ['suite', 'classroom', 'student', 'broadcast', 'developer'].includes(urlMode)) {
       return getPresetConfig(urlMode);
     }
     if (urlParams.get('clean') === '1') {

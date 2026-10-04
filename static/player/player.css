@@ -389,25 +389,127 @@ main {
   color: #38bdf8;
 }
 
-/* Bottom Player Chrome */
-footer {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 6px 12px 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex-shrink: 0;
+/* Bottom Player Chrome: Permanently Retired for Clean Edge-to-Edge Instrument */
+footer, #legacy-player-footer {
+  display: none !important;
 }
 
 /* Scrubber Row */
 .scrubber-container {
-  position: relative;
-  height: 18px;
+  display: none !important;
+}
+
+/* Ambient 2.5px Narrative Hairline (Edge-to-Edge, Zero-Height Clutter) */
+.ambient-timeline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: rgba(15, 23, 42, 0.35);
+  cursor: pointer;
+  z-index: 40;
+  transition: height 0.15s ease, background 0.15s ease;
+}
+
+.ambient-timeline:hover {
+  height: 9px;
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.ambient-timeline-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #38bdf8 0%, #0284c7 100%);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+  pointer-events: none;
+  transition: width 0.05s linear;
+}
+
+.ambient-timeline-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 11px;
+  height: 11px;
+  background: #ffffff;
+  border: 2px solid #38bdf8;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  pointer-events: none;
+  transition: transform 0.15s ease;
+}
+
+.ambient-timeline:hover .ambient-timeline-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Tactile Play/Pause Ripple Indicator */
+.stage-play-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(56, 189, 248, 0.6);
+  color: #38bdf8;
+  font-size: 28px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-play-indicator.animate-ripple {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.15);
+  animation: play-indicator-fade 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes play-indicator-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+
+.lang-select-header {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 6px;
   cursor: pointer;
-  touch-action: none;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.lang-select-header:hover, .lang-select-header:focus {
+  border-color: #38bdf8;
 }
 
 .timeline-track {
@@ -1836,6 +1938,57 @@ body.obs-transparent footer {
   filter: brightness(1.15);
   transition: all 0.15s ease-in-out;
 }
+
+/* ==========================================================================
+   Interactive Suite Mode (Zero-Chrome Edge-to-Edge Pure Instrument)
+   ========================================================================== */
+body.interactive-suite-mode footer {
+  display: none !important;
+}
+
+body.interactive-suite-mode #player-stage {
+  height: calc(100vh - 44px) !important;
+  max-height: calc(100vh - 44px) !important;
+  flex: 1 1 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #020617;
+}
+
+body.interactive-suite-mode #stage-svg {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: calc(100vh - 46px) !important;
+}
+
+#btn-suite-mode {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+#btn-suite-mode:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: #38bdf8;
+}
+
+#btn-suite-mode.active {
+  background: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
 
 
 

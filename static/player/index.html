@@ -18,9 +18,26 @@
     </div>
 
     <div class="header-actions">
+      <button type="button" id="btn-suite-mode" class="suite-mode-btn" title="Toggle Interactive Suite Mode (Edge-to-Edge Pure Apparatus)">⚡ <span class="btn-label">Suite Mode</span></button>
       <button type="button" id="btn-play-mode" class="play-mode-btn" title="Toggle Interactive Play Mode &amp; Game Controls">🎮 <span class="btn-label" id="play-mode-label">Play Mode</span></button>
       <button type="button" id="btn-3d-orbit" class="hidden" title="3D Scene: Drag stage to orbit / Click to reset camera">🌐 <span class="btn-label">3D Orbit</span></button>
       <button type="button" id="btn-interactive" title="Toggle Interactive Questions & Hotspots">🎯 <span class="btn-label">Interactive</span></button>
+      <button type="button" id="btn-narrate" title="Toggle On-Device Voice Narration">🔊 <span class="btn-label">Voice</span></button>
+
+      <!-- Language Selector -->
+      <select id="lang-selector" title="Subtitle and Narration Language" class="lang-select-header">
+        <option value="en" selected>🇬🇧 EN</option>
+        <option value="es">🇪🇸 ES</option>
+        <option value="fr">🇫🇷 FR</option>
+        <option value="de">🇩🇪 DE</option>
+        <option value="it">🇮🇹 IT</option>
+        <option value="pl">🇵🇱 PL</option>
+        <option value="pt">🇵🇹 PT</option>
+        <option value="uk">🇺🇦 UK</option>
+        <option value="ar">🇸🇦 AR</option>
+        <option value="la">🇻🇦 LA</option>
+      </select>
+
       <button type="button" id="btn-dev-mode" title="Toggle Point-and-Click SVG Element Inspector">🛠️ <span class="btn-label">Inspect</span></button>
       <button type="button" id="btn-dev-studio" title="Open Live SVG & AST Code Studio">💻 <span class="btn-label">Studio</span></button>
       <button type="button" id="btn-header-export-spa" title="Export Autonomous Offline SVG Single Page Applet">🚀 <span class="btn-label">Standalone SPA</span></button>
@@ -471,12 +488,21 @@
       </div>
     </div>
 
+    <!-- Tactile Play/Pause Ripple Indicator -->
+    <div id="stage-play-indicator" class="stage-play-indicator hidden" aria-hidden="true">▶</div>
+
+    <!-- Ambient 2.5px Narrative Hairline (Edge-to-Edge, Zero-Height Progress) -->
+    <div id="ambient-timeline" class="ambient-timeline" title="Click or drag to scrub timeline (Space to Play/Pause)">
+      <div id="ambient-timeline-fill" class="ambient-timeline-fill"></div>
+      <div id="ambient-timeline-thumb" class="ambient-timeline-thumb"></div>
+    </div>
+
     <!-- Subtle Toast Notification -->
     <div id="ast-toast" class="ast-toast">Station Selected</div>
   </main>
 
-  <!-- Bottom Player Chrome -->
-  <footer>
+  <!-- Legacy Player Chrome (Retained in DOM for Headless Script Compatibility, Visually Retired) -->
+  <footer id="legacy-player-footer" style="display: none !important;" class="hidden" aria-hidden="true">
     <!-- Interactive Timeline Scrubber -->
     <div class="scrubber-container" id="scrubber-box">
       <div class="timeline-track" id="timeline-track">
@@ -492,7 +518,7 @@
         <button type="button" id="btn-prev" title="Step Back 5% (Left Arrow)">⏮</button>
         <button type="button" id="btn-next" title="Step Forward 5% (Right Arrow)">⏭</button>
         <button type="button" id="btn-reset" title="Rewind to Beginning (Home / 0)">↺</button>
-        <button type="button" id="btn-loop" title="Toggle Auto-Repeat Loop (L)" class="active">🔁 <span class="btn-label" id="loop-label">Loop</span></button>
+        <button type="button" id="btn-loop" title="Toggle Auto-Repeat Loop (L)">🔁 <span class="btn-label" id="loop-label">Loop</span></button>
         <span class="time-readout" id="time-readout">00:00 / 00:16 (0%)</span>
       </div>
 
@@ -500,7 +526,7 @@
         <!-- Master Audio Volume & Mute -->
         <div class="volume-control-box" id="volume-box" title="Master Audio &amp; Speech Volume">
           <button type="button" id="btn-volume-mute" class="volume-mute-btn" title="Mute / Unmute Audio (M)">🔊</button>
-          <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="1.0" title="Audio &amp; Speech Volume (0-100%)" />
+          <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="1.0" />
         </div>
 
         <!-- Speed Multipliers -->
@@ -511,25 +537,8 @@
           <option value="2">2.0×</option>
         </select>
 
-        <!-- Narration Speech Toggle -->
-        <button type="button" id="btn-narrate" title="Toggle On-Device Voice Narration">🔊 Voice</button>
-
         <!-- Voice Command Speech Recognition Toggle -->
-        <button type="button" id="btn-voice-cmd" class="voice-cmd-btn" title="Voice Control: Speak 'play', 'pause', 'rewind', 'show me fractions' (V)">🎤 Mic</button>
-
-        <!-- Language Selector -->
-        <select id="lang-selector" title="Subtitle and Narration Language">
-          <option value="en" selected>🇬🇧 EN</option>
-          <option value="es">🇪🇸 ES</option>
-          <option value="fr">🇫🇷 FR</option>
-          <option value="de">🇩🇪 DE</option>
-          <option value="it">🇮🇹 IT</option>
-          <option value="pl">🇵🇱 PL</option>
-          <option value="pt">🇵🇹 PT</option>
-          <option value="uk">🇺🇦 UK</option>
-          <option value="ar">🇸🇦 AR</option>
-          <option value="la">🇻🇦 LA</option>
-        </select>
+        <button type="button" id="btn-voice-cmd" class="voice-cmd-btn" title="Voice Control: Speak 'play', 'pause', 'rewind' (V)">🎤 Mic</button>
       </div>
     </div>
   </footer>
@@ -576,6 +585,8 @@
       // 3. Initialize UI Controller
       const ui = new window.ASTPlayerUI(engine);
       ui.setTheme(theme);
+      window.AST_ENGINE = engine;
+      window.AST_UI = ui;
 
       // If an external src URL is passed, load it from any remote or local directory
       if (src) {
