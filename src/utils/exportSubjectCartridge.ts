@@ -28,18 +28,20 @@ export const AVAILABLE_CARTRIDGES: CartridgePackage[] = [
       { id: 'photosynthesis', title: '🌱 Photosynthesis Leaf Factory', category: 'Biology' },
       { id: 'velocity', title: '🏎️ Velocity Vectors & Kinematics', category: 'Physics' },
       { id: 'kinetic-gas', title: '🌡️ Kinetic Gas Theory & Boyle\'s Law', category: 'Physics & Chemistry' },
+      { id: 'calculus-curves', title: '📐 Calculus: Tangents & Integrals', category: 'Maths' },
     ],
   },
   {
     id: 'maths-invariants',
-    title: 'Pure Mathematics Foundations Cartridge (5-in-1)',
-    description: 'Algebra, BODMAS, Times Tables, Fractions, and Pythagoras proofs.',
+    title: 'Pure Mathematics Foundations Cartridge (6-in-1)',
+    description: 'Algebra, BODMAS, Times Tables, Fractions, Pythagoras proofs, and Calculus curves.',
     scenes: [
       { id: 'algebra-balance', title: '⚖️ Algebraic Balance Scale', category: 'Algebra' },
       { id: 'bodmas', title: '🧮 BODMAS Order of Operations', category: 'Arithmetic' },
       { id: 'times-tables', title: '📐 Times Tables (12×12)', category: 'Arithmetic' },
       { id: 'fractions', title: '🥧 Fraction Equivalence', category: 'Proportions' },
       { id: 'pythagoras', title: '📐 Pythagoras Geometric Proof', category: 'Geometry' },
+      { id: 'calculus-curves', title: '📐 Calculus Tangents & Integrals (dy/dx & ∫)', category: 'Calculus' },
     ],
   },
   {

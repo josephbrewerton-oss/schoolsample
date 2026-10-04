@@ -633,6 +633,9 @@
       // Speech synthesis debounce queue timer
       this._speakDebounceTimer = null;
 
+      // Reactive State Variables & User Interaction
+      this.vars = {};
+
       // Event listeners
       this.listeners = {
         timeupdate: [],
@@ -640,7 +643,8 @@
         statechange: [],
         presetchange: [],
         langchange: [],
-        camerachange: []
+        camerachange: [],
+        varchange: []
       };
 
       // Zero-Bloat Micro-Physics Subsystem (< 1.5 KB)
@@ -674,11 +678,12 @@
       if (this.sceneCache && this.sceneCache[presetId]) {
         return this.sceneCache[presetId];
       }
-      if (global.ASTSceneRegistry) {
-        return global.ASTSceneRegistry.get(presetId);
+      if (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.get === 'function') {
+        const found = global.ASTSceneRegistry.get(presetId);
+        if (found) return found;
       }
-      if (global.ASTScenes && (global.ASTScenes[presetId] || global.ASTScenes['church-tour'])) {
-        return global.ASTScenes[presetId] || global.ASTScenes['church-tour'];
+      if (global.ASTScenes && global.ASTScenes[presetId]) {
+        return global.ASTScenes[presetId];
       }
       return {
         id: presetId,
@@ -687,7 +692,7 @@
         duration: 10.0,
         keyframes: [],
         subtitles: [],
-        render: () => '<text x="400" y="240" fill="#fff" text-anchor="middle">Scene Ready</text>'
+        render: () => '<text x="400" y="240" fill="#fff" text-anchor="middle">Loading Scene...</text>'
       };
     }
 
@@ -852,6 +857,48 @@
 
     setSpeechRate(rate) {
       this.speechRate = Math.max(0.5, Math.min(2.0, parseFloat(rate) || 0.95));
+    }
+
+    /**
+     * Sets a reactive state variable and recalculates derived outputs at 60 FPS
+     */
+    setVar(name, val) {
+      if (!this.vars) this.vars = {};
+      this.vars[name] = val;
+      this.updateComputedVars();
+      this.applyBindings(this.progress);
+      this.emit('varchange', { name, value: val, vars: { ...this.vars } });
+    }
+
+    getVar(name) {
+      return this.vars ? this.vars[name] : undefined;
+    }
+
+    resetVars() {
+      this.vars = {};
+      if (this.scene && this.scene.vars) {
+        for (const k of Object.keys(this.scene.vars)) {
+          const item = this.scene.vars[k];
+          this.vars[k] = item && item.value !== undefined ? item.value : item;
+        }
+      }
+      this.updateComputedVars();
+      this.applyBindings(this.progress);
+      this.emit('varchange', { name: '*', vars: { ...this.vars } });
+    }
+
+    updateComputedVars() {
+      if (!this.scene || !this.scene.computed || !this.scene.computed.length) return;
+      const v = this.vars || {};
+      for (let i = 0; i < this.scene.computed.length; i++) {
+        const comp = this.scene.computed[i];
+        try {
+          if (!comp._eval) {
+            comp._eval = new Function('vars', 'Math', `"use strict"; return (${comp.expr});`);
+          }
+          v[comp.name] = comp._eval(v, Math);
+        } catch {}
+      }
     }
 
     translateInStageLabels() {
@@ -1355,6 +1402,70 @@
         };
       }
 
+      // Reactive State Variables (:vars ((:var :name "volume" :val 1.0 :min 0.3 :max 1.0) ...))
+      const vars = {};
+      const varBlocks = extractSexprBlocks(astContent, ':vars');
+      if (varBlocks.length > 0) {
+        const vEntries = extractSexprBlocks(varBlocks[0], ':var');
+        vEntries.forEach(vText => {
+          const name = extractSlot.call(null, vText, /:name\s+"([^"]+)"/i) || extractSlot.call(null, vText, /:name\s+([^\s\)]+)/i);
+          const valMatch = vText.match(/:val\s+([^\s\)]+)/i);
+          const minMatch = vText.match(/:min\s+([\d\.\-]+)/i);
+          const maxMatch = vText.match(/:max\s+([\d\.\-]+)/i);
+          const stepMatch = vText.match(/:step\s+([\d\.]+)/i);
+          const unit = extractSlot.call(null, vText, /:unit\s+"([^"]+)"/i) || '';
+          const label = extractSlot.call(null, vText, /:label\s+"([^"]+)"/i) || name;
+          if (name && valMatch) {
+            let parsedVal = valMatch[1].replace(/^"|"$/g, '');
+            if (parsedVal === 'true') parsedVal = true;
+            else if (parsedVal === 'false') parsedVal = false;
+            else if (!isNaN(Number(parsedVal))) parsedVal = Number(parsedVal);
+            vars[name] = {
+              name,
+              value: parsedVal,
+              min: minMatch ? parseFloat(minMatch[1]) : 0,
+              max: maxMatch ? parseFloat(maxMatch[1]) : 100,
+              step: stepMatch ? parseFloat(stepMatch[1]) : 1,
+              unit,
+              label
+            };
+          }
+        });
+      }
+
+      // User Input Controls (:inputs ((:slider :var "volume" :label "Volume") ...))
+      const inputs = [];
+      const inBlocks = extractSexprBlocks(astContent, ':inputs');
+      if (inBlocks.length > 0) {
+        const inEntries = extractSexprBlocks(inBlocks[0], ':');
+        inEntries.forEach(inText => {
+          const typeMatch = inText.match(/^\(:([a-z0-9\-]+)/i);
+          const vName = extractSlot.call(null, inText, /:var\s+"([^"]+)"/i) || extractSlot.call(null, inText, /:var\s+([^\s\)]+)/i);
+          const inLabel = extractSlot.call(null, inText, /:label\s+"([^"]+)"/i) || vName;
+          if (typeMatch && vName) {
+            inputs.push({
+              type: typeMatch[1],
+              var: vName,
+              label: inLabel
+            });
+          }
+        });
+      }
+
+      // Derived & Computed Output Variables (:computed ((:name "pressure" :expr "101.3 / vars.volume") ...))
+      const computed = [];
+      const compBlocks = extractSexprBlocks(astContent, ':computed');
+      if (compBlocks.length > 0) {
+        const compEntries = extractSexprBlocks(compBlocks[0], ':name');
+        compEntries.forEach(cText => {
+          const name = extractSlot.call(null, cText, /:name\s+"([^"]+)"/i) || extractSlot.call(null, cText, /:name\s+([^\s\)]+)/i);
+          const expr = extractSlot.call(null, cText, /:expr\s+"([^"]+)"/i);
+          if (name && expr) {
+            computed.push({ name, expr });
+          }
+        });
+      }
+
       const has3D = Boolean(camMatch || bindings.some(b => b.type && b.type.startsWith('3d-')));
 
       return {
@@ -1369,6 +1480,9 @@
         bindings,
         checkpoints,
         physics,
+        vars,
+        inputs,
+        computed,
         interactive: checkpoints.length > 0 ? { checkpoints, hotspots: [] } : null
       };
     }
@@ -1935,7 +2049,7 @@
             if (node) {
               let evalFn = () => 0;
               try {
-                evalFn = new Function('t', 'Math', `"use strict"; return (${b.expr});`);
+                evalFn = new Function('t', 'vars', 'Math', `"use strict"; return (${b.expr});`);
               } catch (e) {
                 console.warn('[AST Engine] Failed compiling expr:', b.expr, e);
               }
@@ -1960,6 +2074,9 @@
           scene.physics.bodies.forEach(b => this.physics.addBody(b));
         }
       }
+
+      // Initialize reactive variables for the loaded scene
+      this.resetVars();
 
       this.applyBindings(this.progress);
       this.translateInStageLabels();
@@ -2192,17 +2309,20 @@
         }
       }
 
-      // 2. Direct 2D AST Math Bindings
+      // 2. Direct 2D AST Math & User Interaction Variable Bindings
       if (this.activeBindings && this.activeBindings.length) {
+        const v = this.vars || {};
         for (let i = 0; i < this.activeBindings.length; i++) {
           const b = this.activeBindings[i];
           if (b.node) {
-            const val = b.evalFn(t, Math);
-            if (b.attr === 'textContent') {
-              b.node.textContent = String(val);
-            } else {
-              b.node.setAttribute(b.attr, String(val));
-            }
+            try {
+              const val = b.evalFn(t, v, Math);
+              if (b.attr === 'textContent') {
+                b.node.textContent = String(val);
+              } else {
+                b.node.setAttribute(b.attr, String(val));
+              }
+            } catch (err) {}
           }
         }
       }
@@ -3161,6 +3281,37 @@
           break;
         case 'AUDIO_STOP_HUM':
           if (engine.audioSynth) engine.audioSynth.stopHum();
+          break;
+        case 'TOGGLE_PEN':
+          if (global.__astGestures) {
+            global.__astGestures.isPenActive = data.enabled !== undefined ? Boolean(data.enabled) : !global.__astGestures.isPenActive;
+            if (global.__astGestures.stageSvg) {
+              global.__astGestures.stageSvg.style.cursor = global.__astGestures.isPenActive ? 'crosshair' : 'default';
+            }
+          }
+          break;
+        case 'CLEAR_INK':
+          if (global.__astGestures) {
+            global.__astGestures.clearWhiteboardInk();
+          }
+          break;
+        case 'TOGGLE_XRAY':
+          if (global.__astGestures) {
+            global.__astGestures.isXRayActive = data.enabled !== undefined ? Boolean(data.enabled) : !global.__astGestures.isXRayActive;
+          }
+          break;
+        case 'SET_VAR':
+          if (data.name !== undefined && data.value !== undefined) {
+            engine.setVar(data.name, data.value);
+          }
+          break;
+        case 'RESET_VARS':
+          engine.resetVars();
+          break;
+        case 'GET_VARS':
+          if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'VARS_STATE', vars: { ...(engine.vars || {}) } }, '*');
+          }
           break;
         case 'SCORM_SET_SCORE':
           if (engine.scormBridge) engine.scormBridge.setScore(data.score, data.min || 0, data.max || 100);

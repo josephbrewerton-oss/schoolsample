@@ -39,9 +39,11 @@ const FISH_PALETTES = [
   { fill: '#8b5cf6', stroke: '#7c3aed', badge: '#ede9fe', text: '#5b21b6' }, // Purple Bass
 ];
 
+export type GameLevel = 'bonds10' | 'bonds20' | 'bonds100' | 'factors' | 'integers';
+
 export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameMode }) => {
   // Game mode & target
-  const [level, setLevel] = useState<'bonds10' | 'bonds20' | 'multiples5'>('bonds10');
+  const [level, setLevel] = useState<GameLevel>('bonds10');
   const [targetSum, setTargetSum] = useState<number>(10);
   const [caughtFish, setCaughtFish] = useState<FishEntity[]>([]);
   const [score, setScore] = useState<number>(0);
@@ -125,23 +127,49 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
     } catch (_) {}
   }, [soundEnabled]);
 
-  // Generate a balanced school of fish based on current target
-  const spawnFishSchool = useCallback((target: number, currentSum: number) => {
-    const needed = target - currentSum;
+  // Generate a balanced school of fish based on current target and level
+  const spawnFishSchool = useCallback((target: number, currentAcc: number, currentLevel: GameLevel) => {
     const pool: number[] = [];
+    let speedBase = 35;
+    let speedVariance = 45;
 
-    // Always ensure at least one or two fish can solve the equation!
-    if (needed > 0 && needed <= 10) {
+    if (currentLevel === 'bonds10') {
+      const needed = target - currentAcc;
+      if (needed > 0 && needed <= 10) pool.push(needed, needed);
+      for (let i = 1; i <= 9; i++) if (i !== needed) pool.push(i);
+      speedBase = 40; speedVariance = 40;
+    } else if (currentLevel === 'bonds20') {
+      const needed = target - currentAcc;
+      if (needed > 0 && needed <= 20) pool.push(needed, needed);
+      for (let i = 2; i <= 18; i += 2) if (i !== needed) pool.push(i);
+      for (let i = 1; i <= 19; i += 3) if (i !== needed) pool.push(i);
+      speedBase = 55; speedVariance = 50;
+    } else if (currentLevel === 'bonds100') {
+      const needed = target - currentAcc;
+      if (needed > 0 && needed <= 100) pool.push(needed, needed);
+      const candidates = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 65, 75, 80, 85];
+      candidates.forEach(c => { if (c !== needed) pool.push(c); });
+      speedBase = 70; speedVariance = 65;
+    } else if (currentLevel === 'factors') {
+      // Product target (e.g. 24, 36, 48, 60)
+      const validFactors: number[] = [];
+      for (let f = 2; f <= Math.min(12, target); f++) {
+        if (target % f === 0) validFactors.push(f);
+      }
+      validFactors.forEach(f => pool.push(f, f));
+      pool.push(5, 7, 11); // tricky prime distractors
+      speedBase = 75; speedVariance = 70;
+    } else if (currentLevel === 'integers') {
+      // Signed integer target (e.g. -5 to +10)
+      const needed = target - currentAcc;
       pool.push(needed, needed);
-    }
-
-    // Add plausible companion numbers
-    for (let i = 1; i <= 9; i++) {
-      if (i !== needed) pool.push(i);
+      const signedPool = [-8, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 8, 10];
+      signedPool.forEach(s => { if (s !== needed) pool.push(s); });
+      speedBase = 90; speedVariance = 85;
     }
 
     const newFish: FishEntity[] = [];
-    const count = 8;
+    const count = 9;
 
     for (let i = 0; i < count; i++) {
       const val = pool[Math.floor(Math.random() * pool.length)];
@@ -153,8 +181,8 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
         value: val,
         x: 60 + Math.random() * 680,
         y: 190 + (i % 4) * 55 + Math.random() * 20,
-        vx: (35 + Math.random() * 45) * dir,
-        color: palette.fill,
+        vx: (speedBase + Math.random() * speedVariance) * dir,
+        color: val < 0 ? '#ef4444' : palette.fill,
         size: 0.85 + Math.random() * 0.3,
         direction: dir,
         isCaught: false,
@@ -166,10 +194,16 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
 
   // Initialize round
   useEffect(() => {
-    const t = level === 'bonds10' ? 10 : level === 'bonds20' ? 20 : 15;
+    let t = 10;
+    if (level === 'bonds10') t = 10;
+    else if (level === 'bonds20') t = 20;
+    else if (level === 'bonds100') t = [50, 75, 100][Math.floor(Math.random() * 3)];
+    else if (level === 'factors') t = [24, 36, 48, 60][Math.floor(Math.random() * 4)];
+    else if (level === 'integers') t = [-4, -2, 3, 5, 8][Math.floor(Math.random() * 5)];
+
     setTargetSum(t);
     setCaughtFish([]);
-    spawnFishSchool(t, 0);
+    spawnFishSchool(t, level === 'factors' ? 1 : 0, level);
   }, [level, spawnFishSchool]);
 
   // Cast fishing line downward
@@ -263,47 +297,77 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
   const handleFishBite = (fish: FishEntity) => {
     setCaughtFish((prevCaught) => {
       const updated = [...prevCaught, fish];
-      const sum = updated.reduce((acc, curr) => acc + curr.value, 0);
+      const isFactorMode = level === 'factors';
 
-      if (sum === targetSum) {
-        // EXACT NUMBER BOND TARGET REACHED!
+      const currentVal = isFactorMode
+        ? updated.reduce((acc, curr) => acc * curr.value, 1)
+        : updated.reduce((acc, curr) => acc + curr.value, 0);
+
+      const opSymbol = isFactorMode ? ' × ' : ' + ';
+
+      if (currentVal === targetSum) {
+        // EXACT NUMBER BOND / FACTOR TARGET REACHED!
         playSound('win');
-        setScore((s) => s + 100 + streak * 20);
+        const bonus = level === 'integers' ? 60 : level === 'factors' ? 50 : level === 'bonds100' ? 40 : 20;
+        setScore((s) => s + 100 + streak * bonus);
         setStreak((st) => st + 1);
         setMessage({
-          text: `🎉 Marvelous Catch! ${updated.map((f) => f.value).join(' + ')} = ${targetSum}!`,
+          text: `🎉 Marvelous Catch! ${updated.map((f) => f.value).join(opSymbol)} = ${targetSum}!`,
           type: 'success',
         });
 
         // Respawn next challenge after celebratory pause
         setTimeout(() => {
           setCaughtFish([]);
-          spawnFishSchool(targetSum, 0);
+          let nextTarget = targetSum;
+          if (level === 'bonds100') nextTarget = [50, 75, 100][Math.floor(Math.random() * 3)];
+          else if (level === 'factors') nextTarget = [24, 36, 48, 60][Math.floor(Math.random() * 4)];
+          else if (level === 'integers') nextTarget = [-5, -2, 3, 5, 8][Math.floor(Math.random() * 5)];
+          setTargetSum(nextTarget);
+          spawnFishSchool(nextTarget, isFactorMode ? 1 : 0, level);
           setMessage({
-            text: `🎯 New Round! Find numbers that add up to ${targetSum}`,
+            text: `🎯 New Round! Find ${isFactorMode ? 'factors that multiply to' : 'numbers that sum to'} ${nextTarget}`,
             type: 'info',
           });
         }, 2200);
-      } else if (sum < targetSum) {
+      } else if (
+        (!isFactorMode && level !== 'integers' && currentVal < targetSum) ||
+        (isFactorMode && targetSum % currentVal === 0) ||
+        (level === 'integers' && updated.length < 3)
+      ) {
         // Still need more to reach target
-        const remaining = targetSum - sum;
-        setMessage({
-          text: `🎣 Caught a ${fish.value}! So far: ${sum}. Catch ${remaining} more to reach ${targetSum}!`,
-          type: 'info',
-        });
-        spawnFishSchool(targetSum, sum);
+        if (isFactorMode) {
+          const neededFactor = targetSum / currentVal;
+          setMessage({
+            text: `🎣 Caught factor ${fish.value}! Product so far: ${currentVal}. Need factor ${neededFactor} to reach ${targetSum}!`,
+            type: 'info',
+          });
+        } else if (level === 'integers') {
+          const needed = targetSum - currentVal;
+          setMessage({
+            text: `🎣 Caught ${fish.value > 0 ? '+' : ''}${fish.value}! Current net sum: ${currentVal}. Need ${needed > 0 ? '+' : ''}${needed} to hit target ${targetSum}!`,
+            type: 'info',
+          });
+        } else {
+          const remaining = targetSum - currentVal;
+          setMessage({
+            text: `🎣 Caught a ${fish.value}! So far: ${currentVal}. Catch ${remaining} more to reach ${targetSum}!`,
+            type: 'info',
+          });
+        }
+        spawnFishSchool(targetSum, currentVal, level);
       } else {
-        // OVER THE TARGET!
+        // OVER OR MISSED TARGET!
         playSound('miss');
         setStreak(0);
         setMessage({
-          text: `💦 Too big! ${updated.map((f) => f.value).join(' + ')} = ${sum} (Over ${targetSum}). The fish swam back!`,
+          text: `💦 Off target! ${updated.map((f) => f.value).join(opSymbol)} = ${currentVal} (Target was ${targetSum}). The fish swam back!`,
           type: 'warning',
         });
 
         setTimeout(() => {
           setCaughtFish([]);
-          spawnFishSchool(targetSum, 0);
+          spawnFishSchool(targetSum, isFactorMode ? 1 : 0, level);
         }, 1800);
       }
 
@@ -330,7 +394,11 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [castHook]);
 
-  const currentSum = caughtFish.reduce((acc, f) => acc + f.value, 0);
+  const isFactorMode = level === 'factors';
+  const currentMetric = isFactorMode
+    ? (caughtFish.length === 0 ? 0 : caughtFish.reduce((acc, f) => acc * f.value, 1))
+    : caughtFish.reduce((acc, f) => acc + f.value, 0);
+  const opSymbol = isFactorMode ? ' × ' : ' + ';
 
   return (
     <div
@@ -385,7 +453,7 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
 
         {/* Level Selector & Action Row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: 'rgba(0, 0, 0, 0.25)', padding: '3px', borderRadius: '8px', gap: '4px' }}>
+          <div style={{ display: 'flex', background: 'rgba(0, 0, 0, 0.25)', padding: '3px', borderRadius: '8px', gap: '4px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => setLevel('bonds10')}
@@ -400,7 +468,7 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
                 cursor: 'pointer',
               }}
             >
-              Bonds to 10
+              Bonds 10
             </button>
             <button
               type="button"
@@ -416,7 +484,55 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
                 cursor: 'pointer',
               }}
             >
-              Bonds to 20
+              Bonds 20
+            </button>
+            <button
+              type="button"
+              onClick={() => setLevel('bonds100')}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: level === 'bonds100' ? '#ffffff' : 'transparent',
+                color: level === 'bonds100' ? '#0369a1' : '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              Bonds 100
+            </button>
+            <button
+              type="button"
+              onClick={() => setLevel('factors')}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: level === 'factors' ? '#ffffff' : 'transparent',
+                color: level === 'factors' ? '#0369a1' : '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              Factors (×)
+            </button>
+            <button
+              type="button"
+              onClick={() => setLevel('integers')}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '6px',
+                background: level === 'integers' ? '#ffffff' : 'transparent',
+                color: level === 'integers' ? '#0369a1' : '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              Integers (±)
             </button>
           </div>
 
@@ -486,7 +602,7 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
               boxShadow: '0 2px 6px rgba(2, 132, 199, 0.4)',
             }}
           >
-            <span>🎯 Target Sum:</span>
+            <span>{isFactorMode ? '🎯 Target Product:' : '🎯 Target Sum:'}</span>
             <span style={{ fontSize: '1.25rem', color: '#fef08a' }}>{targetSum}</span>
           </div>
 
@@ -523,13 +639,13 @@ export const MathsFishingGame: React.FC<MathsFishingGameProps> = ({ onCloseGameM
                     >
                       {f.value}
                     </span>
-                    {i < caughtFish.length - 1 && <span style={{ color: '#38bdf8' }}>+</span>}
+                    {i < caughtFish.length - 1 && <span style={{ color: '#38bdf8' }}>{opSymbol}</span>}
                   </React.Fragment>
                 ))}
-                <span style={{ color: '#38bdf8' }}>+</span>
+                <span style={{ color: '#38bdf8' }}>{opSymbol}</span>
                 <span style={{ borderBottom: '2px dashed #38bdf8', padding: '0 8px', color: '#38bdf8' }}>?</span>
                 <span>=</span>
-                <span style={{ color: currentSum === targetSum ? '#34d399' : '#f8fafc' }}>{currentSum}</span>
+                <span style={{ color: currentMetric === targetSum ? '#34d399' : '#f8fafc' }}>{currentMetric}</span>
               </>
             )}
           </div>

@@ -1,4 +1,15 @@
 (:scene :id "church-tour" :title "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces" :stage "CATHOLIC LIFE" :duration 16.0
+  (:vars (
+    (:var :name "candleGlow" :val 1.0 :min 0.2 :max 1.5 :step 0.1 :label "Sanctuary Lamp Flame")
+    (:var :name "pilgrimSpeed" :val 1.0 :min 0.5 :max 2.0 :step 0.25 :label "Tour Progression Pace")
+  ))
+  (:inputs (
+    (:slider :var "candleGlow" :label "Sanctuary Lamp Flame" :min 0.2 :max 1.5 :step 0.1)
+    (:slider :var "pilgrimSpeed" :label "Pilgrim Walk Pace" :min 0.5 :max 2.0 :step 0.25)
+  ))
+  (:gestures (
+    (:draggable :target "#spot-dot" :axis "xy" :min 80 :max 440)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.20 :en "We enter through the Narthex, blessing ourselves with Holy Water in the Name of the Father, Son, and Holy Spirit." :es "Entramos por el Nártex, bendiciéndonos con Agua Bendita en el Nombre del Padre, del Hijo y del Espíritu Santo." :la "In nomine Patris, et Filii, et Spiritus Sancti. Aqua benedicta ad memoriam baptismi.")
     (:start 0.20 :end 0.40 :en "Walking up the central aisle of the Nave, we genuflect on our right knee toward the Tabernacle before entering our pew." :es "Por el pasillo de la Nave, hacemos una genuflexión con la rodilla derecha hacia el Sagrario antes de sentarnos." :la "Ad Tabernaculum flectamus genua, Christum Dominum verum Deum adorantes.")
@@ -11,25 +22,25 @@
     (:t 0.00 :title "1. Narthex & Holy Water Stoup" :rule "Vestibulum: We bless ourselves with Holy Water to recall our Baptism.")
     (:t 0.20 :title "2. Nave & Central Aisle" :rule "Navis: The Pilgrim People of God; we genuflect towards the Tabernacle before entering our pew.")
     (:t 0.40 :title "3. Ambo (Lectern)" :rule "Mensa Verbi: The Table of the Word from which the Holy Gospel is proclaimed.")
-    (:t 0.60 :title "4. High Altar of Sacrifice" :rule "Altare Christi: Represents Christ Himself and the Holy Sacrifice of the Mass.")
+    (:t 0.40 :title "4. High Altar of Sacrifice" :rule "Altare Christi: Represents Christ Himself and the Holy Sacrifice of the Mass.")
     (:t 0.80 :title "5. Tabernacle & Sanctuary Lamp" :rule "Tabernaculum: Houses the Blessed Sacrament; red lamp indicates Christ's Real Presence.")
     (:t 0.92 :title "6. Lady Chapel & Baptismal Font" :rule "Fons & Sacellum: Devotional side chapel of Our Lady and the waters of new birth.")
   ))
+  (:interactive (
+    (:checkpoint :t 0.81
+      :prompt "Why does a red Sanctuary Lamp burn day and night beside the Catholic Tabernacle?"
+      :options ("To signify the Real Presence of Jesus Christ in the Blessed Sacrament" "To provide night illumination for the sacristan" "To mark where incense is stored" "As an architectural fire exit indicator")
+      :answer 0
+      :explanation "Canon Law specifies that a special lamp or candle must shine continuously beside the Tabernacle to honor and signify the Eucharistic Real Presence of Christ.")
+  ))
   (:bindings (
-    ;; Pulsing Eucharistic Sanctuary Lamp
-    (:target "#church-lamp" :attr "opacity" :expr "0.70 + Math.sin(t * Math.PI * 8) * 0.30")
-
-    ;; Moving Pilgrim Avatar Position
+    (:target "#church-lamp" :attr "opacity" :expr "(0.70 + Math.sin(t * Math.PI * 8) * 0.30) * (vars.candleGlow || 1.0)")
     (:target "#spot-dot" :attr "cx" :expr "t < 0.20 ? 400 : (t < 0.40 ? 400 : (t < 0.60 ? 400 - ((t - 0.40)/0.20)*59 : (t < 0.80 ? 341 + ((t - 0.60)/0.20)*59 : (t < 0.92 ? 400 : 400 - Math.cos(((t - 0.92)/0.08)*Math.PI)*180))))")
     (:target "#spot-dot" :attr "cy" :expr "t < 0.20 ? 435 - (t/0.20)*35 : (t < 0.40 ? 400 - ((t - 0.20)/0.20)*120 : (t < 0.60 ? 280 - ((t - 0.40)/0.20)*140 : (t < 0.80 ? 140 - ((t - 0.60)/0.20)*12 : (t < 0.92 ? 128 - ((t - 0.80)/0.12)*56 : 190))))")
-
     (:target "#spot-halo" :attr "cx" :expr "t < 0.20 ? 400 : (t < 0.40 ? 400 : (t < 0.60 ? 400 - ((t - 0.40)/0.20)*59 : (t < 0.80 ? 341 + ((t - 0.60)/0.20)*59 : (t < 0.92 ? 400 : 400 - Math.cos(((t - 0.92)/0.08)*Math.PI)*180))))")
     (:target "#spot-halo" :attr "cy" :expr "t < 0.20 ? 435 - (t/0.20)*35 : (t < 0.40 ? 400 - ((t - 0.20)/0.20)*120 : (t < 0.60 ? 280 - ((t - 0.40)/0.20)*140 : (t < 0.80 ? 140 - ((t - 0.60)/0.20)*12 : (t < 0.92 ? 128 - ((t - 0.80)/0.12)*56 : 190))))")
-
     (:target "#spot-core" :attr "cx" :expr "t < 0.20 ? 400 : (t < 0.40 ? 400 : (t < 0.60 ? 400 - ((t - 0.40)/0.20)*59 : (t < 0.80 ? 341 + ((t - 0.60)/0.20)*59 : (t < 0.92 ? 400 : 400 - Math.cos(((t - 0.92)/0.08)*Math.PI)*180))))")
     (:target "#spot-core" :attr "cy" :expr "t < 0.20 ? 435 - (t/0.20)*35 : (t < 0.40 ? 400 - ((t - 0.20)/0.20)*120 : (t < 0.60 ? 280 - ((t - 0.40)/0.20)*140 : (t < 0.80 ? 140 - ((t - 0.60)/0.20)*12 : (t < 0.92 ? 128 - ((t - 0.80)/0.12)*56 : 190))))")
-
-    ;; HUD Titles and Descriptions
     (:target "#church-hud-title" :attr "textContent" :expr "t < 0.20 ? '1. NARTHEX & HOLY WATER STOUP' : (t < 0.40 ? '2. THE NAVE & PEWS' : (t < 0.60 ? '3. THE AMBO (LECTERN)' : (t < 0.80 ? '4. THE HIGH ALTAR OF SACRIFICE' : (t < 0.92 ? '5. THE TABERNACLE & SANCTUARY LAMP' : '6. LADY CHAPEL & BAPTISMAL FONT'))))")
     (:target "#church-hud-desc" :attr "textContent" :expr "t < 0.20 ? 'Vestibulum & Aqua Benedicta • Blessing ourselves with Holy Water...' : (t < 0.40 ? 'Navis Ecclesiae • The Pilgrim People of God genuflect to Tabernacle...' : (t < 0.60 ? 'Mensa Verbi Dei • Proclaiming Sacred Scriptures & Holy Gospel...' : (t < 0.80 ? 'Altare Christi • Holy Sacrifice of the Mass & Eucharist...' : (t < 0.92 ? 'Tabernaculum Domini • Real Presence watched by burning red lamp...' : 'Sacellum Marianum & Fons • Devotional prayer & new birth...'))))")
   ))

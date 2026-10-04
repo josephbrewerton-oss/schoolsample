@@ -1,4 +1,18 @@
 (:scene :id "math-fishing" :title "Math Pond: Number Bonds Fishing Game" :stage "KS1/KS2 MATHS" :duration 14.0
+  (:vars (
+    (:var :name "targetSum" :val 20 :min 5 :max 100 :step 1 :label "Target Bond Goal")
+    (:var :name "bobberSpeed" :val 1.0 :min 0.5 :max 3.0 :step 0.25 :label "Reeling Current Pace")
+  ))
+  (:inputs (
+    (:slider :var "targetSum" :label "Number Bond Target" :min 5 :max 100 :step 1)
+    (:slider :var "bobberSpeed" :label "Water Current Velocity" :min 0.5 :max 3.0 :step 0.25)
+  ))
+  (:computed (
+    (:name "bondComplement" :expr "vars.targetSum - 4")
+  ))
+  (:gestures (
+    (:draggable :target "#water-wave-1" :axis "x" :min -50 :max 50)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.35 :en "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds." :es "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos.")
     (:start 0.35 :end 0.70 :en "We have a 4 on our line. To make 10, we must find and catch a fish with 6!" :es "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!")
@@ -11,33 +25,20 @@
     (:t 1.00 :title "Step 4: Mastery Victory" :rule "Bonds to 10 and 20 provide the foundation for mental arithmetic")
   ))
   (:interactive (
-    (:checkpoints (
-      (:t 0.50
-       :title "Number Bond Challenge"
-       :prompt "If you catch a fish with the number 3, which fish should you catch next to make 10?"
-       :options (
-         "A fish with 7 (because 3 + 7 = 10)"
-         "A fish with 3 (because 3 + 3 = 10)"
-         "A fish with 10 (because 3 + 10 = 10)"
-       )
-       :answer 0
-       :explanation "Number bonds to 10 are pairs that sum to 10. 3 + 7 = 10. Knowing these pairs by heart gives pupils quick mental math fluency for addition and subtraction."
+    (:checkpoint :t 0.55
+      :prompt "In a challenge where Target = 20, if your hook currently holds fish 7 and fish 5, what missing value z must you catch to satisfy 7 + 5 + z = 20?"
+      :options (
+        "z = 8 (since 7 + 5 = 12, and 20 - 12 = 8)"
+        "z = 12"
+        "z = 6"
+        "z = 15"
       )
-      (:t 0.85
-       :title "Concrete to Abstract Progression"
-       :prompt "Why do the fish display ten-frame dots alongside numerals?"
-       :options (
-         "To help early learners count concrete quantities (subitising) before reading abstract numerals"
-         "Because fish prefer polka dots"
-         "To increase the weight of the fishing hook"
-       )
-       :answer 0
-       :explanation "The Concrete-Pictorial-Abstract (CPA) approach allows younger learners to visually group and count dots (subitising) to understand the value of the number before transitioning to pure abstract digits."
-      )
-    ))
+      :answer 0
+      :explanation "Combine known catches first: 7 + 5 = 12. To reach the target sum 20, find the complement: 20 - 12 = 8. This forms the algebraic foundation: x + y + z = T."
+    )
   ))
   (:bindings (
-    (:target "#water-wave-1" :attr "d" :expr "'M 0,' + (155 + Math.sin(t * Math.PI * 4) * 3) + ' Q 100,' + (150 + Math.cos(t * Math.PI * 4) * 4) + ' 200,155 T 400,155 T 600,155 T 800,155'")
-    (:target "#water-wave-2" :attr "d" :expr "'M 0,' + (165 + Math.cos(t * Math.PI * 3.5) * 3) + ' Q 150,' + (160 + Math.sin(t * Math.PI * 3.5) * 3) + ' 300,165 T 600,165 T 800,165'")
+    (:target "#water-wave-1" :attr "d" :expr "'M 0,' + (155 + Math.sin(t * Math.PI * 4 * (vars.bobberSpeed || 1)) * 3) + ' Q 100,' + (150 + Math.cos(t * Math.PI * 4 * (vars.bobberSpeed || 1)) * 4) + ' 200,155 T 400,155 T 600,155 T 800,155'")
+    (:target "#water-wave-2" :attr "d" :expr "'M 0,' + (165 + Math.cos(t * Math.PI * 3.5 * (vars.bobberSpeed || 1)) * 3) + ' Q 150,' + (160 + Math.sin(t * Math.PI * 3.5 * (vars.bobberSpeed || 1)) * 3) + ' 300,165 T 600,165 T 800,165'")
   ))
 )

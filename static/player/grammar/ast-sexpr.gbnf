@@ -2,13 +2,23 @@
 # GGML BNF Grammar for Constraining Local LLMs to Token-Efficient S-Expression ASTs with 3D Node Subsystem
 # Produces valid Lisp-like (scene ...) structures parsed directly by AST Vector Player.
 
-root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ")"
+root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? ("(:vars" ws "(" ws (variable ws)* ")" ws ")")? ws ("(:inputs" ws "(" ws (input ws)* ")" ws ")")? ws ("(:computed" ws "(" ws (computed ws)* ")" ws ")")? ws "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ("(:interactive" ws "(" ws (checkpoint ws)* ")" ws ")")? ws ("(:gestures" ws "(" ws (gesture ws)* ")" ws ")")? ws ")"
 
 camera ::= "(:camera" ws ":distance" ws number ws ":pitch" ws number ws ":yaw" ws (string | number) ws ":fov" ws number ")"
+
+variable ::= "(:var" ws ":name" ws string ws ":val" ws (number | string | boolean) (ws ":min" ws number)? (ws ":max" ws number)? (ws ":step" ws number)? (ws ":unit" ws string)? (ws ":label" ws string)? ")"
+
+input ::= "(:" ("slider" | "switch" | "button" | "number") ws ":var" ws string ws ":label" ws string (ws ":min" ws number)? (ws ":max" ws number)? (ws ":step" ws number)? ")"
+
+computed ::= "(:name" ws string ws ":expr" ws string ")"
 
 keyframe ::= "(:t" ws fraction ws ":title" ws string ws ":rule" ws string ")"
 
 subtitle ::= "(:start" ws fraction ws ":end" ws fraction ws ":en" ws string (ws ":es" ws string)? (ws ":la" ws string)? ")"
+
+checkpoint ::= "(:checkpoint" ws ":t" ws fraction ws ":prompt" ws string ws ":options" ws "(" ws (string ws)* ")" ws ":answer" ws integer ws ":explanation" ws string ")"
+
+gesture ::= "(:draggable" ws ":target" ws string ws ":axis" ws ("\"x\"" | "\"y\"" | "\"xy\"" | "\"curve\"") ws ":min" ws number ws ":max" ws number ")"
 
 binding ::= node3d | line3d | ring3d | attr2d
 

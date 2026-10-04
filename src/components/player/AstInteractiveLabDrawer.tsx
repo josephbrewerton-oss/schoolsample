@@ -1,5 +1,6 @@
 // src/components/player/AstInteractiveLabDrawer.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { CALCULUS_PRESETS, CalculusPlotter, parseMathExpression } from '../../utils/calculusPlotter';
 
 interface AstInteractiveLabDrawerProps {
   isOpen: boolean;
@@ -59,8 +60,15 @@ export default function AstInteractiveLabDrawer({
   const [gasState, setGasState] = useState<'solid' | 'liquid' | 'gas' | 'brownian'>('gas');
   const [gasParticlesCount, setGasParticlesCount] = useState<number>(50);
 
-  const [activeTab, setActiveTab] = useState<'preset' | 'verlet' | 'kinetic-gas'>(
-    preset === 'kinetic-gas' ? 'kinetic-gas' : 'preset'
+  // Calculus & Curves state (dy/dx & ∫)
+  const [calcPresetId, setCalcPresetId] = useState<string>('parabola');
+  const [calcX0, setCalcX0] = useState<number>(2.0);
+  const [calcA, setCalcA] = useState<number>(0.0);
+  const [calcB, setCalcB] = useState<number>(3.0);
+  const [customExpr, setCustomExpr] = useState<string>('x^2 - 2*x');
+
+  const [activeTab, setActiveTab] = useState<'preset' | 'verlet' | 'kinetic-gas' | 'calculus'>(
+    preset === 'calculus-curves' ? 'calculus' : preset === 'kinetic-gas' ? 'kinetic-gas' : 'preset'
   );
 
   if (!isOpen) return null;
@@ -173,13 +181,183 @@ export default function AstInteractiveLabDrawer({
             cursor: 'pointer',
           }}
         >
-          🌡️ Gas Laws (PV=nRT)
+          🌡️ Gas Laws
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('calculus')}
+          style={{
+            flex: 1,
+            padding: '8px 10px',
+            background: activeTab === 'calculus' ? 'rgba(56, 189, 248, 0.15)' : 'none',
+            border: 'none',
+            borderBottom: activeTab === 'calculus' ? '2px solid #38bdf8' : '2px solid transparent',
+            color: activeTab === 'calculus' ? '#38bdf8' : '#94a3b8',
+            fontSize: '0.74rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          📐 Calculus (dy/dx)
         </button>
       </div>
 
       {/* Body content based on active tab and preset */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-        {activeTab === 'kinetic-gas' ? (
+        {activeTab === 'calculus' ? (
+          <div>
+            {/* Header Badge */}
+            <div style={{ background: 'rgba(56, 189, 248, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+              <div style={{ fontSize: '0.76rem', color: '#7dd3fc', fontWeight: 700, textTransform: 'uppercase' }}>
+                Differentiation & Integration:
+              </div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#38bdf8', margin: '2px 0' }}>
+                dy/dx = lim(&Delta;y/&Delta;x) &bull; &int; f(x) dx
+              </div>
+              <div style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>
+                Instantaneous tangent gradients, stationary turning points, and continuous Riemann area integration.
+              </div>
+            </div>
+
+            {/* Curve Preset Selector */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px', color: '#cbd5e1' }}>
+                Function Curve Presets:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
+                {CALCULUS_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      setCalcPresetId(p.id);
+                      setCalcX0(p.defaultX0);
+                      setCalcA(p.defaultA);
+                      setCalcB(p.defaultB);
+                      if (typeof window !== 'undefined') {
+                        window.postMessage({ type: 'AUDIO_PLAY_CLICK', freq: 660 }, '*');
+                      }
+                    }}
+                    style={{
+                      padding: '8px',
+                      background: calcPresetId === p.id ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.06)',
+                      border: calcPresetId === p.id ? '1px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '6px',
+                      color: calcPresetId === p.id ? '#f8fafc' : '#94a3b8',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.76rem', fontWeight: 800 }}>{p.name}</div>
+                    <div style={{ fontSize: '0.64rem', color: '#38bdf8', fontFamily: 'monospace' }}>{p.latex}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tangent Probe Slider x0 */}
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px' }}>
+                <span>Tangent Probe (x₀):</span>
+                <span style={{ color: '#f43f5e' }}>x₀ = {calcX0.toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                min="-4.0"
+                max="4.0"
+                step="0.1"
+                value={calcX0}
+                onChange={(e) => setCalcX0(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#f43f5e' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#94a3b8', marginTop: '2px' }}>
+                <span>-4.0 (Left Domain)</span>
+                <span>+4.0 (Right Domain)</span>
+              </div>
+            </div>
+
+            {/* Definite Integral Bounds a and b */}
+            <div style={{ marginBottom: '14px', background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#86efac', marginBottom: '6px' }}>
+                Integral Boundaries [a, b]:
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#cbd5e1' }}>
+                  <span>Lower Limit (a):</span>
+                  <span style={{ color: '#86efac', fontWeight: 700 }}>a = {calcA.toFixed(1)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="-4"
+                  max="4"
+                  step="0.2"
+                  value={calcA}
+                  onChange={(e) => setCalcA(Math.min(calcB - 0.2, Number(e.target.value)))}
+                  style={{ width: '100%', accentColor: '#22c55e' }}
+                />
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#cbd5e1' }}>
+                  <span>Upper Limit (b):</span>
+                  <span style={{ color: '#86efac', fontWeight: 700 }}>b = {calcB.toFixed(1)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="-4"
+                  max="4"
+                  step="0.2"
+                  value={calcB}
+                  onChange={(e) => setCalcB(Math.max(calcA + 0.2, Number(e.target.value)))}
+                  style={{ width: '100%', accentColor: '#22c55e' }}
+                />
+              </div>
+            </div>
+
+            {/* Real-time Calculus Analysis */}
+            {(() => {
+              const activePreset = CALCULUS_PRESETS.find((p) => p.id === calcPresetId) || CALCULUS_PRESETS[0];
+              const plotter = new CalculusPlotter();
+              const tangent = plotter.calculateTangent(activePreset.fn, calcX0);
+              const integral = plotter.calculateDefiniteIntegral(activePreset.fn, calcA, calcB);
+              const isStationary = Math.abs(tangent.slope) < 0.15;
+
+              return (
+                <div style={{ background: 'rgba(0,0,0,0.35)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.74rem', color: '#94a3b8', fontWeight: 800 }}>ANALYTIC READOUT:</span>
+                    <span style={{ fontSize: '0.74rem', color: '#38bdf8', fontWeight: 900 }}>{activePreset.derivativeStr}</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ background: 'rgba(244, 63, 94, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#fda4af' }}>Gradient (dy/dx)</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f43f5e' }}>
+                        {tangent.slope >= 0 ? '+' : ''}{tangent.slope.toFixed(2)}
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', color: '#86efac' }}>Area &int;[a,b] f(x)dx</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#22c55e' }}>
+                        {integral.area.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isStationary && (
+                    <div style={{ padding: '6px 8px', borderRadius: '4px', background: 'rgba(234, 179, 8, 0.2)', color: '#fef08a', fontSize: '0.72rem', fontWeight: 800, textAlign: 'center', marginBottom: '8px' }}>
+                      ⚡ Stationary Turning Point: dy/dx &asymp; 0 (Slope is horizontal)
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: '0.72rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    <div>Tangent Angle: <strong style={{ color: '#f43f5e' }}>{tangent.angleDeg.toFixed(1)}&deg;</strong></div>
+                    <div>Evaluated Height f(x₀): <strong style={{ color: '#38bdf8' }}>{tangent.y0.toFixed(2)}</strong></div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        ) : activeTab === 'kinetic-gas' ? (
           <div>
             {/* Header Badge */}
             <div style={{ background: 'rgba(239, 68, 68, 0.15)', padding: '10px', borderRadius: '8px', marginBottom: '14px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>

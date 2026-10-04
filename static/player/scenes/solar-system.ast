@@ -1,5 +1,19 @@
 (:scene :id "solar-system" :title "Solar System: Heliocentric Planetary Motion" :stage "KS3 SCIENCE" :duration 14.0
   (:camera :distance 450 :pitch 28 :yaw "t * 60" :fov 55)
+  (:vars (
+    (:var :name "warpSpeed" :val 1.0 :min 0.2 :max 5.0 :step 0.2 :label "Time Dilation Warp")
+    (:var :name "showOrbits" :val true :label "Display Orbital Rings")
+  ))
+  (:inputs (
+    (:slider :var "warpSpeed" :label "Orbital Speed Multiplier" :min 0.2 :max 5.0 :step 0.2)
+    (:switch :var "showOrbits" :label "Orbital Paths")
+  ))
+  (:computed (
+    (:name "earthDays" :expr "Math.round(vars.warpSpeed * 365)")
+  ))
+  (:gestures (
+    (:draggable :target "#sun-body" :axis "xy" :min -30 :max 30)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.33 :en "At the center sits our Sun. Watch how Mercury speeds around much faster than Earth." :es "En el centro se encuentra el Sol. Observa cómo Mercurio gira mucho más rápido que la Tierra.")
     (:start 0.33 :end 0.66 :en "Kepler's Law: The closer a planet is to the Sun, the faster it travels in its orbit." :es "Ley de Kepler: Cuanto más cerca está un planeta del Sol, más rápido orbita.")
@@ -10,6 +24,13 @@
     (:t 0.33 :title "Planetary Orbits" :rule "Inner planets orbit faster than outer planets (Kepler's 3rd Law).")
     (:t 0.66 :title "Earth Axial Tilt" :rule "Earth's 23.5° tilt causes seasonal changes, not distance from the Sun!")
     (:t 1.00 :title "Harmonic Alignment" :rule "Deterministic orbital resonance across the solar system.")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.40
+      :prompt "According to Kepler's Third Law (T² ∝ r³), which planet takes the least time to complete one full revolution around the Sun?"
+      :options ("Mercury (closest orbital radius)" "Earth" "Jupiter" "Saturn")
+      :answer 0
+      :explanation "Planets closest to the Sun experience the strongest gravitational pull and have the smallest orbital circumference, resulting in the shortest orbital period (Mercury orbits in just 88 Earth days).")
   ))
   (:bindings (
     (:target "#sun-body" :type "3d-node" :x "0" :y "0" :z "0" :base-r 26 :depth-fog false)

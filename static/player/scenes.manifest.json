@@ -1,7 +1,7 @@
 {
-  "version": "2.3.0",
-  "generatedAt": "2026-10-03T17:10:00.000Z",
-  "totalScenes": 16,
+  "version": "2.4.0",
+  "generatedAt": "2026-10-04T07:05:00.000Z",
+  "totalScenes": 17,
   "scenes": [
     {
       "id": "church-tour",
@@ -210,6 +210,19 @@
       "keyframeCount": 4,
       "subtitleCount": 4,
       "bindingsCount": 11
+    },
+    {
+      "id": "calculus-curves",
+      "title": "Calculus: Tangent Slopes & Definite Integrals (dy/dx & ∫f(x)dx)",
+      "stage": "GCSE & A-LEVEL MATHS",
+      "duration": 14,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/calculus-curves.svg",
+      "astFile": "scenes/calculus-curves.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 4,
+      "bindingsCount": 5
     }
   ]
 }

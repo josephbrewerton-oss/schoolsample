@@ -1,4 +1,21 @@
 (:scene :id "pythagoras" :title "Pythagoras Theorem: Area Conservation" :stage "KS3 GEOMETRY" :duration 11.0
+  (:vars (
+    (:var :name "sideA" :val 3 :min 1 :max 8 :step 1 :unit "units" :label "Leg a")
+    (:var :name "sideB" :val 4 :min 1 :max 8 :step 1 :unit "units" :label "Leg b")
+  ))
+  (:inputs (
+    (:slider :var "sideA" :label "Triangle Leg a" :min 1 :max 8 :step 1)
+    (:slider :var "sideB" :label "Triangle Leg b" :min 1 :max 8 :step 1)
+  ))
+  (:computed (
+    (:name "hypotenuse" :expr "Math.sqrt(vars.sideA * vars.sideA + vars.sideB * vars.sideB).toFixed(2)")
+    (:name "areaA" :expr "vars.sideA * vars.sideA")
+    (:name "areaB" :expr "vars.sideB * vars.sideB")
+    (:name "areaC" :expr "vars.sideA * vars.sideA + vars.sideB * vars.sideB")
+  ))
+  (:gestures (
+    (:draggable :target "#pyth-rect-a" :axis "x" :min 200 :max 380)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.35 :en "In any right-angled triangle, squares formed on the legs equal the square on the hypotenuse." :es "En un triángulo rectángulo, los cuadrados sobre los catetos equivalen al cuadrado de la hipotenusa.")
     (:start 0.35 :end 0.70 :en "Side 'a' produces a square of 9 units. Side 'b' produces a square of 16 units." :es "El lado 'a' produce un cuadrado de 9 unidades. El lado 'b' produce un cuadrado de 16 unidades.")
@@ -9,6 +26,13 @@
     (:t 0.35 :title "Step 2: Square a² and b²" :rule "Square of side 3 has area 9; square of side 4 has area 16.")
     (:t 0.70 :title "Step 3: Vector Area Sum" :rule "Total area = 9 + 16 = 25 square units.")
     (:t 1.00 :title "Step 4: Hypotenuse Square c²" :rule "c² = 25 ➔ c = √25 = 5. Q.E.D.")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.68
+      :prompt "If triangle legs have lengths a = 3 and b = 4, what is the exact area of the square on hypotenuse c?"
+      :options ("25 square units (3² + 4² = 9 + 16)" "7 square units (3 + 4)" "12 square units (3 × 4)" "50 square units")
+      :answer 0
+      :explanation "Pythagorean Theorem: a² + b² = c². Area of square a is 3² = 9, area of square b is 4² = 16. Sum = 25 units².")
   ))
   (:bindings (
     (:target "#pyth-rect-b" :attr "height" :expr "120 * Math.min(1, t / 0.50)")

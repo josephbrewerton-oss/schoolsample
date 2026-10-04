@@ -51,6 +51,7 @@ export type VectorPresetType =
   | 'fish-tank'
   | 'math-fishing'
   | 'kinetic-gas'
+  | 'calculus-curves'
   | string;
 
 export interface AstVectorMediaPlayerProps {
@@ -84,6 +85,7 @@ export interface AstVectorMediaPlayerHandle {
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
+  { id: 'calculus-curves', label: '📐 Calculus & Curves: Tangent Slopes & Integrals (dy/dx & ∫f(x)dx)', stage: 'GCSE & A-LEVEL MATHS' },
   { id: 'kinetic-gas', label: '🌡️ Kinetic Gas Theory & Boyle\'s Law (PV = nRT)', stage: 'KS3/KS4 PHYSICS & CHEMISTRY' },
   { id: 'algebra-balance', label: '⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)', stage: 'KS2/KS3 MATHS' },
   { id: 'electric-circuits', label: '💡 Electrical Circuits: Ohm\'s Law & Electron Physics (V = I × R)', stage: 'KS2/KS3 PHYSICS' },
@@ -159,6 +161,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [showConceptTrail, setShowConceptTrail] = useState(true);
   const [comparisonPreset, setComparisonPreset] = useState<string | null>(null);
   const [showChalkboard, setShowChalkboard] = useState(false);
+  const [inStagePenActive, setInStagePenActive] = useState(false);
+  const [inStageXRayActive, setInStageXRayActive] = useState(false);
   const [showLabDrawer, setShowLabDrawer] = useState(false);
   const [showCartridgeMenu, setShowCartridgeMenu] = useState(false);
   const relatedConcepts = getRelatedConcepts(selectedPreset);
@@ -899,6 +903,58 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             title="Toggle Live Chalkboard & Annotation Layer"
           >
             <span>✏️ Chalkboard {showChalkboard ? 'ON' : ''}</span>
+          </button>
+
+          {/* Smartboard Vector Ink Pen Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !inStagePenActive;
+              setInStagePenActive(next);
+              postToPlayer({ type: 'TOGGLE_PEN', enabled: next });
+            }}
+            className={`stj-btn ${inStagePenActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: inStagePenActive ? '#eab308' : undefined,
+              borderColor: inStagePenActive ? '#ca8a04' : undefined,
+              color: inStagePenActive ? '#090d16' : undefined,
+            }}
+            title="Toggle Direct In-Stage Whiteboard Pen (Smartboard / Stylus drawing)"
+          >
+            <span>✒️ Smartboard Pen {inStagePenActive ? 'ON' : ''}</span>
+          </button>
+
+          {/* Pedagogical X-Ray Inspection Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = !inStageXRayActive;
+              setInStageXRayActive(next);
+              postToPlayer({ type: 'TOGGLE_XRAY', enabled: next });
+            }}
+            className={`stj-btn ${inStageXRayActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: inStageXRayActive ? '#38bdf8' : undefined,
+              borderColor: inStageXRayActive ? '#0284c7' : undefined,
+              color: inStageXRayActive ? '#090d16' : undefined,
+            }}
+            title="Toggle In-Stage Pedagogical X-Ray Inspection Tooltips"
+          >
+            <span>🔍 X-Ray {inStageXRayActive ? 'ON' : ''}</span>
           </button>
 
           {/* Reactive Invariant Lab Button */}
