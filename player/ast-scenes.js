@@ -520,6 +520,9 @@
           activeBtn.setAttribute('stroke', '#38bdf8');
           const actTxt = activeBtn.nextElementSibling;
           if (actTxt) actTxt.setAttribute('fill', '#090d16');
+          if (window.AST_ENGINE && typeof window.AST_ENGINE.setSpeed === 'function') {
+            window.AST_ENGINE.setSpeed(spd);
+          }
         };
 
         elements.spd025.onclick = (e) => { e.stopPropagation(); setSpeed(0.25, elements.spd025); };
@@ -533,6 +536,10 @@
           elements.isPaused = !elements.isPaused;
           elements.playPauseIcon.textContent = elements.isPaused ? '▶' : '⏸';
           elements.btnPlayPause.setAttribute('fill', elements.isPaused ? '#3b82f6' : '#10b981');
+          if (window.AST_ENGINE) {
+            if (elements.isPaused) window.AST_ENGINE.pause();
+            else window.AST_ENGINE.play();
+          }
         };
 
         // Step Day Buttons
@@ -559,6 +566,9 @@
         elements.btnReset.onclick = (e) => {
           e.stopPropagation();
           elements.simTimeYears = 0;
+          if (window.AST_ENGINE && typeof window.AST_ENGINE.seek === 'function') {
+            window.AST_ENGINE.seek(0);
+          }
           defaultPlanets.forEach((p, idx) => {
             elements.planets[idx].orbR = p.orbR;
             elements.planets[idx].orbitCircle.setAttribute('r', p.orbR);

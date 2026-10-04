@@ -20,6 +20,10 @@
         stageSvg: document.getElementById('stage-svg'),
         sceneRoot: document.getElementById('scene-root'),
         subtitleOverlay: document.getElementById('subtitle-overlay'),
+        ambientTimeline: document.getElementById('ambient-timeline'),
+        ambientTimelineFill: document.getElementById('ambient-timeline-fill'),
+        ambientTimelineThumb: document.getElementById('ambient-timeline-thumb'),
+        stagePlayIndicator: document.getElementById('stage-play-indicator'),
         timelineFill: document.getElementById('timeline-fill'),
         timelineThumb: document.getElementById('timeline-thumb'),
         timelineTrack: document.getElementById('timeline-track'),
@@ -43,6 +47,8 @@
         voiceCmdOverlay: document.getElementById('voice-cmd-overlay'),
         voiceCmdText: document.getElementById('voice-cmd-text'),
         btnTheme: document.getElementById('btn-theme'),
+        btnSuiteMode: document.getElementById('btn-suite-mode'),
+        playerFooter: document.querySelector('footer'),
         btnPip: document.getElementById('btn-pip'),
         btnFullscreen: document.getElementById('btn-fullscreen'),
         btnPrint: document.getElementById('btn-print'),
@@ -762,8 +768,14 @@
         }
       }
 
-      // Scrubber and Readout
+      // Ambient Hairline and Legacy Scrubber
       const pct = (this.engine.progress * 100).toFixed(1);
+      if (this.elements.ambientTimelineFill) {
+        this.elements.ambientTimelineFill.style.width = `${pct}%`;
+      }
+      if (this.elements.ambientTimelineThumb) {
+        this.elements.ambientTimelineThumb.style.left = `${pct}%`;
+      }
       if (this.elements.timelineFill) {
         this.elements.timelineFill.style.width = `${pct}%`;
       }
@@ -799,6 +811,20 @@
       this.updateView();
     }
 
+    showPlayPauseRipple(isPlaying) {
+      if (!this.elements.stagePlayIndicator) return;
+      const ind = this.elements.stagePlayIndicator;
+      ind.textContent = isPlaying ? '▶' : '⏸';
+      ind.classList.remove('hidden');
+      ind.classList.remove('animate-ripple');
+      void ind.offsetWidth; // re-flow
+      ind.classList.add('animate-ripple');
+      setTimeout(() => {
+        ind.classList.add('hidden');
+        ind.classList.remove('animate-ripple');
+      }, 650);
+    }
+
     bindDOMEvents() {
       const el = this.elements;
 
@@ -815,6 +841,46 @@
           this.isDragging = true;
           this.handleScrubberClick(e);
         }, { passive: true });
+      }
+
+      // Ambient Hairline Timeline Scrubbing
+      if (el.ambientTimeline) {
+        const handleAmbientScrub = (e) => {
+          const rect = el.ambientTimeline.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clickX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+          const targetT = clickX / rect.width;
+          this.engine.seek(targetT);
+          this.updateView();
+        };
+
+        el.ambientTimeline.addEventListener('click', (e) => handleAmbientScrub(e));
+
+        el.ambientTimeline.addEventListener('mousedown', (e) => {
+          this.isDragging = true;
+          handleAmbientScrub(e);
+        });
+
+        el.ambientTimeline.addEventListener('touchstart', (e) => {
+          this.isDragging = true;
+          handleAmbientScrub(e);
+        }, { passive: true });
+      }
+
+      // In-Stage Tactile Click for Play / Pause
+      if (el.playerStage) {
+        el.playerStage.addEventListener('click', (e) => {
+          if (e.target.closest('button, input, select, textarea, .interactive-card, .quest-drawer, .obs-drawer, .dev-inspector-drawer, .dev-studio-drawer, .ambient-timeline, [data-draggable="true"], [data-target-t]')) {
+            return;
+          }
+          if (window.__astGestures && window.__astGestures.isDragging) return;
+          const playing = this.engine.togglePlay();
+          this.showPlayPauseRipple(playing);
+          if (el.btnPlay) {
+            el.btnPlay.textContent = playing ? '⏸ Pause' : '▶ Play';
+            el.btnPlay.classList.toggle('active', playing);
+          }
+        });
       }
 
       window.addEventListener('mousemove', (e) => {
@@ -1281,6 +1347,14 @@
             this.playChime(587.33, 'triangle');
             this.update3DStatus();
           });
+        });
+      }
+
+      // Interactive Suite Mode Button (Zero-Chrome Edge-to-Edge Instrument)
+      if (el.btnSuiteMode) {
+        el.btnSuiteMode.addEventListener('click', () => {
+          const isSuite = this.displayConfig && this.displayConfig.mode === 'suite';
+          this.setDisplayMode(isSuite ? 'classroom' : 'suite');
         });
       }
 
@@ -1917,19 +1991,23 @@
         return profile;
       }
 
-      if (urlMode && ['classroom', 'student', 'broadcast', 'developer', 'embed'].includes(urlMode)) {
+      if (urlMode && ['suite', 'classroom', 'student', 'broadcast', 'developer', 'embed'].includes(urlMode)) {
         return this.getPresetProfile(urlMode);
       }
-      if (urlParams.get('clean') === '1') {
-        return this.getPresetProfile('classroom');
+      if (urlParams.get('clean') === '1' || urlParams.get('suite') === '1') {
+        return this.getPresetProfile('suite');
       }
+
+      // Check if current active scene is an interactive simulation apparatus
+      const activePreset = this.engine && (this.engine.activePresetId || this.engine.preset);
+      const isInteractiveSimulation = ['solar-system', 'water-cycle', 'pythagoras', 'kinetic-gas', 'calculus-curves', 'electric-circuits', 'math-fishing'].includes(activePreset);
 
       try {
         const raw = localStorage.getItem('stj_player_display_config');
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && typeof parsed === 'object') {
-            const base = parsed.mode ? this.getPresetProfile(parsed.mode) : this.getPresetProfile('classroom');
+            const base = parsed.mode ? this.getPresetProfile(parsed.mode) : this.getPresetProfile(isInteractiveSimulation ? 'suite' : 'classroom');
             return Object.assign({}, base, parsed);
           }
         }
@@ -1937,7 +2015,7 @@
         console.warn('[AST-PlayerUI] Error reading saved display config:', err);
       }
 
-      return this.getPresetProfile('classroom');
+      return this.getPresetProfile(isInteractiveSimulation ? 'suite' : 'classroom');
     }
 
     getPresetProfile(mode) {
@@ -1969,7 +2047,17 @@
         showPhysicsControls: true,
       };
 
-      if (mode === 'embed' || mode === 'embedded' || mode === 'minimal') {
+      if (mode === 'suite' || mode === 'interactive-suite') {
+        base.mode = 'suite';
+        base.showTimelineScrubber = false;
+        base.showPlaybackControls = false;
+        base.showSpeedSelector = false;
+        base.showSubtitles = false;
+        base.showLoopToggle = false;
+        base.showVolumeControl = false;
+        base.showVoiceCommands = false;
+        base.showPhysicsControls = false;
+      } else if (mode === 'embed' || mode === 'embedded' || mode === 'minimal') {
         base.showPresetSelector = false;
         base.showPrintWorksheet = false;
         base.showStandaloneLink = false;
@@ -2053,6 +2141,17 @@
       if (el.btnFullscreen) el.btnFullscreen.style.display = c.showFullscreen !== false ? '' : 'none';
 
       // Bottom playback bar & overlays
+      const isSuite = c.mode === 'suite' || (!c.showTimelineScrubber && !c.showPlaybackControls);
+      if (isSuite) {
+        document.body.classList.add('interactive-suite-mode');
+        if (el.playerFooter) el.playerFooter.style.display = 'none';
+        if (el.btnSuiteMode) el.btnSuiteMode.classList.add('active');
+      } else {
+        document.body.classList.remove('interactive-suite-mode');
+        if (el.playerFooter) el.playerFooter.style.display = '';
+        if (el.btnSuiteMode) el.btnSuiteMode.classList.remove('active');
+      }
+
       if (el.scrubberBox) el.scrubberBox.style.display = c.showTimelineScrubber !== false ? '' : 'none';
       if (el.btnPlay) el.btnPlay.style.display = c.showPlaybackControls !== false ? '' : 'none';
       if (el.btnPrev) el.btnPrev.style.display = c.showPlaybackControls !== false ? '' : 'none';
