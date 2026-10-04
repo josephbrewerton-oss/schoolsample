@@ -1,4 +1,18 @@
 (:scene :id "kinetic-gas" :title "Kinetic Gas Theory & Boyle's Law" :stage "KS3/KS4 PHYSICS & CHEMISTRY" :duration 14.0
+  (:vars (
+    (:var :name "volume" :val 1.0 :min 0.35 :max 1.0 :step 0.01 :unit "m³" :label "Chamber Volume")
+    (:var :name "temp" :val 300 :min 90 :max 600 :step 10 :unit "K" :label "Gas Temperature")
+  ))
+  (:inputs (
+    (:slider :var "volume" :label "Cylinder Volume (V)" :min 0.35 :max 1.0 :step 0.01)
+    (:slider :var "temp" :label "Thermal Temperature (T)" :min 90 :max 600 :step 10)
+  ))
+  (:computed (
+    (:name "pressure" :expr "(101.3 / vars.volume * (vars.temp / 300)).toFixed(1)")
+  ))
+  (:gestures (
+    (:draggable :target "#piston-assembly" :axis "x" :min 200 :max 450)
+  ))
   (:subtitles (
     (:start 0.00 :end 3.50 :en "Kinetic Molecular Theory explains that gas pressure arises from billions of elastic collisions against the container walls." :es "La teoría cinética explica que la presión de un gas surge de millones de colisiones elásticas contra las paredes.")
     (:start 3.50 :end 7.20 :en "Boyle's Law states that at constant temperature, halving the volume doubles collision frequency, doubling pressure." :es "La ley de Boyle establece que a temperatura constante, reducir el volumen a la mitad duplica las colisiones y la presión.")
@@ -11,13 +25,20 @@
     (:t 0.70 :title "3. Thermal Heat Wave (Gay-Lussac)" :rule "Temperature spikes to 600K -> v_rms increases by √2 -> P reaches 405.2 kPa")
     (:t 1.00 :title "4. Phase Transition to Solid" :rule "Cryogenic cooling locks particles into vibrating crystal lattice sites")
   ))
+  (:interactive (
+    (:checkpoint :t 0.34
+      :prompt "According to Boyle's Law, what happens to the gas pressure if the volume is halved at constant temperature?"
+      :options ("Pressure doubles (P ∝ 1/V)" "Pressure drops to zero" "Temperature decreases" "Volume increases")
+      :answer 0
+      :explanation "Boyle's Law dictates P1 × V1 = P2 × V2. Halving distance halves transit time, doubling the collision rate on container walls.")
+  ))
   (:bindings (
-    (:target "#piston-assembly" :attr "transform" :expr "'translate(' + (t < 0.25 ? 430 : (t < 0.60 ? (430 - 180 * Math.min(1, (t - 0.25) / 0.25)) : (t < 0.85 ? 250 : (250 + 180 * ((t - 0.85) / 0.15))))) + ', 0)'")
-    (:target "#gauge-needle" :attr "transform" :expr "'rotate(' + (-45 + (t < 0.25 ? 0 : (t < 0.60 ? 70 * ((t - 0.25) / 0.25) : (t < 0.85 ? 120 : (120 - 100 * ((t - 0.85) / 0.15)))))) + ' 0 0)'")
-    (:target "#gauge-value" :attr "textContent" :expr "(101.3 + (t < 0.25 ? 0 : (t < 0.60 ? 101.3 * ((t - 0.25) / 0.25) : (t < 0.85 ? 202.6 : 0)))).toFixed(1) + ' kPa'")
+    (:target "#piston-assembly" :attr "transform" :expr "'translate(' + (vars.volume !== undefined && vars.volume !== 1.0 ? (250 + 180 * (vars.volume - 0.35) / 0.65) : (t < 0.25 ? 430 : (t < 0.60 ? (430 - 180 * Math.min(1, (t - 0.25) / 0.25)) : (t < 0.85 ? 250 : (250 + 180 * ((t - 0.85) / 0.15)))))) + ', 0)'")
+    (:target "#gauge-needle" :attr "transform" :expr "'rotate(' + (vars.volume !== undefined && vars.volume !== 1.0 ? (-45 + (1.0 - vars.volume) * 140) : (-45 + (t < 0.25 ? 0 : (t < 0.60 ? 70 * ((t - 0.25) / 0.25) : (t < 0.85 ? 120 : (120 - 100 * ((t - 0.85) / 0.15))))))) + ' 0 0)'")
+    (:target "#gauge-value" :attr "textContent" :expr "(vars.pressure !== undefined && vars.volume !== 1.0 ? vars.pressure : (101.3 + (t < 0.25 ? 0 : (t < 0.60 ? 101.3 * ((t - 0.25) / 0.25) : (t < 0.85 ? 202.6 : 0)))).toFixed(1)) + ' kPa'")
     (:target "#thermo-fluid" :attr "height" :expr "t > 0.60 && t < 0.85 ? 150 : (t >= 0.85 ? 40 : 116)")
     (:target "#thermo-fluid" :attr "y" :expr "t > 0.60 && t < 0.85 ? 30 : (t >= 0.85 ? 140 : 64)")
-    (:target "#thermo-value" :attr "textContent" :expr "t > 0.60 && t < 0.85 ? '600 K' : (t >= 0.85 ? '90 K' : '300 K')")
+    (:target "#thermo-value" :attr "textContent" :expr "vars.temp && vars.temp !== 300 ? vars.temp + ' K' : (t > 0.60 && t < 0.85 ? '600 K' : (t >= 0.85 ? '90 K' : '300 K'))")
     (:target "#pv-equation" :attr "textContent" :expr "t < 0.60 ? 'P × V = k  •  (P ∝ 1 / V verified)' : (t < 0.85 ? 'P / T = k  •  (Gay-Lussac Isochoric Heating)' : 'Phase Change  •  Solid Lattice Formed')")
     (:target "#ind-gas" :attr "fill" :expr "t < 0.85 ? '#2563eb' : '#1e293b'")
     (:target "#ind-solid" :attr "fill" :expr "t >= 0.85 ? '#22c55e' : '#1e293b'")

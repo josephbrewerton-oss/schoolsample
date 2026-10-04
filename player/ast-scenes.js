@@ -2429,6 +2429,368 @@
       render(t) {
         return `<rect width="800" height="480" fill="#090d16"/><text x="400" y="240" fill="#facc15" font-size="20" font-weight="bold" text-anchor="middle">Electrical Circuits &amp; Ohm's Law</text>`;
       }
+    },
+
+    'kinetic-gas': {
+      id: 'kinetic-gas',
+      stage: 'KS3/KS4 PHYSICS & CHEMISTRY',
+      title: '🌡️ Kinetic Gas Theory & Boyle\'s Law (PV = nRT)',
+      duration: 14.0,
+      svgFile: 'scenes/kinetic-gas.svg',
+      astFile: 'scenes/kinetic-gas.ast',
+      keyframes: [
+        { t: 0.00, title: 'Equilibrium Gas State', rule: 'V = 100%, T = 300K -> P = 101.3 kPa baseline atmospheric pressure.' },
+        { t: 0.35, title: 'Boyle\'s Compression', rule: 'Piston compresses V to 50% -> Collision frequency doubles -> P rises to 202.6 kPa.' },
+        { t: 0.70, title: 'Gay-Lussac Heating', rule: 'Temperature spikes to 600K -> v_rms increases -> Harder wall impacts push P to 405.2 kPa.' },
+        { t: 1.00, title: 'Solid Phase Condensation', rule: 'Cryogenic cooling locks particles into vibrating crystal lattice sites.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 3.5, en: "Kinetic Molecular Theory explains that gas pressure arises from billions of elastic collisions against the walls.", es: "La teoría cinética explica que la presión de un gas surge de millones de colisiones elásticas contra las paredes." },
+        { start: 3.5, end: 7.2, en: "Boyle's Law states that at constant temperature, halving the volume doubles collision frequency, doubling pressure.", es: "La ley de Boyle establece que a temperatura constante, reducir el volumen a la mitad duplica las colisiones y la presión." },
+        { start: 7.2, end: 10.8, en: "Gay-Lussac's Law shows heating gas increases particle speed (v_rms), producing harder, more frequent impacts.", es: "La ley de Gay-Lussac demuestra que calentar el gas aumenta la velocidad de las partículas, produciendo impactos más fuertes." },
+        { start: 10.8, end: 14.0, en: "When thermal energy drops, intermolecular bonds overcome kinetic chaos, condensing gas into crystal solid.", es: "Al bajar la energía térmica, los enlaces intermoleculares superan el caos cinético, condensando el gas en sólido." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.34,
+            title: 'Boyle\'s Law Invariant',
+            prompt: 'At constant temperature, what happens to the gas pressure if the piston compresses the chamber to half its volume?',
+            options: [
+              'Pressure doubles because wall collisions occur twice as frequently (P ∝ 1/V)',
+              'Pressure is halved because there is less space',
+              'Pressure remains unchanged because temperature is constant'
+            ],
+            answer: 0,
+            explanation: 'Boyle\'s Law dictates that P1 × V1 = P2 × V2. Halving the volume halves the distance between walls, doubling collision frequency and doubling measured pressure.'
+          },
+          {
+            t: 0.69,
+            title: 'Gay-Lussac\'s Law',
+            prompt: 'Why does heating a sealed, rigid container increase internal gas pressure?',
+            options: [
+              'Particles gain kinetic energy, moving faster (v_rms) and exerting greater momentum impulses on walls',
+              'Particles expand in size and push against each other',
+              'The container walls shrink when heated'
+            ],
+            answer: 0,
+            explanation: 'Thermal energy directly scales the root-mean-square velocity v_rms = √(3kT/m). Particles strike walls with greater velocity and higher frequency.'
+          }
+        ]
+      },
+      mount(container) {
+        container.innerHTML = `
+          <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16;">
+            <defs>
+              <linearGradient id="kgPistonShaft" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#64748b"/>
+                <stop offset="50%" stop-color="#94a3b8"/>
+                <stop offset="100%" stop-color="#475569"/>
+              </linearGradient>
+              <linearGradient id="kgMercuryTube" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="50%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#ef4444"/>
+              </linearGradient>
+            </defs>
+            <rect width="800" height="480" fill="#090d16"/>
+            <!-- Title -->
+            <text x="400" y="38" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle">Kinetic Gas Theory &amp; Thermodynamics (PV = nRT)</text>
+            <text x="400" y="58" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Elastic Wall Collisions, Boyle's Law &amp; Thermal Molecular Chaos</text>
+
+            <!-- Chamber Cylinder -->
+            <rect x="40" y="80" width="460" height="300" rx="16" fill="#0b1120" stroke="#334155" stroke-width="6"/>
+
+            <!-- Grid Lines inside chamber -->
+            <g opacity="0.12" stroke="#38bdf8" stroke-width="1">
+              <line x1="40" y1="140" x2="500" y2="140"/><line x1="40" y1="200" x2="500" y2="200"/><line x1="40" y1="260" x2="500" y2="260"/><line x1="40" y1="320" x2="500" y2="320"/>
+              <line x1="120" y1="80" x2="120" y2="380"/><line x1="200" y1="80" x2="200" y2="380"/><line x1="280" y1="80" x2="280" y2="380"/><line x1="360" y1="80" x2="360" y2="380"/><line x1="440" y1="80" x2="440" y2="380"/>
+            </g>
+
+            <!-- Gas Particles Group -->
+            <g id="kg-particles-group">
+              <circle class="kg-dot" cx="80" cy="140" r="6" fill="#38bdf8"/>
+              <circle class="kg-dot" cx="120" cy="220" r="6" fill="#4ade80"/>
+              <circle class="kg-dot" cx="210" cy="110" r="6" fill="#facc15"/>
+              <circle class="kg-dot" cx="160" cy="300" r="6" fill="#f43f5e"/>
+              <circle class="kg-dot" cx="290" cy="180" r="6" fill="#38bdf8"/>
+              <circle class="kg-dot" cx="240" cy="260" r="6" fill="#4ade80"/>
+              <circle class="kg-dot" cx="340" cy="130" r="6" fill="#facc15"/>
+              <circle class="kg-dot" cx="180" cy="160" r="6" fill="#38bdf8"/>
+              <circle class="kg-dot" cx="320" cy="310" r="6" fill="#4ade80"/>
+              <circle class="kg-dot" cx="100" cy="270" r="6" fill="#f43f5e"/>
+              <circle class="kg-dot" cx="260" cy="340" r="6" fill="#38bdf8"/>
+              <circle class="kg-dot" cx="380" cy="230" r="6" fill="#facc15"/>
+              <circle id="kg-brownian" cx="200" cy="210" r="16" fill="#f59e0b" stroke="#fef3c7" stroke-width="3" opacity="0.9"/>
+            </g>
+
+            <!-- Movable Piston -->
+            <g id="kg-piston" transform="translate(430, 0)">
+              <rect x="0" y="80" width="28" height="300" rx="4" fill="url(#kgPistonShaft)" stroke="#cbd5e1" stroke-width="2"/>
+              <line x1="14" y1="95" x2="14" y2="365" stroke="#334155" stroke-width="4"/>
+              <rect x="28" y="215" width="80" height="30" rx="6" fill="#475569" stroke="#64748b" stroke-width="2"/>
+              <circle cx="100" cy="230" r="14" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+              <text x="14" y="235" fill="#090d16" font-size="11" font-weight="900" text-anchor="middle" transform="rotate(-90 14 235)">PISTON</text>
+            </g>
+
+            <!-- Bourdon Pressure Gauge -->
+            <g transform="translate(630, 160)">
+              <circle cx="0" cy="0" r="64" fill="#0f172a" stroke="#475569" stroke-width="6"/>
+              <circle cx="0" cy="0" r="56" fill="#090d16" stroke="#1e293b" stroke-width="2"/>
+              <path d="M -40 25 A 50 50 0 1 1 40 25" fill="none" stroke="#64748b" stroke-width="3" stroke-dasharray="2 8"/>
+              <g id="kg-gauge-needle" transform="rotate(-45 0 0)">
+                <line x1="0" y1="8" x2="0" y2="-44" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="0" cy="0" r="6" fill="#f8fafc"/>
+              </g>
+              <text x="0" y="24" fill="#94a3b8" font-size="9" font-weight="800" text-anchor="middle">PRESSURE</text>
+              <text id="kg-gauge-val" x="0" y="42" fill="#38bdf8" font-size="14" font-weight="900" text-anchor="middle" font-family="monospace">101.3 kPa</text>
+            </g>
+
+            <!-- Thermometer Cylinder -->
+            <g transform="translate(730, 90)">
+              <rect x="0" y="0" width="22" height="180" rx="11" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+              <rect id="kg-thermo-fluid" x="4" y="60" width="14" height="116" rx="7" fill="url(#kgMercuryTube)"/>
+              <circle cx="11" cy="180" r="16" fill="#ef4444" stroke="#475569" stroke-width="2"/>
+              <text id="kg-thermo-val" x="11" y="215" fill="#fca5a5" font-size="12" font-weight="900" text-anchor="middle" font-family="monospace">300 K</text>
+            </g>
+
+            <!-- State of Matter Indicators -->
+            <g transform="translate(560, 310)">
+              <rect width="210" height="42" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+              <rect id="kg-ind-solid" x="10" y="8" width="58" height="26" rx="4" fill="#1e293b"/>
+              <text x="39" y="24" fill="#64748b" font-size="10" font-weight="900" text-anchor="middle">SOLID</text>
+              <rect id="kg-ind-liquid" x="76" y="8" width="58" height="26" rx="4" fill="#1e293b"/>
+              <text x="105" y="24" fill="#64748b" font-size="10" font-weight="900" text-anchor="middle">LIQUID</text>
+              <rect id="kg-ind-gas" x="142" y="8" width="58" height="26" rx="4" fill="#2563eb"/>
+              <text x="171" y="24" fill="#ffffff" font-size="10" font-weight="900" text-anchor="middle">GAS</text>
+            </g>
+
+            <!-- Bottom Formula Card -->
+            <g transform="translate(40, 400)">
+              <rect width="720" height="58" rx="10" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+              <text x="20" y="22" fill="#86efac" font-size="11" font-weight="800">BOYLE'S LAW INVARIANT (T = CONSTANT):</text>
+              <text id="kg-pv-eq" x="20" y="44" fill="#22c55e" font-size="16" font-weight="900" font-family="monospace">P &times; V = k &nbsp;&bull;&nbsp; (101.3 kPa &times; 100% Volume = 10,130)</text>
+            </g>
+          </svg>
+        `;
+        return {
+          piston: container.querySelector('#kg-piston'),
+          needle: container.querySelector('#kg-gauge-needle'),
+          gaugeVal: container.querySelector('#kg-gauge-val'),
+          thermoFluid: container.querySelector('#kg-thermo-fluid'),
+          thermoVal: container.querySelector('#kg-thermo-val'),
+          pvEq: container.querySelector('#kg-pv-eq'),
+          indSolid: container.querySelector('#kg-ind-solid'),
+          indGas: container.querySelector('#kg-ind-gas'),
+          brownian: container.querySelector('#kg-brownian'),
+          dots: container.querySelectorAll('.kg-dot')
+        };
+      },
+      update(t, el) {
+        if (!el || !el.piston) return;
+        // Piston position
+        const pistonX = t < 0.25 ? 430 : (t < 0.60 ? (430 - 180 * Math.min(1, (t - 0.25) / 0.25)) : (t < 0.85 ? 250 : (250 + 180 * ((t - 0.85) / 0.15))));
+        el.piston.setAttribute('transform', `translate(${pistonX.toFixed(1)}, 0)`);
+
+        // Gauge needle rotation & reading
+        const angle = -45 + (t < 0.25 ? 0 : (t < 0.60 ? 70 * ((t - 0.25) / 0.25) : (t < 0.85 ? 120 : (120 - 100 * ((t - 0.85) / 0.15)))));
+        if (el.needle) el.needle.setAttribute('transform', `rotate(${angle.toFixed(1)} 0 0)`);
+        
+        const pressure = (101.3 + (t < 0.25 ? 0 : (t < 0.60 ? 101.3 * ((t - 0.25) / 0.25) : (t < 0.85 ? 202.6 : 0)))).toFixed(1);
+        if (el.gaugeVal) el.gaugeVal.textContent = `${pressure} kPa`;
+
+        // Thermometer
+        const isHot = t > 0.60 && t < 0.85;
+        const isCold = t >= 0.85;
+        if (el.thermoFluid) {
+          el.thermoFluid.setAttribute('height', isHot ? '150' : (isCold ? '40' : '116'));
+          el.thermoFluid.setAttribute('y', isHot ? '30' : (isCold ? '140' : '64'));
+        }
+        if (el.thermoVal) el.thermoVal.textContent = isHot ? '600 K' : (isCold ? '90 K' : '300 K');
+
+        // State indicator pills
+        if (el.indGas) el.indGas.setAttribute('fill', isCold ? '#1e293b' : '#2563eb');
+        if (el.indSolid) el.indSolid.setAttribute('fill', isCold ? '#22c55e' : '#1e293b');
+
+        // Brownian pollen motion
+        if (el.brownian) {
+          el.brownian.setAttribute('cx', (200 + Math.sin(t * 24) * 25).toFixed(1));
+          el.brownian.setAttribute('cy', (210 + Math.cos(t * 31) * 20).toFixed(1));
+        }
+
+        // Particle jitter
+        if (el.dots) {
+          const speedFactor = isHot ? 2.5 : (isCold ? 0.3 : 1.0);
+          el.dots.forEach((dot, idx) => {
+            const jitterX = Math.sin(t * (10 + idx) * speedFactor) * 8;
+            const jitterY = Math.cos(t * (12 + idx) * speedFactor) * 8;
+            dot.setAttribute('transform', `translate(${jitterX.toFixed(1)}, ${jitterY.toFixed(1)})`);
+          });
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#090d16"/><text x="400" y="240" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">Kinetic Gas Theory &amp; Boyle's Law</text>`;
+      }
+    },
+
+    'calculus-curves': {
+      id: 'calculus-curves',
+      stage: 'GCSE & A-LEVEL MATHS',
+      title: '📐 Calculus: Tangent Slopes & Definite Integrals (dy/dx & ∫)',
+      duration: 14.0,
+      svgFile: 'scenes/calculus-curves.svg',
+      astFile: 'scenes/calculus-curves.ast',
+      keyframes: [
+        { t: 0.00, title: 'Function Graph f(x)', rule: 'Quadratic parabola f(x) = x² - 2x with vertex minimum at (1, -1).' },
+        { t: 0.35, title: 'Tangent Gradient dy/dx', rule: 'Slope probe moves along curve: dy/dx = 2x - 2 evaluates instantaneous rate of change.' },
+        { t: 0.70, title: 'Stationary Turning Point', rule: 'At x = 1, dy/dx = 0 -> Horizontal tangent marks local minimum vertex.' },
+        { t: 1.00, title: 'Definite Integration Area', rule: 'Definite integral ∫[0, 3] (x² - 2x) dx computes net accumulated area.' }
+      ],
+      subtitles: [
+        { start: 0.0, end: 3.5, en: "Calculus reveals how mathematical curves change locally and accumulate globally.", es: "El cálculo revela cómo las curvas matemáticas cambian localmente y se acumulan globalmente." },
+        { start: 3.5, end: 7.2, en: "Differentiation finds the derivative dy/dx, the exact instantaneous gradient of the tangent line.", es: "La diferenciación encuentra la derivada dy/dx, la pendiente instantánea exacta de la recta tangente." },
+        { start: 7.2, end: 10.8, en: "At stationary points where dy/dx = 0, the tangent line is completely horizontal, marking maximums and minimums.", es: "En los puntos estacionarios donde dy/dx = 0, la recta tangente es horizontal, marcando máximos y mínimos." },
+        { start: 10.8, end: 14.0, en: "Integration reverses differentiation, accumulating continuous area under the curve between boundaries a and b.", es: "La integración invierte la diferenciación, acumulando el área continua bajo la curva entre los límites a y b." }
+      ],
+      interactive: {
+        checkpoints: [
+          {
+            t: 0.34,
+            title: 'Derivative Slope Definition',
+            prompt: 'What does the derivative dy/dx evaluate at any specific point on a function curve?',
+            options: [
+              'The exact instantaneous gradient of the tangent line (rate of change)',
+              'The total area between the curve and the x-axis',
+              'The length of the curve from origin to point'
+            ],
+            answer: 0,
+            explanation: 'The derivative dy/dx represents the limit of Δy/Δx as Δx approaches zero, yielding the instantaneous slope of the tangent line at that exact coordinate.'
+          },
+          {
+            t: 0.69,
+            title: 'Stationary Point Condition',
+            prompt: 'When the tangent probe reaches a local minimum or maximum, what is the value of dy/dx?',
+            options: [
+              'dy/dx = 0 (the tangent line is completely horizontal)',
+              'dy/dx = 1 (a 45-degree angle)',
+              'dy/dx is infinite'
+            ],
+            answer: 0,
+            explanation: 'At turning points (local extrema), the curve momentarily stops rising or falling, meaning the rate of change is zero (horizontal tangent line).'
+          }
+        ]
+      },
+      mount(container) {
+        container.innerHTML = `
+          <svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16;">
+            <defs>
+              <linearGradient id="calcGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#38bdf8"/>
+                <stop offset="50%" stop-color="#818cf8"/>
+                <stop offset="100%" stop-color="#c084fc"/>
+              </linearGradient>
+              <linearGradient id="calcAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(34, 197, 94, 0.45)"/>
+                <stop offset="100%" stop-color="rgba(34, 197, 94, 0.08)"/>
+              </linearGradient>
+            </defs>
+            <rect width="800" height="480" fill="#090d16"/>
+            <!-- Title -->
+            <text x="400" y="38" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle">Calculus: Differentiation &amp; Integration</text>
+            <text x="400" y="58" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">Tangent Slope (dy/dx) &amp; Shaded Area Under Curve ∫f(x)dx</text>
+
+            <!-- Coordinate Grid Box -->
+            <g transform="translate(50, 80)">
+              <rect width="500" height="300" rx="12" fill="#0b1120" stroke="#334155" stroke-width="3"/>
+              <!-- Grid Lines -->
+              <g opacity="0.15" stroke="#38bdf8" stroke-width="1">
+                <line x1="50" y1="0" x2="50" y2="300"/><line x1="100" y1="0" x2="100" y2="300"/><line x1="150" y1="0" x2="150" y2="300"/><line x1="200" y1="0" x2="200" y2="300"/>
+                <line x1="250" y1="0" x2="250" y2="300"/><line x1="300" y1="0" x2="300" y2="300"/><line x1="350" y1="0" x2="350" y2="300"/><line x1="400" y1="0" x2="400" y2="300"/><line x1="450" y1="0" x2="450" y2="300"/>
+                <line x1="0" y1="60" x2="500" y2="60"/><line x1="0" y1="120" x2="500" y2="120"/><line x1="0" y1="180" x2="500" y2="180"/><line x1="0" y1="210" x2="500" y2="210"/><line x1="0" y1="240" x2="500" y2="240"/>
+              </g>
+              <!-- Axes -->
+              <line x1="0" y1="210" x2="500" y2="210" stroke="#64748b" stroke-width="2"/>
+              <line x1="250" y1="0" x2="250" y2="300" stroke="#64748b" stroke-width="2"/>
+              <text x="490" y="202" fill="#94a3b8" font-size="12" font-weight="800">x</text>
+              <text x="258" y="16" fill="#94a3b8" font-size="12" font-weight="800">y</text>
+
+              <!-- Shaded Integral Area -->
+              <path id="cc-integral-area" d="M 250 210 L 250 210 Q 325 150 400 90 L 400 210 Z" fill="url(#calcAreaGrad)" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+              <!-- Parabola Curve y = x² - 2x -->
+              <path d="M 50 270 Q 150 240 250 210 T 450 60" fill="none" stroke="url(#calcGrad)" stroke-width="4" stroke-linecap="round"/>
+
+              <!-- Tangent Assembly -->
+              <g id="cc-tangent-assembly" transform="translate(300, 180)">
+                <line id="cc-tangent-line" x1="-90" y1="45" x2="90" y2="-45" stroke="#f43f5e" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="0" cy="0" r="7" fill="#ffffff" stroke="#f43f5e" stroke-width="3"/>
+              </g>
+            </g>
+
+            <!-- Right Instrument Rack -->
+            <g transform="translate(570, 80)">
+              <rect width="190" height="74" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+              <text x="14" y="24" fill="#94a3b8" font-size="10" font-weight="800">FUNCTION f(x):</text>
+              <text x="14" y="48" fill="#38bdf8" font-size="16" font-weight="900" font-family="monospace">f(x) = x² - 2x</text>
+
+              <g transform="translate(0, 86)">
+                <rect width="190" height="96" rx="8" fill="#0f172a" stroke="#f43f5e" stroke-width="1.5"/>
+                <text x="14" y="22" fill="#fda4af" font-size="10" font-weight="800">DERIVATIVE (TANGENT):</text>
+                <text x="14" y="42" fill="#cbd5e1" font-size="12" font-weight="700" font-family="monospace">f'(x) = 2x - 2</text>
+                <text x="14" y="64" fill="#94a3b8" font-size="11" font-weight="700">Slope dy/dx at probe:</text>
+                <text id="cc-slope-val" x="14" y="86" fill="#f43f5e" font-size="18" font-weight="900" font-family="monospace">m = +2.00</text>
+              </g>
+
+              <g transform="translate(0, 194)">
+                <rect width="190" height="106" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+                <text x="14" y="22" fill="#86efac" font-size="10" font-weight="800">DEFINITE INTEGRAL (AREA):</text>
+                <text x="14" y="44" fill="#cbd5e1" font-size="13" font-weight="700" font-family="monospace">Area = ∫ f(x) dx</text>
+                <text x="14" y="72" fill="#94a3b8" font-size="11" font-weight="700">Riemann Sum:</text>
+                <text x="14" y="96" fill="#22c55e" font-size="18" font-weight="900" font-family="monospace">Area = 4.500</text>
+              </g>
+            </g>
+
+            <!-- Bottom Banner -->
+            <g transform="translate(50, 400)">
+              <rect width="710" height="58" rx="10" fill="#0f172a" stroke="#6366f1" stroke-width="1.5"/>
+              <text x="20" y="24" fill="#a5b4fc" font-size="11" font-weight="800">FUNDAMENTAL THEOREM OF CALCULUS:</text>
+              <text id="cc-note" x="20" y="44" fill="#e0e7ff" font-size="13" font-weight="700">Differentiation gives the instantaneous gradient; Integration calculates cumulative area.</text>
+            </g>
+          </svg>
+        `;
+        return {
+          assembly: container.querySelector('#cc-tangent-assembly'),
+          line: container.querySelector('#cc-tangent-line'),
+          slopeVal: container.querySelector('#cc-slope-val'),
+          area: container.querySelector('#cc-integral-area'),
+          note: container.querySelector('#cc-note')
+        };
+      },
+      update(t, el) {
+        if (!el || !el.assembly) return;
+        const interp = Math.min(1, t / 0.85);
+        const posX = 150 + 200 * interp;
+        const mathX = (posX - 250) / 50;
+        const mathY = mathX * mathX - 2 * mathX;
+        const posY = 210 - mathY * 25;
+
+        el.assembly.setAttribute('transform', `translate(${posX.toFixed(1)}, ${posY.toFixed(1)})`);
+
+        const slope = 2 * mathX - 2;
+        const angle = -Math.atan(slope) * 180 / Math.PI;
+        if (el.line) el.line.setAttribute('transform', `rotate(${angle.toFixed(1)})`);
+
+        if (el.slopeVal) {
+          el.slopeVal.textContent = `m = ${slope >= 0 ? '+' : ''}${slope.toFixed(2)}`;
+        }
+
+        if (el.area) {
+          el.area.setAttribute('opacity', t > 0.65 ? Math.min(1, (t - 0.65) / 0.25).toFixed(2) : '0.25');
+        }
+      },
+      render(t) {
+        return `<rect width="800" height="480" fill="#090d16"/><text x="400" y="240" fill="#38bdf8" font-size="20" font-weight="bold" text-anchor="middle">Calculus: Tangents &amp; Integrals</text>`;
+      }
     }
   };
 
@@ -2498,7 +2860,18 @@
         'circuit': 'electric-circuits',
         'ohms-law': 'electric-circuits',
         'electric-circuits': 'electric-circuits',
-        'electricity': 'electric-circuits'
+        'electricity': 'electric-circuits',
+        'kinetic-gas': 'kinetic-gas',
+        'kinetic_gas': 'kinetic-gas',
+        'gas': 'kinetic-gas',
+        'boyle': 'kinetic-gas',
+        'thermodynamics': 'kinetic-gas',
+        'calculus': 'calculus-curves',
+        'calculus-curves': 'calculus-curves',
+        'calculus_curves': 'calculus-curves',
+        'curves': 'calculus-curves',
+        'differentiation': 'calculus-curves',
+        'derivatives': 'calculus-curves'
       };
       return aliases[clean] || clean;
     },
@@ -2512,7 +2885,7 @@
 
     get(id) {
       const norm = this.normalizeId(id);
-      return scenes[norm] || scenes[id] || (scenes['church-tour'] ? scenes['church-tour'] : scenes['fractions']);
+      return scenes[norm] || scenes[id] || null;
     },
 
     list() {

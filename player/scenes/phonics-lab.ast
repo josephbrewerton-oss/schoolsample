@@ -1,4 +1,15 @@
 (:scene :id "phonics-lab" :title "Early Phonics: Sound Buttons & Blending Mat" :stage "EYFS/KS1 ENGLISH" :duration 12.0
+  (:vars (
+    (:var :name "sweepSpeed" :val 1.0 :min 0.5 :max 2.0 :step 0.25 :label "Blending Finger Speed")
+    (:var :name "pureSoundsOnly" :val true :label "Strict Pure Phonemes")
+  ))
+  (:inputs (
+    (:slider :var "sweepSpeed" :label "Blending Sweep Speed" :min 0.5 :max 2.0 :step 0.25)
+    (:switch :var "pureSoundsOnly" :label "No Schwa (/uh/) Mode")
+  ))
+  (:gestures (
+    (:draggable :target "#ph-finger-cursor" :axis "x" :min 20 :max 300)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.35 :en "In primary school, we read words using Sound Buttons! Under single sounds, we put a dot. Listen to the pure sounds: /k/ ... /a/ ... /t/." :es "¡En la escuela primaria, leemos palabras con botones de sonido! Ponemos un punto bajo cada sonido puro: /k/ ... /a/ ... /t/.")
     (:start 0.35 :end 0.70 :en "Never add 'uh' at the end: say crisp /k/, not 'kuh'! Now sweep your finger along the arrow to blend the sounds together." :es "¡Nunca agregues 'uh' al final: di /k/ nítido, no 'cuh'! Ahora desliza el dedo a lo largo de la flecha para unir los sonidos.")
@@ -10,6 +21,13 @@
     (:t 0.50 :title "Step 3: Middle Vowel /æ/" :rule "Short open vowel /a/ as in apple.")
     (:t 0.75 :title "Step 4: End Sound /t/" :rule "Crisp unvoiced /t/ — do not say 'tuh'.")
     (:t 1.00 :title "Step 5: Blending Sweep" :rule "Sweep across the arrow: /k/ - /a/ - /t/ ➔ 'cat'!")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.65
+      :prompt "Why is it important to pronounce pure sounds (e.g. /k/ and /t/) without adding 'uh' (schwa) at the end?"
+      :options ("Adding 'uh' turns /k/-/a/-/t/ into 'kuh-a-tuh', making blending difficult" "English letters only make noise at night" "The schwa sound is not allowed in books" "Pure sounds are always capitalized")
+      :answer 0
+      :explanation "Pronouncing pure phonemes prevents extra syllables from distorting the word during auditory blending.")
   ))
   (:bindings (
     (:target "#ph-finger-cursor" :attr "cx" :expr "20 + Math.min(1, Math.max(0, (t - 0.20) / 0.60)) * 280")

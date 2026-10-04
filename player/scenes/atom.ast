@@ -1,5 +1,21 @@
 (:scene :id "atom" :title "Atomic Structure: Bohr Electron Shells" :stage "KS3 CHEMISTRY" :duration 12.0
   (:camera :distance 460 :pitch 22 :yaw "t * 120" :fov 60)
+  (:vars (
+    (:var :name "atomicNumber" :val 6 :min 1 :max 18 :step 1 :unit "protons" :label "Atomic Number (Z)")
+    (:var :name "orbitSpeed" :val 1.0 :min 0.2 :max 3.0 :step 0.1 :label "Orbital Velocity Scale")
+  ))
+  (:inputs (
+    (:slider :var "atomicNumber" :label "Atomic Number (Element Z)" :min 1 :max 18 :step 1)
+    (:slider :var "orbitSpeed" :label "Electron Orbital Velocity" :min 0.2 :max 3.0 :step 0.1)
+  ))
+  (:computed (
+    (:name "massNumber" :expr "vars.atomicNumber * 2")
+    (:name "electronsK" :expr "Math.min(2, vars.atomicNumber)")
+    (:name "electronsL" :expr "Math.min(8, Math.max(0, vars.atomicNumber - 2))")
+  ))
+  (:gestures (
+    (:draggable :target "#nucleus-p1" :axis "xy" :min -30 :max 30)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.33 :en "At the center is the dense nucleus made of positively charged protons and neutral neutrons." :es "En el centro está el núcleo denso con protones positivos y neutrones neutros.")
     (:start 0.33 :end 0.66 :en "Electrons orbit in quantized 3D shells. The first shell (K) holds 2 electrons; outer shell (L) holds 4." :es "Los electrones orbitan en capas cuánticas 3D. La primera capa (K) contiene 2; la externa (L) contiene 4.")
@@ -10,6 +26,13 @@
     (:t 0.33 :title "Inner K-Shell (n=1)" :rule "Holds a maximum of 2 electrons in the lowest ground energy state.")
     (:t 0.66 :title "Outer L-Shell (n=2)" :rule "Holds up to 8 electrons (Carbon has 4 valence electrons).")
     (:t 1.00 :title "Chemical Valence" :rule "Valence electrons dictate bonding affinity with other elements.")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.50
+      :prompt "What is the maximum capacity of electrons for the first inner shell (K shell, n = 1)?"
+      :options ("2 electrons (2n² = 2(1)²)" "8 electrons" "18 electrons" "4 electrons")
+      :answer 0
+      :explanation "The Pauli exclusion principle and Bohr orbital rules dictate that shell n holds up to 2n² electrons. For n=1, maximum capacity is 2(1)² = 2 electrons.")
   ))
   (:bindings (
     (:target "#atom-ring-k" :type "3d-ring" :r "75" :tilt-x "20" :depth-fog true)

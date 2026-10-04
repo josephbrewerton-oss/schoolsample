@@ -1,4 +1,18 @@
 (:scene :id "water-cycle" :title "Water Cycle: Continuous Earth Cycle" :stage "KS2 GEOGRAPHY" :duration 10.0
+  (:vars (
+    (:var :name "oceanTemp" :val 24 :min 10 :max 40 :step 1 :unit "°C" :label "Sea Surface Temp")
+    (:var :name "cloudCover" :val 70 :min 10 :max 100 :step 5 :unit "%" :label "Cloud Density")
+  ))
+  (:inputs (
+    (:slider :var "oceanTemp" :label "Ocean Heat Index" :min 10 :max 40 :step 1)
+    (:slider :var "cloudCover" :label "Cloud Condensation" :min 10 :max 100 :step 5)
+  ))
+  (:computed (
+    (:name "rainfallRate" :expr "(vars.oceanTemp * 0.15 * (vars.cloudCover / 50)).toFixed(1)")
+  ))
+  (:gestures (
+    (:draggable :target "#wc-vapor-0" :axis "y" :min 140 :max 350)
+  ))
   (:subtitles (
     (:start 0.00 :end 0.35 :en "Solar energy heats water surfaces, causing evaporation into rising gas molecules." :es "La energía solar calienta el agua provocando la evaporación en moléculas de gas.")
     (:start 0.35 :end 0.70 :en "As vapor climbs into cold upper air, it condenses into visible fluffy clouds." :es "Al subir al aire frío, el vapor se condensa en nubes esponjosas.")
@@ -9,6 +23,13 @@
     (:t 0.35 :title "Atmospheric Condensation" :rule "Rising vapor cools and condenses into cloud water droplets.")
     (:t 0.70 :title "Precipitation" :rule "Heavy clouds release moisture as rain, sleet, or snow.")
     (:t 1.00 :title "Runoff & Collection" :rule "Rivers carry precipitation back to oceans, completing the closed cycle.")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.65
+      :prompt "What state change occurs when rising invisible water vapor cools in the upper atmosphere to form clouds?"
+      :options ("Condensation (gas to liquid droplets)" "Evaporation" "Sublimation" "Freezing directly to rock")
+      :answer 0
+      :explanation "Condensation occurs as warm water vapor rises, expands, and cools, changing from a gas into tiny suspended liquid droplets that form clouds.")
   ))
   (:bindings (
     (:target "#wc-vapor-0" :attr "cy" :expr "330 - ((t * 2 + 0/6) % 1) * 160")

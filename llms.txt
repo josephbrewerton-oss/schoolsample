@@ -22,7 +22,8 @@
 - Dual-Licensing Charter & Covenant: `/licensing` & `/LICENSE.md` (Track A Humanitarian Commons GNU AGPLv3/OGLv3 vs Track B Enterprise Commercial License)
 
 ## Vector Media & Simulation Subsystem Capabilities (October 2026)
-- **16 Production AST Vector Scenes**:
+- **17 Production AST Vector Scenes**:
+  - `calculus-curves` (GCSE/A-Level Calculus: Tangent Slopes $\frac{dy}{dx}$, Stationary Points & Riemann Integrals $\int_a^b f(x)dx$)
   - `kinetic-gas` (KS3/KS4 Kinetic Molecular Gas Theory, Boyle's Law $PV = nRT$, Thermal Speeds & Phase Changes)
   - `church-tour` (Catholic Life & Sacred Architecture)
   - `math-fishing` (KS1/KS2 Number Bonds to 10/20)
@@ -39,6 +40,19 @@
   - `bodmas` (KS2/KS3 Order of Operations Forcefield Clamps)
   - `phonics-lab` (EYFS/KS1 Sound Buttons & Blending Mat)
   - `times-tables` (KS1/KS2 2D Array Grid & Distributive Splitter)
+
+- **Direct Flash-Caliber Canvas Manipulation Subsystem (`static/player/ast-gestures.js`)**:
+  - Direct pointer capture and grab-and-drag for physical elements on the SVG canvas (piston cylinder, tangent slope probe, knife switches, weights).
+  - On-Stage Glassmorphism floating HUD toolbar (Whiteboard Pen, X-Ray tooltips, Audio sonification toggle, Reset).
+  - Smartboard & stylus vector ink annotation layer (quadratic bézier smoothing) for classroom Promethean/SMART boards and iPads.
+  - Pedagogical X-Ray discovery inspection: Hovering or tapping components reveals physics equations, units, and bilingual explanations.
+  - Multi-sensory procedural sonification (pressure hiss, switch mechanical snaps, stationary turning point chimes).
+
+- **GeoGebra & Desmos Calculus Engine (`src/utils/calculusPlotter.ts`)**:
+  - Real-time numerical function curve evaluation ($y = f(x)$) with continuous SVG path mapping.
+  - Derivative tangent slope vector engine ($\frac{dy}{dx} = \lim_{h\to 0}\frac{f(x+h) - f(x-h)}{2h}$) with rise/run right triangle and normal perpendicular lines.
+  - Definite numerical integration via Simpson's 1/3 Rule ($\int_a^b f(x)dx$) with dynamic SVG shaded area polygons.
+  - Ingests GeoGebra expressions and Desmos equations with real-time stationary point ($\frac{dy}{dx} = 0$) detection.
 
 - **Kinetic Gas Theory & Thermal Particle Engine (`src/utils/kineticGasPhysics.ts`)**:
   - Micro-second elastic particle-wall collision accumulator calculating wall momentum impulse ($\Delta p = 2mv$).

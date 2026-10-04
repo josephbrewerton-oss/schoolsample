@@ -1,0 +1,144 @@
+<svg id="stage-svg" viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16;">
+  <defs>
+    <!-- Curve Glow & Gradients -->
+    <linearGradient id="curve-gradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="integral-fill-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(34, 197, 94, 0.45)"/>
+      <stop offset="100%" stop-color="rgba(34, 197, 94, 0.08)"/>
+    </linearGradient>
+    <filter id="glow-tangent" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="800" height="480" fill="#090d16"/>
+  <rect x="0" y="0" width="800" height="480" fill="none" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Title & Curriculum Banner -->
+  <text x="400" y="38" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">
+    Calculus & Function Curves: Differentiation & Integration
+  </text>
+  <text x="400" y="58" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">
+    GCSE & A-Level Mathematics: Tangent Slope (dy/dx) & Shaded Area Under Curve ∫f(x)dx
+  </text>
+
+  <!-- Cartesian Coordinate Grid Box (600x320) centered at (50, 80) -->
+  <g id="cartesian-grid" transform="translate(50, 80)">
+    <!-- Container background -->
+    <rect width="500" height="300" rx="12" fill="#0b1120" stroke="#334155" stroke-width="3"/>
+
+    <!-- Subtle Grid Lines (x: -5 to +5, y: -3 to +7) -->
+    <g opacity="0.15" stroke="#38bdf8" stroke-width="1">
+      <!-- Verticals -->
+      <line x1="50" y1="0" x2="50" y2="300"/>
+      <line x1="100" y1="0" x2="100" y2="300"/>
+      <line x1="150" y1="0" x2="150" y2="300"/>
+      <line x1="200" y1="0" x2="200" y2="300"/>
+      <line x1="250" y1="0" x2="250" y2="300"/>
+      <line x1="300" y1="0" x2="300" y2="300"/>
+      <line x1="350" y1="0" x2="350" y2="300"/>
+      <line x1="400" y1="0" x2="400" y2="300"/>
+      <line x1="450" y1="0" x2="450" y2="300"/>
+      <!-- Horizontals -->
+      <line x1="0" y1="30" x2="500" y2="30"/>
+      <line x1="0" y1="60" x2="500" y2="60"/>
+      <line x1="0" y1="90" x2="500" y2="90"/>
+      <line x1="0" y1="120" x2="500" y2="120"/>
+      <line x1="0" y1="150" x2="500" y2="150"/>
+      <line x1="0" y1="180" x2="500" y2="180"/>
+      <line x1="0" y1="210" x2="500" y2="210"/>
+      <line x1="0" y1="240" x2="500" y2="240"/>
+      <line x1="0" y1="270" x2="500" y2="270"/>
+    </g>
+
+    <!-- Main X-Axis (y=0 at y=210) & Y-Axis (x=0 at x=250) -->
+    <line x1="0" y1="210" x2="500" y2="210" stroke="#64748b" stroke-width="2"/>
+    <line x1="250" y1="0" x2="250" y2="300" stroke="#64748b" stroke-width="2"/>
+
+    <!-- Axis Labels -->
+    <text x="490" y="202" fill="#94a3b8" font-size="12" font-weight="800">x</text>
+    <text x="258" y="16" fill="#94a3b8" font-size="12" font-weight="800">y</text>
+    <text x="242" y="224" fill="#64748b" font-size="10" font-weight="700">0</text>
+
+    <!-- Shaded Area Under Curve: Definite Integral -->
+    <path id="integral-shaded-area" d="M 250 210 L 250 210 Q 325 150 400 90 L 400 210 Z" fill="url(#integral-fill-grad)" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+    <!-- Dynamic Function Curve y = f(x) -->
+    <path id="curve-path" d="M 50 270 Q 150 240 250 210 T 450 60" fill="none" stroke="url(#curve-gradient)" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Tangent Slope Line dy/dx -->
+    <g id="tangent-assembly" transform="translate(300, 180)">
+      <!-- Tangent Extended Line -->
+      <line id="tangent-line" x1="-90" y1="45" x2="90" y2="-45" stroke="#f43f5e" stroke-width="3" stroke-linecap="round" filter="url(#glow-tangent)"/>
+      <!-- Normal Line (Perpendicular) -->
+      <line id="normal-line" x1="-30" y1="-60" x2="30" y2="60" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6"/>
+      <!-- Rise/Run Triangle -->
+      <path id="rise-run-triangle" d="M 0 0 L 40 0 L 40 -20 Z" fill="rgba(244, 63, 94, 0.2)" stroke="#f43f5e" stroke-width="1"/>
+      <!-- Tangent Point Probe -->
+      <circle id="tangent-probe" cx="0" cy="0" r="7" fill="#ffffff" stroke="#f43f5e" stroke-width="3"/>
+    </g>
+
+    <!-- Integral Boundary Markers a and b -->
+    <line id="marker-a" x1="250" y1="200" x2="250" y2="220" stroke="#22c55e" stroke-width="2"/>
+    <text id="label-a" x="250" y="235" fill="#86efac" font-size="11" font-weight="800" text-anchor="middle">a = 0</text>
+
+    <line id="marker-b" x1="400" y1="200" x2="400" y2="220" stroke="#22c55e" stroke-width="2"/>
+    <text id="label-b" x="400" y="235" fill="#86efac" font-size="11" font-weight="800" text-anchor="middle">b = 3</text>
+  </g>
+
+  <!-- Right Instrument Rack: Derivative & Integral Telemetry -->
+  <g transform="translate(570, 80)">
+    <!-- Function Formula Card -->
+    <rect width="190" height="74" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+    <text x="14" y="24" fill="#94a3b8" font-size="10" font-weight="800" letter-spacing="0.5">FUNCTION f(x):</text>
+    <text id="card-formula" x="14" y="48" fill="#38bdf8" font-size="16" font-weight="900" font-family="monospace">
+      f(x) = x² - 2x
+    </text>
+
+    <!-- Derivative Slope Card (dy/dx) -->
+    <g transform="translate(0, 86)">
+      <rect width="190" height="96" rx="8" fill="#0f172a" stroke="#f43f5e" stroke-width="1.5"/>
+      <text x="14" y="22" fill="#fda4af" font-size="10" font-weight="800" letter-spacing="0.5">DERIVATIVE (TANGENT):</text>
+      <text id="card-derivative-formula" x="14" y="42" fill="#cbd5e1" font-size="12" font-weight="700" font-family="monospace">
+        f'(x) = 2x - 2
+      </text>
+      <text x="14" y="64" fill="#94a3b8" font-size="11" font-weight="700">Slope dy/dx at probe:</text>
+      <text id="card-slope-val" x="14" y="86" fill="#f43f5e" font-size="18" font-weight="900" font-family="monospace">
+        m = +2.00
+      </text>
+    </g>
+
+    <!-- Definite Integral Area Card (∫) -->
+    <g transform="translate(0, 194)">
+      <rect width="190" height="106" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="14" y="22" fill="#86efac" font-size="10" font-weight="800" letter-spacing="0.5">DEFINITE INTEGRAL (AREA):</text>
+      <text x="14" y="44" fill="#cbd5e1" font-size="13" font-weight="700" font-family="monospace">
+        Area = ∫<tspan font-size="9" dy="4">a</tspan><tspan font-size="9" dy="-8">b</tspan><tspan font-size="13" dy="4"> f(x) dx</tspan>
+      </text>
+      <text x="14" y="72" fill="#94a3b8" font-size="11" font-weight="700">Calculated Riemann Sum:</text>
+      <text id="card-integral-val" x="14" y="96" fill="#22c55e" font-size="18" font-weight="900" font-family="monospace">
+        Area = 4.500
+      </text>
+    </g>
+  </g>
+
+  <!-- Bottom Interactive Note -->
+  <g transform="translate(50, 400)">
+    <rect width="710" height="58" rx="10" fill="#0f172a" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="20" y="24" fill="#a5b4fc" font-size="11" font-weight="800" letter-spacing="1">
+      FUNDAMENTAL THEOREM OF CALCULUS:
+    </text>
+    <text id="calc-theorem-note" x="20" y="44" fill="#e0e7ff" font-size="13" font-weight="700">
+      Differentiation gives the instantaneous gradient; Integration calculates cumulative area.
+    </text>
+  </g>
+</svg>
