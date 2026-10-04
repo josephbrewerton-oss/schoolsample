@@ -34,6 +34,9 @@ export default defineConfig({
           if (id.includes('node_modules/@mlc-ai/web-llm')) {
             return 'vendor-webllm';
           }
+          if (id.includes('node_modules/katex/')) {
+            return 'vendor-katex';
+          }
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
             return 'vendor-react';
           }

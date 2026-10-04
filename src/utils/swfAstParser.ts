@@ -608,6 +608,17 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
   :stageWidth ${width}
   :stageHeight ${height}
 
+  (:static (
+    (:element :target "#bg" :cache true)
+    (:element :target "#swf-bg-card" :cache true)
+    (:element :target "#swf-title" :cache true)
+    (:element :target "#swf-caption" :cache true)
+  ))
+
+  (:actors (
+    (:actor :target "#${targetId}" :kinematic true :will-change true)
+  ))
+
   :bindings (
     (:target "#${targetId}" :attr "transform" :expr "'translate(' + (Math.sin(t * Math.PI * 2) * 40) + ', 0)'")
   )

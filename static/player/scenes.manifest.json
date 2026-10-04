@@ -1,6 +1,6 @@
 {
-  "version": "2.4.0",
-  "generatedAt": "2026-10-04T07:05:00.000Z",
+  "version": "2.2.0",
+  "generatedAt": "2026-10-04T08:33:54.844Z",
   "totalScenes": 17,
   "scenes": [
     {
@@ -173,6 +173,19 @@
       "bindingsCount": 8
     },
     {
+      "id": "calculus-curves",
+      "title": "Calculus: Tangent Slopes & Definite Integrals",
+      "stage": "GCSE & A-LEVEL MATHS",
+      "duration": 14,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/calculus-curves.svg",
+      "astFile": "scenes/calculus-curves.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 4,
+      "bindingsCount": 5
+    },
+    {
       "id": "phonics-lab",
       "title": "Early Phonics: Sound Buttons & Blending Mat",
       "stage": "EYFS/KS1 ENGLISH",
@@ -186,21 +199,8 @@
       "bindingsCount": 6
     },
     {
-      "id": "times-tables",
-      "title": "Times Tables: 2D Array & Distributive Splitter",
-      "stage": "KS1/KS2 MATHS",
-      "duration": 14,
-      "has3D": false,
-      "nodes3DCount": 0,
-      "svgFile": "scenes/times-tables.svg",
-      "astFile": "scenes/times-tables.ast",
-      "keyframeCount": 5,
-      "subtitleCount": 3,
-      "bindingsCount": 7
-    },
-    {
       "id": "kinetic-gas",
-      "title": "Kinetic Gas Theory & Boyle's Law (PV = nRT)",
+      "title": "Kinetic Gas Theory & Boyle's Law",
       "stage": "KS3/KS4 PHYSICS & CHEMISTRY",
       "duration": 14,
       "has3D": false,
@@ -212,17 +212,17 @@
       "bindingsCount": 11
     },
     {
-      "id": "calculus-curves",
-      "title": "Calculus: Tangent Slopes & Definite Integrals (dy/dx & ∫f(x)dx)",
-      "stage": "GCSE & A-LEVEL MATHS",
+      "id": "times-tables",
+      "title": "Times Tables: 2D Array & Distributive Splitter",
+      "stage": "KS1/KS2 MATHS",
       "duration": 14,
       "has3D": false,
       "nodes3DCount": 0,
-      "svgFile": "scenes/calculus-curves.svg",
-      "astFile": "scenes/calculus-curves.ast",
-      "keyframeCount": 4,
-      "subtitleCount": 4,
-      "bindingsCount": 5
+      "svgFile": "scenes/times-tables.svg",
+      "astFile": "scenes/times-tables.ast",
+      "keyframeCount": 5,
+      "subtitleCount": 3,
+      "bindingsCount": 7
     }
   ]
 }

@@ -22,11 +22,21 @@ export type VectorPresetId =
   | 'languages'
   | 'phonics-lab';
 
+export interface PlayerCheckpointOption {
+  prompt: string;
+  options: string[];
+  answer: number;
+  explanation?: string;
+  title?: string;
+  t?: number;
+}
+
 export interface PlayerCallOptions {
   preset?: VectorPresetId;
   title?: string;
   autoPlay?: boolean;
   lang?: string;
+  checkpoint?: PlayerCheckpointOption;
 }
 
 type PlayerListener = (options: PlayerCallOptions | null) => void;
@@ -99,6 +109,7 @@ export function openPlayerModal(options: PlayerCallOptions = {}): void {
     title: options.title || 'Curriculum Vector Media Player',
     autoPlay: options.autoPlay ?? true,
     lang: options.lang || 'en',
+    checkpoint: options.checkpoint,
   };
   listeners.forEach((listener) => listener(currentOptions));
 }

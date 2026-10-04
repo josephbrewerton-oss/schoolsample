@@ -1466,6 +1466,44 @@
         });
       }
 
+      // Static Layer Primitives (:static ((:element :target "#bg" :cache true) ...))
+      const staticElements = [];
+      const staticBlocks = extractSexprBlocks(astContent, ':static');
+      if (staticBlocks.length > 0) {
+        const sEntries = extractSexprBlocks(staticBlocks[0], ':element');
+        sEntries.forEach(sText => {
+          const target = extractSlot.call(null, sText, /:target\s+"([^"]+)"/i) || extractSlot.call(null, sText, /:target\s+([^\s\)]+)/i);
+          const layer = extractSlot.call(null, sText, /:layer\s+"([^"]+)"/i) || 'bg';
+          const cacheMatch = sText.match(/:cache\s+(true|false)/i);
+          if (target) {
+            staticElements.push({
+              target,
+              layer,
+              cache: cacheMatch ? cacheMatch[1] === 'true' : true
+            });
+          }
+        });
+      }
+
+      // Dynamic Kinematic Actors (:actors ((:actor :target "#piston" :kinematic true) ...))
+      const actors = [];
+      const actorBlocks = extractSexprBlocks(astContent, ':actors');
+      if (actorBlocks.length > 0) {
+        const aEntries = extractSexprBlocks(actorBlocks[0], ':actor');
+        aEntries.forEach(aText => {
+          const target = extractSlot.call(null, aText, /:target\s+"([^"]+)"/i) || extractSlot.call(null, aText, /:target\s+([^\s\)]+)/i);
+          const kinematicMatch = aText.match(/:kinematic\s+(true|false)/i);
+          const willChangeMatch = aText.match(/:will-change\s+(true|false)/i);
+          if (target) {
+            actors.push({
+              target,
+              kinematic: kinematicMatch ? kinematicMatch[1] === 'true' : true,
+              willChange: willChangeMatch ? willChangeMatch[1] === 'true' : true
+            });
+          }
+        });
+      }
+
       const has3D = Boolean(camMatch || bindings.some(b => b.type && b.type.startsWith('3d-')));
 
       return {
@@ -1483,6 +1521,8 @@
         vars,
         inputs,
         computed,
+        staticElements,
+        actors,
         interactive: checkpoints.length > 0 ? { checkpoints, hotspots: [] } : null
       };
     }
@@ -2078,6 +2118,64 @@
       // Initialize reactive variables for the loaded scene
       this.resetVars();
 
+      // 3. Optimized DOM Partitioning & Hardware Promotion (Static vs Kinematic Actors)
+      try {
+        const dynamicTargets = new Set();
+        if (this.activeBindings) {
+          this.activeBindings.forEach(b => { if (b.node) dynamicTargets.add(b.node); });
+        }
+        if (this.active3DItems) {
+          this.active3DItems.forEach(item => { if (item.domNode) dynamicTargets.add(item.domNode); });
+        }
+        if (scene.actors && Array.isArray(scene.actors)) {
+          scene.actors.forEach(a => {
+            const el = container.querySelector(a.target);
+            if (el) dynamicTargets.add(el);
+          });
+        }
+        if (scene.gestures && Array.isArray(scene.gestures)) {
+          scene.gestures.forEach(g => {
+            const el = container.querySelector(g.target);
+            if (el) dynamicTargets.add(el);
+          });
+        }
+
+        // Apply hardware compositor promotion to all dynamic elements
+        dynamicTargets.forEach(node => {
+          if (node && node.style) {
+            node.style.willChange = 'transform';
+            node.setAttribute('data-kinematic', 'true');
+            node.style.pointerEvents = 'auto';
+          }
+        });
+
+        // Apply static containment to explicit static elements or background layers
+        if (scene.staticElements && Array.isArray(scene.staticElements)) {
+          scene.staticElements.forEach(s => {
+            const el = container.querySelector(s.target);
+            if (el && el.style) {
+              el.style.pointerEvents = 'none';
+              el.style.contain = 'paint layout';
+              el.setAttribute('data-static', 'true');
+            }
+          });
+        } else {
+          // Automatic inference: any top-level group or element with NO dynamic children gets static containment
+          const directChildren = Array.from(container.children || []);
+          directChildren.forEach(child => {
+            if (child.id === 'annotation-ink-root' || child.id === 'dev-overlay-root') return;
+            const containsDynamic = Array.from(dynamicTargets).some(dt => child.contains(dt));
+            if (!containsDynamic && child.style) {
+              child.style.pointerEvents = 'none';
+              child.style.contain = 'paint layout';
+              child.setAttribute('data-static', 'true');
+            }
+          });
+        }
+      } catch (domOptErr) {
+        console.warn('[AST Engine] DOM optimization notice:', domOptErr);
+      }
+
       this.applyBindings(this.progress);
       this.translateInStageLabels();
       } finally {
@@ -2317,10 +2415,13 @@
           if (b.node) {
             try {
               const val = b.evalFn(t, v, Math);
-              if (b.attr === 'textContent') {
-                b.node.textContent = String(val);
-              } else {
-                b.node.setAttribute(b.attr, String(val));
+              if (b.lastVal !== val) {
+                b.lastVal = val;
+                if (b.attr === 'textContent') {
+                  b.node.textContent = String(val);
+                } else {
+                  b.node.setAttribute(b.attr, String(val));
+                }
               }
             } catch (err) {}
           }
@@ -3313,6 +3414,21 @@
             window.parent.postMessage({ type: 'VARS_STATE', vars: { ...(engine.vars || {}) } }, '*');
           }
           break;
+        case 'GET_CONTEXT_SNAPSHOT':
+          if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'CONTEXT_SNAPSHOT',
+              sceneId: engine.activePresetId,
+              title: engine.currentScene ? engine.currentScene.title : engine.activePresetId,
+              stage: engine.currentScene ? engine.currentScene.stage : 'CURRICULUM',
+              progress: engine.progress,
+              currentTime: engine.currentTime,
+              duration: engine.duration,
+              vars: { ...(engine.vars || {}) },
+              computed: { ...(engine.computedValues || {}) },
+            }, '*');
+          }
+          break;
         case 'SCORM_SET_SCORE':
           if (engine.scormBridge) engine.scormBridge.setScore(data.score, data.min || 0, data.max || 100);
           break;
@@ -3348,6 +3464,25 @@
           break;
         case 'REQUEST_PRINT':
           window.print();
+          break;
+        case 'INJECT_CHECKPOINT':
+          if (data.checkpoint && engine.scene) {
+            if (!engine.scene.interactive) engine.scene.interactive = { checkpoints: [], hotspots: [] };
+            if (!Array.isArray(engine.scene.interactive.checkpoints)) engine.scene.interactive.checkpoints = [];
+            const cp = {
+              t: data.checkpoint.t !== undefined ? data.checkpoint.t : engine.progress,
+              title: data.checkpoint.title || 'PRACTICE QUESTION',
+              prompt: data.checkpoint.prompt || data.checkpoint.question,
+              options: data.checkpoint.options || [],
+              answer: data.checkpoint.answer !== undefined ? data.checkpoint.answer : 0,
+              explanation: data.checkpoint.explanation || ''
+            };
+            engine.scene.interactive.checkpoints.push(cp);
+            engine.pause();
+            if (uiController && typeof uiController.triggerCheckpoint === 'function') {
+              uiController.triggerCheckpoint(cp, engine.scene.interactive.checkpoints.length - 1);
+            }
+          }
           break;
         case 'LOAD_AST':
           if (data.ast) {

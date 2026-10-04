@@ -6,13 +6,14 @@ import PersistentFooter from './PersistentFooter';
 import MobileBottomNav from './MobileBottomNav';
 import ViewportSkeleton from './ViewportSkeleton';
 import { OfflineIndicator } from './OfflineIndicator';
-import GlobalPlayerModal from './GlobalPlayerModal';
-import GlobalChallengeModal from './GlobalChallengeModal';
 import { classroomBeacon, TeacherBroadcastCommand } from '../services/classroomBeacon';
 import { getLearnerProfile } from '../services/studentProfileStore';
 import { hypervisor } from '../engine/hypervisor';
 import { playSuccessChime, playIncorrectTone, triggerHapticSuccess, triggerHapticError } from '../services/soundHaptics';
 import { triggerMasteryConfetti } from '../utils/confetti';
+
+const GlobalPlayerModal = React.lazy(() => import('./GlobalPlayerModal'));
+const GlobalChallengeModal = React.lazy(() => import('./GlobalChallengeModal'));
 
 export default function PersistentAppShell(): React.JSX.Element {
   const location = useLocation();
@@ -198,11 +199,11 @@ export default function PersistentAppShell(): React.JSX.Element {
       {/* 6. Zero-Data Offline Mode Status Indicator */}
       <OfflineIndicator />
 
-      {/* Global Interactive Media Player Caller Modal */}
-      <GlobalPlayerModal />
-
-      {/* Global Interactive Challenge & Educational Game Caller Modal */}
-      <GlobalChallengeModal />
+      {/* Global Interactive Media Player & Challenge Modals (Code-Split) */}
+      <Suspense fallback={null}>
+        <GlobalPlayerModal />
+        <GlobalChallengeModal />
+      </Suspense>
 
       {/* 6. Off-Main-Thread Neural WebRTC Guest VM Daemon */}
       <iframe

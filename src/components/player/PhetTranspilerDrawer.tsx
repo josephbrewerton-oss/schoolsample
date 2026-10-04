@@ -11,6 +11,7 @@ import {
   type PhetTranspileResult,
   type SupportedPhetPreset,
 } from '../../utils/phetBridge';
+import { transpileSwfToAst } from '../../utils/swfAstParser';
 
 export interface PhetTranspilerDrawerProps {
   setCustomSvgCode: (code: string) => void;
@@ -34,6 +35,40 @@ export const PhetTranspilerDrawer: React.FC<PhetTranspilerDrawerProps> = ({
     setIsTranspiling(true);
     setPhetError(null);
     try {
+      // 1. Legacy PhET Flash (.swf) support
+      if (file.name.toLowerCase().endsWith('.swf')) {
+        const buf = await file.arrayBuffer();
+        const cleanName = file.name.replace(/\.swf$/i, '');
+        const swfRes = await transpileSwfToAst(buf, cleanName);
+        if (swfRes.success) {
+          const origSize = file.size;
+          const distSize = new Blob([swfRes.svgMarkup + swfRes.astSource]).size;
+          const reduction = (((origSize - distSize) / Math.max(1, origSize)) * 100).toFixed(1);
+          const res: PhetTranspileResult = {
+            success: true,
+            metadata: {
+              simName: cleanName,
+              title: `PhET Legacy Flash: ${cleanName}`,
+              version: `Flash v${swfRes.metadata?.version || 9}`,
+              originalSizeBytes: origSize,
+              distilledSizeBytes: distSize,
+              compressionRatio: `${reduction}% reduction`,
+              detectedInvariants: ['Legacy Flash Vector Timeline', 'SWF Tag Stream Transpiled'],
+              localesFound: ['en'],
+            },
+            svgMarkup: swfRes.svgMarkup,
+            astSource: swfRes.astSource,
+          };
+          setPhetResult(res);
+          setCustomSvgCode(res.svgMarkup);
+          setCustomAstCode(res.astSource);
+        } else {
+          setPhetError(swfRes.error || 'Failed to transpile legacy PhET SWF.');
+        }
+        return;
+      }
+
+      // 2. Modern PhET HTML5 bundle (*.html, *.json) support
       const text = await file.text();
       const res = await transpilePhetFile(text, file.name);
       if (res.success) {
@@ -184,7 +219,7 @@ export const PhetTranspilerDrawer: React.FC<PhetTranspilerDrawerProps> = ({
         onClick={() => {
           const input = document.createElement('input');
           input.type = 'file';
-          input.accept = '.html,.json,.phet';
+          input.accept = '.html,.json,.htm,.swf,.phet';
           input.onchange = (e) => {
             const file = (e.target as HTMLInputElement).files?.[0];
             if (file) handleFileUpload(file);
@@ -194,10 +229,10 @@ export const PhetTranspilerDrawer: React.FC<PhetTranspilerDrawerProps> = ({
       >
         <span style={{ fontSize: '2rem', display: 'block', marginBottom: '6px' }}>📥</span>
         <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc' }}>
-          Drop PhET Offline Simulation (.html or .json)
+          Drop ANY PhET Simulation (HTML5 or Legacy Flash)
         </div>
         <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '4px' }}>
-          Or click to browse your local computer
+          Supports modern PhET HTML5 (*.html, *.json) &amp; legacy Flash (*.swf) &bull; Click to browse
         </div>
       </div>
 

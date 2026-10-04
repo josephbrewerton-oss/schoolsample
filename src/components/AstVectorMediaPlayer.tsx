@@ -28,6 +28,7 @@ import {
   PlayerSettingsModal,
   PlayerEmbedModal,
   DevStudioDrawer,
+  NanoAiTutorDrawer,
   type InspectedElementData,
   type StudioTabType,
 } from './player';
@@ -69,6 +70,14 @@ export interface AstVectorMediaPlayerProps {
   onKeyframeReached?: (keyframe: { title: string; rule: string; progress: number }) => void;
   onTimeUpdate?: (progress: number) => void;
   onConfigChange?: (config: PlayerDisplayConfig) => void;
+  initialCheckpoint?: {
+    prompt: string;
+    options: string[];
+    answer: number;
+    explanation?: string;
+    title?: string;
+    t?: number;
+  };
 }
 
 export interface AstVectorMediaPlayerHandle {
@@ -82,6 +91,14 @@ export interface AstVectorMediaPlayerHandle {
   stopVoiceCommands: () => void;
   executeVoiceCommand: (command: string) => void;
   togglePictureInPicture: () => void;
+  injectCheckpoint: (checkpoint: {
+    prompt: string;
+    options: string[];
+    answer: number;
+    explanation?: string;
+    title?: string;
+    t?: number;
+  }) => void;
 }
 
 export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
@@ -123,6 +140,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   onKeyframeReached,
   onTimeUpdate,
   onConfigChange,
+  initialCheckpoint,
 }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(preset);
@@ -164,6 +182,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [inStagePenActive, setInStagePenActive] = useState(false);
   const [inStageXRayActive, setInStageXRayActive] = useState(false);
   const [showLabDrawer, setShowLabDrawer] = useState(false);
+  const [showNanoAi, setShowNanoAi] = useState(false);
   const [showCartridgeMenu, setShowCartridgeMenu] = useState(false);
   const relatedConcepts = getRelatedConcepts(selectedPreset);
 
@@ -339,7 +358,28 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     stopVoiceCommands: () => postToPlayer({ type: 'STOP_VOICE_COMMANDS' }),
     executeVoiceCommand: (command: string) => postToPlayer({ type: 'VOICE_COMMAND', command }),
     togglePictureInPicture: () => togglePictureInPicture(),
+    injectCheckpoint: (checkpoint: {
+      prompt: string;
+      options: string[];
+      answer: number;
+      explanation?: string;
+      title?: string;
+      t?: number;
+    }) => postToPlayer({ type: 'INJECT_CHECKPOINT', checkpoint }),
   }), [postToPlayer, togglePictureInPicture]);
+
+  // Automatically inject checkpoint into player stage when provided
+  useEffect(() => {
+    if (initialCheckpoint) {
+      const timer = setTimeout(() => {
+        postToPlayer({
+          type: 'INJECT_CHECKPOINT',
+          checkpoint: initialCheckpoint,
+        });
+      }, 550);
+      return () => clearTimeout(timer);
+    }
+  }, [initialCheckpoint, postToPlayer, selectedPreset]);
 
   // Global keyboard shortcut: Press 'V' to toggle voice commands
   useEffect(() => {
@@ -979,6 +1019,28 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             <span>🔬 Reactive Lab</span>
           </button>
 
+          {/* Gemini Nano Edge AI Co-Pilot Button */}
+          <button
+            type="button"
+            onClick={() => setShowNanoAi((prev) => !prev)}
+            className={`stj-btn ${showNanoAi ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+            style={{
+              padding: '4px 10px',
+              minHeight: '32px',
+              fontSize: '0.76rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: showNanoAi ? '#0284c7' : undefined,
+              borderColor: showNanoAi ? '#0369a1' : undefined,
+              color: showNanoAi ? '#ffffff' : undefined,
+            }}
+            title="Open On-Device Gemini Nano Edge AI Co-Pilot & Lab Synthesizer (0 Cloud Egress)"
+          >
+            <span>✨ Ask Nano</span>
+          </button>
+
           {/* Standalone Air-Gap HTML & Cartridge Exporter */}
           <div style={{ position: 'relative' }}>
             <button
@@ -1442,6 +1504,16 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           isOpen={showLabDrawer}
           onClose={() => setShowLabDrawer(false)}
           preset={selectedPreset}
+        />
+
+        {/* Gemini Nano Edge AI Co-Pilot & Lab Synthesizer */}
+        <NanoAiTutorDrawer
+          isOpen={showNanoAi}
+          onClose={() => setShowNanoAi(false)}
+          preset={selectedPreset}
+          postToPlayer={postToPlayer}
+          currentProgress={currentProgress}
+          activeKeyframe={activeKeyframe}
         />
       </div>
 

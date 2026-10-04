@@ -139,6 +139,7 @@ export default function GlobalPlayerModal(): React.JSX.Element | null {
             autoPlay={callOptions.autoPlay ?? true}
             lang={callOptions.lang}
             allowPresetSwitch={true}
+            initialCheckpoint={callOptions.checkpoint}
             height="520px"
           />
         </div>

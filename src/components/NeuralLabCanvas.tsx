@@ -23,6 +23,9 @@ import {
   triggerStreakCelebration,
   triggerMasteryConfetti,
 } from '../utils/confetti';
+import { openPlayerModal, resolvePresetForTopic } from '../services/playerLauncher';
+
+const AstVectorMediaPlayer = React.lazy(() => import('./AstVectorMediaPlayer'));
 
 interface NeuralLabCanvasProps {
   initialKeyStage?: string;
@@ -46,6 +49,7 @@ export default function NeuralLabCanvas({
   const [selectedUnit, setSelectedUnit] = useState(() => initialUnit || (typeof window !== 'undefined' ? localStorage.getItem('stj_active_unit') : null) || 'Seasonal Changes');
   const [selectedLesson, setSelectedLesson] = useState('');
   const [sessionId, setSessionId] = useState('Lesson 1');
+  const [questionMode, setQuestionMode] = useState<'stage' | 'card'>('stage');
 
   const [activeLang, setActiveLang] = useState<string>(() => {
     return typeof window !== 'undefined' ? getSavedLanguage() : 'en';
@@ -546,6 +550,40 @@ export default function NeuralLabCanvas({
     });
   };
 
+  // 5. In-Stage Vector Player Socratic Launch
+  const handleSolveInPlayer = () => {
+    if (!activeQuestion) return;
+    const targetPreset = resolvePresetForTopic(selectedSubject, selectedUnit);
+    openPlayerModal({
+      preset: targetPreset,
+      title: `${selectedSubject}: ${selectedUnit} (In-Stage Practice)`,
+      autoPlay: true,
+      lang: activeLang,
+      checkpoint: {
+        title: `${selectedSubject} Checkpoint`,
+        prompt: activeQuestion.prompt,
+        options: activeQuestion.displayOptions,
+        answer: correctIndex,
+        explanation: activeQuestion.explanation,
+        t: 0.5,
+      },
+    });
+  };
+
+  // Synchronize in-stage player checkpoint answers with the NeuralLab assessment state
+  useEffect(() => {
+    const handleCheckpointMsg = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'CHECKPOINT_ANSWERED') {
+        const chosenIdx = event.data.chosenIdx;
+        if (typeof chosenIdx === 'number' && selectedAnswer === null && activeQuestion) {
+          handleSelectOption(chosenIdx);
+        }
+      }
+    };
+    window.addEventListener('message', handleCheckpointMsg);
+    return () => window.removeEventListener('message', handleCheckpointMsg);
+  }, [selectedAnswer, activeQuestion, handleSelectOption]);
+
   return (
     <div style={{ maxWidth: '1100px', margin: '1rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
       <CurriculumSelector
@@ -856,62 +894,292 @@ export default function NeuralLabCanvas({
               />
             )}
 
-            <QuestionCard
-              keyStage={activeQuestion.keyStage || selectedKeyStage}
-              subject={activeQuestion.subject}
-              unit={activeQuestion.unit}
-              lessonTitle={activeQuestion.lessonTitle || selectedLesson || undefined}
-              prompt={activeQuestion.prompt}
-              displayOptions={activeQuestion.displayOptions}
-              selectedAnswer={selectedAnswer}
-              correctIndex={correctIndex}
-              score={score}
-              streak={streak}
-              seedToken={activeQuestion.seedToken}
-              pedagogicalStage={activeQuestion.pedagogicalStage}
-              stageBadge={activeQuestion.stageBadge}
-              stepLabel={activeQuestion.stepLabel}
-              pedagogicalIntent={activeQuestion.pedagogicalIntent}
-              urn={activeQuestion.urn}
-              csn={activeQuestion.csn}
-              routeEngine={activeQuestion.routeEngine}
-              trajectoryState={trajectoryState}
-              streamTransition={streamTransition}
-              onSeedJump={(customSeed) => {
-                requestQuestion(
-                  selectedKeyStage,
-                  selectedSubject,
-                  selectedUnit,
-                  difficulty,
-                  activeLang,
-                  false,
-                  customSeed
-                );
+            {/* Presentation Mode Selector Bar */}
+            <div
+              style={{
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px',
+                padding: '8px 12px',
+                background: '#f8fafc',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
               }}
-              hint={activeQuestion.hint}
-              explanation={activeQuestion.explanation}
-              misconceptions={activeQuestion.misconceptions}
-              socraticFollowUp={activeQuestion.socraticFollowUp}
-              currentLang={activeLang}
-              onLanguageChange={(newLang) => {
-                setActiveLang(newLang);
-                requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
-              }}
-              onSelectOption={handleSelectOption}
-              onNextQuestion={() => {
-                const targetSeed = streamTransition?.nextSeedToken;
-                requestQuestion(
-                  selectedKeyStage,
-                  selectedSubject,
-                  selectedUnit,
-                  difficulty,
-                  activeLang,
-                  true,
-                  targetSeed
-                );
-              }}
-              onParallelVariation={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, true)}
-            />
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.1rem' }}>🎮</span>
+                <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#334155' }}>
+                  Question Presentation:
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  {questionMode === 'stage' ? 'Served directly inside live 60 FPS vector player' : 'Step-by-step accessible text cards'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setQuestionMode('stage')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: questionMode === 'stage' ? '#6366f1' : 'transparent',
+                    color: questionMode === 'stage' ? '#ffffff' : '#64748b',
+                    fontWeight: questionMode === 'stage' ? 800 : 600,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: questionMode === 'stage' ? '0 2px 8px rgba(99, 102, 241, 0.3)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                  aria-pressed={questionMode === 'stage'}
+                >
+                  <span>🎬 In-Stage Vector Player</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuestionMode('card')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: questionMode === 'card' ? '#0f172a' : 'transparent',
+                    color: questionMode === 'card' ? '#ffffff' : '#64748b',
+                    fontWeight: questionMode === 'card' ? 800 : 600,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: questionMode === 'card' ? '0 2px 8px rgba(15, 23, 42, 0.3)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                  aria-pressed={questionMode === 'card'}
+                >
+                  <span>📝 Accessible Text Card</span>
+                </button>
+              </div>
+            </div>
+
+            {questionMode === 'stage' ? (
+              <div
+                style={{
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '1px solid #334155',
+                  boxShadow: '0 12px 36px rgba(0, 0, 0, 0.45)',
+                  background: '#090d16',
+                }}
+              >
+                {/* In-Stage Question Header Banner */}
+                <div
+                  style={{
+                    padding: '10px 16px',
+                    background: 'linear-gradient(90deg, #0f172a 0%, #1e293b 100%)',
+                    borderBottom: '1px solid #334155',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                    <div>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#f8fafc' }}>
+                        In-Stage Socratic Challenge: {selectedSubject} • {selectedUnit}
+                      </span>
+                      <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                        Question served live on vector apparatus with Promethean stylus pen inking.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {streak > 1 && (
+                      <span style={{ background: '#f59e0b', color: '#000', fontSize: '0.72rem', fontWeight: 900, padding: '3px 10px', borderRadius: '9999px', boxShadow: '0 2px 6px rgba(245, 158, 11, 0.35)' }}>
+                        🔥 Streak: {streak}
+                      </span>
+                    )}
+                    <span style={{ background: '#10b981', color: '#fff', fontSize: '0.72rem', fontWeight: 800, padding: '3px 10px', borderRadius: '9999px' }}>
+                      ⭐ Score: {score}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Embedded AST Vector Media Player with Injected Checkpoint */}
+                <React.Suspense
+                  fallback={
+                    <div style={{ height: '540px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', gap: '12px' }}>
+                      <span style={{ fontSize: '2rem' }}>⚡</span>
+                      <span>Mounting In-Stage AST Vector Apparatus...</span>
+                    </div>
+                  }
+                >
+                  <AstVectorMediaPlayer
+                    key={`${selectedSubject}-${selectedUnit}-${activeQuestion.id}`}
+                    preset={resolvePresetForTopic(selectedSubject, selectedUnit)}
+                    height="540px"
+                    autoPlay={true}
+                    allowPresetSwitch={true}
+                    initialCheckpoint={{
+                      title: `${selectedSubject} In-Stage Quiz`,
+                      prompt: activeQuestion.prompt,
+                      options: activeQuestion.displayOptions,
+                      answer: correctIndex,
+                      explanation: activeQuestion.explanation,
+                      t: 0.5,
+                    }}
+                  />
+                </React.Suspense>
+
+                {/* Question Actions Toolbar under Player */}
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    background: '#0b0f19',
+                    borderTop: '1px solid #1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetSeed = streamTransition?.nextSeedToken;
+                        requestQuestion(
+                          selectedKeyStage,
+                          selectedSubject,
+                          selectedUnit,
+                          difficulty,
+                          activeLang,
+                          true,
+                          targetSeed
+                        );
+                      }}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: '#38bdf8',
+                        color: '#090d16',
+                        fontWeight: 800,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>⚡ Next Question In-Stage</span>
+                      <span>➔</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, true)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: '#cbd5e1',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      🔄 Parallel Variation
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSolveInPlayer}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(99, 102, 241, 0.4)',
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      color: '#a5b4fc',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⛶ Fullscreen Stage Modal
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <QuestionCard
+                keyStage={activeQuestion.keyStage || selectedKeyStage}
+                subject={activeQuestion.subject}
+                unit={activeQuestion.unit}
+                lessonTitle={activeQuestion.lessonTitle || selectedLesson || undefined}
+                prompt={activeQuestion.prompt}
+                displayOptions={activeQuestion.displayOptions}
+                selectedAnswer={selectedAnswer}
+                correctIndex={correctIndex}
+                score={score}
+                streak={streak}
+                seedToken={activeQuestion.seedToken}
+                pedagogicalStage={activeQuestion.pedagogicalStage}
+                stageBadge={activeQuestion.stageBadge}
+                stepLabel={activeQuestion.stepLabel}
+                pedagogicalIntent={activeQuestion.pedagogicalIntent}
+                urn={activeQuestion.urn}
+                csn={activeQuestion.csn}
+                routeEngine={activeQuestion.routeEngine}
+                trajectoryState={trajectoryState}
+                streamTransition={streamTransition}
+                onSeedJump={(customSeed) => {
+                  requestQuestion(
+                    selectedKeyStage,
+                    selectedSubject,
+                    selectedUnit,
+                    difficulty,
+                    activeLang,
+                    false,
+                    customSeed
+                  );
+                }}
+                hint={activeQuestion.hint}
+                explanation={activeQuestion.explanation}
+                misconceptions={activeQuestion.misconceptions}
+                socraticFollowUp={activeQuestion.socraticFollowUp}
+                currentLang={activeLang}
+                onLanguageChange={(newLang) => {
+                  setActiveLang(newLang);
+                  requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, newLang);
+                }}
+                onSelectOption={handleSelectOption}
+                onNextQuestion={() => {
+                  const targetSeed = streamTransition?.nextSeedToken;
+                  requestQuestion(
+                    selectedKeyStage,
+                    selectedSubject,
+                    selectedUnit,
+                    difficulty,
+                    activeLang,
+                    true,
+                    targetSeed
+                  );
+                }}
+                onParallelVariation={() => requestQuestion(selectedKeyStage, selectedSubject, selectedUnit, difficulty, activeLang, true)}
+              />
+            )}
           </>
         ) : (
           <div

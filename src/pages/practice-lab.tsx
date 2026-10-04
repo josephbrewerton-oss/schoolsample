@@ -240,7 +240,7 @@ export default function PracticeLabPage() {
                 Practice Arena &amp; Neural Lab
               </h1>
               <p style={{ color: '#94a3b8', fontSize: '0.92rem', margin: 0 }}>
-                Interactive curriculum drills, adaptive question mastery, and on-device Socratic guidance.
+                Interactive curriculum drills, adaptive question mastery, and in-stage vector simulations.
               </p>
             </div>
 

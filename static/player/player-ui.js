@@ -471,6 +471,17 @@
           const chosenIdx = parseInt(btn.getAttribute('data-opt-idx'), 10);
           const isCorrect = chosenIdx === checkpoint.answer;
 
+          if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'CHECKPOINT_ANSWERED',
+              index,
+              chosenIdx,
+              isCorrect,
+              prompt: checkpoint.prompt,
+              answer: checkpoint.answer,
+            }, '*');
+          }
+
           optBtns.forEach(b => { b.disabled = true; });
 
           if (isCorrect) {

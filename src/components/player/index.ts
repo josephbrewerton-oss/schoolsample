@@ -4,3 +4,4 @@ export { default as PlayerEmbedModal, type PlayerEmbedModalProps } from './Playe
 export { default as SvgInspectorDrawer, type SvgInspectorDrawerProps, type InspectedElementData } from './SvgInspectorDrawer';
 export { default as SwfTranspilerDrawer, type SwfTranspilerDrawerProps } from './SwfTranspilerDrawer';
 export { default as DevStudioDrawer, type DevStudioDrawerProps, type StudioTabType } from './DevStudioDrawer';
+export { default as NanoAiTutorDrawer, type NanoAiTutorDrawerProps } from './NanoAiTutorDrawer';
