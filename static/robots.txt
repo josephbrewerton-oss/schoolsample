@@ -24,18 +24,26 @@ User-agent: GPTBot
 Allow: /
 Allow: /llms.txt
 Allow: /player/scenes.manifest.json
+Allow: /player/ast-phet-bridge.js
+Allow: /player/
 
 User-agent: ClaudeBot
 Allow: /
 Allow: /llms.txt
+Allow: /player/scenes.manifest.json
+Allow: /player/
 
 User-agent: PerplexityBot
 Allow: /
 Allow: /llms.txt
+Allow: /player/scenes.manifest.json
+Allow: /player/
 
 User-agent: Google-Extended
 Allow: /
 Allow: /llms.txt
+Allow: /player/scenes.manifest.json
+Allow: /player/
 
 # Sitemap
 Sitemap: /sitemap.xml

@@ -83,7 +83,11 @@
         keyframes: [],
         subtitles: [],
         bindings: [],
-        checkpoints: []
+        checkpoints: [],
+        emitters: [],
+        bindInputs: [],
+        stateMachines: [],
+        currentStateMachine: null
       };
 
       for (let i = 0; i < lines.length; i++) {
@@ -130,11 +134,97 @@
           }
         }
 
+        // Emitter Directives (Zero-Allocation Particle Pool)
+        // Syntax: Emitter: #<id> count=80 speed=120 radius=4 fill=#38bdf8 wrap=bounce
+        const emitterMatch = line.match(/^emitter:\s*(#[a-z0-9_-]+)\s*(.*)$/i);
+        if (emitterMatch) {
+          const emId = emitterMatch[1].replace(/^#/, '');
+          const attrs = this._parseKeyValuePairs(emitterMatch[2]);
+          parsed.emitters.push({
+            id: emId,
+            count: Number(attrs.count) || 80,
+            speed: Number(attrs.speed) || 120,
+            radius: Number(attrs.radius) || 4,
+            fill: attrs.fill || '#38bdf8',
+            wrap: attrs.wrap || 'bounce',
+            gravity: Number(attrs.gravity) || 0
+          });
+          continue;
+        }
+
+        // Slider / Bind-Input Directives (Self-Wiring Interactive Handles)
+        // Syntax: Slider: #<id> var=<name> min=<val> max=<val> axis=<x|y|rotary>
+        // Syntax: Bind-Input: #<id> var=<name> min=<val> max=<val> axis=<x|y|rotary>
+        const sliderMatch = line.match(/^(?:slider|bind-input):\s*(#[a-z0-9_-]+)\s*(.*)$/i);
+        if (sliderMatch) {
+          const target = sliderMatch[1];
+          const attrs = this._parseKeyValuePairs(sliderMatch[2]);
+          parsed.bindInputs.push({
+            target: target,
+            var: attrs.var || 'val',
+            min: Number(attrs.min !== undefined ? attrs.min : 0),
+            max: Number(attrs.max !== undefined ? attrs.max : 100),
+            axis: attrs.axis || 'x',
+            trackMin: Number(attrs.trackMin || attrs.minX || 60),
+            trackMax: Number(attrs.trackMax || attrs.maxX || 440)
+          });
+          continue;
+        }
+
+        // State Machine Directives
+        // Syntax: State-Machine: <id> initial=<state> dwell=<sec>
+        const smMatch = line.match(/^state-machine:\s*([a-z0-9_-]+)\s*(.*)$/i);
+        if (smMatch) {
+          const smId = smMatch[1];
+          const attrs = this._parseKeyValuePairs(smMatch[2]);
+          parsed.currentStateMachine = {
+            id: smId,
+            initial: attrs.initial || 'default',
+            dwell: Number(attrs.dwell) || 0.25,
+            states: [],
+            transitions: []
+          };
+          parsed.stateMachines.push(parsed.currentStateMachine);
+          continue;
+        }
+
+        // State definition under State Machine
+        // Syntax: State: <name> fill=<color> emitter=<target> speed=<n> count=<n> gravity=<n>
+        const stateMatch = line.match(/^state:\s*([a-z0-9_-]+)\s*(.*)$/i);
+        if (stateMatch && parsed.currentStateMachine) {
+          const stateName = stateMatch[1];
+          const attrs = this._parseKeyValuePairs(stateMatch[2]);
+          const stateObj = {
+            name: stateName,
+            fill: attrs.fill,
+            emitterSet: attrs.emitter ? {
+              target: attrs.emitter,
+              speed: Number(attrs.speed) || 120,
+              count: Number(attrs.count) || 80,
+              gravity: Number(attrs.gravity) || 0
+            } : null
+          };
+          parsed.currentStateMachine.states.push(stateObj);
+          continue;
+        }
+
+        // Transition definition under State Machine
+        // Syntax: Transition: from=<state> to=<state> trigger="<expr>" duration=<sec> dwell=<sec>
+        const transMatch = line.match(/^transition:\s*(.*)$/i);
+        if (transMatch && parsed.currentStateMachine) {
+          const attrs = this._parseKeyValuePairs(transMatch[1]);
+          parsed.currentStateMachine.transitions.push({
+            from: attrs.from || '*',
+            to: attrs.to,
+            trigger: attrs.trigger || 'true',
+            duration: Number(attrs.duration) || 0.5,
+            dwell: Number(attrs.dwell) || 0.3
+          });
+          continue;
+        }
+
         // Shape Directives (adds visual SVG elements directly from text)
         // Syntax: Shape: <type> #<id> <attrs...>
-        // e.g. Shape: circle #ball cx=400 cy=240 r=25 fill=#38bdf8
-        // e.g. Shape: rect #piston x=250 y=140 w=300 h=36 fill=#64748b rx=6
-        // e.g. Shape: text #label x=400 y=60 text="Boyle's Law" fill=#ffffff font-size=20
         const shapeMatch = line.match(/^shape:\s*([a-z]+)\s+(#[a-z0-9_-]+)\s*(.*)$/i);
         if (shapeMatch) {
           const type = shapeMatch[1].toLowerCase();
@@ -355,6 +445,22 @@
       }
 
       return null;
+    }
+
+    /**
+     * Helper to parse key=value or key="val with spaces" pairs
+     */
+    static _parseKeyValuePairs(str) {
+      const res = {};
+      if (!str) return res;
+      const regex = /([a-z0-9_-]+)=(?:"([^"]*)"|'([^']*)'|([^\s]+))/gi;
+      let match;
+      while ((match = regex.exec(str)) !== null) {
+        const key = match[1];
+        const val = match[2] !== undefined ? match[2] : (match[3] !== undefined ? match[3] : match[4]);
+        res[key] = val;
+      }
+      return res;
     }
 
     /**
@@ -609,7 +715,50 @@
         ast += `  ))\n`;
       }
 
-      // 5. Zero-Bloat Micro-Physics Subsystem
+      // 5. Multi-Entity Vector Emitters
+      if (parsed.emitters && parsed.emitters.length > 0) {
+        ast += `  (:emitters (\n`;
+        parsed.emitters.forEach(em => {
+          ast += `    (:emitter :id "${em.id}" :count ${em.count || 80} :speed ${em.speed || 120} :radius ${em.radius || 4} :fill "${em.fill || '#38bdf8'}" :wrap "${em.wrap || 'bounce'}")\n`;
+        });
+        ast += `  ))\n`;
+      }
+
+      // 6. Bidirectional Slider-to-Variable Bindings (:bind-inputs)
+      if (parsed.bindInputs && parsed.bindInputs.length > 0) {
+        ast += `  (:bind-inputs (\n`;
+        parsed.bindInputs.forEach(bi => {
+          ast += `    (:bind-input :target "${bi.target}" :var "${bi.var}" :min ${bi.min} :max ${bi.max} :axis "${bi.axis || 'x'}" :track-min ${bi.trackMin || 60} :track-max ${bi.trackMax || 440})\n`;
+        });
+        ast += `  ))\n`;
+      }
+
+      // 7. Declarative State Transition Machines
+      if (parsed.stateMachines && parsed.stateMachines.length > 0) {
+        ast += `  (:state-machines (\n`;
+        parsed.stateMachines.forEach(sm => {
+          ast += `    (:state-machine :id "${sm.id}" :initial "${sm.initial}" :dwell ${sm.dwell || 0.25}\n`;
+          ast += `      (:states (\n`;
+          (sm.states || []).forEach(st => {
+            ast += `        (:state :name "${st.name}"`;
+            if (st.fill) ast += ` (:attr :target "#phase-pill" :attr "fill" :val "${st.fill}")`;
+            if (st.emitterSet) {
+              ast += ` (:emitter-set :target "${st.emitterSet.target}" :speed ${st.emitterSet.speed || 120} :count ${st.emitterSet.count || 80} :gravity ${st.emitterSet.gravity || 0})`;
+            }
+            ast += `)\n`;
+          });
+          ast += `      ))\n`;
+          ast += `      (:transitions (\n`;
+          (sm.transitions || []).forEach(tr => {
+            ast += `        (:transition :from "${tr.from}" :to "${tr.to}" :trigger "${this._escapeQuotes(tr.trigger)}" :duration ${tr.duration || 0.5} :dwell ${tr.dwell || 0.3})\n`;
+          });
+          ast += `      ))\n`;
+          ast += `    )\n`;
+        });
+        ast += `  ))\n`;
+      }
+
+      // 8. Zero-Bloat Micro-Physics Subsystem
       if (parsed.gravity !== undefined) {
         ast += `  (:physics (:gravity ${parsed.gravity} :friction 0.985 :ground 420))\n`;
       }
@@ -627,6 +776,20 @@
       let text = `# ${scene.title || 'Untitled Curriculum Slide'}\n`;
       text += `Stage: ${scene.stage || 'KS3 SCIENCE'}\n`;
       text += `Duration: ${scene.duration || 10}s\n\n`;
+
+      if (scene.emitters && scene.emitters.length > 0) {
+        scene.emitters.forEach(em => {
+          text += `Emitter: #${em.id} count=${em.count || 80} speed=${em.speed || 120} radius=${em.radius || 4} fill=${em.fill || '#38bdf8'} wrap=${em.wrap || 'bounce'}\n`;
+        });
+        text += `\n`;
+      }
+
+      if (scene.bindInputs && scene.bindInputs.length > 0) {
+        scene.bindInputs.forEach(bi => {
+          text += `Slider: ${bi.target} var=${bi.var} min=${bi.min} max=${bi.max} axis=${bi.axis || 'x'}\n`;
+        });
+        text += `\n`;
+      }
 
       const keyframes = scene.keyframes || [];
       const subtitles = scene.subtitles || [];
@@ -680,6 +843,53 @@
 
   // Pre-baked Non-Tech Slide-Script Templates for Educators
   ASTSlideScriptCompiler.TEMPLATES = {
+    'phase-change': {
+      id: 'phase-change',
+      title: '🧊 Phase Changes: Solid, Liquid & Gas Thermodynamics',
+      stage: 'KS3/KS4 CHEMISTRY & PHYSICS',
+      desc: 'Dynamic state machine transitions, multi-entity particle emitter boiling/freezing, and interactive bidirectional thermal slider.',
+      script: `# Thermodynamic Phase Transitions: Kinetic Theory
+Stage: KS3/KS4 CHEMISTRY & PHYSICS
+Duration: 12s
+
+Shape: rect #chamber x=180 y=100 w=440 h=250 rx=12 fill=#0b1120 stroke=#38bdf8 stroke-width=3
+Shape: rect #phase-pill x=340 y=370 w=120 h=32 rx=8 fill=#3b82f6
+Shape: text #phase-label x=400 y=391 text="PHASE ACTIVE" fill="#ffffff" font-size=12
+Shape: rect #slider-track x=240 y=420 w=320 h=8 rx=4 fill=#1e293b stroke=#334155
+Shape: circle #temp-knob cx=400 cy=424 r=12 fill=#ef4444 stroke=#ffffff stroke-width=2
+
+Emitter: #matter-particles count=80 speed=90 radius=5 fill=#38bdf8 wrap=bounce
+Slider: #temp-knob var=temp min=90 max=600 axis=x trackMin=240 trackMax=560
+
+State-Machine: matter-phase initial=liquid dwell=0.3
+State: solid fill=#22c55e emitter=matter-particles speed=15 count=60 gravity=60
+State: liquid fill=#3b82f6 emitter=matter-particles speed=90 count=80 gravity=180
+State: gas fill=#ef4444 emitter=matter-particles speed=320 count=120 gravity=0
+Transition: from=solid to=liquid trigger="temp >= 273.15" duration=0.5
+Transition: from=liquid to=gas trigger="temp >= 373.15" duration=0.5
+Transition: from=gas to=liquid trigger="temp < 373.15" duration=0.5
+Transition: from=liquid to=solid trigger="temp < 273.15" duration=0.5
+
+## Step 1: Liquid State Equilibrium (0s)
+Rule: In liquid phase, intermolecular forces permit fluid sliding flow past one another under gravity.
+Subtitles: At room temperature (300 K), particles flow fluidly under gravity with moderate kinetic velocity.
+
+## Step 2: Thermal Boiling Vaporization (4s)
+Rule: Heating past boiling point (373.15 K) overcomes intermolecular attraction, causing rapid expansion.
+Subtitles: Notice the temperature rise past 373 K: boiling triggers rapid particle acceleration into chaotic gas motion!
+
+## Step 3: Cryogenic Solid Condensation (8s)
+Rule: Cryogenic cooling drops molecular kinetic energy, freezing molecules into vibrating crystal lattice sites.
+Subtitles: Freezing point reached: thermal speed drops drastically as molecules lock into crystalline lattice vibration.
+
+## Checkpoint: Latent Heat & Phase Transition (10s)
+Question: Why does temperature remain constant during a pure substance phase change despite ongoing heating?
+- Heat energy is absorbed as latent heat to break intermolecular bonds [correct]
+- Particles stop moving entirely during transition
+- Heat is converted into gravitational mass
+Explain: Latent heat of vaporization breaks intermolecular bonds rather than increasing molecular kinetic energy (v_rms), keeping temperature constant until the phase shift completes.`
+    },
+
     'boyle-law': {
       id: 'boyle-law',
       title: "🔬 Boyle's Gas Law & Compression",
@@ -694,9 +904,9 @@ Shape: rect #piston x=245 y=150 w=310 h=36 rx=4 fill=#64748b stroke=#94a3b8 stro
 Shape: circle #gauge-body cx=640 cy=240 r=46 fill=#1e293b stroke=#f59e0b stroke-width=3
 Shape: line #gauge-needle x1=640 y1=240 x2=640 y2=205 stroke=#ef4444 stroke-width=3
 Shape: text #pressure-txt x=640 y=310 text="1.0 atm" fill="#f59e0b" font-size=18
-Shape: circle #particle1 cx=320 cy=260 r=7 fill=#38bdf8
-Shape: circle #particle2 cx=440 cy=300 r=7 fill=#38bdf8
-Shape: circle #particle3 cx=380 cy=340 r=7 fill=#38bdf8
+
+Emitter: #gas-particles count=70 speed=140 radius=4 fill=#38bdf8 wrap=bounce
+Slider: #piston var=volume min=0.35 max=1.0 axis=x trackMin=245 trackMax=480
 
 ## Step 1: Baseline Volume (0s)
 Rule: In a large volume, gas particles collide infrequently with the container walls.
@@ -792,6 +1002,47 @@ Question: In osmosis, water molecules diffuse across a partially permeable membr
 - A region of higher water potential (dilute) to lower water potential (concentrated) [correct]
 - Through active transport using cellular ATP energy
 Explain: Osmosis is the passive net diffusion of water molecules from a high water potential (dilute) to a low water potential (concentrated) across a partially permeable membrane.`
+    },
+
+    'pythagoras-proof': {
+      id: 'pythagoras-proof',
+      title: '📐 Pythagoras Theorem & PhET Area Conservation',
+      stage: 'KS3 GEOMETRY',
+      desc: 'Interactive right-triangle legs with direct vertex dragging, square area conservation (a² + b² = c²), and integer triples.',
+      script: `# Pythagoras Theorem: Visual Area Conservation Proof
+Stage: KS3 GEOMETRY
+Duration: 11s
+
+Shape: rect #eq-banner x=180 y=20 w=440 h=44 rx=10 fill=#0f172a stroke=#38bdf8 stroke-width=2
+Shape: text #eq-txt x=400 y=48 text="a² + b² = c²  ➔  3² + 4² = 9 + 16 = 25" fill="#f8fafc" font-size=15
+Shape: polygon #pyth-triangle points="290,270 370,270 290,210" fill=#0f172a stroke=#38bdf8 stroke-width=3
+Shape: polygon #sq-a fill=#10b981 opacity=0.8 stroke=#34d399 stroke-width=2
+Shape: polygon #sq-b fill=#3b82f6 opacity=0.8 stroke=#60a5fa stroke-width=2
+Shape: polygon #sq-c fill=#f59e0b opacity=0.8 stroke=#fbbf24 stroke-width=2
+Shape: circle #handle-a cx=290 cy=210 r=12 fill=#10b981 stroke=#ffffff stroke-width=2
+Shape: circle #handle-b cx=370 cy=270 r=12 fill=#3b82f6 stroke=#ffffff stroke-width=2
+
+Slider: #handle-a var=sideA min=2 max=8 axis=y trackMin=110 trackMax=230
+Slider: #handle-b var=sideB min=2 max=10 axis=x trackMin=330 trackMax=490
+
+## Step 1: The 3-4-5 Right Triangle (0s)
+Rule: In any right-angled triangle, squares erected on the legs equal the square on the hypotenuse.
+Subtitles: Look at the right triangle: leg a = 3 units, leg b = 4 units, forming hypotenuse c.
+
+## Step 2: Summing Areas a² and b² (3.5s)
+Rule: Square a has area 3² = 9; square b has area 4² = 16. Sum = 25 square units.
+Subtitles: Notice the green and blue squares: 9 unit blocks + 16 unit blocks = 25 total blocks!
+
+## Step 3: Exact Hypotenuse Conservation (7.0s)
+Rule: Hypotenuse square c² = 25 ➔ c = √25 = 5.00 units. Q.E.D.
+Subtitles: The golden square on the hypotenuse contains exactly 25 units! Area is strictly conserved.
+
+## Checkpoint: Pythagorean Conservation Calculation (9.0s)
+Question: If leg a has square area 9 and leg b has square area 16, what is the side length c of the hypotenuse?
+- c = 5 (since √25 = 5) [correct]
+- c = 7 (since 3 + 4 = 7)
+- c = 25
+Explain: The area of the square on the hypotenuse is 9 + 16 = 25. Therefore the length of the hypotenuse is √25 = 5.`
     }
   };
 

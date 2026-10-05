@@ -15,6 +15,8 @@
       <select id="preset-selector" title="Select Curriculum Vector Preset">
         <!-- Injected dynamically from ASTSceneRegistry -->
       </select>
+      <button type="button" id="btn-open-file" class="btn btn-secondary btn-sm" title="Open local simulation (.ast, .svg, .json) or capsule" style="padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 6px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; cursor: pointer;">📂 Open...</button>
+      <input type="file" id="file-input-hidden" accept=".ast,.svg,.json,.html,.phet" style="display:none;" />
     </div>
 
     <div class="header-actions">
@@ -41,6 +43,7 @@
       <button type="button" id="btn-dev-mode" title="Toggle Point-and-Click SVG Element Inspector">🛠️ <span class="btn-label">Inspect</span></button>
       <button type="button" id="btn-dev-studio" title="Open Live SVG & AST Code Studio">💻 <span class="btn-label">Studio</span></button>
       <button type="button" id="btn-header-export-spa" title="Export Autonomous Offline SVG Single Page Applet">🚀 <span class="btn-label">Standalone SPA</span></button>
+      <a href="/lumina-vector-player.zip" download="lumina-vector-player.zip" id="btn-download-zip" class="zip-download-btn" title="Download Complete Offline Simulator Suite (Zero-Dependency ZIP Bundle)">📦 <span class="btn-label">ZIP</span></a>
       <button type="button" id="btn-obs-link" title="OBS Studio WebSocket Broadcast Controls">📡 <span class="btn-label">OBS</span><span id="obs-status-dot" class="obs-status-dot disconnected"></span></button>
       <button type="button" id="btn-print" title="Generate A4 Classroom Worksheet">🖨️ <span class="btn-label">Print</span></button>
       <button type="button" id="btn-copy-svg" title="Copy Raw Vector SVG to Clipboard">📋 <span class="btn-label">Copy SVG</span></button>
@@ -147,7 +150,8 @@
     <div id="dev-studio-drawer" class="dev-studio-drawer hidden">
       <div class="dev-studio-bar">
         <div class="dev-studio-tabs">
-          <button type="button" class="dev-tab-btn active" data-tab="svg">🎨 Raw SVG Markup</button>
+          <button type="button" class="dev-tab-btn active" data-tab="compiler">📝 SlideScript</button>
+          <button type="button" class="dev-tab-btn" data-tab="svg">🎨 Raw SVG</button>
           <button type="button" class="dev-tab-btn" data-tab="ast">⚡ AST S-Expressions</button>
           <button type="button" class="dev-tab-btn" data-tab="templates">🚀 Starter Templates</button>
         </div>
@@ -161,8 +165,21 @@
       </div>
 
       <div class="dev-studio-content">
+        <!-- SlideScript Compiler Tab -->
+        <div id="dev-compiler-tab" class="dev-compiler-tab" style="display:flex; flex-direction:column; height:100%; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div style="font-size:11px; color:#94a3b8;">Author zero-bloat interactive slides in plain Markdown. Supports Emitter:, Slider:, and State-Machine:.</div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="dev-btn compiler-tpl-btn" data-tpl="phase-change">🧊 Phase Changes</button>
+              <button type="button" class="dev-btn compiler-tpl-btn" data-tpl="boyle-law">🔬 Boyle's Law</button>
+              <button type="button" class="dev-btn" id="btn-decompile-ast" title="Convert active SVG scene into plain SlideScript">🔄 Decompile Scene</button>
+            </div>
+          </div>
+          <textarea id="dev-editor-slidescript" class="dev-editor-textarea" style="flex:1;" spellcheck="false" placeholder="Write or edit SlideScript Markdown here..."></textarea>
+        </div>
+
         <!-- SVG Code Tab -->
-        <textarea id="dev-editor-svg" class="dev-editor-textarea" spellcheck="false" placeholder="Paste or edit raw &lt;svg&gt; XML nodes here..."></textarea>
+        <textarea id="dev-editor-svg" class="dev-editor-textarea" style="display:none;" spellcheck="false" placeholder="Paste or edit raw &lt;svg&gt; XML nodes here..."></textarea>
 
         <!-- AST Code Tab -->
         <textarea id="dev-editor-ast" class="dev-editor-textarea" style="display:none;" spellcheck="false" placeholder="Write or edit AST S-Expressions here (:scene :id ... (:bindings ...))"></textarea>
@@ -544,8 +561,10 @@
   </footer>
 
   <!-- Modular Scripts with Cache-Busting Version -->
+  <script src="./ast-phet-bridge.js?v=2.5.2"></script>
   <script src="./ast-scenes.js?v=2.5.2"></script>
   <script src="./ast-engine.js?v=2.5.2"></script>
+  <script src="./ast-compiler.js?v=2.5.2"></script>
   <script src="./obs-controller.js?v=2.5.2"></script>
   <script src="./player-ui.js?v=2.5.2"></script>
   <script src="./ast-gestures.js?v=2.5.2"></script>
@@ -588,15 +607,47 @@
       window.AST_ENGINE = engine;
       window.AST_UI = ui;
 
-      // If an external src URL is passed, load it from any remote or local directory
-      if (src) {
+      // 4. Ingest Zero-Server URL Hash / Query Payloads (#ast=..., #script=..., #data=...)
+      let payloadBooted = false;
+      const rawHash = window.location.hash ? window.location.hash.slice(1) : '';
+      const hashParams = new URLSearchParams(rawHash);
+      const astPayload = params.get('ast') || hashParams.get('ast');
+      const scriptPayload = params.get('script') || hashParams.get('script') || params.get('slidescript') || hashParams.get('slidescript');
+      const dataPayload = params.get('data') || hashParams.get('data');
+
+      if (astPayload) {
+        try {
+          engine.loadFromPayload(astPayload, autoplay);
+          payloadBooted = true;
+        } catch (e) {
+          console.warn('[AST Player] Failed to boot from ?ast/hash payload:', e);
+        }
+      } else if (scriptPayload) {
+        try {
+          engine.loadFromPayload(scriptPayload, autoplay);
+          payloadBooted = true;
+        } catch (e) {
+          console.warn('[AST Player] Failed to boot from ?script/hash payload:', e);
+        }
+      } else if (dataPayload) {
+        try {
+          engine.loadFromPayload(dataPayload, autoplay);
+          payloadBooted = true;
+        } catch (e) {
+          console.warn('[AST Player] Failed to boot from ?data/hash payload:', e);
+        }
+      } else if (src) {
+        // If an external src URL is passed, load it from any remote or local directory
         engine.loadFromUrl(src, autoplay).catch((err) => {
           console.warn('[AST Player] Could not load external src:', src, err);
         });
       }
 
-      // 3. Load scenes manifest if available (can be loaded relative to basePath or default)
-      if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
+      // 5. Load scenes manifest (federated from ?manifest=URL or default built-in catalog)
+      const federatedManifest = params.get('manifest') || params.get('catalog');
+      if (federatedManifest) {
+        ui.populatePresets();
+      } else if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
         const manifestUrl = basePath ? `${basePath.replace(/\/?$/, '/')}/scenes.manifest.json` : './scenes.manifest.json?v=2.5.2';
         const fallbackUrl = basePath ? `${basePath.replace(/\/?$/, '/')}/scenes-config.json` : './scenes-config.json?v=2.5.2';
         window.ASTSceneRegistry.loadConfig(manifestUrl).then(() => {
@@ -608,10 +659,10 @@
         });
       }
 
-      // 4. Setup postMessage bridge for parent iframe communication
+      // 6. Setup postMessage bridge for parent iframe communication
       window.setupPostMessageBridge(engine, ui);
 
-      // 5. Start timeline clock
+      // 7. Start timeline clock
       engine.start();
     })();
   </script>

@@ -685,21 +685,20 @@
         elements.lastT = 0;
         return elements;
       },
-      update(t, el) {
+      update(t, el, engine, dt) {
         if (!el || !el.updatePositions) return;
 
-        // Advance simulation time smoothly based on delta-t and speedMultiplier if not paused
-        const dt = Math.max(0, t - (el.lastT || 0));
-        el.lastT = t;
+        // PhET Continuous Dynamic Physics: Advance simulation smoothly using real elapsed delta seconds
+        const dtSec = typeof dt === 'number' && dt > 0 ? Math.min(dt, 0.1) : 0.016;
 
         if (!el.isPaused) {
-          // 1 full timeline loop = 2.0 Earth years at 1x
-          el.simTimeYears += dt * 2.0 * (el.speedMultiplier || 1.0);
+          // Dynamic Keplerian orbital clock: ~0.20 Earth years per wall-clock second at 1.0x
+          el.simTimeYears += dtSec * 0.20 * (el.speedMultiplier || 1.0);
         }
 
-        // Twinkle starfield
+        // Twinkle starfield dynamically
         for (let i = 0; i < el.stars.length; i++) {
-          const op = 0.2 + ((i * 13 + t * 4) % 1) * 0.7;
+          const op = 0.2 + ((i * 13 + el.simTimeYears * 5) % 1) * 0.7;
           el.stars[i].setAttribute('opacity', op.toFixed(2));
         }
 
@@ -773,6 +772,10 @@
       duration: 11.0,
       svgFile: 'scenes/pythagoras.svg',
       astFile: 'scenes/pythagoras.ast',
+      vars: {
+        sideA: { value: 3, min: 2, max: 8, unit: 'units' },
+        sideB: { value: 4, min: 2, max: 10, unit: 'units' }
+      },
       keyframes: [
         { t: 0.00, title: 'Step 1: The 3-4-5 Triangle', rule: 'A right-angled triangle with sides a = 3, b = 4, and hypotenuse c.' },
         { t: 0.35, title: 'Step 2: Square a² and b²', rule: 'Square of side 3 has area 9; square of side 4 has area 16.' },
@@ -815,143 +818,191 @@
       mount(container) {
         let curA = 3;
         let curB = 4;
-        const ox = 330, oy = 290, s = 22;
+        let showGrid = true;
+        let liquidMode = false;
+        let ox = 290, oy = 270, s = 20;
 
         container.innerHTML = `
-          <svg id="pyth-interactive-svg" viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#090d16; user-select:none; touch-action:none;">
-            <defs>
-              <linearGradient id="pythA-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
-                <stop offset="100%" stop-color="#059669" stop-opacity="0.6"/>
-              </linearGradient>
-              <linearGradient id="pythB-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.85"/>
-                <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.6"/>
-              </linearGradient>
-              <linearGradient id="pythC-grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.85"/>
-                <stop offset="100%" stop-color="#d97706" stop-opacity="0.6"/>
-              </linearGradient>
-              <filter id="pyth-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="blur"/>
-                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-              </filter>
-            </defs>
+          <defs>
+            <linearGradient id="pythA-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="#059669" stop-opacity="0.6"/>
+            </linearGradient>
+            <linearGradient id="pythB-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.6"/>
+            </linearGradient>
+            <linearGradient id="pythC-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.85"/>
+              <stop offset="100%" stop-color="#d97706" stop-opacity="0.6"/>
+            </linearGradient>
+            <linearGradient id="pyth-liquid-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#0284c7" stop-opacity="0.75"/>
+            </linearGradient>
+            <filter id="pyth-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
 
-            <!-- Background Grid -->
-            <g opacity="0.08" stroke="#38bdf8" stroke-width="1">
-              <line x1="0" y1="120" x2="800" y2="120"/><line x1="0" y1="200" x2="800" y2="200"/><line x1="0" y1="280" x2="800" y2="280"/><line x1="0" y1="360" x2="800" y2="360"/>
-              <line x1="160" y1="0" x2="160" y2="480"/><line x1="320" y1="0" x2="320" y2="480"/><line x1="480" y1="0" x2="480" y2="480"/><line x1="640" y1="0" x2="640" y2="480"/>
+          <!-- Background Stage Grid -->
+          <g opacity="0.08" stroke="#38bdf8" stroke-width="1">
+            <line x1="0" y1="120" x2="800" y2="120"/><line x1="0" y1="200" x2="800" y2="200"/><line x1="0" y1="280" x2="800" y2="280"/><line x1="0" y1="360" x2="800" y2="360"/>
+            <line x1="160" y1="0" x2="160" y2="480"/><line x1="320" y1="0" x2="320" y2="480"/><line x1="480" y1="0" x2="480" y2="480"/><line x1="640" y1="0" x2="640" y2="480"/>
+          </g>
+
+          <!-- Live Algebra Equation Banner -->
+          <g transform="translate(400, 34)">
+            <rect x="-310" y="-22" width="620" height="44" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+            <text id="pyth-formula-text" x="0" y="6" fill="#f8fafc" font-size="15" font-weight="800" text-anchor="middle">
+              a² + b² = c²  ➔  3² + 4² = 9 + 16 = 25  ➔  c = √25 = 5.00
+            </text>
+          </g>
+
+          <!-- Pythagorean Triple Badge -->
+          <g id="pyth-triple-badge" transform="translate(680, 34)" style="display:block;">
+            <rect x="-65" y="-14" width="130" height="28" rx="14" fill="#854d0e" stroke="#facc15" stroke-width="1.5"/>
+            <text x="0" y="5" fill="#fef08a" font-size="11" font-weight="900" text-anchor="middle">★ INTEGER TRIPLE</text>
+          </g>
+
+          <!-- Geometry Layer -->
+          <g id="pyth-geometry-root">
+            <!-- Square A (Green) -->
+            <polygon id="pyth-poly-a" data-pedagogical="pyth-sq-a" fill="url(#pythA-grad)" stroke="#34d399" stroke-width="2"/>
+            <g id="pyth-grid-a" opacity="0.45" stroke="#ffffff" stroke-width="0.8" fill="none" pointer-events="none"></g>
+            <text id="pyth-label-a" fill="#ecfdf5" font-size="15" font-weight="900" text-anchor="middle" pointer-events="none">a² = 9</text>
+
+            <!-- Square B (Blue) -->
+            <polygon id="pyth-poly-b" data-pedagogical="pyth-sq-b" fill="url(#pythB-grad)" stroke="#60a5fa" stroke-width="2"/>
+            <g id="pyth-grid-b" opacity="0.45" stroke="#ffffff" stroke-width="0.8" fill="none" pointer-events="none"></g>
+            <text id="pyth-label-b" fill="#eff6ff" font-size="15" font-weight="900" text-anchor="middle" pointer-events="none">b² = 16</text>
+
+            <!-- Square C (Gold Hypotenuse) -->
+            <polygon id="pyth-poly-c" data-pedagogical="pyth-sq-c" fill="url(#pythC-grad)" stroke="#fbbf24" stroke-width="2"/>
+            <g id="pyth-grid-c" opacity="0.45" stroke="#ffffff" stroke-width="0.8" fill="none" pointer-events="none"></g>
+            <text id="pyth-label-c" fill="#fffbeb" font-size="15" font-weight="900" text-anchor="middle" pointer-events="none">c² = 25</text>
+
+            <!-- Liquid / Bead Conservation Overlay -->
+            <g id="pyth-liquid-overlay" style="display:none;" pointer-events="none">
+              <polygon id="pyth-liquid-fill-c" fill="url(#pyth-liquid-grad)" stroke="#38bdf8" stroke-width="2"/>
+              <rect x="200" y="68" width="400" height="28" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+              <text id="pyth-liquid-banner-text" x="400" y="86" fill="#38bdf8" font-size="11" font-weight="900" text-anchor="middle">💧 AREA CONSERVATION: Liquid from a² + b² fills c² exactly 100%</text>
             </g>
 
-            <!-- Live Algebra Equation Banner -->
-            <g transform="translate(400, 36)">
-              <rect x="-310" y="-22" width="620" height="44" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2"/>
-              <text id="pyth-formula-text" x="0" y="6" fill="#f8fafc" font-size="16" font-weight="800" text-anchor="middle">
-                a² + b² = c²  ➔  3² + 4² = 9 + 16 = 25  ➔  c = √25 = 5.00
-              </text>
+            <!-- Main Right-Angled Triangle -->
+            <polygon id="pyth-triangle" data-pedagogical="pyth-triangle" fill="#0f172a" stroke="#38bdf8" stroke-width="3.5" filter="url(#pyth-glow)"/>
+
+            <!-- Right-Angle Indicator Box -->
+            <rect id="pyth-right-angle" data-pedagogical="pyth-right-angle" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
+
+            <!-- Dimension Labels on Legs -->
+            <text id="pyth-side-a-lbl" fill="#34d399" font-size="14" font-weight="800" text-anchor="end" pointer-events="none">a = 3</text>
+            <text id="pyth-side-b-lbl" fill="#60a5fa" font-size="14" font-weight="800" text-anchor="middle" pointer-events="none">b = 4</text>
+            <text id="pyth-side-c-lbl" fill="#fbbf24" font-size="14" font-weight="800" text-anchor="middle" pointer-events="none">c = 5.00</text>
+
+            <!-- Draggable Vertex Handles with generous touch hit targets -->
+            <!-- Top Vertex Handle (controls side a) -->
+            <g id="pyth-handle-a" data-draggable="pyth-handle-a" data-pedagogical="pyth-handle-a" style="cursor:ns-resize;">
+              <circle r="34" fill="transparent" pointer-events="all"/>
+              <circle id="pyth-handle-a-glow" r="18" fill="#10b981" fill-opacity="0.3" pointer-events="none"/>
+              <circle id="pyth-handle-a-dot" r="11" fill="#10b981" stroke="#ffffff" stroke-width="2.5" pointer-events="none"/>
+              <circle r="5" fill="#ffffff" pointer-events="none"/>
+              <text x="24" y="5" fill="#34d399" font-size="11" font-weight="900" pointer-events="none">DRAG (a) ↕</text>
             </g>
 
-            <!-- Pythagorean Triple Badge -->
-            <g id="pyth-triple-badge" transform="translate(680, 36)" style="display:block;">
-              <rect x="-65" y="-14" width="130" height="28" rx="14" fill="#854d0e" stroke="#facc15" stroke-width="1.5"/>
-              <text x="0" y="5" fill="#fef08a" font-size="11" font-weight="900" text-anchor="middle">★ INTEGER TRIPLE</text>
+            <!-- Right Vertex Handle (controls side b) -->
+            <g id="pyth-handle-b" data-draggable="pyth-handle-b" data-pedagogical="pyth-handle-b" style="cursor:ew-resize;">
+              <circle r="34" fill="transparent" pointer-events="all"/>
+              <circle id="pyth-handle-b-glow" r="18" fill="#3b82f6" fill-opacity="0.3" pointer-events="none"/>
+              <circle id="pyth-handle-b-dot" r="11" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5" pointer-events="none"/>
+              <circle r="5" fill="#ffffff" pointer-events="none"/>
+              <text x="0" y="28" fill="#60a5fa" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">DRAG (b) ↔</text>
             </g>
+          </g>
 
-            <!-- Squares & Shapes Layer -->
-            <g id="pyth-geometry-root">
-              <!-- Square A (Green) -->
-              <polygon id="pyth-poly-a" fill="url(#pythA-grad)" stroke="#34d399" stroke-width="2"/>
-              <text id="pyth-label-a" fill="#ecfdf5" font-size="16" font-weight="900" text-anchor="middle">a² = 9</text>
+          <!-- Bottom Interactive Control Dock (PhET Apparatus Controls) -->
+          <g id="pyth-control-dock" transform="translate(400, 442)">
+            <rect x="-385" y="-24" width="770" height="48" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
 
-              <!-- Square B (Blue) -->
-              <polygon id="pyth-poly-b" fill="url(#pythB-grad)" stroke="#60a5fa" stroke-width="2"/>
-              <text id="pyth-label-b" fill="#eff6ff" font-size="16" font-weight="900" text-anchor="middle">b² = 16</text>
-
-              <!-- Square C (Gold/Orange Hypotenuse) -->
-              <polygon id="pyth-poly-c" fill="url(#pythC-grad)" stroke="#fbbf24" stroke-width="2"/>
-              <text id="pyth-label-c" fill="#fffbeb" font-size="16" font-weight="900" text-anchor="middle">c² = 25</text>
-
-              <!-- Main Right-Angled Triangle -->
-              <polygon id="pyth-triangle" fill="#0f172a" stroke="#38bdf8" stroke-width="3.5" filter="url(#pyth-glow)"/>
-
-              <!-- Right-Angle Indicator Box -->
-              <rect id="pyth-right-angle" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.8"/>
-
-              <!-- Dimension Labels on Legs -->
-              <text id="pyth-side-a-lbl" fill="#34d399" font-size="14" font-weight="800" text-anchor="end">a = 3</text>
-              <text id="pyth-side-b-lbl" fill="#60a5fa" font-size="14" font-weight="800" text-anchor="middle">b = 4</text>
-              <text id="pyth-side-c-lbl" fill="#fbbf24" font-size="14" font-weight="800" text-anchor="middle">c = 5.00</text>
-
-              <!-- Draggable Vertex Handles -->
-              <!-- Top Vertex Handle (controls side a) -->
-              <g id="pyth-handle-a" style="cursor:ns-resize;">
-                <circle id="pyth-handle-a-glow" r="16" fill="#10b981" fill-opacity="0.3"/>
-                <circle id="pyth-handle-a-dot" r="9" fill="#10b981" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="18" y="5" fill="#34d399" font-size="11" font-weight="800">DRAG (a)</text>
+            <!-- Side A Stepper -->
+            <g transform="translate(-320, 0)">
+              <text x="-48" y="5" fill="#34d399" font-size="13" font-weight="800">Side a:</text>
+              <g data-action="pyth-dec-a" style="cursor:pointer;">
+                <rect x="8" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+                <text x="22" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
               </g>
-
-              <!-- Right Vertex Handle (controls side b) -->
-              <g id="pyth-handle-b" style="cursor:ew-resize;">
-                <circle id="pyth-handle-b-glow" r="16" fill="#3b82f6" fill-opacity="0.3"/>
-                <circle id="pyth-handle-b-dot" r="9" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5"/>
-                <text x="0" y="24" fill="#60a5fa" font-size="11" font-weight="800" text-anchor="middle">DRAG (b)</text>
+              <text id="pyth-val-a" x="52" y="5" fill="#ffffff" font-size="15" font-weight="900" text-anchor="middle">3</text>
+              <g data-action="pyth-inc-a" style="cursor:pointer;">
+                <rect x="66" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+                <text x="80" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
               </g>
             </g>
 
-            <!-- Bottom Interactive Control Dock (PhET-Caliber Dimension Adjusters) -->
-            <g id="pyth-control-dock" transform="translate(400, 442)">
-              <rect x="-370" y="-24" width="740" height="48" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-
-              <!-- Side A Stepper -->
-              <g transform="translate(-270, 0)">
-                <text x="-48" y="5" fill="#34d399" font-size="13" font-weight="800">Side a:</text>
-                <!-- Dec Button -->
-                <rect id="pyth-btn-dec-a" x="6" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="20" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
-                <!-- Val -->
-                <text id="pyth-val-a" x="50" y="5" fill="#ffffff" font-size="15" font-weight="900" text-anchor="middle">3</text>
-                <!-- Inc Button -->
-                <rect id="pyth-btn-inc-a" x="64" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="78" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
+            <!-- Side B Stepper -->
+            <g transform="translate(-160, 0)">
+              <text x="-48" y="5" fill="#60a5fa" font-size="13" font-weight="800">Side b:</text>
+              <g data-action="pyth-dec-b" style="cursor:pointer;">
+                <rect x="8" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5"/>
+                <text x="22" y="5" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
               </g>
-
-              <!-- Side B Stepper -->
-              <g transform="translate(-80, 0)">
-                <text x="-48" y="5" fill="#60a5fa" font-size="13" font-weight="800">Side b:</text>
-                <!-- Dec Button -->
-                <rect id="pyth-btn-dec-b" x="6" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="20" y="5" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
-                <!-- Val -->
-                <text id="pyth-val-b" x="50" y="5" fill="#ffffff" font-size="15" font-weight="900" text-anchor="middle">4</text>
-                <!-- Inc Button -->
-                <rect id="pyth-btn-inc-b" x="64" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="78" y="5" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
-              </g>
-
-              <!-- Presets -->
-              <g transform="translate(130, 0)">
-                <text x="-40" y="5" fill="#94a3b8" font-size="11" font-weight="700">Triples:</text>
-                <!-- Preset 3-4-5 -->
-                <rect id="pyth-pre-345" x="8" y="-13" width="56" height="26" rx="6" fill="#1e293b" stroke="#facc15" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="36" y="4" fill="#facc15" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">3-4-5</text>
-                <!-- Preset 5-12-13 (scaled) -->
-                <rect id="pyth-pre-6810" x="72" y="-13" width="60" height="26" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="102" y="4" fill="#38bdf8" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">6-8-10</text>
-                <!-- Preset 5-5 (isosceles) -->
-                <rect id="pyth-pre-55" x="140" y="-13" width="68" height="26" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5" style="cursor:pointer;"/>
-                <text x="174" y="4" fill="#c084fc" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">5-5-√50</text>
+              <text id="pyth-val-b" x="52" y="5" fill="#ffffff" font-size="15" font-weight="900" text-anchor="middle">4</text>
+              <g data-action="pyth-inc-b" style="cursor:pointer;">
+                <rect x="66" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="1.5"/>
+                <text x="80" y="5" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
               </g>
             </g>
-          </svg>
+
+            <!-- Presets & Toggles -->
+            <g transform="translate(30, 0)">
+              <!-- Preset 3-4-5 -->
+              <g data-action="pyth-pre-345" style="cursor:pointer;">
+                <rect x="0" y="-13" width="52" height="26" rx="6" fill="#1e293b" stroke="#facc15" stroke-width="1.5"/>
+                <text x="26" y="4" fill="#facc15" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">3-4-5</text>
+              </g>
+              <!-- Preset 6-8-10 -->
+              <g data-action="pyth-pre-6810" style="cursor:pointer;">
+                <rect x="58" y="-13" width="56" height="26" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+                <text x="86" y="4" fill="#38bdf8" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">6-8-10</text>
+              </g>
+              <!-- Preset 5-12-13 -->
+              <g data-action="pyth-pre-51213" style="cursor:pointer;">
+                <rect x="120" y="-13" width="62" height="26" rx="6" fill="#1e293b" stroke="#4ade80" stroke-width="1.5"/>
+                <text x="151" y="4" fill="#4ade80" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">5-12-13</text>
+              </g>
+              <!-- Grid Toggle -->
+              <g data-action="pyth-toggle-grid" style="cursor:pointer;">
+                <rect id="pyth-btn-grid-bg" x="188" y="-13" width="70" height="26" rx="6" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
+                <text id="pyth-btn-grid-txt" x="223" y="4" fill="#f8fafc" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">▦ GRID: ON</text>
+              </g>
+              <!-- Liquid Proof Toggle -->
+              <g data-action="pyth-toggle-liquid" style="cursor:pointer;">
+                <rect id="pyth-btn-liquid-bg" x="264" y="-13" width="74" height="26" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+                <text id="pyth-btn-liquid-txt" x="301" y="4" fill="#38bdf8" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">💧 POUR</text>
+              </g>
+              <!-- Reset Button -->
+              <g data-action="pyth-reset" style="cursor:pointer;">
+                <rect x="344" y="-13" width="28" height="26" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                <text x="358" y="4" fill="#94a3b8" font-size="12" font-weight="900" text-anchor="middle" pointer-events="none">↺</text>
+              </g>
+            </g>
+          </g>
         `;
 
-        const svgEl = container.querySelector('#pyth-interactive-svg');
         const elements = {
-          svg: svgEl,
           polyA: container.querySelector('#pyth-poly-a'),
           polyB: container.querySelector('#pyth-poly-b'),
           polyC: container.querySelector('#pyth-poly-c'),
+          gridA: container.querySelector('#pyth-grid-a'),
+          gridB: container.querySelector('#pyth-grid-b'),
+          gridC: container.querySelector('#pyth-grid-c'),
+          liquidOverlay: container.querySelector('#pyth-liquid-overlay'),
+          liquidFillC: container.querySelector('#pyth-liquid-fill-c'),
+          liquidBannerText: container.querySelector('#pyth-liquid-banner-text'),
+          btnGridBg: container.querySelector('#pyth-btn-grid-bg'),
+          btnGridTxt: container.querySelector('#pyth-btn-grid-txt'),
+          btnLiquidBg: container.querySelector('#pyth-btn-liquid-bg'),
+          btnLiquidTxt: container.querySelector('#pyth-btn-liquid-txt'),
           triangle: container.querySelector('#pyth-triangle'),
           labelA: container.querySelector('#pyth-label-a'),
           labelB: container.querySelector('#pyth-label-b'),
@@ -966,190 +1017,283 @@
           tripleBadge: container.querySelector('#pyth-triple-badge'),
           valA: container.querySelector('#pyth-val-a'),
           valB: container.querySelector('#pyth-val-b'),
-          btnDecA: container.querySelector('#pyth-btn-dec-a'),
-          btnIncA: container.querySelector('#pyth-btn-inc-a'),
-          btnDecB: container.querySelector('#pyth-btn-dec-b'),
-          btnIncB: container.querySelector('#pyth-btn-inc-b'),
-          pre345: container.querySelector('#pyth-pre-345'),
-          pre6810: container.querySelector('#pyth-pre-6810'),
-          pre55: container.querySelector('#pyth-pre-55'),
           curA,
           curB,
+          showGrid,
+          liquidMode,
           ox,
           oy,
           s,
-          tProgress: 1.0,
+          isUserControlled: false,
         };
 
         // Render Geometry Function
-        function renderPythagorasGeometry() {
+        function renderPythagorasGeometry(newA = elements.curA, newB = elements.curB) {
+          elements.curA = Number(newA);
+          elements.curB = Number(newB);
           const a = elements.curA;
           const b = elements.curB;
-          const aLen = a * s;
-          const bLen = b * s;
-          const c = Math.sqrt(a * a + b * b);
-          const cLen = c * s;
 
-          const topX = ox;
-          const topY = oy - aLen;
-          const rightX = ox + bLen;
-          const rightY = oy;
+          // Adaptive scaling so large right triangles (e.g. 5-12-13 or 6-8-10) never clip stage edges
+          if (a > 6 || b > 8) {
+            elements.ox = 250;
+            elements.oy = 295;
+            elements.s = 15;
+          } else {
+            elements.ox = 290;
+            elements.oy = 270;
+            elements.s = 20;
+          }
+
+          const curOx = elements.ox;
+          const curOy = elements.oy;
+          const curS = elements.s;
+
+          const aLen = a * curS;
+          const bLen = b * curS;
+          const c = Math.sqrt(a * a + b * b);
+          const cLen = c * curS;
+
+          const topX = curOx;
+          const topY = curOy - aLen;
+          const rightX = curOx + bLen;
+          const rightY = curOy;
 
           // Triangle Points
-          elements.triangle.setAttribute('points', `${ox},${oy} ${rightX},${rightY} ${topX},${topY}`);
+          if (elements.triangle) {
+            elements.triangle.setAttribute('points', `${curOx},${curOy} ${rightX},${rightY} ${topX},${topY}`);
+          }
 
           // Right Angle Box
-          elements.rightAngle.setAttribute('x', ox);
-          elements.rightAngle.setAttribute('y', oy - 16);
+          if (elements.rightAngle) {
+            elements.rightAngle.setAttribute('x', curOx);
+            elements.rightAngle.setAttribute('y', curOy - 16);
+          }
 
           // Square A Points (Left of vertical leg)
-          const pA1 = `${ox},${oy}`;
+          const pA1 = `${curOx},${curOy}`;
           const pA2 = `${topX},${topY}`;
           const pA3 = `${topX - aLen},${topY}`;
-          const pA4 = `${ox - aLen},${oy}`;
-          elements.polyA.setAttribute('points', `${pA1} ${pA2} ${pA3} ${pA4}`);
-          elements.labelA.setAttribute('x', (ox - aLen / 2).toFixed(1));
-          elements.labelA.setAttribute('y', (topY + aLen / 2 + 5).toFixed(1));
-          elements.labelA.textContent = `a² = ${(a * a).toFixed(0)}`;
+          const pA4 = `${curOx - aLen},${curOy}`;
+          if (elements.polyA) {
+            elements.polyA.setAttribute('points', `${pA1} ${pA2} ${pA3} ${pA4}`);
+          }
+          if (elements.labelA) {
+            elements.labelA.setAttribute('x', (curOx - aLen / 2).toFixed(1));
+            elements.labelA.setAttribute('y', (topY + aLen / 2 + 5).toFixed(1));
+            elements.labelA.textContent = `a² = ${(a * a).toFixed(0)}`;
+          }
 
           // Square B Points (Below horizontal leg)
-          const pB1 = `${ox},${oy}`;
+          const pB1 = `${curOx},${curOy}`;
           const pB2 = `${rightX},${rightY}`;
           const pB3 = `${rightX},${rightY + bLen}`;
-          const pB4 = `${ox},${oy + bLen}`;
-          elements.polyB.setAttribute('points', `${pB1} ${pB2} ${pB3} ${pB4}`);
-          elements.labelB.setAttribute('x', (ox + bLen / 2).toFixed(1));
-          elements.labelB.setAttribute('y', (oy + bLen / 2 + 5).toFixed(1));
-          elements.labelB.textContent = `b² = ${(b * b).toFixed(0)}`;
+          const pB4 = `${curOx},${curOy + bLen}`;
+          if (elements.polyB) {
+            elements.polyB.setAttribute('points', `${pB1} ${pB2} ${pB3} ${pB4}`);
+          }
+          if (elements.labelB) {
+            elements.labelB.setAttribute('x', (curOx + bLen / 2).toFixed(1));
+            elements.labelB.setAttribute('y', (curOy + bLen / 2 + 5).toFixed(1));
+            elements.labelB.textContent = `b² = ${(b * b).toFixed(0)}`;
+          }
 
           // Square C Points (Outward along hypotenuse)
-          // Vector along hyp from right to top: (-bLen, -aLen)
-          // Outward normal: (aLen, -bLen)
+          // Normal vector perpendicular to hypotenuse directed outwards: (aLen, -bLen)
           const pC1 = `${rightX},${rightY}`;
           const pC2 = `${topX},${topY}`;
           const pC3 = `${topX + aLen},${topY - bLen}`;
           const pC4 = `${rightX + aLen},${rightY - bLen}`;
-          elements.polyC.setAttribute('points', `${pC1} ${pC2} ${pC3} ${pC4}`);
+          if (elements.polyC) {
+            elements.polyC.setAttribute('points', `${pC1} ${pC2} ${pC3} ${pC4}`);
+          }
 
           const centerCX = (rightX + topX + aLen) / 2;
           const centerCY = (rightY + topY - bLen) / 2;
-          elements.labelC.setAttribute('x', centerCX.toFixed(1));
-          elements.labelC.setAttribute('y', (centerCY + 5).toFixed(1));
-          elements.labelC.textContent = `c² = ${(c * c).toFixed(1).replace('.0', '')}`;
+          if (elements.labelC) {
+            elements.labelC.setAttribute('x', centerCX.toFixed(1));
+            elements.labelC.setAttribute('y', (centerCY + 5).toFixed(1));
+            elements.labelC.textContent = `c² = ${(c * c).toFixed(1).replace('.0', '')}`;
+          }
+
+          // Render Live Unit Grid Squares if toggled ON (PhET Area Counting Mode)
+          if (elements.gridA && elements.gridB && elements.gridC) {
+            if (elements.showGrid) {
+              elements.gridA.style.display = 'block';
+              elements.gridB.style.display = 'block';
+              elements.gridC.style.display = 'block';
+
+              // Grid A lines
+              let gridAPath = '';
+              const intA = Math.round(a);
+              for (let i = 1; i < intA; i++) {
+                const frac = i / intA;
+                gridAPath += `M ${curOx - frac * aLen} ${topY} L ${curOx - frac * aLen} ${curOy} `;
+                gridAPath += `M ${curOx} ${topY + frac * aLen} L ${curOx - aLen} ${topY + frac * aLen} `;
+              }
+              elements.gridA.innerHTML = `<path d="${gridAPath}" />`;
+
+              // Grid B lines
+              let gridBPath = '';
+              const intB = Math.round(b);
+              for (let j = 1; j < intB; j++) {
+                const frac = j / intB;
+                gridBPath += `M ${curOx + frac * bLen} ${curOy} L ${curOx + frac * bLen} ${curOy + bLen} `;
+                gridBPath += `M ${curOx} ${curOy + frac * bLen} L ${rightX} ${curOy + frac * bLen} `;
+              }
+              elements.gridB.innerHTML = `<path d="${gridBPath}" />`;
+
+              // Grid C lines
+              let gridCPath = '';
+              const intC = Math.round(c);
+              const gridSteps = intC > 0 && Math.abs(c - intC) < 0.05 ? intC : 5;
+              for (let k = 1; k < gridSteps; k++) {
+                const frac = k / gridSteps;
+                // Parallel to hyp
+                const x1 = rightX + frac * aLen, y1 = rightY - frac * bLen;
+                const x2 = topX + frac * aLen, y2 = topY - frac * bLen;
+                gridCPath += `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)} `;
+                // Perpendicular to hyp
+                const x3 = rightX - frac * bLen, y3 = rightY - frac * aLen;
+                const x4 = x3 + aLen, y4 = y3 - bLen;
+                gridCPath += `M ${x3.toFixed(1)} ${y3.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)} `;
+              }
+              elements.gridC.innerHTML = `<path d="${gridCPath}" />`;
+            } else {
+              elements.gridA.style.display = 'none';
+              elements.gridB.style.display = 'none';
+              elements.gridC.style.display = 'none';
+            }
+          }
+
+          // Liquid conservation mode overlay
+          if (elements.liquidOverlay && elements.liquidFillC) {
+            elements.liquidOverlay.style.display = elements.liquidMode ? 'block' : 'none';
+            if (elements.liquidMode) {
+              elements.liquidFillC.setAttribute('points', `${pC1} ${pC2} ${pC3} ${pC4}`);
+              elements.liquidFillC.setAttribute('opacity', '0.85');
+            }
+          }
 
           // Leg Dimension Labels
-          elements.sideLblA.setAttribute('x', (ox - 8).toFixed(1));
-          elements.sideLblA.setAttribute('y', (oy - aLen / 2 + 5).toFixed(1));
-          elements.sideLblA.textContent = `a = ${a}`;
-
-          elements.sideLblB.setAttribute('x', (ox + bLen / 2).toFixed(1));
-          elements.sideLblB.setAttribute('y', (oy - 8).toFixed(1));
-          elements.sideLblB.textContent = `b = ${b}`;
-
-          const midHypX = (topX + rightX) / 2;
-          const midHypY = (topY + rightY) / 2;
-          elements.sideLblC.setAttribute('x', (midHypX + 16).toFixed(1));
-          elements.sideLblC.setAttribute('y', (midHypY - 10).toFixed(1));
-          elements.sideLblC.textContent = `c = ${c.toFixed(2)}`;
+          if (elements.sideLblA) {
+            elements.sideLblA.setAttribute('x', (curOx - 8).toFixed(1));
+            elements.sideLblA.setAttribute('y', (curOy - aLen / 2 + 5).toFixed(1));
+            elements.sideLblA.textContent = `a = ${a}`;
+          }
+          if (elements.sideLblB) {
+            elements.sideLblB.setAttribute('x', (curOx + bLen / 2).toFixed(1));
+            elements.sideLblB.setAttribute('y', (curOy - 8).toFixed(1));
+            elements.sideLblB.textContent = `b = ${b}`;
+          }
+          if (elements.sideLblC) {
+            const midHypX = (topX + rightX) / 2;
+            const midHypY = (topY + rightY) / 2;
+            elements.sideLblC.setAttribute('x', (midHypX + 16).toFixed(1));
+            elements.sideLblC.setAttribute('y', (midHypY - 10).toFixed(1));
+            elements.sideLblC.textContent = `c = ${c.toFixed(2)}`;
+          }
 
           // Draggable Handles Placement
-          elements.handleA.setAttribute('transform', `translate(${topX}, ${topY})`);
-          elements.handleB.setAttribute('transform', `translate(${rightX}, ${rightY})`);
+          if (elements.handleA) {
+            elements.handleA.setAttribute('transform', `translate(${topX}, ${topY})`);
+          }
+          if (elements.handleB) {
+            elements.handleB.setAttribute('transform', `translate(${rightX}, ${rightY})`);
+          }
 
-          // Control Val Display
-          elements.valA.textContent = a;
-          elements.valB.textContent = b;
+          // Control Values Display
+          if (elements.valA) elements.valA.textContent = a;
+          if (elements.valB) elements.valB.textContent = b;
 
-          // Formula Update
+          // Toggle Buttons States
+          if (elements.btnGridTxt && elements.btnGridBg) {
+            elements.btnGridTxt.textContent = elements.showGrid ? '▦ GRID: ON' : '▦ GRID: OFF';
+            elements.btnGridBg.setAttribute('fill', elements.showGrid ? '#0284c7' : '#1e293b');
+          }
+          if (elements.btnLiquidTxt && elements.btnLiquidBg) {
+            elements.btnLiquidTxt.textContent = elements.liquidMode ? '💧 DRAIN' : '💧 POUR';
+            elements.btnLiquidBg.setAttribute('fill', elements.liquidMode ? '#2563eb' : '#1e293b');
+          }
+
+          // Formula Update & Triple Detection
           const a2 = (a * a).toFixed(0);
           const b2 = (b * b).toFixed(0);
           const c2 = (c * c).toFixed(1).replace('.0', '');
           const isInt = Math.abs(c - Math.round(c)) < 0.001;
           const cDisplay = isInt ? Math.round(c) : c.toFixed(2);
 
-          elements.formulaText.textContent = `a² + b² = c²  ➔  ${a}² + ${b}² = ${a2} + ${b2} = ${c2}  ➔  c = √${c2} = ${cDisplay}`;
-          elements.tripleBadge.style.display = isInt ? 'block' : 'none';
+          if (elements.formulaText) {
+            elements.formulaText.textContent = `a² + b² = c²  ➔  ${a}² + ${b}² = ${a2} + ${b2} = ${c2}  ➔  c = √${c2} = ${cDisplay}`;
+          }
+          if (elements.tripleBadge) {
+            elements.tripleBadge.style.display = isInt ? 'block' : 'none';
+          }
         }
+
+        // Animated PhET Liquid Pour Simulation
+        elements.animateLiquidPour = function() {
+          if (!elements.liquidOverlay || !elements.liquidFillC) return;
+          elements.liquidOverlay.style.display = 'block';
+
+          const a = elements.curA;
+          const b = elements.curB;
+          const curOx = elements.ox;
+          const curOy = elements.oy;
+          const curS = elements.s;
+          const aLen = a * curS;
+          const bLen = b * curS;
+          const topX = curOx;
+          const topY = curOy - aLen;
+          const rightX = curOx + bLen;
+          const rightY = curOy;
+
+          const startT = performance.now();
+          const duration = 900;
+
+          function step(now) {
+            if (!elements.liquidMode) return;
+            const progress = Math.min(1, (now - startT) / duration);
+            const eased = 1 - Math.pow(1 - progress, 3); // cubic ease out
+
+            const curP3X = topX + aLen * eased;
+            const curP3Y = topY - bLen * eased;
+            const curP4X = rightX + aLen * eased;
+            const curP4Y = rightY - bLen * eased;
+
+            elements.liquidFillC.setAttribute('points', `${rightX},${rightY} ${topX},${topY} ${curP3X.toFixed(1)},${curP3Y.toFixed(1)} ${curP4X.toFixed(1)},${curP4Y.toFixed(1)}`);
+            elements.liquidFillC.setAttribute('opacity', (0.45 + eased * 0.45).toFixed(2));
+
+            if (elements.liquidBannerText) {
+              const a2 = a * a;
+              const b2 = b * b;
+              const c2 = a2 + b2;
+              elements.liquidBannerText.textContent = `💧 AREA TRANSFER: ${a2} + ${b2} ➔ ${c2} units² [${Math.round(eased * 100)}% Filled]`;
+            }
+
+            if (progress < 1) {
+              requestAnimationFrame(step);
+            }
+          }
+          requestAnimationFrame(step);
+        };
 
         elements.renderGeometry = renderPythagorasGeometry;
         renderPythagorasGeometry();
 
-        // Attach Stepper Button Handlers
-        const updateA = (delta) => {
-          elements.curA = Math.max(2, Math.min(7, elements.curA + delta));
-          renderPythagorasGeometry();
-        };
-        const updateB = (delta) => {
-          elements.curB = Math.max(2, Math.min(8, elements.curB + delta));
-          renderPythagorasGeometry();
-        };
-
-        elements.btnDecA.onclick = (e) => { e.stopPropagation(); updateA(-1); };
-        elements.btnIncA.onclick = (e) => { e.stopPropagation(); updateA(1); };
-        elements.btnDecB.onclick = (e) => { e.stopPropagation(); updateB(-1); };
-        elements.btnIncB.onclick = (e) => { e.stopPropagation(); updateB(1); };
-
-        elements.pre345.onclick = (e) => { e.stopPropagation(); elements.curA = 3; elements.curB = 4; renderPythagorasGeometry(); };
-        elements.pre6810.onclick = (e) => { e.stopPropagation(); elements.curA = 6; elements.curB = 8; renderPythagorasGeometry(); };
-        elements.pre55.onclick = (e) => { e.stopPropagation(); elements.curA = 5; elements.curB = 5; renderPythagorasGeometry(); };
-
-        // Draggable Vertex Handle Gestures (Direct SVG Manipulation)
-        let activeDrag = null;
-
-        const getSvgPoint = (evt) => {
-          const pt = svgEl.createSVGPoint();
-          const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-          const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
-          pt.x = clientX;
-          pt.y = clientY;
-          const ctm = svgEl.getScreenCTM();
-          return ctm ? pt.matrixTransform(ctm.inverse()) : { x: 0, y: 0 };
-        };
-
-        elements.handleA.onpointerdown = (e) => {
-          e.stopPropagation();
-          activeDrag = 'a';
-          elements.handleA.setPointerCapture(e.pointerId);
-        };
-
-        elements.handleB.onpointerdown = (e) => {
-          e.stopPropagation();
-          activeDrag = 'b';
-          elements.handleB.setPointerCapture(e.pointerId);
-        };
-
-        svgEl.onpointermove = (e) => {
-          if (!activeDrag) return;
-          const pt = getSvgPoint(e);
-          if (activeDrag === 'a') {
-            const rawA = (oy - pt.y) / s;
-            elements.curA = Math.max(2, Math.min(7, Math.round(rawA)));
-            renderPythagorasGeometry();
-          } else if (activeDrag === 'b') {
-            const rawB = (pt.x - ox) / s;
-            elements.curB = Math.max(2, Math.min(8, Math.round(rawB)));
-            renderPythagorasGeometry();
-          }
-        };
-
-        svgEl.onpointerup = (e) => {
-          if (activeDrag) {
-            try {
-              if (activeDrag === 'a') elements.handleA.releasePointerCapture(e.pointerId);
-              if (activeDrag === 'b') elements.handleB.releasePointerCapture(e.pointerId);
-            } catch {}
-            activeDrag = null;
-          }
-        };
-
         return elements;
       },
-      update(t, el) {
+      update(t, el, engine) {
         if (!el || !el.renderGeometry) return;
-        el.tProgress = t;
-        // Fade in squares according to pedagogical timeline if playing
-        const fillB = Math.min(1, t / 0.4);
-        const fillA = Math.min(1, Math.max(0, (t - 0.25) / 0.4));
+        // User sovereignty: if user is manipulating, leave geometry under user control
+        if (el.isUserControlled) return;
+
+        // Otherwise pedagogical timeline animation:
+        // 0.0..0.35: 3-4-5 Triangle
+        // 0.35..0.70: Animate Square A and B focus
+        // 0.70..1.00: Show full hypotenuse area
+        const fillB = Math.min(1, t / 0.35);
+        const fillA = Math.min(1, Math.max(0, (t - 0.25) / 0.35));
         const fillC = Math.min(1, Math.max(0, (t - 0.6) / 0.4));
 
         if (el.polyB) el.polyB.setAttribute('opacity', (fillB * 0.9 + 0.1).toFixed(2));
@@ -2401,20 +2545,320 @@
         { start: 0.30, end: 0.65, en: 'At Camp 1 (1,500m), notice the right-angled triangle! The slope is the hypotenuse, but true altitude is the vertical rise.', es: 'En el Campamento 1 (1,500m), ¡mira el triángulo rectángulo! La pendiente es la hipotenusa, pero la altitud real es la línea vertical.' },
         { start: 0.65, end: 1.00, en: 'Approaching the 3,000m summit: temperature drops to -2°C, air pressure falls to 70 kPa, and altitude reaches peak height!', es: '¡Llegando a la cumbre de 3,000m! La temperatura baja a -2°C, la presión cae a 70 kPa y la altitud alcanza el máximo.' }
       ],
-      render(t) {
-        const cx = 180 + t * 220;
-        const cy = 380 - t * 240;
-        const altM = Math.round(t * 3000);
-        return `
-          <rect width="800" height="480" fill="#0284c7" />
-          <polygon points="400,140 180,380 680,380" fill="#475569" />
-          <polygon points="400,140 375,190 425,190" fill="#ffffff" />
-          <line x1="180" y1="380" x2="${cx}" y2="380" stroke="#0ea5e9" stroke-width="3" />
-          <line x1="${cx}" y1="380" x2="${cx}" y2="${cy}" stroke="#10b981" stroke-width="3" />
-          <circle cx="${cx}" cy="${cy}" r="6" fill="#ef4444" />
-          <rect x="250" y="20" width="300" height="40" rx="8" fill="#0f172a" />
-          <text x="400" y="45" fill="#38bdf8" font-size="16" font-weight="bold" text-anchor="middle">Altitude: ${altM}m / 3000m</text>
+      mount(container) {
+        let curT = 0.0;
+        let showTrig = true;
+        let showAtmosphere = true;
+        let slopeAngleDeg = 30;
+
+        container.innerHTML = `
+          <defs>
+            <linearGradient id="mtn-sky-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0284c7"/>
+              <stop offset="65%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#bae6fd"/>
+            </linearGradient>
+            <linearGradient id="mtn-rock-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#64748b"/>
+              <stop offset="50%" stop-color="#475569"/>
+              <stop offset="100%" stop-color="#1e293b"/>
+            </linearGradient>
+            <linearGradient id="mtn-snow-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#cbd5e1"/>
+            </linearGradient>
+            <linearGradient id="mtn-ground-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#16a34a"/>
+              <stop offset="100%" stop-color="#14532d"/>
+            </linearGradient>
+            <linearGradient id="mtn-hud-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#0f172a" stop-opacity="0.92"/>
+              <stop offset="100%" stop-color="#1e293b" stop-opacity="0.85"/>
+            </linearGradient>
+            <filter id="mtn-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+
+          <!-- Sky Backdrop -->
+          <rect width="800" height="380" fill="url(#mtn-sky-grad)"/>
+
+          <!-- Alpine Mountain Clouds -->
+          <g opacity="0.65">
+            <ellipse cx="140" cy="90" rx="60" ry="20" fill="#ffffff" opacity="0.8"/>
+            <ellipse cx="180" cy="85" rx="45" ry="18" fill="#ffffff" opacity="0.9"/>
+            <ellipse cx="640" cy="110" rx="80" ry="24" fill="#ffffff" opacity="0.75"/>
+            <ellipse cx="680" cy="105" rx="50" ry="18" fill="#ffffff" opacity="0.85"/>
+          </g>
+
+          <!-- Distant Alpine Mountain Ranges -->
+          <polygon points="580,180 440,380 720,380" fill="#94a3b8" opacity="0.55"/>
+          <polygon points="660,150 540,380 780,380" fill="#64748b" opacity="0.5"/>
+          <polygon points="260,220 100,380 420,380" fill="#94a3b8" opacity="0.45"/>
+
+          <!-- Main Alpine Mountain Pyramid -->
+          <polygon points="400,130 180,380 680,380" fill="url(#mtn-rock-grad)" stroke="#1e293b" stroke-width="2"/>
+
+          <!-- Snow Cap Summit -->
+          <polygon points="400,130 365,190 395,200 405,195 435,190" fill="url(#mtn-snow-grad)"/>
+
+          <!-- Valley Sea Level Ground Baseline -->
+          <rect x="0" y="380" width="800" height="100" fill="url(#mtn-ground-grad)"/>
+          <line x1="0" y1="380" x2="800" y2="380" stroke="#0f172a" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.4"/>
+          <text x="24" y="405" fill="#f8fafc" font-size="12" font-weight="800" opacity="0.85">🌊 Sea Level Baseline (0m Elevation)</text>
+
+          <!-- Trigonometry Right-Angle Triangle Construction Overlay -->
+          <g id="mtn-trig-group">
+            <!-- Base Run Line (Adjacent) -->
+            <line id="mtn-base-line" x1="180" y1="380" x2="180" y2="380" stroke="#0284c7" stroke-width="3" stroke-dasharray="5,4"/>
+            <!-- Vertical Altitude Rise Line (Opposite) -->
+            <line id="mtn-rise-line" x1="180" y1="380" x2="180" y2="380" stroke="#10b981" stroke-width="3.5" filter="url(#mtn-glow)"/>
+            <!-- Right-Angle Box -->
+            <rect id="mtn-right-angle-box" x="180" y="364" width="16" height="16" fill="none" stroke="#64748b" stroke-width="1.8" style="display:none;"/>
+            <!-- Slope Trail Guideline (Hypotenuse) -->
+            <line x1="180" y1="380" x2="400" y2="130" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.85"/>
+            <!-- Angle Arc at Base Camp -->
+            <path id="mtn-angle-arc" d="M 215 380 A 35 35 0 0 0 210 363" fill="none" stroke="#f59e0b" stroke-width="2"/>
+            <text x="224" y="374" fill="#fbbf24" font-size="12" font-weight="900">θ = 30°</text>
+          </g>
+
+          <!-- Altitude Height Callout on Vertical Line -->
+          <text id="mtn-altitude-callout" x="195" y="380" fill="#34d399" font-size="13" font-weight="900" pointer-events="none">Rise: 0m</text>
+
+          <!-- Elevation Milestones Along Mountain Face -->
+          <g font-size="11" font-weight="800">
+            <!-- Base Camp -->
+            <circle cx="180" cy="380" r="5" fill="#38bdf8"/>
+            <text x="175" y="420" fill="#0f172a" text-anchor="middle">⛺ Base Camp (0m)</text>
+            <!-- Camp 1 Ridge -->
+            <circle cx="290" cy="255" r="4" fill="#38bdf8" opacity="0.6"/>
+            <text x="300" y="258" fill="#e2e8f0" opacity="0.8">Camp 1 (1,500m)</text>
+            <!-- Summit -->
+            <circle cx="400" cy="130" r="5" fill="#facc15"/>
+            <text x="400" y="118" fill="#0f172a" text-anchor="middle" font-weight="900">🚩 Summit (3,000m)</text>
+          </g>
+
+          <!-- Interactive Draggable Climber Avatar -->
+          <g id="mtn-climber" data-draggable="climber" data-pedagogical="mtn-climber" transform="translate(180, 380)" style="cursor:grab;">
+            <!-- Generous Transparent Touch Target -->
+            <circle r="34" fill="transparent" pointer-events="all"/>
+            <!-- Pulsing Radar Ring -->
+            <circle id="mtn-climber-pulse" r="16" fill="#ef4444" fill-opacity="0.3" pointer-events="none"/>
+            <!-- Outer Core -->
+            <circle r="10" fill="#ef4444" stroke="#ffffff" stroke-width="2.5" pointer-events="none"/>
+            <circle r="4" fill="#ffffff" pointer-events="none"/>
+            <!-- Climber Silhouette Details -->
+            <rect x="-3" y="-18" width="6" height="8" rx="2" fill="#3b82f6" pointer-events="none"/>
+            <circle cx="0" cy="-22" r="4" fill="#f59e0b" pointer-events="none"/>
+            <!-- Walking Pole -->
+            <line x1="5" y1="-14" x2="8" y2="4" stroke="#e2e8f0" stroke-width="1.8" pointer-events="none"/>
+            <!-- Drag Callout Hint -->
+            <text x="24" y="5" fill="#ffffff" font-size="11" font-weight="900" filter="url(#mtn-glow)" pointer-events="none">DRAG CLIMBER ⇗</text>
+          </g>
+
+          <!-- Real-Time Atmospheric Science & Trigonometry HUD (Glassmorphic Card) -->
+          <g id="mtn-hud" transform="translate(20, 24)">
+            <rect width="270" height="116" rx="10" fill="url(#mtn-hud-grad)" stroke="#38bdf8" stroke-width="1.5"/>
+            <!-- Header -->
+            <text x="16" y="24" fill="#38bdf8" font-size="12" font-weight="900" letter-spacing="0.5">🏔️ MOUNTAIN TELEMETRY HUD</text>
+            <line x1="16" y1="32" x2="254" y2="32" stroke="#334155" stroke-width="1"/>
+            <!-- Altitude Metric -->
+            <text id="mtn-hud-alt" x="16" y="52" fill="#34d399" font-size="14" font-weight="900">Altitude (Rise): 0 m</text>
+            <!-- Slope Distance Metric -->
+            <text id="mtn-hud-slope" x="16" y="71" fill="#fbbf24" font-size="12" font-weight="800">Slope Distance: 0 m</text>
+            <!-- Temperature Metric -->
+            <text id="mtn-hud-temp" x="16" y="89" fill="#67e8f9" font-size="12" font-weight="700">Ambient Temp: 20.0 °C (Lapse: -6.5°C/km)</text>
+            <!-- Air Pressure & Boiling Point -->
+            <text id="mtn-hud-pres" x="16" y="106" fill="#cbd5e1" font-size="11" font-weight="700">Pressure: 101.3 kPa | Water Boils: 100.0 °C</text>
+          </g>
+
+          <!-- Top Formula Banner -->
+          <g transform="translate(400, 36)">
+            <rect x="-240" y="-18" width="480" height="36" rx="8" fill="#0f172a" fill-opacity="0.9" stroke="#334155" stroke-width="1.5"/>
+            <text id="mtn-formula-banner" x="0" y="6" fill="#f8fafc" font-size="13" font-weight="800" text-anchor="middle">
+              sin(30°) = Rise / Slope  ➔  Altitude = Slope × 0.500
+            </text>
+          </g>
+
+          <!-- Bottom Interactive Control Dock (PhET Style) -->
+          <g id="mtn-control-dock" transform="translate(400, 442)">
+            <rect x="-385" y="-24" width="770" height="48" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+
+            <!-- Altitude Quick Stepper -->
+            <g transform="translate(-320, 0)">
+              <text x="-48" y="5" fill="#34d399" font-size="13" font-weight="800">Elevation:</text>
+              <g data-action="mtn-dec-alt" style="cursor:pointer;">
+                <rect x="22" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+                <text x="36" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">-</text>
+              </g>
+              <text id="mtn-dock-alt-val" x="78" y="5" fill="#ffffff" font-size="13" font-weight="900" text-anchor="middle">0m</text>
+              <g data-action="mtn-inc-alt" style="cursor:pointer;">
+                <rect x="106" y="-14" width="28" height="28" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+                <text x="120" y="5" fill="#34d399" font-size="16" font-weight="900" text-anchor="middle" pointer-events="none">+</text>
+              </g>
+            </g>
+
+            <!-- Slope Incline Angle Presets -->
+            <g transform="translate(-110, 0)">
+              <text x="-42" y="5" fill="#fbbf24" font-size="12" font-weight="800">Angle:</text>
+              <!-- 15 deg -->
+              <g data-action="mtn-angle-15" style="cursor:pointer;">
+                <rect id="mtn-btn-ang15" x="2" y="-13" width="46" height="26" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                <text x="25" y="4" fill="#f8fafc" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">15°</text>
+              </g>
+              <!-- 30 deg -->
+              <g data-action="mtn-angle-30" style="cursor:pointer;">
+                <rect id="mtn-btn-ang30" x="52" y="-13" width="46" height="26" rx="6" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5"/>
+                <text x="75" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">30°</text>
+              </g>
+              <!-- 45 deg -->
+              <g data-action="mtn-angle-45" style="cursor:pointer;">
+                <rect id="mtn-btn-ang45" x="102" y="-13" width="46" height="26" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                <text x="125" y="4" fill="#f8fafc" font-size="11" font-weight="800" text-anchor="middle" pointer-events="none">45°</text>
+              </g>
+            </g>
+
+            <!-- Toggles and Actions -->
+            <g transform="translate(100, 0)">
+              <!-- Trig View Toggle -->
+              <g data-action="mtn-toggle-trig" style="cursor:pointer;">
+                <rect id="mtn-btn-trig-bg" x="0" y="-13" width="76" height="26" rx="6" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5"/>
+                <text id="mtn-btn-trig-txt" x="38" y="4" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">📐 TRIG: ON</text>
+              </g>
+              <!-- Lapse Rate View Toggle -->
+              <g data-action="mtn-toggle-lapse" style="cursor:pointer;">
+                <rect id="mtn-btn-lapse-bg" x="82" y="-13" width="94" height="26" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                <text id="mtn-btn-lapse-txt" x="129" y="4" fill="#94a3b8" font-size="10" font-weight="800" text-anchor="middle" pointer-events="none">🌡️ HUD: FULL</text>
+              </g>
+              <!-- Summit Jump Preset -->
+              <g data-action="mtn-jump-summit" style="cursor:pointer;">
+                <rect x="182" y="-13" width="76" height="26" rx="6" fill="#1e293b" stroke="#facc15" stroke-width="1.5"/>
+                <text x="220" y="4" fill="#facc15" font-size="10" font-weight="900" text-anchor="middle" pointer-events="none">🚩 SUMMIT</text>
+              </g>
+              <!-- Reset Button -->
+              <g data-action="mtn-reset" style="cursor:pointer;">
+                <rect x="264" y="-13" width="30" height="26" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
+                <text x="279" y="4" fill="#94a3b8" font-size="13" font-weight="900" text-anchor="middle" pointer-events="none">↺</text>
+              </g>
+            </g>
+          </g>
         `;
+
+        const elements = {
+          climber: container.querySelector('#mtn-climber'),
+          climberPulse: container.querySelector('#mtn-climber-pulse'),
+          baseLine: container.querySelector('#mtn-base-line'),
+          riseLine: container.querySelector('#mtn-rise-line'),
+          rightAngleBox: container.querySelector('#mtn-right-angle-box'),
+          altCallout: container.querySelector('#mtn-altitude-callout'),
+          hudAlt: container.querySelector('#mtn-hud-alt'),
+          hudSlope: container.querySelector('#mtn-hud-slope'),
+          hudTemp: container.querySelector('#mtn-hud-temp'),
+          hudPres: container.querySelector('#mtn-hud-pres'),
+          hudGroup: container.querySelector('#mtn-hud'),
+          formulaBanner: container.querySelector('#mtn-formula-banner'),
+          dockAltVal: container.querySelector('#mtn-dock-alt-val'),
+          trigGroup: container.querySelector('#mtn-trig-group'),
+          btnTrigBg: container.querySelector('#mtn-btn-trig-bg'),
+          btnTrigTxt: container.querySelector('#mtn-btn-trig-txt'),
+          btnLapseBg: container.querySelector('#mtn-btn-lapse-bg'),
+          btnLapseTxt: container.querySelector('#mtn-btn-lapse-txt'),
+          btnAng15: container.querySelector('#mtn-btn-ang15'),
+          btnAng30: container.querySelector('#mtn-btn-ang30'),
+          btnAng45: container.querySelector('#mtn-btn-ang45'),
+          curT,
+          showTrig,
+          showAtmosphere,
+          slopeAngleDeg,
+          isUserControlled: false,
+        };
+
+        // Render Geometry & Telemetry
+        function updateMountainGeometry(t = elements.curT) {
+          elements.curT = Math.max(0, Math.min(1, Number(t)));
+          const progress = elements.curT;
+
+          // Slope Vector: Base Camp (180, 380) to Summit (400, 130)
+          const startX = 180, startY = 380;
+          const endX = 400, endY = 130;
+          const curX = startX + progress * (endX - startX);
+          const curY = startY + progress * (endY - startY);
+
+          // Physics / Atmospheric Metrics
+          const maxAltitude = 3000; // meters
+          const curAltitude = Math.round(progress * maxAltitude);
+          const slopeDistance = Math.round(curAltitude / Math.sin((elements.slopeAngleDeg * Math.PI) / 180));
+          const seaLevelTemp = 20.0;
+          const curTemp = (seaLevelTemp - (curAltitude / 1000) * 6.5).toFixed(1);
+          const curPressure = (101.3 * Math.exp(-curAltitude / 7400)).toFixed(1);
+          const curBoil = (100.0 - (curAltitude / 300) * 1.0).toFixed(1);
+
+          // Position Climber
+          if (elements.climber) {
+            elements.climber.setAttribute('transform', `translate(${curX.toFixed(1)}, ${curY.toFixed(1)})`);
+          }
+
+          // Update Trigonometry Construction
+          if (elements.baseLine) {
+            elements.baseLine.setAttribute('x1', startX);
+            elements.baseLine.setAttribute('x2', curX.toFixed(1));
+            elements.baseLine.setAttribute('y1', startY);
+            elements.baseLine.setAttribute('y2', startY);
+          }
+          if (elements.riseLine) {
+            elements.riseLine.setAttribute('x1', curX.toFixed(1));
+            elements.riseLine.setAttribute('x2', curX.toFixed(1));
+            elements.riseLine.setAttribute('y1', startY);
+            elements.riseLine.setAttribute('y2', curY.toFixed(1));
+          }
+          if (elements.rightAngleBox) {
+            elements.rightAngleBox.setAttribute('x', (curX - 16).toFixed(1));
+            elements.rightAngleBox.setAttribute('y', (startY - 16).toFixed(1));
+            elements.rightAngleBox.style.display = progress > 0.05 ? 'block' : 'none';
+          }
+          if (elements.altCallout) {
+            elements.altCallout.setAttribute('x', (curX + 8).toFixed(1));
+            elements.altCallout.setAttribute('y', ((startY + curY) / 2).toFixed(1));
+            elements.altCallout.textContent = `Rise: ${curAltitude}m`;
+            elements.altCallout.style.display = progress > 0.03 ? 'block' : 'none';
+          }
+
+          // Update Telemetry HUD
+          if (elements.hudAlt) elements.hudAlt.textContent = `Altitude (Rise): ${curAltitude} m / 3,000 m`;
+          if (elements.hudSlope) elements.hudSlope.textContent = `Slope Distance: ${slopeDistance} m (Hypotenuse)`;
+          if (elements.hudTemp) elements.hudTemp.textContent = `Ambient Temp: ${curTemp} °C (Lapse: -6.5°C/km)`;
+          if (elements.hudPres) elements.hudPres.textContent = `Pressure: ${curPressure} kPa | Water Boils: ${curBoil} °C`;
+          if (elements.dockAltVal) elements.dockAltVal.textContent = `${curAltitude}m`;
+
+          // Formula Banner
+          const sinVal = Math.sin((elements.slopeAngleDeg * Math.PI) / 180).toFixed(3);
+          if (elements.formulaBanner) {
+            elements.formulaBanner.textContent = `sin(${elements.slopeAngleDeg}°) = Rise / Slope  ➔  Altitude (${curAltitude}m) = Slope (${slopeDistance}m) × ${sinVal}`;
+          }
+
+          // Toggle Visibilities
+          if (elements.trigGroup) {
+            elements.trigGroup.style.display = elements.showTrig ? 'block' : 'none';
+          }
+          if (elements.btnTrigBg && elements.btnTrigTxt) {
+            elements.btnTrigBg.setAttribute('fill', elements.showTrig ? '#0284c7' : '#1e293b');
+            elements.btnTrigTxt.textContent = elements.showTrig ? '📐 TRIG: ON' : '📐 TRIG: OFF';
+          }
+        }
+
+        elements.updateGeometry = updateMountainGeometry;
+        updateMountainGeometry(0);
+
+        return elements;
+      },
+      update(t, el, engine) {
+        if (!el || !el.updateGeometry) return;
+        // User sovereignty: if user is dragging or interacting, keep user control
+        if (el.isUserControlled) return;
+
+        el.curT = t;
+        el.updateGeometry(t);
       }
     },
     'fish-tank': {
@@ -3422,12 +3866,13 @@
               <text x="0" y="45" fill="#facc15" font-size="12" font-weight="800" text-anchor="middle">LIGHTBULB</text>
             </g>
 
-            <!-- Component 4: Switch (Bottom side) -->
-            <g transform="translate(370, 350)">
+            <!-- Component 4: Interactive Knife Switch (Bottom side) -->
+            <g id="circuit-switch" data-interactive="switch" data-state="closed" transform="translate(370, 350)" style="cursor: pointer;">
+              <rect x="-10" y="0" width="80" height="60" fill="transparent"/>
               <circle cx="0" cy="20" r="5" fill="#22c55e"/>
-              <line x1="0" y1="20" x2="60" y2="20" stroke="#22c55e" stroke-width="4"/>
+              <line id="switch-blade" x1="0" y1="20" x2="60" y2="20" stroke="#22c55e" stroke-width="4"/>
               <circle cx="60" cy="20" r="5" fill="#22c55e"/>
-              <text x="30" y="48" fill="#4ade80" font-size="11" font-weight="800" text-anchor="middle">SWITCH: CLOSED</text>
+              <text id="switch-text" x="30" y="48" fill="#4ade80" font-size="11" font-weight="800" text-anchor="middle">SWITCH: CLOSED (Click to toggle)</text>
             </g>
 
             <!-- Legend Card -->
@@ -3437,15 +3882,72 @@
             </text>
           </svg>
         `;
+        const switchEl = container.querySelector('#circuit-switch');
+        const blade = container.querySelector('#switch-blade');
+        const switchTxt = container.querySelector('#switch-text');
+
+        if (switchEl) {
+          switchEl.onclick = (e) => {
+            e.stopPropagation();
+            const isOpen = switchEl.getAttribute('data-state') === 'open';
+            const nextState = isOpen ? 'closed' : 'open';
+            switchEl.setAttribute('data-state', nextState);
+            if (blade) {
+              blade.setAttribute('x2', nextState === 'open' ? '50' : '60');
+              blade.setAttribute('y2', nextState === 'open' ? '-5' : '20');
+              blade.setAttribute('stroke', nextState === 'open' ? '#ef4444' : '#22c55e');
+            }
+            if (switchTxt) {
+              switchTxt.textContent = nextState === 'open' ? 'SWITCH: OPEN (Current halted)' : 'SWITCH: CLOSED (Current flowing)';
+              switchTxt.setAttribute('fill', nextState === 'open' ? '#f87171' : '#4ade80');
+            }
+          };
+        }
+
         return {
           glow: container.querySelector('#bulb-halo'),
-          dots: container.querySelectorAll('.e-dot')
+          dots: container.querySelectorAll('.e-dot'),
+          switchEl: switchEl
         };
       },
-      update(t, elements) {
+      update(t, elements, engine, dt) {
         if (!elements || !elements.dots) return;
-        const pulse = Math.sin(t * 12) * 0.15 + 0.85;
+        const dtSec = typeof dt === 'number' && dt > 0 ? dt : 0.016;
+
+        const isOpen = elements.switchEl && elements.switchEl.getAttribute('data-state') === 'open';
+
+        if (!isOpen) {
+          elements.electronOffset = (elements.electronOffset || 0) + dtSec * 180; // 180 px/sec current flow
+        }
+
+        const offset = elements.electronOffset || 0;
+        const perimeter = 1520;
+
+        elements.dots.forEach((dot, idx) => {
+          const baseDist = (idx * (perimeter / elements.dots.length) + offset) % perimeter;
+          let dx = 150, dy = 110;
+
+          if (baseDist < 500) {
+            dx = 150 + baseDist;
+            dy = 110;
+          } else if (baseDist < 760) {
+            dx = 650;
+            dy = 110 + (baseDist - 500);
+          } else if (baseDist < 1260) {
+            dx = 650 - (baseDist - 760);
+            dy = 370;
+          } else {
+            dx = 150;
+            dy = 370 - (baseDist - 1260);
+          }
+
+          dot.setAttribute('cx', dx.toFixed(1));
+          dot.setAttribute('cy', dy.toFixed(1));
+          dot.setAttribute('opacity', isOpen ? '0.2' : '1.0');
+        });
+
         if (elements.glow) {
+          const pulse = isOpen ? 0.05 : (Math.sin(offset * 0.05) * 0.15 + 0.85);
           elements.glow.setAttribute('opacity', pulse.toFixed(2));
         }
       },
@@ -3461,6 +3963,13 @@
       duration: 14.0,
       svgFile: 'scenes/kinetic-gas.svg',
       astFile: 'scenes/kinetic-gas.ast',
+      vars: {
+        temp: { value: 300, min: 90, max: 600, unit: 'K' },
+        volume: { value: 1.0, min: 0.35, max: 1.0 }
+      },
+      bindInputs: [
+        { target: '#kg-temp-knob', var: 'temp', min: 90, max: 600, axis: 'x', trackMin: 0, trackMax: 160 }
+      ],
       keyframes: [
         { t: 0.00, title: 'Equilibrium Gas State', rule: 'V = 100%, T = 300K -> P = 101.3 kPa baseline atmospheric pressure.' },
         { t: 0.35, title: 'Boyle\'s Compression', rule: 'Piston compresses V to 50% -> Collision frequency doubles -> P rises to 202.6 kPa.' },
@@ -3577,6 +4086,17 @@
               <text id="kg-thermo-val" x="11" y="215" fill="#fca5a5" font-size="12" font-weight="900" text-anchor="middle" font-family="monospace">300 K</text>
             </g>
 
+            <!-- Interactive Temperature Slider Track & Handle (:bind-input) -->
+            <g transform="translate(560, 260)">
+              <text x="0" y="-6" fill="#94a3b8" font-size="10" font-weight="800">THERMAL CONTROL (Drag to Heat/Cool):</text>
+              <line x1="0" y1="12" x2="160" y2="12" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+              <line x1="0" y1="12" x2="160" y2="12" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 4"/>
+              <g id="kg-temp-knob" data-bind-input="temp" data-draggable="true" transform="translate(66, 12)" style="cursor: grab;">
+                <circle cx="0" cy="0" r="11" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                <text x="0" y="4" fill="#ffffff" font-size="9" font-weight="900" text-anchor="middle">T</text>
+              </g>
+            </g>
+
             <!-- State of Matter Indicators -->
             <g transform="translate(560, 310)">
               <rect width="210" height="42" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
@@ -3604,49 +4124,73 @@
           thermoVal: container.querySelector('#kg-thermo-val'),
           pvEq: container.querySelector('#kg-pv-eq'),
           indSolid: container.querySelector('#kg-ind-solid'),
+          indLiquid: container.querySelector('#kg-ind-liquid'),
           indGas: container.querySelector('#kg-ind-gas'),
           brownian: container.querySelector('#kg-brownian'),
           dots: container.querySelectorAll('.kg-dot')
         };
       },
-      update(t, el) {
+      update(t, el, engine, dt) {
         if (!el || !el.piston) return;
-        // Piston position
-        const pistonX = t < 0.25 ? 430 : (t < 0.60 ? (430 - 180 * Math.min(1, (t - 0.25) / 0.25)) : (t < 0.85 ? 250 : (250 + 180 * ((t - 0.85) / 0.15))));
+
+        // PhET Dynamic State: If user dragged or set the piston, honor user sovereignty!
+        const isUserControlled = typeof el.userPistonX === 'number';
+        const pistonX = isUserControlled 
+          ? el.userPistonX 
+          : (t < 0.25 ? 430 : (t < 0.60 ? (430 - 180 * Math.min(1, (t - 0.25) / 0.25)) : (t < 0.85 ? 250 : (250 + 180 * ((t - 0.85) / 0.15)))));
+
         el.piston.setAttribute('transform', `translate(${pistonX.toFixed(1)}, 0)`);
 
-        // Gauge needle rotation & reading
-        const angle = -45 + (t < 0.25 ? 0 : (t < 0.60 ? 70 * ((t - 0.25) / 0.25) : (t < 0.85 ? 120 : (120 - 100 * ((t - 0.85) / 0.15)))));
-        if (el.needle) el.needle.setAttribute('transform', `rotate(${angle.toFixed(1)} 0 0)`);
-        
-        const pressure = (101.3 + (t < 0.25 ? 0 : (t < 0.60 ? 101.3 * ((t - 0.25) / 0.25) : (t < 0.85 ? 202.6 : 0)))).toFixed(1);
+        // Volume ratio and pressure (Boyle's Law: P = P0 / V)
+        const volRatio = Math.max(0.35, Math.min(1.0, (pistonX - 150) / 280));
+        const pressure = isUserControlled
+          ? (101.3 / volRatio).toFixed(1)
+          : (101.3 + (t < 0.25 ? 0 : (t < 0.60 ? 101.3 * ((t - 0.25) / 0.25) : (t < 0.85 ? 202.6 : 0)))).toFixed(1);
+
+        const gaugeAngle = -45 + (1.0 - volRatio) * 130;
+        if (el.needle) el.needle.setAttribute('transform', `rotate(${gaugeAngle.toFixed(1)} 0 0)`);
         if (el.gaugeVal) el.gaugeVal.textContent = `${pressure} kPa`;
 
-        // Thermometer
-        const isHot = t > 0.60 && t < 0.85;
-        const isCold = t >= 0.85;
+        // Thermal dynamics from reactive variable 'temp' (supports :bind-input from slider)
+        const hasUserTemp = engine && typeof engine.getVar === 'function' && engine.getVar('temp') !== undefined;
+        const currentTemp = hasUserTemp 
+          ? Number(engine.getVar('temp')) 
+          : (t > 0.60 && t < 0.85 ? 600 : (t >= 0.85 ? 90 : 300));
+
+        const isCold = currentTemp < 120;
+        const isLiquid = currentTemp >= 120 && currentTemp < 373;
+        const isGas = currentTemp >= 373;
+
+        // Sync Thermometer Fluid height dynamically:
+        const tempRatio = Math.max(0, Math.min(1, (currentTemp - 90) / (600 - 90)));
+        const fluidHeight = 24 + tempRatio * 144;
+        const fluidY = 180 - fluidHeight;
         if (el.thermoFluid) {
-          el.thermoFluid.setAttribute('height', isHot ? '150' : (isCold ? '40' : '116'));
-          el.thermoFluid.setAttribute('y', isHot ? '30' : (isCold ? '140' : '64'));
+          el.thermoFluid.setAttribute('height', fluidHeight.toFixed(0));
+          el.thermoFluid.setAttribute('y', fluidY.toFixed(0));
         }
-        if (el.thermoVal) el.thermoVal.textContent = isHot ? '600 K' : (isCold ? '90 K' : '300 K');
+        if (el.thermoVal) el.thermoVal.textContent = `${Math.round(currentTemp)} K`;
 
         // State indicator pills
-        if (el.indGas) el.indGas.setAttribute('fill', isCold ? '#1e293b' : '#2563eb');
         if (el.indSolid) el.indSolid.setAttribute('fill', isCold ? '#22c55e' : '#1e293b');
+        if (el.indLiquid) el.indLiquid.setAttribute('fill', isLiquid ? '#3b82f6' : '#1e293b');
+        if (el.indGas) el.indGas.setAttribute('fill', isGas ? '#ef4444' : '#1e293b');
 
-        // Brownian pollen motion
+        // Continuous Brownian pollen motion
+        el.simClock = (el.simClock || 0) + (typeof dt === 'number' && dt > 0 ? dt : 0.016);
+        const clock = el.simClock;
+
         if (el.brownian) {
-          el.brownian.setAttribute('cx', (200 + Math.sin(t * 24) * 25).toFixed(1));
-          el.brownian.setAttribute('cy', (210 + Math.cos(t * 31) * 20).toFixed(1));
+          el.brownian.setAttribute('cx', (160 + Math.sin(clock * 5) * 30).toFixed(1));
+          el.brownian.setAttribute('cy', (210 + Math.cos(clock * 6.2) * 25).toFixed(1));
         }
 
-        // Particle jitter
+        // Particle kinetic thermal collision motion bounded by live piston position!
         if (el.dots) {
-          const speedFactor = isHot ? 2.5 : (isCold ? 0.3 : 1.0);
+          const speedFactor = isGas ? (currentTemp / 240) : (isCold ? 0.2 : 0.9);
           el.dots.forEach((dot, idx) => {
-            const jitterX = Math.sin(t * (10 + idx) * speedFactor) * 8;
-            const jitterY = Math.cos(t * (12 + idx) * speedFactor) * 8;
+            const jitterX = Math.sin(clock * (10 + idx) * speedFactor) * (isCold ? 2 : 8);
+            const jitterY = Math.cos(clock * (12 + idx) * speedFactor) * (isCold ? 2 : 8);
             dot.setAttribute('transform', `translate(${jitterX.toFixed(1)}, ${jitterY.toFixed(1)})`);
           });
         }
@@ -3789,10 +4333,15 @@
           note: container.querySelector('#cc-note')
         };
       },
-      update(t, el) {
+      update(t, el, engine, dt) {
         if (!el || !el.assembly) return;
-        const interp = Math.min(1, t / 0.85);
-        const posX = 150 + 200 * interp;
+
+        // PhET Dynamic State: If user dragged or set the probe, honor user sovereignty!
+        const isUserControlled = typeof el.userProbeX === 'number';
+        const posX = isUserControlled
+          ? el.userProbeX
+          : (150 + 200 * Math.min(1, t / 0.85));
+
         const mathX = (posX - 250) / 50;
         const mathY = mathX * mathX - 2 * mathX;
         const posY = 210 - mathY * 25;

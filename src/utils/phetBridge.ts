@@ -792,7 +792,7 @@ export async function transpilePhetFile(
   let matchedPreset: SupportedPhetPreset | null = null;
   if (simLower.includes('faraday') || simLower.includes('magnet') || simLower.includes('induct')) {
     matchedPreset = 'faraday';
-  } else if (simLower.includes('acid') || simLower.includes('ph') || simLower.includes('base') || simLower.includes('titrat')) {
+  } else if (simLower.includes('acid') || /\bph\b/i.test(simLower) || simLower.includes('base-solution') || simLower.includes('titrat')) {
     matchedPreset = 'acid-base';
   } else if (simLower.includes('pendulum') || simLower.includes('harmonic')) {
     matchedPreset = 'pendulum';

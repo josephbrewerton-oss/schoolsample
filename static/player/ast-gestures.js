@@ -172,6 +172,30 @@
 
       const integralArea = this.stageSvg.querySelector('#cc-integral-area') || this.stageSvg.querySelector('#integral-shaded-area');
       if (integralArea) integralArea.setAttribute('data-pedagogical', 'cc-integral');
+
+      // 5. Pythagoras Theorem Draggable Handles & Action Buttons
+      const pythHandleA = this.stageSvg.querySelector('#pyth-handle-a');
+      if (pythHandleA) {
+        pythHandleA.style.cursor = 'ns-resize';
+        pythHandleA.setAttribute('data-draggable', 'pyth-handle-a');
+        pythHandleA.setAttribute('data-pedagogical', 'pyth-handle-a');
+      }
+      const pythHandleB = this.stageSvg.querySelector('#pyth-handle-b');
+      if (pythHandleB) {
+        pythHandleB.style.cursor = 'ew-resize';
+        pythHandleB.setAttribute('data-draggable', 'pyth-handle-b');
+        pythHandleB.setAttribute('data-pedagogical', 'pyth-handle-b');
+      }
+      const sqA = this.stageSvg.querySelector('#pyth-poly-a');
+      if (sqA) sqA.setAttribute('data-pedagogical', 'pyth-sq-a');
+      const sqB = this.stageSvg.querySelector('#pyth-poly-b');
+      if (sqB) sqB.setAttribute('data-pedagogical', 'pyth-sq-b');
+      const sqC = this.stageSvg.querySelector('#pyth-poly-c');
+      if (sqC) sqC.setAttribute('data-pedagogical', 'pyth-sq-c');
+      const tri = this.stageSvg.querySelector('#pyth-triangle');
+      if (tri) tri.setAttribute('data-pedagogical', 'pyth-triangle');
+      const ra = this.stageSvg.querySelector('#pyth-right-angle');
+      if (ra) ra.setAttribute('data-pedagogical', 'pyth-right-angle');
     }
 
     /**
@@ -192,10 +216,18 @@
         return;
       }
 
-      // B. Check for interactive direct-grab targets
-      const target = e.target.closest('[data-draggable], [data-interactive], #kg-piston, #piston-assembly, #cc-tangent-assembly, #tangent-assembly, #tangent-probe');
+      // B. Check for interactive direct-grab targets or action buttons
+      const target = e.target.closest('[data-draggable], [data-interactive], [data-action], #kg-piston, #piston-assembly, #cc-tangent-assembly, #tangent-assembly, #tangent-probe, #pyth-handle-a, #pyth-handle-b');
 
       if (target) {
+        // Direct Action Buttons (e.g. Pythagoras steppers, presets, toggles)
+        if (target.hasAttribute('data-action')) {
+          e.preventDefault();
+          this.handleActionClick(target.getAttribute('data-action'));
+          this.createTouchRipple(svgPt.x, svgPt.y);
+          return;
+        }
+
         e.preventDefault();
         try {
           this.stageSvg.setPointerCapture(e.pointerId);
@@ -206,7 +238,26 @@
         this.dragStart = { x: svgPt.x, y: svgPt.y };
 
         // Determine specific drag mode
-        if (target.id === 'kg-piston' || target.id === 'piston-assembly' || target.getAttribute('data-draggable') === 'piston') {
+        if (target.id === 'mtn-climber' || target.getAttribute('data-draggable') === 'climber' || target.closest('#mtn-climber')) {
+          this.dragMode = 'climber';
+          target.style.cursor = 'grabbing';
+          if (this.engine && this.engine._cachedElements) this.engine._cachedElements.isUserControlled = true;
+          this.playAudioTone(440, 'triangle', 0.08);
+        } else if (target.id === 'pyth-handle-a' || target.getAttribute('data-draggable') === 'pyth-handle-a') {
+          this.dragMode = 'pyth-handle-a';
+          target.style.cursor = 'ns-resize';
+          if (this.engine && this.engine._cachedElements) this.engine._cachedElements.isUserControlled = true;
+          this.playAudioTone(440, 'triangle', 0.08);
+        } else if (target.id === 'pyth-handle-b' || target.getAttribute('data-draggable') === 'pyth-handle-b') {
+          this.dragMode = 'pyth-handle-b';
+          target.style.cursor = 'ew-resize';
+          if (this.engine && this.engine._cachedElements) this.engine._cachedElements.isUserControlled = true;
+          this.playAudioTone(554.37, 'triangle', 0.08);
+        } else if (target.hasAttribute('data-bind-input') || (this.engine && this.engine.activeBindInputs && this.engine.activeBindInputs.some(b => b.node === target || b.target === '#' + target.id || (target.id && b.target === target.id)))) {
+          this.dragMode = 'bind-input';
+          target.style.cursor = 'grabbing';
+          this.playAudioTone(380, 'sine', 0.05);
+        } else if (target.id === 'kg-piston' || target.id === 'piston-assembly' || target.getAttribute('data-draggable') === 'piston') {
           this.dragMode = 'piston';
           target.style.cursor = 'grabbing';
           this.playAudioTone(330, 'triangle', 0.08);
@@ -246,10 +297,18 @@
       if (this.isDragging && this.dragTarget) {
         e.preventDefault();
 
-        if (this.dragMode === 'piston') {
+        if (this.dragMode === 'climber') {
+          this.handleClimberDrag(svgPt);
+        } else if (this.dragMode === 'piston') {
           this.handlePistonDrag(svgPt.x);
         } else if (this.dragMode === 'tangent-probe') {
           this.handleTangentProbeDrag(svgPt.x);
+        } else if (this.dragMode === 'bind-input') {
+          this.handleBindInputDrag(this.dragTarget, svgPt);
+        } else if (this.dragMode === 'pyth-handle-a') {
+          this.handlePythagorasDragA(svgPt.y);
+        } else if (this.dragMode === 'pyth-handle-b') {
+          this.handlePythagorasDragB(svgPt.x);
         }
       } else if (this.isXRayActive) {
         const pedNode = e.target.closest('[data-pedagogical]');
@@ -281,6 +340,15 @@
         } else if (this.dragMode === 'tangent-probe') {
           this.dragTarget.style.cursor = 'grab';
           this.playAudioTone(523.25, 'sine', 0.06);
+        } else if (this.dragMode === 'bind-input') {
+          this.dragTarget.style.cursor = 'grab';
+          this.playAudioTone(520, 'sine', 0.04);
+        } else if (this.dragMode === 'pyth-handle-a') {
+          this.dragTarget.style.cursor = 'ns-resize';
+          this.playAudioTone(523.25, 'triangle', 0.08);
+        } else if (this.dragMode === 'pyth-handle-b') {
+          this.dragTarget.style.cursor = 'ew-resize';
+          this.playAudioTone(659.25, 'triangle', 0.08);
         }
 
         this.isDragging = false;
@@ -291,6 +359,46 @@
 
     handlePointerCancel(e) {
       this.handlePointerUp(e);
+    }
+
+    // =========================================================================
+    // Direct Manipulation Action 0: Bidirectional Slider-to-Variable Drag
+    // =========================================================================
+    handleBindInputDrag(target, svgPt) {
+      if (!this.engine || !this.engine.activeBindInputs) return;
+      const binding = this.engine.activeBindInputs.find(b => b.node === target || b.target === '#' + target.id || (target.id && b.target === target.id));
+      if (!binding) return;
+
+      const axis = binding.axis || 'x';
+      const tMin = binding.trackMin !== undefined ? binding.trackMin : (axis === 'y' ? 320 : 60);
+      const tMax = binding.trackMax !== undefined ? binding.trackMax : (axis === 'y' ? 80 : 440);
+      let ratio = 0;
+
+      if (axis === 'y') {
+        const minY = Math.min(tMin, tMax);
+        const maxY = Math.max(tMin, tMax);
+        const clampedY = Math.max(minY, Math.min(maxY, svgPt.y));
+        ratio = (clampedY - tMin) / (tMax - tMin);
+        target.setAttribute('transform', `translate(0, ${clampedY.toFixed(1)})`);
+      } else if (axis === 'rotary') {
+        const center = { x: binding.originX || 0, y: binding.originY || 0 };
+        const angleRad = Math.atan2(svgPt.y - center.y, svgPt.x - center.x);
+        let angleDeg = (angleRad * 180 / Math.PI) + 90;
+        if (angleDeg < -135) angleDeg = -135;
+        if (angleDeg > 135) angleDeg = 135;
+        ratio = (angleDeg + 135) / 270;
+        target.setAttribute('transform', `rotate(${angleDeg.toFixed(1)} ${center.x} ${center.y})`);
+      } else {
+        const minX = Math.min(tMin, tMax);
+        const maxX = Math.max(tMin, tMax);
+        const clampedX = Math.max(minX, Math.min(maxX, svgPt.x));
+        ratio = (clampedX - tMin) / (tMax - tMin);
+        target.setAttribute('transform', `translate(${clampedX.toFixed(1)}, 0)`);
+      }
+
+      ratio = Math.max(0, Math.min(1, ratio));
+      const val = binding.min + ratio * (binding.max - binding.min);
+      this.engine.setVar(binding.var, Number(val.toFixed(2)));
     }
 
     // =========================================================================
@@ -328,7 +436,10 @@
         eqCard.textContent = `P × V = ${(parseFloat(pressureKpa) * volRatio).toFixed(0)}  •  [Boyle's Law Direct Grab: V=${(volRatio * 100).toFixed(0)}%]`;
       }
 
-      // Sync with Engine Reactive State Variables
+      // Sync with Engine Reactive State Variables and Scene Cache
+      if (this.engine && this.engine._cachedElements) {
+        this.engine._cachedElements.userPistonX = clampedX;
+      }
       if (this.engine && typeof this.engine.setVar === 'function') {
         this.engine.setVar('volume', parseFloat(volRatio.toFixed(3)));
         this.engine.setVar('pressure', parseFloat(pressureKpa));
@@ -372,7 +483,10 @@
         slopeVal.textContent = `m = ${slope >= 0 ? '+' : ''}${slope.toFixed(2)}`;
       }
 
-      // Sync with Engine Reactive State Variables
+      // Sync with Engine Reactive State Variables and Scene Cache
+      if (this.engine && this.engine._cachedElements) {
+        this.engine._cachedElements.userProbeX = clampedX;
+      }
       if (this.engine && typeof this.engine.setVar === 'function') {
         this.engine.setVar('probeX', parseFloat(mathX.toFixed(2)));
         this.engine.setVar('probeY', parseFloat(mathY.toFixed(2)));
@@ -413,6 +527,233 @@
       } else {
         if (bulbGlow) bulbGlow.setAttribute('opacity', '0.9');
         if (dots) dots.forEach(d => d.setAttribute('opacity', '1.0'));
+      }
+    }
+
+    // =========================================================================
+    // Direct Manipulation Action 4: Pythagoras Theorem PhET Geometry & Controls
+    // =========================================================================
+    handlePythagorasDragA(svgY) {
+      const el = this.engine && this.engine._cachedElements;
+      if (!el || typeof el.renderGeometry !== 'function') return;
+
+      el.isUserControlled = true;
+      const originY = el.oy !== undefined ? el.oy : 270;
+      const scale = el.s !== undefined ? el.s : 20;
+
+      // Vertical leg a extends upwards: topY = oy - a * s => a = (oy - svgY) / s
+      const rawA = (originY - svgY) / scale;
+      const clampedA = Math.max(2, Math.min(8, Math.round(rawA)));
+
+      if (clampedA !== el.curA) {
+        el.renderGeometry(clampedA, el.curB);
+        if (this.engine && typeof this.engine.setVar === 'function') {
+          this.engine.setVar('sideA', clampedA);
+        }
+        // Sonification & integer triple detection
+        const c = Math.sqrt(clampedA * clampedA + el.curB * el.curB);
+        const isTriple = Math.abs(c - Math.round(c)) < 0.001;
+        if (isTriple) {
+          this.playAudioTone(880, 'sine', 0.22, 0.22);
+        } else {
+          this.playAudioTone(300 + clampedA * 45, 'triangle', 0.05, 0.12);
+        }
+      }
+    }
+
+    handlePythagorasDragB(svgX) {
+      const el = this.engine && this.engine._cachedElements;
+      if (!el || typeof el.renderGeometry !== 'function') return;
+
+      el.isUserControlled = true;
+      const originX = el.ox !== undefined ? el.ox : 290;
+      const scale = el.s !== undefined ? el.s : 20;
+
+      // Horizontal leg b extends rightwards: rightX = ox + b * s => b = (svgX - ox) / s
+      const rawB = (svgX - originX) / scale;
+      const clampedB = Math.max(2, Math.min(10, Math.round(rawB)));
+
+      if (clampedB !== el.curB) {
+        el.renderGeometry(el.curA, clampedB);
+        if (this.engine && typeof this.engine.setVar === 'function') {
+          this.engine.setVar('sideB', clampedB);
+        }
+        // Sonification & integer triple detection
+        const c = Math.sqrt(el.curA * el.curA + clampedB * clampedB);
+        const isTriple = Math.abs(c - Math.round(c)) < 0.001;
+        if (isTriple) {
+          this.playAudioTone(880, 'sine', 0.22, 0.22);
+        } else {
+          this.playAudioTone(320 + clampedB * 40, 'triangle', 0.05, 0.12);
+        }
+      }
+    }
+
+    /**
+     * Direct Manipulation of Mountain Elevation Climber
+     * Projects pointer position onto slope line segment from (180, 380) to (400, 130)
+     */
+    handleClimberDrag(svgPt) {
+      const el = this.engine && this.engine._cachedElements;
+      if (!el || typeof el.updateGeometry !== 'function') return;
+
+      el.isUserControlled = true;
+
+      const startX = 180, startY = 380;
+      const endX = 400, endY = 130;
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const segLenSq = dx * dx + dy * dy;
+
+      const px = svgPt.x - startX;
+      const py = svgPt.y - startY;
+      const dot = px * dx + py * dy;
+      let t = dot / segLenSq;
+      t = Math.max(0, Math.min(1, t));
+
+      el.updateGeometry(t);
+
+      // Footstep & altitude audio feedback
+      const freq = 360 + t * 300;
+      this.playAudioTone(freq, 'sine', 0.04, 0.08);
+
+      if (t >= 0.98) {
+        this.playAudioTone(880, 'triangle', 0.2, 0.2);
+      }
+    }
+
+    handleActionClick(action) {
+      const el = this.engine && this.engine._cachedElements;
+      if (!el) return;
+
+      el.isUserControlled = true;
+
+      // -----------------------------------------------------------------------
+      // Mountain Altitude & Trigonometry Apparatus Actions
+      // -----------------------------------------------------------------------
+      if (typeof el.updateGeometry === 'function') {
+        if (action === 'mtn-inc-alt') {
+          const newT = Math.min(1.0, (el.curT || 0) + (250 / 3000));
+          el.updateGeometry(newT);
+          this.playAudioTone(400 + newT * 260, 'sine', 0.06);
+          return;
+        } else if (action === 'mtn-dec-alt') {
+          const newT = Math.max(0.0, (el.curT || 0) - (250 / 3000));
+          el.updateGeometry(newT);
+          this.playAudioTone(400 + newT * 260, 'sine', 0.06);
+          return;
+        } else if (action === 'mtn-angle-15') {
+          el.slopeAngleDeg = 15;
+          if (el.btnAng15) el.btnAng15.setAttribute('fill', '#0284c7');
+          if (el.btnAng30) el.btnAng30.setAttribute('fill', '#1e293b');
+          if (el.btnAng45) el.btnAng45.setAttribute('fill', '#1e293b');
+          el.updateGeometry(el.curT);
+          this.playAudioTone(520, 'triangle', 0.08);
+          return;
+        } else if (action === 'mtn-angle-30') {
+          el.slopeAngleDeg = 30;
+          if (el.btnAng15) el.btnAng15.setAttribute('fill', '#1e293b');
+          if (el.btnAng30) el.btnAng30.setAttribute('fill', '#0284c7');
+          if (el.btnAng45) el.btnAng45.setAttribute('fill', '#1e293b');
+          el.updateGeometry(el.curT);
+          this.playAudioTone(580, 'triangle', 0.08);
+          return;
+        } else if (action === 'mtn-angle-45') {
+          el.slopeAngleDeg = 45;
+          if (el.btnAng15) el.btnAng15.setAttribute('fill', '#1e293b');
+          if (el.btnAng30) el.btnAng30.setAttribute('fill', '#1e293b');
+          if (el.btnAng45) el.btnAng45.setAttribute('fill', '#0284c7');
+          el.updateGeometry(el.curT);
+          this.playAudioTone(640, 'triangle', 0.08);
+          return;
+        } else if (action === 'mtn-toggle-trig') {
+          el.showTrig = !el.showTrig;
+          el.updateGeometry(el.curT);
+          this.playAudioTone(el.showTrig ? 600 : 300, 'sine', 0.06);
+          return;
+        } else if (action === 'mtn-toggle-lapse') {
+          el.showAtmosphere = !el.showAtmosphere;
+          if (el.hudGroup) el.hudGroup.style.display = el.showAtmosphere ? 'block' : 'none';
+          if (el.btnLapseBg && el.btnLapseTxt) {
+            el.btnLapseBg.setAttribute('fill', el.showAtmosphere ? '#0284c7' : '#1e293b');
+            el.btnLapseTxt.textContent = el.showAtmosphere ? '🌡️ HUD: FULL' : '🌡️ HUD: MINI';
+          }
+          this.playAudioTone(el.showAtmosphere ? 520 : 320, 'sine', 0.06);
+          return;
+        } else if (action === 'mtn-jump-summit') {
+          el.updateGeometry(1.0);
+          this.playAudioTone(880, 'triangle', 0.2);
+          return;
+        } else if (action === 'mtn-reset') {
+          el.isUserControlled = false;
+          el.slopeAngleDeg = 30;
+          el.showTrig = true;
+          el.showAtmosphere = true;
+          if (el.btnAng15) el.btnAng15.setAttribute('fill', '#1e293b');
+          if (el.btnAng30) el.btnAng30.setAttribute('fill', '#0284c7');
+          if (el.btnAng45) el.btnAng45.setAttribute('fill', '#1e293b');
+          if (el.hudGroup) el.hudGroup.style.display = 'block';
+          el.updateGeometry(0.0);
+          this.playAudioTone(440, 'sine', 0.12);
+          return;
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // Pythagoras Theorem Apparatus Actions
+      // -----------------------------------------------------------------------
+      if (typeof el.renderGeometry === 'function') {
+        if (action === 'pyth-dec-a') {
+          const newA = Math.max(2, (el.curA || 3) - 1);
+          el.renderGeometry(newA, el.curB);
+          if (this.engine && this.engine.setVar) this.engine.setVar('sideA', newA);
+          this.playAudioTone(380, 'sine', 0.06);
+        } else if (action === 'pyth-inc-a') {
+          const newA = Math.min(8, (el.curA || 3) + 1);
+          el.renderGeometry(newA, el.curB);
+          if (this.engine && this.engine.setVar) this.engine.setVar('sideA', newA);
+          this.playAudioTone(460, 'sine', 0.06);
+        } else if (action === 'pyth-dec-b') {
+          const newB = Math.max(2, (el.curB || 4) - 1);
+          el.renderGeometry(el.curA, newB);
+          if (this.engine && this.engine.setVar) this.engine.setVar('sideB', newB);
+          this.playAudioTone(420, 'sine', 0.06);
+        } else if (action === 'pyth-inc-b') {
+          const newB = Math.min(10, (el.curB || 4) + 1);
+          el.renderGeometry(el.curA, newB);
+          if (this.engine && this.engine.setVar) this.engine.setVar('sideB', newB);
+          this.playAudioTone(520, 'sine', 0.06);
+        } else if (action === 'pyth-pre-345') {
+          el.renderGeometry(3, 4);
+          if (this.engine && this.engine.setVar) { this.engine.setVar('sideA', 3); this.engine.setVar('sideB', 4); }
+          this.playAudioTone(660, 'triangle', 0.15);
+        } else if (action === 'pyth-pre-6810') {
+          el.renderGeometry(6, 8);
+          if (this.engine && this.engine.setVar) { this.engine.setVar('sideA', 6); this.engine.setVar('sideB', 8); }
+          this.playAudioTone(880, 'triangle', 0.15);
+        } else if (action === 'pyth-pre-51213') {
+          el.renderGeometry(5, 12);
+          if (this.engine && this.engine.setVar) { this.engine.setVar('sideA', 5); this.engine.setVar('sideB', 12); }
+          this.playAudioTone(1046.5, 'triangle', 0.18);
+        } else if (action === 'pyth-toggle-grid') {
+          el.showGrid = !el.showGrid;
+          el.renderGeometry(el.curA, el.curB);
+          this.playAudioTone(el.showGrid ? 600 : 300, 'sine', 0.06);
+        } else if (action === 'pyth-toggle-liquid') {
+          el.liquidMode = !el.liquidMode;
+          el.renderGeometry(el.curA, el.curB);
+          if (el.liquidMode && typeof el.animateLiquidPour === 'function') {
+            el.animateLiquidPour();
+          }
+          this.playAudioTone(el.liquidMode ? 587.33 : 293.66, 'sine', 0.12);
+        } else if (action === 'pyth-reset') {
+          el.isUserControlled = false;
+          el.showGrid = true;
+          el.liquidMode = false;
+          el.renderGeometry(3, 4);
+          if (this.engine && this.engine.setVar) { this.engine.setVar('sideA', 3); this.engine.setVar('sideB', 4); }
+          this.playAudioTone(440, 'sine', 0.15);
+        }
       }
     }
 
@@ -627,6 +968,51 @@
           title: 'Knife Circuit Switch',
           eq: 'Closed: I = V / R',
           desc: 'Conductive copper bridge. When opened, air gap resistance is infinite, cutting current flow to 0 Amperes.'
+        },
+        'pyth-handle-a': {
+          title: 'Leg a Dynamic Vertex Handle',
+          eq: 'Leg a = Δy / scale',
+          desc: 'Direct drag vertex. Vertically resizes side a. The square on leg a instantly updates to area a².'
+        },
+        'pyth-handle-b': {
+          title: 'Leg b Dynamic Vertex Handle',
+          eq: 'Leg b = Δx / scale',
+          desc: 'Direct drag vertex. Horizontally resizes side b. The square on leg b instantly updates to area b².'
+        },
+        'pyth-sq-a': {
+          title: 'Square on Leg a (a²)',
+          eq: 'Area_a = a²',
+          desc: 'Unit grid array of a × a squares. Green area represents the contribution of leg a.'
+        },
+        'pyth-sq-b': {
+          title: 'Square on Leg b (b²)',
+          eq: 'Area_b = b²',
+          desc: 'Unit grid array of b × b squares. Blue area represents the contribution of leg b.'
+        },
+        'pyth-sq-c': {
+          title: 'Hypotenuse Square (c²)',
+          eq: 'c² = a² + b²',
+          desc: 'Conservation of Area. Gold square exactly matches the sum of areas a² and b² in all Euclidean right triangles.'
+        },
+        'pyth-triangle': {
+          title: 'Euclidean Right Triangle',
+          eq: 'a² + b² = c²',
+          desc: 'Right triangle connecting sides a, b, and hypotenuse c. Demonstrates invariant area conservation.'
+        },
+        'pyth-right-angle': {
+          title: 'Right Angle Vertex (90°)',
+          eq: 'a ⊥ b (90° / π/2 rad)',
+          desc: 'The fundamental condition of Pythagoras theorem. Legs a and b must meet at an exact 90-degree angle.'
+        },
+        'mtn-climber': {
+          title: 'High-Altitude Alpine Climber',
+          eq: 'Elevation = Slope × sin(θ)',
+          desc: 'Direct drag climber. Walking along a slope is the hypotenuse; true vertical altitude is the opposite rise above sea level.'
+        },
+        'mtn-lapse': {
+          title: 'Environmental Lapse Rate',
+          eq: 'T = T_0 - (h / 1000) × 6.5°C',
+          desc: 'Tropospheric cooling with altitude. Atmospheric pressure drops exponentially with elevation, causing temperature and water boiling point to fall.'
         }
       };
 

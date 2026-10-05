@@ -133,6 +133,23 @@ Gesture          ::= "(:draggable" ws ":target" ws String ws
 * Checkpoints trigger automatic pause at time $t$ on the timeline.
 * Embeds self-marking pedagogical questions with instant formative remediation.
 
+### 3.7. Declarative State Transitions (:state-machine / :transition / :emitter-set)
+* Replaces imperative state management with declarative discrete state models (solid/liquid/gas, open/closed, charging/discharging).
+* Smooth cubic-bezier attribute interpolation during transition (`height`, `opacity`, `transform`).
+* Reactive guard triggers evaluated at 60 FPS against simulation variables (`temp > 373.15`, `voltage > 24`).
+* Direct Emitter Coupling (`:emitter-set`): Allows state transitions to mutate emitter velocity, particle count, gravity, or boundary bounds directly upon state entry without imperative scripting.
+
+### 3.8. Multi-Entity Particle Emitter Collections (:emitter / :particle-pool)
+* Zero-allocation, high-performance O(1) particle pool (< 2 KB footprint, 0 dependencies).
+* Simulates thermal molecular chaos, Coulombic electron drift, rainfall condensation, and radioactive decay at 60 FPS without DOM garbage collection thrashing.
+* Configurable boundary dynamics (`bounce`, `wrap`, `recycle`), gravity, speed distributions, and particle radius/fill.
+* ViewBox & Inverse CTM Inversion: Dynamically projects boundaries across SVG viewBox scaling, 3D camera transforms, and moving SVG assembly elements using inverse matrix projection.
+
+### 3.9. Bidirectional Slider-to-Variable Binding (:bind-input)
+* Directly links on-stage SVG interactive slider handles, knobs, and levers (`ast-gestures.js`) to reactive state variables.
+* Supports linear axes (`x`, `y`) and rotational dials (`rotary`).
+* Full two-way synchronisation: dragging the SVG handle mutates the variable; programmatic or state machine variable changes smoothly translate the handle in real time.
+
 ---
 
 ## 4. Canonical Scene File Example
@@ -143,6 +160,12 @@ Gesture          ::= "(:draggable" ws ":target" ws String ws
     (:start 0.00 :end 3.50 :en "Kinetic Molecular Theory explains gas pressure." :es "La teoría cinética explica la presión.")
     (:start 3.50 :end 7.20 :en "Boyle's Law: Halving volume doubles collision frequency." :es "Ley de Boyle: Reducir volumen duplica colisiones.")
   ))
+  (:vars (
+    (:var :name "temp" :val 300 :min 100 :max 600 :unit "K")
+  ))
+  (:bind-inputs (
+    (:bind-input :target "#temp-slider" :var "temp" :min 100 :max 600 :axis "x" :track-min 60 :track-max 440)
+  ))
   (:keyframes (
     (:t 0.00 :title "Equilibrium" :rule "V = 100%, P = 101.3 kPa")
     (:t 0.35 :title "Boyle's Compression" :rule "V = 50%, P = 202.6 kPa")
@@ -152,6 +175,19 @@ Gesture          ::= "(:draggable" ws ":target" ws String ws
     (:target "#gauge-needle" :attr "transform" :expr "'rotate(' + (-45 + 130 * t) + ' 0 0)'")
     (:target "#gauge-value" :attr "textContent" :expr "(101.3 / (1.0 - 0.5 * t)).toFixed(1) + ' kPa'")
   ))
+  (:state-machine :id "matter-phase" :initial "liquid"
+    (:state :name "liquid" 
+      (:attr :target "#phase-pill" :fill "#3b82f6" :textContent "Liquid Phase")
+      (:emitter-set :target "#gas-particles" :speed 80 :count 60 :gravity 200))
+    (:state :name "gas" 
+      (:attr :target "#phase-pill" :fill "#ef4444" :textContent "Gas Phase")
+      (:emitter-set :target "#gas-particles" :speed 320 :count 120 :gravity 0))
+    (:transition :from "liquid" :to "gas" :trigger "temp >= 373.15" :duration 0.5 :dwell 0.3)
+    (:transition :from "gas" :to "liquid" :trigger "temp < 373.15" :duration 0.5 :dwell 0.3)
+  )
+  (:emitter :id "gas-particles" :count 80 :speed 120 :radius 4 :fill "#38bdf8"
+    (:bounds :minX 40 :maxX 430 :minY 80 :maxY 380 :wrapMode "bounce")
+  )
   (:gestures (
     (:draggable :target "#piston-assembly" :axis "x" :min 200 :max 450)
   ))

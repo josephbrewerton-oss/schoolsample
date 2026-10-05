@@ -71,6 +71,17 @@ export default function AstInteractiveLabDrawer({
     preset === 'calculus-curves' ? 'calculus' : preset === 'kinetic-gas' ? 'kinetic-gas' : 'preset'
   );
 
+  const postVarToPlayer = (name: string, val: number) => {
+    if (typeof window !== 'undefined') {
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach((f) => {
+        try {
+          f.contentWindow?.postMessage({ type: 'SET_VAR', name, value: val }, '*');
+        } catch {}
+      });
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -425,7 +436,11 @@ export default function AstInteractiveLabDrawer({
                 max="1.0"
                 step="0.05"
                 value={gasVolumeRatio}
-                onChange={(e) => setGasVolumeRatio(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setGasVolumeRatio(val);
+                  postVarToPlayer('volume', val);
+                }}
                 style={{ width: '100%', accentColor: '#38bdf8' }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#94a3b8', marginTop: '2px' }}>
@@ -446,7 +461,11 @@ export default function AstInteractiveLabDrawer({
                 max="800"
                 step="10"
                 value={gasTempK}
-                onChange={(e) => setGasTempK(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setGasTempK(val);
+                  postVarToPlayer('temp', val);
+                }}
                 style={{ width: '100%', accentColor: '#ef4444' }}
               />
               <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
@@ -460,7 +479,10 @@ export default function AstInteractiveLabDrawer({
                   <button
                     key={preset.label}
                     type="button"
-                    onClick={() => setGasTempK(preset.temp)}
+                    onClick={() => {
+                      setGasTempK(preset.temp);
+                      postVarToPlayer('temp', preset.temp);
+                    }}
                     style={{
                       flex: 1,
                       padding: '4px 2px',
