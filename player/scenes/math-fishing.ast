@@ -1,22 +1,25 @@
 (:scene :id "math-fishing" :title "Math Pond: Number Bonds Fishing Game" :stage "KS1/KS2 MATHS" :duration 14.0
   (:vars (
-    (:var :name "targetSum" :val 20 :min 5 :max 100 :step 1 :label "Target Bond Goal")
+    (:var :name "targetSum" :val 10 :min 5 :max 20 :step 1 :label "Target Bond Goal")
+    (:var :name "hookX" :val 320 :min 80 :max 740 :step 1 :label "Hook X Position")
+    (:var :name "hookY" :val 240 :min 120 :max 440 :step 1 :label "Hook Y Depth")
     (:var :name "bobberSpeed" :val 1.0 :min 0.5 :max 3.0 :step 0.25 :label "Reeling Current Pace")
   ))
   (:inputs (
-    (:slider :var "targetSum" :label "Number Bond Target" :min 5 :max 100 :step 1)
+    (:slider :var "targetSum" :label "Number Bond Target" :min 5 :max 20 :step 1)
     (:slider :var "bobberSpeed" :label "Water Current Velocity" :min 0.5 :max 3.0 :step 0.25)
   ))
   (:computed (
     (:name "bondComplement" :expr "vars.targetSum - 4")
   ))
   (:gestures (
-    (:draggable :target "#water-wave-1" :axis "x" :min -50 :max 50)
+    (:draggable :target "#fishing-bobber-rig" :axis "xy" :min-x 80 :max-x 740 :min-y 120 :max-y 440)
+    (:draggable :target "#fishing-hook" :axis "xy" :min-x 80 :max-x 740 :min-y 120 :max-y 440)
   ))
   (:subtitles (
-    (:start 0.00 :end 0.35 :en "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds." :es "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos.")
-    (:start 0.35 :end 0.70 :en "We have a 4 on our line. To make 10, we must find and catch a fish with 6!" :es "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!")
-    (:start 0.70 :end 1.00 :en "4 plus 6 equals 10! A perfect number bond stored right in our tackle bucket." :es "¡4 más 6 es igual a 10! Un vínculo numérico perfecto guardado en la cubeta.")
+    (:start 0.00 :end 0.35 :en "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds." :es "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos." :fr "Bienvenue dans l'étang des maths ! Observez comment la pêche aux nombres forme nos liaisons numériques." :la "Bene veneritis ad stagnum mathematicum! Videte quomodo pisces capere vincula numerorum aedificat.")
+    (:start 0.35 :end 0.70 :en "We have a 4 on our line. To make 10, we must find and catch a fish with 6!" :es "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!" :fr "Nous avons un 4 sur notre ligne. Pour faire 10, nous devons trouver et attraper un 6 !" :la "Quattuor in lino tenemus. Ad decem conficiendum, piscem cum sex capere debemus!")
+    (:start 0.70 :end 1.00 :en "4 plus 6 equals 10! A perfect number bond stored right in our tackle bucket." :es "¡4 más 6 es igual a 10! Un vínculo numérico perfecto guardado en la cubeta." :fr "4 plus 6 égale 10 ! Une liaison numérique parfaite rangée dans notre seau." :la "Quattuor et sex decem faciunt! Perfectum vinculum numerorum in situla nostra repositum.")
   ))
   (:keyframes (
     (:t 0.00 :title "Step 1: Pond Inspection" :rule "Scanning swimming fish numerals and ten-frame dots")
