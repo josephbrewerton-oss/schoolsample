@@ -3232,9 +3232,9 @@
         { t: 1.00, title: 'Step 4: Mastery Victory', rule: 'Bonds to 10 and 20 provide the foundation for mental arithmetic' }
       ],
       subtitles: [
-        { start: 0.00, end: 0.35, en: "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds.", es: "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos." },
-        { start: 0.35, end: 0.70, en: "We have a 4 on our line. To make 10, we must find and catch a fish with 6!", es: "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!" },
-        { start: 0.70, end: 1.00, en: "4 plus 6 equals 10! A perfect number bond stored right in our tackle bucket.", es: "¡4 más 6 es igual a 10! Un vínculo numérico perfecto guardado en la cubeta." }
+        { start: 0.00, end: 0.35, en: "Welcome to the Math Pond! Watch how catching fish with numbers builds our number bonds.", es: "¡Bienvenidos a la laguna matemática! Mira cómo pescar números construye los vínculos numéricos.", fr: "Bienvenue dans l'étang des maths ! Observez comment la pêche aux nombres forme nos liaisons numériques.", la: "Bene veneritis ad stagnum mathematicum! Videte quomodo pisces capere vincula numerorum aedificat." },
+        { start: 0.35, end: 0.70, en: "We have a 4 on our line. To make 10, we must find and catch a fish with 6!", es: "Tenemos un 4 en la caña. ¡Para formar 10, debemos buscar y pescar un 6!", fr: "Nous avons un 4 sur notre ligne. Pour faire 10, nous devons trouver et attraper un 6 !", la: "Quattuor in lino tenemus. Ad decem conficiendum, piscem cum sex capere debemus!" },
+        { start: 0.70, end: 1.00, en: "4 plus 6 equals 10! A perfect number bond stored right in our tackle bucket.", es: "¡4 más 6 es igual a 10! Un vínculo numérico perfecto guardado en la cubeta.", fr: "4 plus 6 égale 10 ! Une liaison numérique parfaite rangée dans notre seau.", la: "Quattuor et sex decem faciunt! Perfectum vinculum numerorum in situla nostra repositum." }
       ],
       interactive: {
         checkpoints: [
@@ -3290,14 +3290,17 @@
             <g id="fishing-rod-group">
               <line id="fishing-rod" x1="80" y1="30" x2="320" y2="70" stroke="#78350f" stroke-width="5" stroke-linecap="round" />
               <line id="fishing-line" x1="320" y1="70" x2="320" y2="240" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="3 3" />
-              <circle id="fishing-bobber" cx="320" cy="140" r="7" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
-              <path id="fishing-hook" d="M 320,240 C 320,252 328,252 328,244 L 328,242" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+              <g id="fishing-bobber-rig" data-draggable="fishing-hook" style="cursor: grab;">
+                <circle cx="320" cy="140" r="14" fill="#38bdf8" fill-opacity="0.15" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="3 3" />
+                <circle id="fishing-bobber" cx="320" cy="140" r="8" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+              </g>
+              <path id="fishing-hook" d="M 320,240 C 320,252 328,252 328,244 L 328,242" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" data-draggable="fishing-hook" style="cursor: grab;" />
             </g>
             <g id="math-hud-panel" transform="translate(420, 16)">
               <rect width="360" height="96" rx="10" fill="#0f172a" fill-opacity="0.92" stroke="#334155" stroke-width="1.5" />
               <text x="16" y="24" fill="#38bdf8" font-size="11" font-weight="bold" font-family="system-ui, sans-serif">🎣 NUMBER BONDS POND: TARGET 10</text>
               <text id="math-hud-equation" x="16" y="60" fill="#ffffff" font-size="22" font-weight="900" font-family="system-ui, sans-serif">4 + 6 = 10 🌟</text>
-              <text x="16" y="82" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Catch pairs of swimming fish that bond to make the target</text>
+              <text x="16" y="82" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Drag red bobber to hook swimming fish &amp; make number bonds</text>
             </g>
           `;
           fishGroup = container.querySelector('#fish-school-group');
@@ -3342,7 +3345,9 @@
           fishEls,
           hook,
           line,
-          eqText
+          eqText,
+          isUserControlled: false,
+          caughtList: []
         };
       },
       update(t, state) {
@@ -3352,32 +3357,56 @@
         // Fish swimming
         if (fishEls) {
           fishEls.forEach((f) => {
+            if (f.caught) return;
             const phase = t * 6 + f.phase;
             const curX = ((f.x + t * f.vx * 15) % 700) + 50;
             const curY = f.y + Math.sin(phase) * 6;
-            if (f.el) {
+            f.curX = curX;
+            f.curY = curY;
+            if (f.el && !f.isHooked) {
               f.el.setAttribute('transform', `translate(${curX.toFixed(1)}, ${curY.toFixed(1)})`);
             }
           });
         }
 
+        // If pupil is actively dragging hook with direct pointer manipulation, do not override
+        if (state.isUserControlled) return;
+
+        // Current language detection
+        const lang = (window.AST_ENGINE_ACTIVE_LANG || window.STJ_CURRENT_LANG || 'en').toLowerCase();
+
         // Animate line, hook, and equation as progression moves
         if (t < 0.35) {
-          if (eqText) eqText.textContent = 'Scan Pond: Find fish that bond to 10!';
+          if (eqText) {
+            if (lang.startsWith('es')) eqText.textContent = '¡Explora la laguna: busca peces que sumen 10!';
+            else if (lang.startsWith('fr')) eqText.textContent = 'Explorez l\'étang : trouvez les poissons qui font 10 !';
+            else if (lang.startsWith('la')) eqText.textContent = 'Explora stagnum: inveni pisces qui 10 faciunt!';
+            else eqText.textContent = 'Scan Pond: Find fish that bond to 10!';
+          }
           if (hook) hook.setAttribute('transform', `translate(480, 180)`);
           if (line) {
             line.setAttribute('x2', '480');
             line.setAttribute('y2', '180');
           }
         } else if (t < 0.70) {
-          if (eqText) eqText.textContent = 'Caught 4! Needed: 10 - 4 = 6';
+          if (eqText) {
+            if (lang.startsWith('es')) eqText.textContent = '¡Pescaste 4! Falta: 10 - 4 = 6';
+            else if (lang.startsWith('fr')) eqText.textContent = 'Pêché 4 ! Requis : 10 - 4 = 6';
+            else if (lang.startsWith('la')) eqText.textContent = 'Captus 4! Requisitum: 10 - 4 = 6';
+            else eqText.textContent = 'Caught 4! Needed: 10 - 4 = 6';
+          }
           if (hook) hook.setAttribute('transform', `translate(320, 240)`);
           if (line) {
             line.setAttribute('x2', '320');
             line.setAttribute('y2', '240');
           }
         } else {
-          if (eqText) eqText.textContent = '🌟 Solved: 4 + 6 = 10 (Bond Complete!)';
+          if (eqText) {
+            if (lang.startsWith('es')) eqText.textContent = '🌟 ¡Resuelto: 4 + 6 = 10 (Vínculo completo!)';
+            else if (lang.startsWith('fr')) eqText.textContent = '🌟 Résolu : 4 + 6 = 10 (Liaison complète !)';
+            else if (lang.startsWith('la')) eqText.textContent = '🌟 Solutum: 4 + 6 = 10 (Vinculum perfectum!)';
+            else eqText.textContent = '🌟 Solved: 4 + 6 = 10 (Bond Complete!)';
+          }
           if (hook) hook.setAttribute('transform', `translate(400, 120)`);
           if (line) {
             line.setAttribute('x2', '400');

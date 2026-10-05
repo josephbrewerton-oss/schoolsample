@@ -19,6 +19,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { AstVectorMediaPlayerHandle } from './AstVectorMediaPlayer';
+import {
+  getSavedLanguage,
+  listenToLanguageChange,
+  SUPPORTED_LANGUAGES,
+} from '../engine/operational-language';
 
 export interface MathFishingGameProps {
   playerRef?: React.RefObject<AstVectorMediaPlayerHandle | null>;
@@ -49,10 +54,100 @@ const FISH_COLORS = [
   { body: '#10b981', belly: '#a7f3d0', tail: '#059669', name: 'Emerald Carp' },
 ];
 
+interface MathPondTranslations {
+  title: string;
+  subtitle: string;
+  bonds10: string;
+  bonds20: string;
+  freeAdd: string;
+  doubles: string;
+  welcome10: string;
+  welcome20: string;
+  welcomeFree: string;
+  welcomeDoubles: string;
+  firstCastPrompt: string;
+  castInstruction: string;
+}
+
+const MATH_POND_I18N: Record<string, MathPondTranslations> = {
+  en: {
+    title: 'Lumina Math Pond: Number Bonds Fishing Game',
+    subtitle: 'Concrete-to-Abstract Math Discovery • UK National Curriculum KS1/KS2',
+    bonds10: '🎯 Bonds to 10',
+    bonds20: '🚀 Bonds to 20',
+    freeAdd: '➕ Catch & Add',
+    doubles: '👯 Doubles Pond',
+    welcome10: 'Welcome to Math Pond! Let us find number bonds to 10.',
+    welcome20: 'Target 20! Hunt for pairs that make 20.',
+    welcomeFree: 'Catch any two fish and find their sum!',
+    welcomeDoubles: 'Doubles Pond! Catch a twin fish to double the score.',
+    firstCastPrompt: 'Cast your line into the pond to catch your first fish!',
+    castInstruction: 'Cast line with mouse, touch or SPACE to hook swimming fish!',
+  },
+  es: {
+    title: 'Laguna Matemática: Pesca de Vínculos Numéricos',
+    subtitle: 'Descubrimiento Matemático Concreto-Pictórico-Abstracto • Primaria KS1/KS2',
+    bonds10: '🎯 Vínculos a 10',
+    bonds20: '🚀 Vínculos a 20',
+    freeAdd: '➕ Pescar y Sumar',
+    doubles: '👯 Laguna de Dobles',
+    welcome10: '¡Bienvenidos a la laguna matemática! Busquemos vínculos numéricos a 10.',
+    welcome20: '¡Meta 20! Busca parejas que sumen 20.',
+    welcomeFree: '¡Pesca dos peces y calcula su suma!',
+    welcomeDoubles: '¡Laguna de dobles! Pesca peces gemelos para duplicar el puntaje.',
+    firstCastPrompt: '¡Lanza la caña a la laguna para pescar tu primer número!',
+    castInstruction: '¡Lanza la caña con el ratón, toque o ESPACIO para pescar!',
+  },
+  fr: {
+    title: 'Étang des Maths : Pêche aux Liaisons Numériques',
+    subtitle: 'Découverte Mathématique Concrète-Imagée-Abstraite • Primaire KS1/KS2',
+    bonds10: '🎯 Liaisons à 10',
+    bonds20: '🚀 Liaisons à 20',
+    freeAdd: '➕ Pêcher et Additionner',
+    doubles: '👯 Étang des Doubles',
+    welcome10: 'Bienvenue dans l\'étang des maths ! Trouvons les paires qui font 10.',
+    welcome20: 'Objectif 20 ! Cherchez les paires qui font 20.',
+    welcomeFree: 'Attrapez deux poissons et trouvez leur somme !',
+    welcomeDoubles: 'Étang des doubles ! Attrapez des poissons jumeaux pour doubler le score.',
+    firstCastPrompt: 'Lancez votre ligne dans l\'étang pour pêcher votre premier poisson !',
+    castInstruction: 'Lancez la ligne avec la souris, le toucher ou ESPACE !',
+  },
+  la: {
+    title: 'Stagnum Mathematicum: Piscatio Vinculorum Numerorum',
+    subtitle: 'Inventio Mathematica Concreta ad Abstractam • Curriculum Sancti Iosephi',
+    bonds10: '🎯 Vincula ad 10',
+    bonds20: '🚀 Vincula ad 20',
+    freeAdd: '➕ Capere et Addere',
+    doubles: '👯 Stagnum Duplorum',
+    welcome10: 'Bene veneritis ad stagnum mathematicum! Inveniamus vincula numerorum ad decem.',
+    welcome20: 'Meta viginti! Inveni pares qui viginti faciunt.',
+    welcomeFree: 'Cape duos pisces et computa summam!',
+    welcomeDoubles: 'Stagnum duplorum! Cape pisces geminos ad duplicandum!',
+    firstCastPrompt: 'Iace linum in stagnum ad primum piscem capiendum!',
+    castInstruction: 'Iace linum manu vel spatio ad pisces capiendos!',
+  },
+};
+
 export const MathFishingGame: React.FC<MathFishingGameProps> = ({
   playerRef,
   onCloseGameMode,
 }) => {
+  // Operational Language & Universal Translator Synchronization
+  const [currentLang, setCurrentLang] = useState<string>(() => {
+    try {
+      return getSavedLanguage() || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  useEffect(() => {
+    const unsub = listenToLanguageChange((newLang) => {
+      setCurrentLang(newLang);
+    });
+    return unsub;
+  }, []);
+
   // Game Configuration & Mode
   const [mode, setMode] = useState<GameMode>('bonds-10');
   const [showTenFrames, setShowTenFrames] = useState<boolean>(true);
@@ -85,20 +180,21 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
   const pondRef = useRef<SVGSVGElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  // Speech Helper
-  const speakText = useCallback((text: string) => {
+  // Speech Helper with Multilingual Voice Selection
+  const speakText = useCallback((text: string, langOverride?: string) => {
     if (!speechEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
-      utterance.pitch = 1.1;
-      utterance.lang = 'en-GB';
+      utterance.pitch = 1.05;
+      const targetLang = langOverride || currentLang;
+      utterance.lang = SUPPORTED_LANGUAGES[targetLang]?.ttsVoiceLang || 'en-GB';
       window.speechSynthesis.speak(utterance);
     } catch {
       // Ignore audio synthesis errors
     }
-  }, [speechEnabled]);
+  }, [speechEnabled, currentLang]);
 
   // Web Audio Synthesizer
   const playSfx = useCallback((type: 'cast' | 'plop' | 'nibble' | 'reel' | 'success' | 'splash' | 'wrong') => {
@@ -231,23 +327,26 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
     setCastState('idle');
   }, [mode]);
 
+  const i18n = MATH_POND_I18N[currentLang] || MATH_POND_I18N.en;
+
   // Initial populate & mode change
   useEffect(() => {
     populatePond();
+    const curI18n = MATH_POND_I18N[currentLang] || MATH_POND_I18N.en;
     if (mode === 'bonds-10') {
-      setFeedbackMsg('🎯 Target: 10! Hook any fish, then find the matching partner that adds up to 10!');
-      speakText('Welcome to Math Pond! Let us find number bonds to 10.');
+      setFeedbackMsg(curI18n.welcome10);
+      speakText(curI18n.welcome10);
     } else if (mode === 'bonds-20') {
-      setFeedbackMsg('🎯 Target: 20! Catch fish that add together to reach exactly 20!');
-      speakText('Target 20! Hunt for pairs that make 20.');
+      setFeedbackMsg(curI18n.welcome20);
+      speakText(curI18n.welcome20);
     } else if (mode === 'free-add') {
-      setFeedbackMsg('🎣 Free Fishing! Catch any 2 fish to add their numbers together!');
-      speakText('Catch any two fish and find their sum!');
+      setFeedbackMsg(curI18n.welcomeFree);
+      speakText(curI18n.welcomeFree);
     } else if (mode === 'doubles') {
-      setFeedbackMsg('👯 Doubles Pond! Catch a fish, then hunt for its identical twin to double it!');
-      speakText('Doubles Pond! Catch a twin fish to double the score.');
+      setFeedbackMsg(curI18n.welcomeDoubles);
+      speakText(curI18n.welcomeDoubles);
     }
-  }, [mode, populatePond, speakText]);
+  }, [mode, populatePond, speakText, currentLang]);
 
   // Main 60 FPS Fish Boid Animation & Collision Loop
   useEffect(() => {
@@ -391,44 +490,82 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
 
   // Evaluate arithmetic depending on the mode
   const evaluateCaughtFish = (bucket: number[], lastVal: number) => {
+    const lang = (currentLang || 'en').toLowerCase();
+
     if (mode === 'bonds-10') {
       const currentSum = bucket.reduce((a, b) => a + b, 0);
 
       if (bucket.length === 1) {
         const needed = 10 - bucket[0];
-        setFeedbackMsg(`🐠 Caught ${bucket[0]}! To make 10, what do we need? Find and catch a ${needed}!`);
+        let msg = `🐠 Caught ${bucket[0]}! To make 10, what do we need? Find and catch a ${needed}!`;
+        let spoken = `You have ${bucket[0]}. You need ${needed} to make 10!`;
+        if (lang.startsWith('es')) {
+          msg = `🐠 ¡Pescaste ${bucket[0]}! Para formar 10, ¿cuánto falta? ¡Busca y pesca un ${needed}!`;
+          spoken = `Tienes ${bucket[0]}. ¡Necesitas ${needed} para formar 10!`;
+        } else if (lang.startsWith('fr')) {
+          msg = `🐠 Pêché ${bucket[0]} ! Pour faire 10, que nous manque-t-il ? Trouvez et pêchez un ${needed} !`;
+          spoken = `Vous avez ${bucket[0]}. Il vous faut ${needed} pour faire 10 !`;
+        } else if (lang.startsWith('la')) {
+          msg = `🐠 Piscis ${bucket[0]} captus! Ad decem conficiendum, requiritur ${needed}!`;
+          spoken = `Habes ${bucket[0]}. Requiris ${needed} ad decem!`;
+        }
+        setFeedbackMsg(msg);
         setFeedbackType('info');
-        speakText(`You have ${bucket[0]}. You need ${needed} to make 10!`);
+        speakText(spoken);
       } else if (currentSum === 10) {
         // SUCCESS! Perfect number bond!
         playSfx('success');
         const eqStr = bucket.join(' + ') + ' = 10!';
-        setFeedbackMsg(`🌟 SPLENDID! ${eqStr} Perfect Number Bond to 10!`);
+        let msg = `🌟 SPLENDID! ${eqStr} Perfect Number Bond to 10!`;
+        let spoken = `Splendid! ${bucket.join(' plus ')} equals 10! That is a number bond!`;
+        if (lang.startsWith('es')) {
+          msg = `🌟 ¡EXCELENTE! ${eqStr} ¡Vínculo numérico a 10 perfecto!`;
+          spoken = `¡Excelente! ¡${bucket.join(' más ')} es igual a 10!`;
+        } else if (lang.startsWith('fr')) {
+          msg = `🌟 SPLENDIDE ! ${eqStr} Liaison numérique parfaite à 10 !`;
+          spoken = `Splendide ! ${bucket.join(' plus ')} égale 10 !`;
+        } else if (lang.startsWith('la')) {
+          msg = `🌟 OPTIME! ${eqStr} Perfectum vinculum ad decem!`;
+          spoken = `Optime! ${bucket.join(' et ')} decem faciunt!`;
+        }
+        setFeedbackMsg(msg);
         setFeedbackType('cheer');
         setScore((s) => s + 100 + streak * 20);
         setStreak((st) => st + 1);
         setStars((star) => star + 1);
         setRoundsCompleted((r) => r + 1);
-        speakText(`Splendid! ${bucket.join(' plus ')} equals 10! That is a number bond!`);
+        speakText(spoken);
 
         // Reset bucket after celebratory pause
         setTimeout(() => {
           setCaughtFish([]);
-          setFeedbackMsg('🎯 Cast again to start a new number bond to 10!');
+          setFeedbackMsg(lang.startsWith('es') ? '🎯 ¡Lanza de nuevo para otro vínculo a 10!' : (lang.startsWith('fr') ? '🎯 Relancez pour une nouvelle liaison à 10 !' : (lang.startsWith('la') ? '🎯 Iterum iace ad novum vinculum!' : '🎯 Cast again to start a new number bond to 10!')));
           setFeedbackType('info');
         }, 2200);
       } else if (currentSum > 10) {
         // Overshoot
         playSfx('wrong');
         const eqStr = bucket.join(' + ') + ` = ${currentSum}`;
-        setFeedbackMsg(`💦 Oops! ${eqStr} is greater than 10. Let's toss that one back and try again!`);
+        let msg = `💦 Oops! ${eqStr} is greater than 10. Let's toss that one back and try again!`;
+        let spoken = `Oops! ${currentSum} is bigger than 10. Let us try again!`;
+        if (lang.startsWith('es')) {
+          msg = `💦 ¡Ups! ${eqStr} es mayor que 10. ¡Devuélvelo y prueba de nuevo!`;
+          spoken = `¡Ups! ${currentSum} es mayor que 10. ¡Probemos de nuevo!`;
+        } else if (lang.startsWith('fr')) {
+          msg = `💦 Oups ! ${eqStr} dépasse 10. Relâchons-le et réessayons !`;
+          spoken = `Oups ! ${currentSum} dépasse 10. Réessayons !`;
+        } else if (lang.startsWith('la')) {
+          msg = `💦 Eheu! ${eqStr} maius est quam 10. Iterum conemur!`;
+          spoken = `Eheu! ${currentSum} maius est quam decem. Iterum conemur!`;
+        }
+        setFeedbackMsg(msg);
         setFeedbackType('warning');
-        speakText(`Oops! ${currentSum} is bigger than 10. Let us try again!`);
+        speakText(spoken);
         setStreak(0);
 
         setTimeout(() => {
           setCaughtFish([]);
-          setFeedbackMsg('🎯 Cast for your first number!');
+          setFeedbackMsg(lang.startsWith('es') ? '🎯 ¡Lanza para tu primer número!' : (lang.startsWith('fr') ? '🎯 Lancez pour votre premier nombre !' : '🎯 Cast for your first number!'));
           setFeedbackType('info');
         }, 2200);
       } else {
@@ -436,7 +573,7 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
         const needed = 10 - currentSum;
         setFeedbackMsg(`Current sum: ${bucket.join(' + ')} = ${currentSum}. Still need ${needed} to reach 10!`);
         setFeedbackType('info');
-        speakText(`Total is ${currentSum}. Catch a ${needed} to reach 10!`);
+        speakText(lang.startsWith('es') ? `Total: ${currentSum}. ¡Pesca un ${needed} para llegar a 10!` : (lang.startsWith('fr') ? `Total : ${currentSum}. Pêchez un ${needed} pour atteindre 10 !` : `Total is ${currentSum}. Catch a ${needed} to reach 10!`));
       }
     } else if (mode === 'bonds-20') {
       const currentSum = bucket.reduce((a, b) => a + b, 0);
@@ -627,10 +764,10 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
           <span style={{ fontSize: '24px' }}>🎣</span>
           <div>
             <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#38bdf8' }}>
-              Lumina Math Pond: Number Bonds Fishing Game
+              {i18n.title}
             </h2>
             <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-              Concrete-to-Abstract Math Discovery • UK National Curriculum KS1/KS2
+              {i18n.subtitle}
             </div>
           </div>
         </div>
@@ -652,7 +789,7 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
               boxShadow: mode === 'bonds-10' ? '0 0 12px rgba(2,132,199,0.5)' : 'none',
             }}
           >
-            🎯 Bonds to 10
+            {i18n.bonds10}
           </button>
           <button
             type="button"
@@ -669,7 +806,7 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
               boxShadow: mode === 'bonds-20' ? '0 0 12px rgba(2,132,199,0.5)' : 'none',
             }}
           >
-            🚀 Bonds to 20
+            {i18n.bonds20}
           </button>
           <button
             type="button"
@@ -686,7 +823,7 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
               boxShadow: mode === 'free-add' ? '0 0 12px rgba(2,132,199,0.5)' : 'none',
             }}
           >
-            ➕ Catch &amp; Add
+            {i18n.freeAdd}
           </button>
           <button
             type="button"
@@ -703,7 +840,7 @@ export const MathFishingGame: React.FC<MathFishingGameProps> = ({
               boxShadow: mode === 'doubles' ? '0 0 12px rgba(2,132,199,0.5)' : 'none',
             }}
           >
-            👯 Doubles Pond
+            {i18n.doubles}
           </button>
         </div>
 

@@ -196,6 +196,20 @@
       if (tri) tri.setAttribute('data-pedagogical', 'pyth-triangle');
       const ra = this.stageSvg.querySelector('#pyth-right-angle');
       if (ra) ra.setAttribute('data-pedagogical', 'pyth-right-angle');
+
+      // 6. Math Fishing Pond Hook & Bobber Manipulation
+      const bobber = this.stageSvg.querySelector('#fishing-bobber');
+      const hook = this.stageSvg.querySelector('#fishing-hook');
+      if (bobber) {
+        bobber.style.cursor = 'grab';
+        bobber.setAttribute('data-draggable', 'fishing-hook');
+        bobber.setAttribute('data-pedagogical', 'math-bobber');
+      }
+      if (hook) {
+        hook.style.cursor = 'grab';
+        hook.setAttribute('data-draggable', 'fishing-hook');
+        hook.setAttribute('data-pedagogical', 'math-hook');
+      }
     }
 
     /**
@@ -217,7 +231,7 @@
       }
 
       // B. Check for interactive direct-grab targets or action buttons
-      const target = e.target.closest('[data-draggable], [data-interactive], [data-action], #kg-piston, #piston-assembly, #cc-tangent-assembly, #tangent-assembly, #tangent-probe, #pyth-handle-a, #pyth-handle-b');
+      const target = e.target.closest('[data-draggable], [data-interactive], [data-action], #kg-piston, #piston-assembly, #cc-tangent-assembly, #tangent-assembly, #tangent-probe, #pyth-handle-a, #pyth-handle-b, #fishing-hook, #fishing-bobber, #fishing-bobber-rig');
 
       if (target) {
         // Direct Action Buttons (e.g. Pythagoras steppers, presets, toggles)
@@ -265,6 +279,11 @@
           this.dragMode = 'tangent-probe';
           target.style.cursor = 'grabbing';
           this.playAudioTone(440, 'sine', 0.08);
+        } else if (target.id === 'fishing-hook' || target.id === 'fishing-bobber' || target.id === 'fishing-bobber-rig' || target.getAttribute('data-draggable') === 'fishing-hook' || target.closest('#fishing-rod-group')) {
+          this.dragMode = 'fishing-hook';
+          target.style.cursor = 'grabbing';
+          if (this.engine && this.engine._cachedElements) this.engine._cachedElements.isUserControlled = true;
+          this.playAudioTone(320, 'sine', 0.08, 0.18);
         } else if (target.getAttribute('data-interactive') === 'switch') {
           this.toggleSwitch(target);
           return;
@@ -309,6 +328,8 @@
           this.handlePythagorasDragA(svgPt.y);
         } else if (this.dragMode === 'pyth-handle-b') {
           this.handlePythagorasDragB(svgPt.x);
+        } else if (this.dragMode === 'fishing-hook') {
+          this.handleFishingHookDrag(svgPt);
         }
       } else if (this.isXRayActive) {
         const pedNode = e.target.closest('[data-pedagogical]');
@@ -349,6 +370,9 @@
         } else if (this.dragMode === 'pyth-handle-b') {
           this.dragTarget.style.cursor = 'ew-resize';
           this.playAudioTone(659.25, 'triangle', 0.08);
+        } else if (this.dragMode === 'fishing-hook') {
+          if (this.dragTarget) this.dragTarget.style.cursor = 'grab';
+          this.finishFishingHookDrag();
         }
 
         this.isDragging = false;
@@ -619,6 +643,159 @@
 
       if (t >= 0.98) {
         this.playAudioTone(880, 'triangle', 0.2, 0.2);
+      }
+    }
+
+    /**
+     * Direct Manipulation of Math Fishing Hook & Bobber
+     * Provides real-time pointer capture, rod flexion, fish collision & bond resolution
+     */
+    handleFishingHookDrag(svgPt) {
+      const el = this.engine && this.engine._cachedElements;
+      if (!this.stageSvg) return;
+
+      if (el) el.isUserControlled = true;
+
+      const clampedX = Math.max(80, Math.min(740, svgPt.x));
+      const clampedY = Math.max(120, Math.min(440, svgPt.y));
+
+      const hook = this.stageSvg.querySelector('#fishing-hook');
+      const bobber = this.stageSvg.querySelector('#fishing-bobber');
+      const bobberRig = this.stageSvg.querySelector('#fishing-bobber-rig');
+      const line = this.stageSvg.querySelector('#fishing-line');
+      const eqText = this.stageSvg.querySelector('#math-hud-equation');
+      const rod = this.stageSvg.querySelector('#fishing-rod');
+
+      // 1. Dynamic rod bending towards pointer
+      if (rod) {
+        const rodTipX = 80 + (clampedX - 80) * 0.35;
+        const rodTipY = 30 + Math.min(45, (clampedY - 120) * 0.15);
+        rod.setAttribute('x2', rodTipX.toFixed(1));
+        rod.setAttribute('y2', rodTipY.toFixed(1));
+
+        if (line) {
+          line.setAttribute('x1', rodTipX.toFixed(1));
+          line.setAttribute('y1', rodTipY.toFixed(1));
+        }
+      }
+
+      // 2. Position hook & line
+      if (hook) {
+        hook.setAttribute('transform', `translate(${clampedX.toFixed(1)}, ${clampedY.toFixed(1)})`);
+      }
+      if (line) {
+        line.setAttribute('x2', clampedX.toFixed(1));
+        line.setAttribute('y2', clampedY.toFixed(1));
+      }
+
+      // 3. Bobber floats at waterline unless submerged by drag
+      const bobberY = Math.min(160, Math.max(130, clampedY));
+      if (bobber) {
+        bobber.setAttribute('cx', clampedX.toFixed(1));
+        bobber.setAttribute('cy', bobberY.toFixed(1));
+      }
+      if (bobberRig) {
+        bobberRig.setAttribute('transform', `translate(${(clampedX - 320).toFixed(1)}, ${(bobberY - 140).toFixed(1)})`);
+      }
+
+      // 4. Fish collision detection in the pond
+      if (el && el.fishEls && el.fishEls.length) {
+        if (!this._hookedFish) {
+          for (let i = 0; i < el.fishEls.length; i++) {
+            const fish = el.fishEls[i];
+            if (fish.caught) continue;
+            // Get current fish coordinate
+            let fx = fish.curX !== undefined ? fish.curX : fish.x;
+            let fy = fish.curY !== undefined ? fish.curY : fish.y;
+            const dist = Math.hypot(clampedX - fx, clampedY - fy);
+            if (dist < 34) {
+              // NIBBLE & HOOK!
+              this._hookedFish = fish;
+              fish.isHooked = true;
+              this.playAudioTone(540, 'sine', 0.08, 0.2);
+              setTimeout(() => this.playAudioTone(680, 'sine', 0.08, 0.25), 60);
+
+              if (eqText) {
+                const lang = (window.AST_ENGINE_ACTIVE_LANG || window.STJ_CURRENT_LANG || 'en').toLowerCase();
+                if (lang.startsWith('es')) eqText.textContent = `¡Enganchaste un ${fish.val}! ¡Llévalo arriba!`;
+                else if (lang.startsWith('fr')) eqText.textContent = `Accroché ${fish.val} ! Remontez-le !`;
+                else if (lang.startsWith('la')) eqText.textContent = `Piscis ${fish.val} captus! Attolle!`;
+                else eqText.textContent = `Hooked ${fish.val}! Pull above surface!`;
+              }
+              break;
+            }
+          }
+        } else {
+          // Move hooked fish with the hook
+          if (this._hookedFish.el) {
+            this._hookedFish.el.setAttribute('transform', `translate(${clampedX.toFixed(1)}, ${(clampedY + 12).toFixed(1)})`);
+          }
+        }
+      }
+    }
+
+    finishFishingHookDrag() {
+      if (!this._hookedFish) return;
+
+      const hook = this.stageSvg.querySelector('#fishing-hook');
+      const eqText = this.stageSvg.querySelector('#math-hud-equation');
+      const el = this.engine && this.engine._cachedElements;
+      const lang = (window.AST_ENGINE_ACTIVE_LANG || window.STJ_CURRENT_LANG || 'en').toLowerCase();
+
+      // Check if dragged above surface (y < 200)
+      const ctm = hook ? hook.getAttribute('transform') : null;
+      let hookY = 240;
+      if (ctm) {
+        const match = ctm.match(/translate\(\s*[\d.-]+,\s*([\d.-]+)\)/);
+        if (match) hookY = parseFloat(match[1]);
+      }
+
+      if (hookY < 200) {
+        // Reeled In!
+        const caughtFish = this._hookedFish;
+        this._hookedFish = null;
+        if (!el.caughtList) el.caughtList = [];
+        el.caughtList.push(caughtFish.val);
+        caughtFish.caught = true;
+
+        if (el.caughtList.length === 1) {
+          const needed = 10 - caughtFish.val;
+          this.playAudioTone(440, 'triangle', 0.12, 0.2);
+          if (eqText) {
+            if (lang.startsWith('es')) eqText.textContent = `Pescado: ${caughtFish.val}. ¡Busca un ${needed} para hacer 10!`;
+            else if (lang.startsWith('fr')) eqText.textContent = `Pêché : ${caughtFish.val}. Trouvez un ${needed} pour faire 10 !`;
+            else if (lang.startsWith('la')) eqText.textContent = `Captus: ${caughtFish.val}. Requiris ${needed} ad decem!`;
+            else eqText.textContent = `Caught ${caughtFish.val}! Need ${needed} to make 10!`;
+          }
+        } else {
+          const sum = el.caughtList.reduce((a, b) => a + b, 0);
+          if (sum === 10) {
+            // Perfect Bond! Ascending Pentatonic Fanfare (C5 - E5 - G5 - C6)
+            this.playAudioTone(523.25, 'triangle', 0.15, 0.25);
+            setTimeout(() => this.playAudioTone(659.25, 'triangle', 0.15, 0.25), 140);
+            setTimeout(() => this.playAudioTone(783.99, 'triangle', 0.15, 0.25), 280);
+            setTimeout(() => this.playAudioTone(1046.50, 'sine', 0.40, 0.35), 420);
+
+            if (eqText) {
+              eqText.textContent = `🌟 ${el.caughtList.join(' + ')} = 10 (Bond Mastered!)`;
+            }
+            el.caughtList = [];
+          } else {
+            // Misconception / overshoot
+            this.playAudioTone(180, 'sawtooth', 0.2, 0.2);
+            if (eqText) {
+              if (lang.startsWith('es')) eqText.textContent = `Total: ${sum} (≠ 10). ¡Intentémoslo de nuevo!`;
+              else if (lang.startsWith('fr')) eqText.textContent = `Total : ${sum} (≠ 10). Réessayons !`;
+              else if (lang.startsWith('la')) eqText.textContent = `Summa: ${sum}. Iterum conemur!`;
+              else eqText.textContent = `Sum ${sum} != 10. Let's try again!`;
+            }
+            el.caughtList = [];
+          }
+        }
+      } else {
+        // Released back into water
+        this._hookedFish.isHooked = false;
+        this._hookedFish = null;
       }
     }
 
