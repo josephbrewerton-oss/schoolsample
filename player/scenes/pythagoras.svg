@@ -98,8 +98,20 @@
   <text x="420" y="302" fill="#60a5fa" font-size="14" font-weight="700" text-anchor="middle">b = 4</text>
   <text x="435" y="225" fill="#fbbf24" font-size="15" font-weight="800">c = 5</text>
 
-  <!-- Triangle Vertices -->
+  <!-- Triangle Vertices & Draggable Handles -->
   <circle cx="360" cy="280" r="4.5" fill="#38bdf8" />
-  <circle cx="480" cy="280" r="4.5" fill="#38bdf8" />
-  <circle cx="360" cy="190" r="4.5" fill="#38bdf8" />
+  <g id="pyth-handle-a" data-draggable="pyth-handle-a" data-pedagogical="pyth-handle-a" transform="translate(360, 190)" style="cursor:ns-resize;">
+    <circle r="34" fill="transparent" pointer-events="all" />
+    <circle r="16" fill="#10b981" fill-opacity="0.3" pointer-events="none" />
+    <circle r="10" fill="#10b981" stroke="#ffffff" stroke-width="2.5" pointer-events="none" />
+    <circle r="4" fill="#ffffff" pointer-events="none" />
+    <text x="22" y="5" fill="#34d399" font-size="11" font-weight="900" pointer-events="none">DRAG (a) ↕</text>
+  </g>
+  <g id="pyth-handle-b" data-draggable="pyth-handle-b" data-pedagogical="pyth-handle-b" transform="translate(480, 280)" style="cursor:ew-resize;">
+    <circle r="34" fill="transparent" pointer-events="all" />
+    <circle r="16" fill="#3b82f6" fill-opacity="0.3" pointer-events="none" />
+    <circle r="10" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5" pointer-events="none" />
+    <circle r="4" fill="#ffffff" pointer-events="none" />
+    <text x="0" y="26" fill="#60a5fa" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">DRAG (b) ↔</text>
+  </g>
 </svg>

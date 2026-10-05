@@ -14,7 +14,8 @@
     (:name "areaC" :expr "vars.sideA * vars.sideA + vars.sideB * vars.sideB")
   ))
   (:gestures (
-    (:draggable :target "#pyth-rect-a" :axis "x" :min 200 :max 380)
+    (:draggable :target "#pyth-handle-a" :axis "y" :min 110 :max 230)
+    (:draggable :target "#pyth-handle-b" :axis "x" :min 330 :max 490)
   ))
   (:subtitles (
     (:start 0.00 :end 0.35 :en "In any right-angled triangle, squares formed on the legs equal the square on the hypotenuse." :es "En un triángulo rectángulo, los cuadrados sobre los catetos equivalen al cuadrado de la hipotenusa.")

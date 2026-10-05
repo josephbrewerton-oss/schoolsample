@@ -2,7 +2,7 @@
 # GGML BNF Grammar for Constraining Local LLMs to Token-Efficient S-Expression ASTs with 3D Node Subsystem
 # Produces valid Lisp-like (scene ...) structures parsed directly by AST Vector Player.
 
-root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? ("(:static" ws "(" ws (staticItem ws)* ")" ws ")")? ws ("(:actors" ws "(" ws (actorItem ws)* ")" ws ")")? ws ("(:vars" ws "(" ws (variable ws)* ")" ws ")")? ws ("(:inputs" ws "(" ws (input ws)* ")" ws ")")? ws ("(:computed" ws "(" ws (computed ws)* ")" ws ")")? ws "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ("(:interactive" ws "(" ws (checkpoint ws)* ")" ws ")")? ws ("(:gestures" ws "(" ws (gesture ws)* ")" ws ")")? ws ")"
+root ::= "(scene" ws ":id" ws string ws ":stage" ws string ws ":duration" ws number ws "(:title" ws string ")" ws (camera ws)? ("(:easing" ws easing ")" ws)? ("(:static" ws "(" ws (staticItem ws)* ")" ws ")")? ws ("(:actors" ws "(" ws (actorItem ws)* ")" ws ")")? ws ("(:vars" ws "(" ws (variable ws)* ")" ws ")")? ws ("(:inputs" ws "(" ws (input ws)* ")" ws ")")? ws ("(:computed" ws "(" ws (computed ws)* ")" ws ")")? ws ("(:state-machines" ws "(" ws (stateMachine ws)* ")" ws ")")? ws ("(:emitters" ws "(" ws (emitter ws)* ")" ws ")")? ws ("(:bind-inputs" ws "(" ws (bindInput ws)* ")" ws ")")? ws "(:keyframes" ws "(" ws (keyframe ws)* ")" ws ")" ws ("(:subtitles" ws "(" ws (subtitle ws)* ")" ws ")")? ws ("(:bindings" ws "(" ws (binding ws)* ")" ws ")")? ws ("(:interactive" ws "(" ws (checkpoint ws)* ")" ws ")")? ws ("(:gestures" ws "(" ws (gesture ws)* ")" ws ")")? ws ")"
 
 staticItem ::= "(:element" ws ":target" ws string (ws ":layer" ws string)? (ws ":cache" ws boolean)? ")"
 
@@ -14,7 +14,21 @@ variable ::= "(:var" ws ":name" ws string ws ":val" ws (number | string | boolea
 
 input ::= "(:" ("slider" | "switch" | "button" | "number") ws ":var" ws string ws ":label" ws string (ws ":min" ws number)? (ws ":max" ws number)? (ws ":step" ws number)? ")"
 
+bindInput ::= "(:bind-input" ws ":target" ws string ws ":var" ws string ws ":min" ws number ws ":max" ws number (ws ":axis" ws ("\"x\"" | "\"y\"" | "\"rotary\""))? (ws ":track-min" ws number)? (ws ":track-max" ws number)? ")"
+
 computed ::= "(:name" ws string ws ":expr" ws string ")"
+
+stateMachine ::= "(:state-machine" ws ":id" ws string ws ":initial" ws string (ws ":dwell" ws number)? ws "(:states" ws "(" ws (stateDef ws)+ ")" ws ")" ws "(:transitions" ws "(" ws (transitionDef ws)* ")" ws ")" ws ")"
+
+stateDef ::= "(:state" ws ":name" ws string ws (stateAttr | emitterSet)* ")"
+
+stateAttr ::= "(:attr" ws ":target" ws string ws ":attr" ws string ws ":val" ws (number | string) ")"
+
+emitterSet ::= "(:emitter-set" ws ":target" ws string (ws ":speed" ws number)? (ws ":count" ws integer)? (ws ":gravity" ws number)? (ws ":fill" ws string)? (ws ":bounds-element" ws string)? ")"
+
+transitionDef ::= "(:transition" ws ":from" ws string ws ":to" ws string ws ":trigger" ws string (ws ":duration" ws number)? (ws ":dwell" ws number)? (ws ":easing" ws easing)? ")"
+
+emitter ::= "(:emitter" ws ":id" ws string (ws ":count" ws integer)? (ws ":speed" ws number)? (ws ":radius" ws number)? (ws ":fill" ws string)? (ws ":gravity" ws number)? (ws ":wrap" ws ("\"bounce\"" | "\"wrap\""))? (ws ":bounds" ws number ws number ws number ws number)? (ws ":bounds-element" ws string)? ")"
 
 keyframe ::= "(:t" ws fraction ws ":title" ws string ws ":rule" ws string ")"
 

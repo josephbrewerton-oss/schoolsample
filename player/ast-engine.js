@@ -226,6 +226,447 @@
   }
 
   /**
+   * ASTStateMachine (< 1.8 KB Zero-Bloat Declarative State Transitions)
+   * Manages discrete physical & pedagogical state transitions (e.g. solid/liquid/gas,
+   * open/closed circuit, charged/discharged capacitor, equilibrium/stretched spring)
+   * with declarative guards, duration easing, and smooth attribute interpolation.
+   *
+   * Includes State Machine Hysteresis & Refractory Dwell Lock to completely eliminate
+   * guard thrashing / high-frequency flip-flopping at boundary conditions.
+   */
+  class ASTStateMachine {
+    constructor(engine, config = {}) {
+      this.engine = engine;
+      this.id = config.id || 'sm_default';
+      this.states = new Map();
+      this.transitions = [];
+      this.currentState = config.initial || null;
+      this.targetState = null;
+      this.activeTransition = null;
+
+      // Hysteresis & Refractory Dwell Lock (Anti-Thrashing)
+      // dwellTime: Minimum seconds the machine MUST settle in a newly entered state
+      // before re-evaluating any reverse or forward transition triggers.
+      this.dwellTime = Math.max(0.05, Number(config.dwellTime || config.cooldown) || 0.25);
+      this.refractoryTimer = 0;
+      this.hysteresis = Math.max(0, Number(config.hysteresis) || 0);
+    }
+
+    addState(name, configOrAttrs = {}) {
+      let attrs = {};
+      let emitterSets = [];
+      if (configOrAttrs.attrs || configOrAttrs.emitterSets) {
+        attrs = configOrAttrs.attrs || {};
+        emitterSets = configOrAttrs.emitterSets || [];
+      } else {
+        attrs = configOrAttrs;
+      }
+      this.states.set(name, { attrs, emitterSets });
+      if (!this.currentState) {
+        this.currentState = name;
+        this.applyEmitterSets(emitterSets);
+      }
+    }
+
+    applyEmitterSets(emitterSets) {
+      if (!Array.isArray(emitterSets)) return;
+      for (const es of emitterSets) {
+        const id = String(es.target || '').replace(/^#/, '');
+        const em = this.engine && this.engine.getEmitter(id);
+        if (em) em.mutate(es);
+      }
+    }
+
+    addTransition(config = {}) {
+      this.transitions.push({
+        from: config.from || '*',
+        to: config.to,
+        trigger: config.trigger || null,
+        duration: Math.max(0.001, Number(config.duration) || 0.4),
+        dwellTime: config.dwellTime !== undefined ? Number(config.dwellTime) : this.dwellTime,
+        hysteresis: Number(config.hysteresis || 0),
+        easing: config.easing || 'easeInOut',
+        onEnter: config.onEnter || null
+      });
+    }
+
+    transitionTo(toState, duration = null, overrideLock = false) {
+      if (!this.states.has(toState) || this.currentState === toState) return false;
+
+      // Guard Thrashing Prevention: Do not interrupt active transition or break refractory dwell lock
+      if (!overrideLock && (this.activeTransition !== null || this.refractoryTimer > 0)) {
+        return false;
+      }
+
+      const transConfig = this.transitions.find(t => (t.from === '*' || t.from === this.currentState) && t.to === toState) || {};
+      const dur = duration !== null ? duration : (transConfig.duration || 0.4);
+      const dwell = transConfig.dwellTime !== undefined ? transConfig.dwellTime : this.dwellTime;
+      
+      const fromStateDef = this.states.get(this.currentState) || {};
+      const toStateDef = this.states.get(toState) || {};
+      const fromAttrs = fromStateDef.attrs || {};
+      const toAttrs = toStateDef.attrs || {};
+
+      this.activeTransition = {
+        from: this.currentState,
+        to: toState,
+        duration: dur,
+        dwellTime: dwell,
+        elapsed: 0,
+        fromAttrs,
+        toAttrs,
+        easing: transConfig.easing || 'easeInOut'
+      };
+      this.targetState = toState;
+      return true;
+    }
+
+    update(dt, reactiveVars = {}) {
+      // 1. Decrement refractory dwell timer if in settling period
+      if (this.refractoryTimer > 0) {
+        this.refractoryTimer = Math.max(0, this.refractoryTimer - dt);
+      }
+
+      // 2. Evaluate triggers ONLY if not currently transitioning AND refractory dwell timer is expired
+      if (!this.activeTransition && this.refractoryTimer <= 0) {
+        for (const t of this.transitions) {
+          if ((t.from === '*' || t.from === this.currentState) && t.trigger && t.to !== this.currentState) {
+            try {
+              const keys = Object.keys(reactiveVars);
+              const vals = Object.values(reactiveVars);
+              const testFn = new Function(...keys, `"use strict"; return (${t.trigger});`);
+              if (testFn(...vals)) {
+                this.transitionTo(t.to, t.duration);
+                break;
+              }
+            } catch {}
+          }
+        }
+      }
+
+      // 3. Process active transition
+      if (this.activeTransition) {
+        const tr = this.activeTransition;
+        tr.elapsed += dt;
+        const progress = Math.min(1.0, tr.elapsed / tr.duration);
+
+        let eased = progress;
+        if (tr.easing === 'easeInOut') {
+          eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        } else if (tr.easing === 'easeOut') {
+          eased = 1 - Math.pow(1 - progress, 3);
+        }
+
+        for (const [targetSelector, toProps] of Object.entries(tr.toAttrs)) {
+          const fromProps = (tr.fromAttrs && tr.fromAttrs[targetSelector]) || {};
+          const node = document.querySelector(targetSelector) || (this.engine.container && this.engine.container.querySelector(targetSelector));
+          if (!node) continue;
+
+          for (const [attrName, targetVal] of Object.entries(toProps)) {
+            const startVal = fromProps[attrName] !== undefined ? fromProps[attrName] : targetVal;
+            if (typeof targetVal === 'number' && typeof startVal === 'number') {
+              const currentVal = startVal + (targetVal - startVal) * eased;
+              if (attrName === 'textContent') {
+                node.textContent = currentVal.toFixed(1);
+              } else {
+                node.setAttribute(attrName, currentVal.toFixed(2));
+              }
+            } else if (progress >= 1.0) {
+              if (attrName === 'textContent') {
+                node.textContent = String(targetVal);
+              } else {
+                node.setAttribute(attrName, String(targetVal));
+              }
+            }
+          }
+        }
+
+        if (progress >= 1.0) {
+          this.currentState = tr.to;
+          // Lock machine in newly entered state for dwellTime to eliminate threshold flutter
+          this.refractoryTimer = tr.dwellTime !== undefined ? tr.dwellTime : this.dwellTime;
+          this.activeTransition = null;
+          this.targetState = null;
+
+          // Apply declarative :emitter-set updates for the newly reached state
+          const toStateDef = this.states.get(tr.to);
+          if (toStateDef && toStateDef.emitterSets) {
+            this.applyEmitterSets(toStateDef.emitterSets);
+          }
+
+          if (this.engine) {
+            this.engine.emit('statechange', { stateMachine: this.id, state: this.currentState });
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * VectorEmitterCollection (< 2.5 KB Zero-Allocation Multi-Entity Particle Pool)
+   * High-performance reusable vector particles simulating thermal molecular chaos,
+   * electron charges, rain condensation, photon rays, and nuclear alpha decay at 60 FPS.
+   *
+   * Includes ViewBox & Local CTM Inversion:
+   * Dynamically projects boundaries across SVG viewBox scaling, 3D camera transforms,
+   * and moving SVG assembly elements (e.g. pistons, tanks) using inverse CTM translation.
+   */
+  class VectorEmitterCollection {
+    constructor(engine, config = {}) {
+      this.engine = engine;
+      this.id = config.id || 'emitter_default';
+      this.count = Math.max(1, Math.min(600, Number(config.count) || 80));
+      this.pool = [];
+      this.group = null;
+      this.bounds = Object.assign({ minX: 40, maxX: 760, minY: 40, maxY: 440 }, config.bounds || {});
+      this.boundsElement = config.boundsElement || null;
+      this.gravity = Number(config.gravity) || 0;
+      this.speed = Number(config.speed) || 120;
+      this.shape = config.shape || 'circle';
+      this.radius = Number(config.radius) || 4;
+      this.fill = config.fill || '#38bdf8';
+      this.wrapMode = config.wrapMode || 'bounce';
+      this.initPool();
+    }
+
+    initPool() {
+      this.pool = [];
+      const bw = Math.max(20, this.bounds.maxX - this.bounds.minX);
+      const bh = Math.max(20, this.bounds.maxY - this.bounds.minY);
+      for (let i = 0; i < this.count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = this.speed * (0.6 + Math.random() * 0.8);
+        this.pool.push({
+          x: this.bounds.minX + Math.random() * bw,
+          y: this.bounds.minY + Math.random() * bh,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd,
+          radius: this.radius,
+          node: null
+        });
+      }
+    }
+
+    mount(container) {
+      if (!container) return;
+      let g = container.querySelector(`#emitter-${this.id}`);
+      if (!g) {
+        g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('id', `emitter-${this.id}`);
+        g.setAttribute('class', 'ast-emitter-pool');
+        container.appendChild(g);
+      }
+      this.group = g;
+      g.replaceChildren();
+
+      for (let i = 0; i < this.pool.length; i++) {
+        const p = this.pool[i];
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', p.x.toFixed(1));
+        circle.setAttribute('cy', p.y.toFixed(1));
+        circle.setAttribute('r', p.radius);
+        circle.setAttribute('fill', this.fill);
+        circle.setAttribute('opacity', '0.85');
+        g.appendChild(circle);
+        p.node = circle;
+      }
+    }
+
+    /**
+     * Transform a 2D point using an SVGMatrix
+     */
+    transformPoint(x, y, matrix) {
+      return {
+        x: x * matrix.a + y * matrix.c + matrix.e,
+        y: x * matrix.b + y * matrix.d + matrix.f
+      };
+    }
+
+    /**
+     * Resolves effective boundary box in the local coordinate space of the emitter group.
+     * Prevents invisible walls by dynamically inverting camera transforms, CSS scaling,
+     * or SVG viewBox aspect ratio preservation.
+     */
+    getEffectiveBounds() {
+      // A. Dynamic tracking of an explicit SVG bounding element (e.g. moving piston or chamber)
+      if (this.boundsElement && typeof document !== 'undefined') {
+        const el = typeof this.boundsElement === 'string'
+          ? (document.querySelector(this.boundsElement) || (this.engine && this.engine.container && this.engine.container.querySelector(this.boundsElement)))
+          : this.boundsElement;
+
+        if (el && typeof el.getBBox === 'function' && this.group && typeof this.group.getScreenCTM === 'function') {
+          try {
+            const bbox = el.getBBox();
+            const elCTM = el.getScreenCTM();
+            const grpCTM = this.group.getScreenCTM();
+            if (elCTM && grpCTM) {
+              const invGrp = grpCTM.inverse();
+              const xform = invGrp.multiply(elCTM);
+
+              const p0 = this.transformPoint(bbox.x, bbox.y, xform);
+              const p1 = this.transformPoint(bbox.x + bbox.width, bbox.y, xform);
+              const p2 = this.transformPoint(bbox.x, bbox.y + bbox.height, xform);
+              const p3 = this.transformPoint(bbox.x + bbox.width, bbox.y + bbox.height, xform);
+
+              return {
+                minX: Math.min(p0.x, p1.x, p2.x, p3.x),
+                maxX: Math.max(p0.x, p1.x, p2.x, p3.x),
+                minY: Math.min(p0.y, p1.y, p2.y, p3.y),
+                maxY: Math.max(p0.y, p1.y, p2.y, p3.y)
+              };
+            }
+          } catch (err) {}
+        }
+      }
+
+      // B. ViewBox-Derived Auto-bounds
+      if (this.bounds.autoViewBox && this.group && this.group.ownerSVGElement) {
+        const svg = this.group.ownerSVGElement;
+        if (svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width > 0) {
+          const vb = svg.viewBox.baseVal;
+          return {
+            minX: vb.x + this.radius,
+            maxX: vb.x + vb.width - this.radius,
+            minY: vb.y + this.radius,
+            maxY: vb.y + vb.height - this.radius
+          };
+        }
+      }
+
+      return this.bounds;
+    }
+
+    /**
+     * Set bounds with optional screen client pixel inversion
+     */
+    setBounds(minX, maxX, minY, maxY, isClientCoords = false) {
+      if (isClientCoords && this.group && typeof this.group.getScreenCTM === 'function') {
+        try {
+          const invCTM = this.group.getScreenCTM().inverse();
+          const pMin = this.transformPoint(minX, minY, invCTM);
+          const pMax = this.transformPoint(maxX, maxY, invCTM);
+          this.bounds.minX = Math.min(pMin.x, pMax.x);
+          this.bounds.maxX = Math.max(pMin.x, pMax.x);
+          this.bounds.minY = Math.min(pMin.y, pMax.y);
+          this.bounds.maxY = Math.max(pMin.y, pMax.y);
+          return;
+        } catch {}
+      }
+
+      if (minX !== undefined) this.bounds.minX = minX;
+      if (maxX !== undefined) this.bounds.maxX = maxX;
+      if (minY !== undefined) this.bounds.minY = minY;
+      if (maxY !== undefined) this.bounds.maxY = maxY;
+    }
+
+    update(dt) {
+      const bounds = this.getEffectiveBounds();
+      const minX = bounds.minX;
+      const maxX = bounds.maxX;
+      const minY = bounds.minY;
+      const maxY = bounds.maxY;
+
+      for (let i = 0; i < this.pool.length; i++) {
+        const p = this.pool[i];
+        p.vy += this.gravity * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        if (this.wrapMode === 'bounce') {
+          if (p.x < minX + p.radius) {
+            p.x = minX + p.radius;
+            p.vx = Math.abs(p.vx);
+          } else if (p.x > maxX - p.radius) {
+            p.x = maxX - p.radius;
+            p.vx = -Math.abs(p.vx);
+          }
+          if (p.y < minY + p.radius) {
+            p.y = minY + p.radius;
+            p.vy = Math.abs(p.vy);
+          } else if (p.y > maxY - p.radius) {
+            p.y = maxY - p.radius;
+            p.vy = -Math.abs(p.vy);
+          }
+        } else if (this.wrapMode === 'wrap') {
+          if (p.x < minX) p.x = maxX;
+          if (p.x > maxX) p.x = minX;
+          if (p.y < minY) p.y = maxY;
+          if (p.y > maxY) p.y = minY;
+        }
+
+        if (p.node) {
+          p.node.setAttribute('cx', p.x.toFixed(1));
+          p.node.setAttribute('cy', p.y.toFixed(1));
+        }
+      }
+    }
+
+    /**
+     * Mutates emitter physical properties dynamically (e.g. from state machine transitions)
+     */
+    mutate(props = {}) {
+      if (props.speed !== undefined) this.speed = Number(props.speed);
+      if (props.gravity !== undefined) this.gravity = Number(props.gravity);
+      if (props.boundsElement !== undefined) this.boundsElement = props.boundsElement;
+      if (props.wrapMode !== undefined) this.wrapMode = props.wrapMode;
+      if (props.fill !== undefined) {
+        this.fill = props.fill;
+        for (const p of this.pool) {
+          if (p.node) p.node.setAttribute('fill', this.fill);
+        }
+      }
+      if (props.radius !== undefined) {
+        this.radius = Number(props.radius);
+        for (const p of this.pool) {
+          p.radius = this.radius;
+          if (p.node) p.node.setAttribute('r', this.radius);
+        }
+      }
+      if (props.count !== undefined) {
+        this.setCount(Number(props.count));
+      }
+    }
+
+    setCount(targetCount) {
+      const tc = Math.max(1, Math.min(600, targetCount));
+      if (tc === this.pool.length) return;
+      this.count = tc;
+      if (tc < this.pool.length) {
+        const removed = this.pool.splice(tc);
+        for (const p of removed) {
+          if (p.node && p.node.parentNode) p.node.parentNode.removeChild(p.node);
+        }
+      } else {
+        const bw = Math.max(20, this.bounds.maxX - this.bounds.minX);
+        const bh = Math.max(20, this.bounds.maxY - this.bounds.minY);
+        for (let i = this.pool.length; i < tc; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const spd = this.speed * (0.6 + Math.random() * 0.8);
+          const p = {
+            x: this.bounds.minX + Math.random() * bw,
+            y: this.bounds.minY + Math.random() * bh,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd,
+            radius: this.radius,
+            node: null
+          };
+          this.pool.push(p);
+          if (this.group) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', p.x.toFixed(1));
+            circle.setAttribute('cy', p.y.toFixed(1));
+            circle.setAttribute('r', p.radius);
+            circle.setAttribute('fill', this.fill);
+            circle.setAttribute('opacity', '0.85');
+            this.group.appendChild(circle);
+            p.node = circle;
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * VectorProceduralAudioSynth (< 1.2 KB Zero-Asset Web Audio Synthesizer)
    * Generates realtime tactile clicks, harmonic pentatonic chimes, AC current hums,
    * spring impacts, and checkpoint alerts entirely via mathematical oscillators.
@@ -650,6 +1091,11 @@
       // Zero-Bloat Micro-Physics Subsystem (< 1.5 KB)
       this.physics = new VectorMicroPhysics(this, this.options.physics || {});
 
+      // Declarative State Transition Machines & Multi-Entity Emitter Collections
+      this.stateMachines = new Map();
+      this.emitters = new Map();
+      this.activeBindInputs = [];
+
       // Load initial scene
       this.scene = this.getScene(this.activePresetId);
       this.durationSec = this.scene.duration || 10.0;
@@ -775,6 +1221,39 @@
       this.emit('camerachange', { ...this.cameraOrbit });
     }
 
+    /**
+     * Declarative State Machine API
+     */
+    addStateMachine(config) {
+      const sm = new ASTStateMachine(this, config);
+      this.stateMachines.set(sm.id, sm);
+      return sm;
+    }
+
+    transitionTo(smId, stateName, duration = null) {
+      const sm = this.stateMachines.get(smId);
+      return sm ? sm.transitionTo(stateName, duration) : false;
+    }
+
+    getState(smId) {
+      const sm = this.stateMachines.get(smId);
+      return sm ? sm.currentState : null;
+    }
+
+    /**
+     * Multi-Entity Vector Emitter API
+     */
+    addEmitter(config) {
+      const em = new VectorEmitterCollection(this, config);
+      this.emitters.set(em.id, em);
+      if (this.container) em.mount(this.container);
+      return em;
+    }
+
+    getEmitter(id) {
+      return this.emitters.get(id);
+    }
+
     start() {
       if (!this.animationFrameId) {
         this.lastTimestamp = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -860,12 +1339,72 @@
     }
 
     /**
+     * Bidirectional Slider-to-Variable Binding (:bind-input)
+     */
+    registerBindInput(config = {}) {
+      if (!this.activeBindInputs) this.activeBindInputs = [];
+      const target = config.target;
+      const node = typeof target === 'string'
+        ? (this.container ? this.container.querySelector(target) : document.querySelector(target))
+        : target;
+
+      const minVal = Number(config.min !== undefined ? config.min : 0);
+      const maxVal = Number(config.max !== undefined ? config.max : 100);
+      const axis = config.axis || 'x';
+
+      const binding = {
+        target: config.target,
+        var: config.var || 'temp',
+        min: minVal,
+        max: maxVal,
+        axis: axis,
+        trackMin: config.trackMin !== undefined ? Number(config.trackMin) : (axis === 'y' ? 320 : 60),
+        trackMax: config.trackMax !== undefined ? Number(config.trackMax) : (axis === 'y' ? 80 : 440),
+        node: node
+      };
+
+      this.activeBindInputs = this.activeBindInputs.filter(b => b.target !== config.target);
+      this.activeBindInputs.push(binding);
+
+      if (node) {
+        node.setAttribute('data-draggable', 'true');
+        node.setAttribute('data-bind-input', binding.var);
+        node.style.cursor = 'grab';
+      }
+
+      const curVal = this.getVar(binding.var);
+      if (curVal !== undefined) {
+        this.syncBindInputs(binding.var, curVal);
+      }
+      return binding;
+    }
+
+    syncBindInputs(name, val) {
+      if (!this.activeBindInputs || this.activeBindInputs.length === 0) return;
+      for (const b of this.activeBindInputs) {
+        if (b.var === name && b.node) {
+          const ratio = Math.max(0, Math.min(1, (val - b.min) / (b.max - b.min)));
+          const pos = b.trackMin + ratio * (b.trackMax - b.trackMin);
+          if (b.axis === 'y') {
+            b.node.setAttribute('transform', `translate(0, ${pos.toFixed(1)})`);
+          } else if (b.axis === 'rotary') {
+            const angle = -135 + ratio * 270;
+            b.node.setAttribute('transform', `rotate(${angle.toFixed(1)} 0 0)`);
+          } else {
+            b.node.setAttribute('transform', `translate(${pos.toFixed(1)}, 0)`);
+          }
+        }
+      }
+    }
+
+    /**
      * Sets a reactive state variable and recalculates derived outputs at 60 FPS
      */
     setVar(name, val) {
       if (!this.vars) this.vars = {};
       this.vars[name] = val;
       this.updateComputedVars();
+      this.syncBindInputs(name, val);
       this.applyBindings(this.progress);
       this.emit('varchange', { name, value: val, vars: { ...this.vars } });
     }
@@ -1726,17 +2265,52 @@
               const loaded = this.loadSceneData(json, shouldPlay);
               this.emit('fileloaded', { filename, type: 'json', id: json.id });
               resolve(loaded);
-            } else if (ext === 'svg') {
-              const loaded = this.loadSceneData({
-                id,
-                title: filename,
-                stage: 'CUSTOM SVG',
-                duration: 10.0,
-                svgText: content,
-                keyframes: [],
-                subtitles: []
-              }, shouldPlay);
-              this.emit('fileloaded', { filename, type: 'svg', id });
+            } else if (ext === 'svg' || (ext !== 'ast' && content.includes('<svg'))) {
+              // -------------------------------------------------------------
+              // Single-File Hybrid Simulation Capsule (.ast.svg)
+              // Inspect SVG for embedded AST S-expressions:
+              // <metadata type="application/ast-sexpr">(:scene ...)</metadata>
+              // or <script type="application/ast-sexpr">(:scene ...)</script>
+              // or <ast-scene>(:scene ...)</ast-scene>
+              // -------------------------------------------------------------
+              let embeddedAst = '';
+              const metaMatch = content.match(/<metadata[^>]*type=["']application\/ast-sexpr["'][^>]*>([\s\S]*?)<\/metadata>/i)
+                || content.match(/<script[^>]*type=["']application\/ast-sexpr["'][^>]*>([\s\S]*?)<\/script>/i)
+                || content.match(/<ast-scene[^>]*>([\s\S]*?)<\/ast-scene>/i);
+
+              if (metaMatch && metaMatch[1]) {
+                embeddedAst = metaMatch[1].trim();
+              }
+
+              let parsed = null;
+              if (embeddedAst) {
+                try {
+                  parsed = this.parseAst(embeddedAst);
+                } catch (e) {
+                  console.warn('[AST Engine] Notice: Could not parse embedded AST inside SVG:', e);
+                }
+              }
+
+              const scene = {
+                id: (parsed && parsed.id) || id,
+                title: (parsed && parsed.title) || filename,
+                stage: (parsed && parsed.stage) || (embeddedAst ? 'HYBRID AST.SVG CAPSULE' : 'CUSTOM SVG'),
+                duration: (parsed && parsed.duration) || 10.0,
+                camera: (parsed && parsed.camera) || null,
+                has3D: Boolean(parsed && parsed.has3D),
+                keyframes: (parsed && parsed.keyframes) || [],
+                subtitles: (parsed && parsed.subtitles) || [],
+                rawBindings: (parsed && parsed.bindings) || [],
+                interactive: (parsed && parsed.interactive) || null,
+                gestures: (parsed && parsed.gestures) || null,
+                stateMachines: (parsed && parsed.stateMachines) || null,
+                emitters: (parsed && parsed.emitters) || null,
+                bindInputs: (parsed && parsed.bindInputs) || null,
+                svgText: content
+              };
+
+              const loaded = this.loadSceneData(scene, shouldPlay);
+              this.emit('fileloaded', { filename, type: embeddedAst ? 'ast.svg' : 'svg', id: scene.id });
               resolve(loaded);
             } else if (ext === 'ast') {
               const parsed = this.parseAst(content);
@@ -1745,9 +2319,16 @@
                 title: (parsed && parsed.title) || filename,
                 stage: (parsed && parsed.stage) || 'CUSTOM AST',
                 duration: (parsed && parsed.duration) || 10.0,
+                camera: (parsed && parsed.camera) || null,
+                has3D: Boolean(parsed && parsed.has3D),
                 keyframes: (parsed && parsed.keyframes) || [],
                 subtitles: (parsed && parsed.subtitles) || [],
                 rawBindings: (parsed && parsed.bindings) || [],
+                interactive: (parsed && parsed.interactive) || null,
+                gestures: (parsed && parsed.gestures) || null,
+                stateMachines: (parsed && parsed.stateMachines) || null,
+                emitters: (parsed && parsed.emitters) || null,
+                bindInputs: (parsed && parsed.bindInputs) || null,
                 svgText: ''
               };
               const loaded = this.loadSceneData(scene, shouldPlay);
@@ -1763,8 +2344,35 @@
                 resolve(this.loadSceneData({ id, ...parsed }, shouldPlay));
               } else if (content.includes('<svg')) {
                 resolve(this.loadSceneData({ id, title: filename, svgText: content }, shouldPlay));
+              } else if (content.startsWith('#') || content.includes('Stage:') || content.includes('Shape:')) {
+                if (global.ASTSlideScriptCompiler) {
+                  const compiled = global.ASTSlideScriptCompiler.compile(content);
+                  resolve(this.loadSceneData(compiled.scene, shouldPlay));
+                } else {
+                  throw new Error(`SlideScript detected but compiler is not loaded.`);
+                }
+              } else if (ext === 'html' || ext === 'htm' || ext === 'phet' || (global.ASTPhetBridge && global.ASTPhetBridge.isPhetBundle(content))) {
+                if (global.ASTPhetBridge) {
+                  const result = global.ASTPhetBridge.transpilePhet(content, filename);
+                  const parsed = this.parseAst(result.astSource);
+                  const scene = {
+                    id: result.id || id,
+                    title: result.title || filename,
+                    stage: result.stage || 'PhET TRANSLATED',
+                    duration: result.duration || 12.0,
+                    svgText: result.svgText,
+                    keyframes: (parsed && parsed.keyframes) || [],
+                    subtitles: (parsed && parsed.subtitles) || [],
+                    rawBindings: (parsed && parsed.bindings) || []
+                  };
+                  const loaded = this.loadSceneData(scene, shouldPlay);
+                  this.emit('fileloaded', { filename, type: 'phet-transpiled', id: scene.id, metadata: result.metadata });
+                  resolve(loaded);
+                } else {
+                  throw new Error(`PhET bundle detected but ASTPhetBridge is not loaded.`);
+                }
               } else {
-                throw new Error(`Unsupported file extension: .${ext}. Expected .json, .ast, or .svg.`);
+                throw new Error(`Unsupported file extension: .${ext}. Expected .json, .ast, .svg, .html (PhET), or SlideScript.`);
               }
             }
           } catch (parseErr) {
@@ -1778,6 +2386,90 @@
         };
         reader.readAsText(file);
       });
+    }
+
+    /**
+     * Loads a simulation directly from a zero-server URL payload string or base64 payload.
+     * Supports S-expressions (#ast=...), SlideScript markdown (#script=...), or JSON (#data=...).
+     * @param {string} payload
+     * @param {boolean} shouldPlay
+     */
+    loadFromPayload(payload, shouldPlay = false) {
+      if (!payload || typeof payload !== 'string') {
+        const err = new Error('[AST Engine] loadFromPayload requires a valid string');
+        this.emit('error', { type: 'INVALID_PAYLOAD', message: err.message });
+        throw err;
+      }
+
+      let content = payload.trim();
+      // Decode Base64 if flagged or clean base64 string
+      if (content.startsWith('base64:')) {
+        try {
+          content = decodeURIComponent(escape(atob(content.slice(7))));
+        } catch (e) {
+          try { content = atob(content.slice(7)); } catch {}
+        }
+      } else if (!content.startsWith('(') && !content.startsWith('{') && !content.startsWith('<') && !content.startsWith('#') && /^[A-Za-z0-9+/=_-]+$/.test(content)) {
+        try {
+          const rawB64 = content.replace(/-/g, '+').replace(/_/g, '/');
+          const decoded = decodeURIComponent(escape(atob(rawB64)));
+          if (decoded.startsWith('(') || decoded.startsWith('{') || decoded.startsWith('<') || decoded.startsWith('#')) {
+            content = decoded;
+          }
+        } catch {}
+      }
+
+      const id = `payload-${Date.now()}`;
+
+      // 1. AST S-Expression
+      if (content.startsWith('(')) {
+        const parsed = this.parseAst(content);
+        const scene = {
+          id: (parsed && parsed.id) || id,
+          title: (parsed && parsed.title) || 'Decentralized Vector Simulation',
+          stage: (parsed && parsed.stage) || 'DECENTRALIZED WEB',
+          duration: (parsed && parsed.duration) || 10.0,
+          camera: (parsed && parsed.camera) || null,
+          has3D: Boolean(parsed && parsed.has3D),
+          keyframes: (parsed && parsed.keyframes) || [],
+          subtitles: (parsed && parsed.subtitles) || [],
+          rawBindings: (parsed && parsed.bindings) || [],
+          interactive: (parsed && parsed.interactive) || null,
+          gestures: (parsed && parsed.gestures) || null,
+          stateMachines: (parsed && parsed.stateMachines) || null,
+          emitters: (parsed && parsed.emitters) || null,
+          bindInputs: (parsed && parsed.bindInputs) || null,
+          svgText: ''
+        };
+        const loaded = this.loadSceneData(scene, shouldPlay);
+        this.emit('fileloaded', { filename: `${scene.id}.ast`, type: 'ast-payload', id: scene.id });
+        return loaded;
+      }
+
+      // 2. SlideScript Markdown
+      if (content.startsWith('#') || content.includes('Stage:') || content.includes('Shape:')) {
+        if (global.ASTSlideScriptCompiler) {
+          const compiled = global.ASTSlideScriptCompiler.compile(content);
+          const loaded = this.loadSceneData(compiled.scene, shouldPlay);
+          this.emit('fileloaded', { filename: `${compiled.scene.id || id}.slidescript`, type: 'slidescript-payload', id: compiled.scene.id || id });
+          return loaded;
+        }
+      }
+
+      // 3. JSON Scene
+      if (content.startsWith('{')) {
+        const json = JSON.parse(content);
+        const loaded = this.loadSceneData(json, shouldPlay);
+        this.emit('fileloaded', { filename: `${json.id || id}.json`, type: 'json-payload', id: json.id || id });
+        return loaded;
+      }
+
+      // 4. Standalone SVG
+      if (content.includes('<svg')) {
+        return this.loadFromFile(new Blob([content], { type: 'image/svg+xml' }), shouldPlay);
+      }
+
+      throw new Error('[AST Engine] Unrecognized payload format: expected AST S-expression, SlideScript, or JSON');
     }
 
     /**
@@ -1974,9 +2666,18 @@
           if (rendered instanceof Node) {
             container.replaceChildren(rendered);
           } else if (typeof rendered === 'string') {
-            const temp = document.createElement('div');
-            temp.textContent = rendered;
-            container.replaceChildren(temp);
+            try {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${rendered}</svg>`, 'image/svg+xml');
+              const svgEl = doc.querySelector('svg');
+              if (svgEl && !doc.querySelector('parsererror')) {
+                container.replaceChildren(...svgEl.childNodes);
+              } else {
+                container.innerHTML = rendered;
+              }
+            } catch (e) {
+              container.innerHTML = rendered;
+            }
           }
         }
 
@@ -2176,6 +2877,18 @@
         console.warn('[AST Engine] DOM optimization notice:', domOptErr);
       }
 
+      // Mount any registered Multi-Entity Vector Emitters
+      if (this.emitters && this.emitters.size > 0) {
+        for (const em of this.emitters.values()) {
+          em.mount(container);
+        }
+      }
+
+      // Mount any declarative :bind-input items
+      if (scene.bindInputs && Array.isArray(scene.bindInputs)) {
+        scene.bindInputs.forEach(bi => this.registerBindInput(bi));
+      }
+
       this.applyBindings(this.progress);
       this.translateInStageLabels();
       } finally {
@@ -2187,7 +2900,7 @@
      * Evaluates AST mathematical bindings directly on the DOM at 60 FPS
      * Includes 3D perspective projection, 3D rings, 3D polygons, and Painter's Algorithm Z-Sorting
      */
-    applyBindings(t) {
+    applyBindings(t, dt = 0.016) {
       // Safety check: ensure container has scene elements mounted
       if (!this._isMounting && this._container && (this._mountedSceneId !== this.activePresetId || this._mountedContainer !== this._container)) {
         if (this.scene) {
@@ -2430,7 +3143,7 @@
 
       // 3. Procedural update hook if present
       if (this.scene && typeof this.scene.update === 'function' && this._cachedElements) {
-        this.scene.update(t, this._cachedElements, this);
+        this.scene.update(t, this._cachedElements, this, dt);
       }
     }
 
@@ -2468,12 +3181,25 @@
           this.physics.update(deltaSec);
         }
 
+        // Declarative State Transition Machines Tick
+        for (const sm of this.stateMachines.values()) {
+          sm.update(deltaSec, this.reactiveVars || {});
+        }
+
+        // Multi-Entity Particle Emitter Collections Tick
+        for (const em of this.emitters.values()) {
+          em.update(deltaSec);
+        }
+
+        // Dynamic continuous simulation check:
+        const isDynamicScene = this.isDynamicSim || (this.scene && typeof this.scene.mount === 'function');
+
         if (this.isPlaying) {
           this.progress += (deltaSec / this.durationSec) * this.speed;
 
           if (this.progress >= 1.0) {
-            if (this.loop) {
-              this.progress = 0.0;
+            if (this.loop || isDynamicScene) {
+              this.progress = this.progress % 1.0;
               this.lastSpokenIndex = -1;
             } else {
               this.progress = 1.0;
@@ -2483,8 +3209,14 @@
           }
 
           this.updateActiveKeyframeAndSpeech(false);
-          this.applyBindings(this.progress);
+        }
 
+        // PhET-Grade Continuous 60 FPS Render Loop:
+        // Always execute applyBindings every frame so direct manipulation, live physics,
+        // particle collisions, and 60 FPS rendering execute continuously even if clock is paused!
+        this.applyBindings(this.progress, deltaSec);
+
+        if (this.isPlaying) {
           this.emit('timeupdate', {
             progress: this.progress,
             currentTime: this.progress * this.durationSec,

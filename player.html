@@ -302,6 +302,7 @@
 
   <!-- Modular Scripts -->
   <script src="./player/ast-compiler.js"></script>
+  <script src="./player/ast-phet-bridge.js"></script>
   <script src="./player/ast-scenes.js"></script>
   <script src="./player/ast-engine.js"></script>
   <script src="./player/player-ui.js"></script>
@@ -309,10 +310,11 @@
     (function () {
       'use strict';
       const params = new URLSearchParams(window.location.search);
-      const preset = params.get('preset') || 'fractions';
+      const src = params.get('src') || params.get('file');
+      const preset = params.get('preset') || (src ? null : 'fractions');
       const lang = params.get('lang') || 'en';
       const speed = parseFloat(params.get('speed') || '1.0');
-      const autoplay = params.get('autoplay') === '1';
+      const autoplay = params.get('autoplay') === '1' || params.get('play') === '1';
       const theme = params.get('theme') || 'dark';
 
       // 1. Initialize Engine
@@ -326,18 +328,40 @@
       // 2. Initialize UI Controller
       const ui = new window.ASTPlayerUI(engine);
       ui.setTheme(theme);
+      window.AST_ENGINE = engine;
+      window.AST_UI = ui;
 
-      // 3. Load scenes config if available
-      if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
+      // 3. Ingest Zero-Server URL Hash / Query Payloads (#ast=..., #script=..., #data=...)
+      const rawHash = window.location.hash ? window.location.hash.slice(1) : '';
+      const hashParams = new URLSearchParams(rawHash);
+      const astPayload = params.get('ast') || hashParams.get('ast');
+      const scriptPayload = params.get('script') || hashParams.get('script') || params.get('slidescript') || hashParams.get('slidescript');
+      const dataPayload = params.get('data') || hashParams.get('data');
+
+      if (astPayload) {
+        try { engine.loadFromPayload(astPayload, autoplay); } catch (e) { console.warn(e); }
+      } else if (scriptPayload) {
+        try { engine.loadFromPayload(scriptPayload, autoplay); } catch (e) { console.warn(e); }
+      } else if (dataPayload) {
+        try { engine.loadFromPayload(dataPayload, autoplay); } catch (e) { console.warn(e); }
+      } else if (src) {
+        engine.loadFromUrl(src, autoplay).catch(console.warn);
+      }
+
+      // 4. Load scenes manifest (federated from ?manifest=URL or default built-in catalog)
+      const federatedManifest = params.get('manifest') || params.get('catalog');
+      if (federatedManifest) {
+        ui.populatePresets();
+      } else if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
         window.ASTSceneRegistry.loadConfig('./player/scenes-config.json').then(() => {
           ui.populatePresets();
         }).catch(() => {});
       }
 
-      // 4. Setup postMessage bridge for parent iframe communication
+      // 5. Setup postMessage bridge for parent iframe communication
       window.setupPostMessageBridge(engine, ui);
 
-      // 5. Start timeline clock
+      // 6. Start timeline clock
       engine.start();
     })();
   </script>

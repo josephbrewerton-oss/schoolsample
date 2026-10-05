@@ -2,7 +2,24 @@
 # GGML BNF Grammar for Constraining Local LLMs to Valid AST Vector Scenes
 # Compatible with llama.cpp, Ollama, llama-cpp-python, and vLLM.
 
-root ::= "{" ws "\"id\":" ws string "," ws "\"stage\":" ws string "," ws "\"title\":" ws string "," ws "\"duration\":" ws number "," ws ("\"easing\":" ws easing "," ws)? "\"keyframes\":" ws keyframe-array ("," ws "\"subtitles\":" ws subtitle-array)? ("," ws "\"elements\":" ws element-array)? ws "}"
+root ::= "{" ws "\"id\":" ws string "," ws "\"stage\":" ws string "," ws "\"title\":" ws string "," ws "\"duration\":" ws number "," ws ("\"easing\":" ws easing "," ws)? "\"keyframes\":" ws keyframe-array ("," ws "\"subtitles\":" ws subtitle-array)? ("," ws "\"stateMachines\":" ws state-machine-array)? ("," ws "\"emitters\":" ws emitter-array)? ("," ws "\"bindInputs\":" ws bind-input-array)? ("," ws "\"elements\":" ws element-array)? ws "}"
+
+# State Machines Array
+state-machine-array ::= "[" ws (state-machine ("," ws state-machine)*)? ws "]"
+state-machine ::= "{" ws "\"id\":" ws string "," ws "\"initial\":" ws string ("," ws "\"dwell\":" ws number)? "," ws "\"states\":" ws state-array "," ws "\"transitions\":" ws transition-array ws "}"
+state-array ::= "[" ws (state-obj ("," ws state-obj)*)? ws "]"
+state-obj ::= "{" ws "\"name\":" ws string ("," ws "\"attrs\":" ws "{" ws "}")? ("," ws "\"emitterSets\":" ws "[" ws (emitter-set ("," ws emitter-set)*)? ws "]")? ws "}"
+emitter-set ::= "{" ws "\"target\":" ws string ("," ws "\"speed\":" ws number)? ("," ws "\"count\":" ws integer)? ("," ws "\"gravity\":" ws number)? ("," ws "\"fill\":" ws string)? ("," ws "\"boundsElement\":" ws string)? ws "}"
+transition-array ::= "[" ws (transition-obj ("," ws transition-obj)*)? ws "]"
+transition-obj ::= "{" ws "\"from\":" ws string "," ws "\"to\":" ws string "," ws "\"trigger\":" ws string ("," ws "\"duration\":" ws number)? ("," ws "\"dwell\":" ws number)? ("," ws "\"easing\":" ws easing)? ws "}"
+
+# Emitters Array
+emitter-array ::= "[" ws (emitter-obj ("," ws emitter-obj)*)? ws "]"
+emitter-obj ::= "{" ws "\"id\":" ws string ("," ws "\"count\":" ws integer)? ("," ws "\"speed\":" ws number)? ("," ws "\"radius\":" ws number)? ("," ws "\"fill\":" ws string)? ("," ws "\"gravity\":" ws number)? ("," ws "\"wrapMode\":" ws ("\"bounce\"" | "\"wrap\""))? ("," ws "\"boundsElement\":" ws string)? ws "}"
+
+# Bind Inputs Array
+bind-input-array ::= "[" ws (bind-input-obj ("," ws bind-input-obj)*)? ws "]"
+bind-input-obj ::= "{" ws "\"target\":" ws string "," ws "\"var\":" ws string "," ws "\"min\":" ws number "," ws "\"max\":" ws number ("," ws "\"axis\":" ws ("\"x\"" | "\"y\"" | "\"rotary\""))? ("," ws "\"trackMin\":" ws number)? ("," ws "\"trackMax\":" ws number)? ws "}"
 
 # Keyframes Array
 keyframe-array ::= "[" ws (keyframe ("," ws keyframe)*)? ws "]"

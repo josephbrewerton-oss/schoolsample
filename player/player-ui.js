@@ -648,6 +648,33 @@
       if (!this.elements.presetSelector || this._isPopulating) return;
       this._isPopulating = true;
       let list = [];
+
+      // 1. Check for Federated Manifest URLs (?manifest=... or ?catalog=...)
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const federatedUrls = urlParams ? (urlParams.get('manifest') || urlParams.get('catalog')) : null;
+
+      if (federatedUrls) {
+        const urls = federatedUrls.split(',').map(u => u.trim()).filter(Boolean);
+        for (const fedUrl of urls) {
+          try {
+            const fedRes = await fetch(fedUrl).catch(() => null);
+            if (fedRes && fedRes.ok) {
+              const fedData = await fedRes.json();
+              if (fedData && Array.isArray(fedData.scenes)) {
+                fedData.scenes.forEach(sc => {
+                  sc._source = 'federated';
+                  sc._originUrl = fedUrl;
+                  list.push(sc);
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('[Player UI] Federated manifest load notice for:', fedUrl, e);
+          }
+        }
+      }
+
+      // 2. Fetch default built-in local manifests
       try {
         let res = await fetch('./scenes.manifest.json?v=2.5.0').catch(() => null);
         if (!res || !res.ok) {
@@ -656,39 +683,121 @@
         if (res && res.ok) {
           const manifest = await res.json();
           if (manifest && Array.isArray(manifest.scenes)) {
-            list = manifest.scenes;
+            manifest.scenes.forEach(sc => {
+              sc._source = 'builtin';
+              list.push(sc);
+            });
           }
         }
       } catch (err) {
         console.warn('[Player UI] Manifest load fallback:', err);
       }
 
+      // 3. Fallback to in-memory scene registry
       if (!list.length && global.ASTSceneRegistry) {
-        list = global.ASTSceneRegistry.list();
+        list = global.ASTSceneRegistry.list().map(sc => ({ ...sc, _source: 'builtin' }));
       }
 
-      if (!list.length) {
+      // 4. Ingest In-Browser Local Vault (offline user simulations)
+      let vaultList = [];
+      try {
+        const rawVault = localStorage.getItem('ast_local_vault');
+        if (rawVault) {
+          const parsed = JSON.parse(rawVault);
+          if (Array.isArray(parsed)) {
+            vaultList = parsed.map(item => ({ ...item, _source: 'vault' }));
+          }
+        }
+      } catch (e) {}
+
+      if (!list.length && !vaultList.length) {
         list = [
-          { id: this.engine.activePresetId || 'standalone-stage', title: 'Standalone Vector Stage', stage: 'SYSTEM' }
+          { id: this.engine.activePresetId || 'standalone-stage', title: 'Standalone Vector Stage', stage: 'SYSTEM', _source: 'builtin' }
         ];
       }
 
       const activeId = this.engine.activePresetId || 'church-tour';
       this.elements.presetSelector.innerHTML = '';
-      list.forEach(item => {
+
+      // Create Local Vault OptGroup if items exist
+      if (vaultList.length > 0) {
+        const vaultGroup = document.createElement('optgroup');
+        vaultGroup.label = '📦 In-Browser Vault (Offline)';
+        vaultList.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id;
+          opt.textContent = `★ ${item.title || item.id} (${item.stage || 'VAULT'})`;
+          if (item.id === activeId) opt.selected = true;
+          vaultGroup.appendChild(opt);
+        });
+        this.elements.presetSelector.appendChild(vaultGroup);
+      }
+
+      // Create Federated OptGroup if items exist
+      const fedItems = list.filter(item => item._source === 'federated');
+      if (fedItems.length > 0) {
+        const fedGroup = document.createElement('optgroup');
+        fedGroup.label = '🌐 Federated Simulation Catalog';
+        fedItems.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id;
+          opt.textContent = `${item.title} (${item.stage || 'FEDERATED'})`;
+          if (item.id === activeId) opt.selected = true;
+          fedGroup.appendChild(opt);
+        });
+        this.elements.presetSelector.appendChild(fedGroup);
+      }
+
+      // Built-in Curriculum Group
+      const builtInItems = list.filter(item => item._source === 'builtin');
+      const curriculumGroup = document.createElement('optgroup');
+      curriculumGroup.label = '📚 Standard Curriculum Presets';
+      builtInItems.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
         opt.textContent = `${item.title} (${item.stage})`;
         if (item.id === activeId) {
           opt.selected = true;
         }
-        this.elements.presetSelector.appendChild(opt);
+        curriculumGroup.appendChild(opt);
       });
+      this.elements.presetSelector.appendChild(curriculumGroup);
+
       // Explicitly sync the select value to the engine's active preset
       if (activeId) {
         this.elements.presetSelector.value = activeId;
       }
       this._isPopulating = false;
+    }
+
+    /**
+     * Saves a simulation to the user's permanent browser local vault
+     */
+    saveToLocalVault(sceneData) {
+      if (!sceneData || !sceneData.id) return;
+      try {
+        let vault = [];
+        const raw = localStorage.getItem('ast_local_vault');
+        if (raw) vault = JSON.parse(raw) || [];
+        // Replace existing or prepend
+        const existingIdx = vault.findIndex(v => v.id === sceneData.id);
+        const item = {
+          id: sceneData.id,
+          title: sceneData.title || sceneData.id,
+          stage: sceneData.stage || 'LOCAL VAULT',
+          savedAt: new Date().toISOString()
+        };
+        if (existingIdx >= 0) {
+          vault[existingIdx] = item;
+        } else {
+          vault.unshift(item);
+        }
+        localStorage.setItem('ast_local_vault', JSON.stringify(vault.slice(0, 30)));
+        this.showToast(`💾 Saved to Local Vault: ${item.title}`);
+        this.populatePresets();
+      } catch (e) {
+        console.warn('[Player UI] Could not save to local vault:', e);
+      }
     }
 
     setupKeyframeMarkers() {
@@ -867,21 +976,8 @@
         }, { passive: true });
       }
 
-      // In-Stage Tactile Click for Play / Pause
-      if (el.playerStage) {
-        el.playerStage.addEventListener('click', (e) => {
-          if (e.target.closest('button, input, select, textarea, .interactive-card, .quest-drawer, .obs-drawer, .dev-inspector-drawer, .dev-studio-drawer, .ambient-timeline, [data-draggable="true"], [data-target-t]')) {
-            return;
-          }
-          if (window.__astGestures && window.__astGestures.isDragging) return;
-          const playing = this.engine.togglePlay();
-          this.showPlayPauseRipple(playing);
-          if (el.btnPlay) {
-            el.btnPlay.textContent = playing ? '⏸ Pause' : '▶ Play';
-            el.btnPlay.classList.toggle('active', playing);
-          }
-        });
-      }
+      // PhET-Grade Touch Substrate: Touching the stage never pauses or halts the dynamic simulation.
+      // Spacebar or in-graphics controls handle explicit physics clock pausing.
 
       window.addEventListener('mousemove', (e) => {
         if (this.isDragging) this.handleScrubberClick(e);
@@ -923,6 +1019,24 @@
             this.engine.loadFromFile(file, true).catch((err) => {
               this.showToast('❌ ' + err.message, 4500);
             });
+          }
+        });
+      }
+
+      // Native Open File Picker for Touch Screens & Smartboards
+      const btnOpen = el.btnOpenFile || document.getElementById('btn-open-file');
+      const fileInput = el.fileInputHidden || document.getElementById('file-input-hidden');
+      if (btnOpen && fileInput) {
+        btnOpen.addEventListener('click', () => {
+          fileInput.click();
+        });
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files.length) {
+            const file = e.target.files[0];
+            this.engine.loadFromFile(file, true).catch((err) => {
+              this.showToast('❌ ' + err.message, 4500);
+            });
+            fileInput.value = '';
           }
         });
       }
