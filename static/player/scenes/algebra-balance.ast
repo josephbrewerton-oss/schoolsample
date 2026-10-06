@@ -34,9 +34,10 @@
       :explanation "Since x is multiplied by 2, we apply the inverse operation: divide both sides by 2 to isolate a single x.")
   ))
   (:bindings (
-    (:target "#eq-display" :attr "textContent" :expr "t < 0.35 ? '2x + 5 = 15' : (t < 0.70 ? 'Step 1: 2x = 10 (-5 both sides)' : 'Step 2: x = 5 (Divide both by 2)')")
+    (:target "#balance-beam" :attr "transform" :expr "'rotate(' + Math.max(-14, Math.min(14, (((t < 0.35 ? 15 : 10) - (2 * (vars.xVal !== undefined ? vars.xVal : 5) + (t < 0.35 ? 5 : 0))) * 2.2))).toFixed(1) + ', 400, 240)'")
+    (:target "#eq-display" :attr "textContent" :expr "t < 0.35 ? ('2x + 5 = 15' + (vars.xVal !== undefined && vars.xVal !== 5 ? ' (x=' + vars.xVal + ')' : '')) : (t < 0.70 ? 'Step 1: 2x = 10 (-5 both sides)' : 'Step 2: x = 5 (Divide both by 2)')")
     (:target "#left-5-units" :attr "opacity" :expr "t < 0.35 ? '1' : '0'")
     (:target "#right-weight-text" :attr "textContent" :expr "t < 0.35 ? '15' : (t < 0.70 ? '10' : '5')")
-    (:target "#balance-status" :attr "textContent" :expr "t < 0.35 ? '⚖️ Scale Balanced • Left (2x + 5) = Right (15)' : (t < 0.70 ? '⚖️ Scale Balanced • Left (2x) = Right (10)' : '⭐ Solved! Each x = 5 units (5 + 5 + 5 = 15)')")
+    (:target "#balance-status" :attr "textContent" :expr "((vars.xVal !== undefined ? vars.xVal : 5) === 5) ? '⚖️ Scale in Perfect Equilibrium (2x + 5 = 15)' : (((vars.xVal || 5) < 5) ? '⚠️ Left Pan Too Light (' + (2*(vars.xVal||5) + (t < 0.35 ? 5 : 0)) + ' < ' + (t < 0.35 ? 15 : 10) + ')' : '⚠️ Left Pan Too Heavy (' + (2*(vars.xVal||5) + (t < 0.35 ? 5 : 0)) + ' > ' + (t < 0.35 ? 15 : 10) + ')')")
   ))
 )

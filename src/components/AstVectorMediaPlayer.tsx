@@ -88,6 +88,10 @@ export interface AstVectorMediaPlayerHandle {
     title?: string;
     t?: number;
   }) => void;
+  nextSlide: () => void;
+  prevSlide: () => void;
+  goToSlide: (progress: number) => void;
+  takeQuiz: () => void;
 }
 
 export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVectorMediaPlayerProps>(({
@@ -115,6 +119,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [has3D, setHas3D] = useState(false);
   const [hasInteractive, setHasInteractive] = useState(false);
+  const [keyframes, setKeyframes] = useState<Array<{ t: number; title: string; rule: string }>>([]);
   const [activeKeyframe, setActiveKeyframe] = useState<{ title: string; rule: string } | null>(null);
   const [currentProgress, setCurrentProgress] = useState(0);
   const [showEmbedCode, setShowEmbedCode] = useState(false);
@@ -319,6 +324,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     stopVoiceCommands: () => postToPlayer({ type: 'STOP_VOICE_COMMANDS' }),
     executeVoiceCommand: (command: string) => postToPlayer({ type: 'VOICE_COMMAND', command }),
     togglePictureInPicture: () => togglePictureInPicture(),
+    nextSlide: () => postToPlayer({ type: 'STEP_NEXT_KEYFRAME' }),
+    prevSlide: () => postToPlayer({ type: 'STEP_PREV_KEYFRAME' }),
+    goToSlide: (progress: number) => postToPlayer({ type: 'STEP_TO_KEYFRAME', progress }),
+    takeQuiz: () => postToPlayer({ type: 'TRIGGER_CHECKPOINT' }),
     injectCheckpoint: (checkpoint: {
       prompt: string;
       options: string[];
@@ -409,6 +418,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           setIsPlayerReady(true);
           if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
           if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
+          if (Array.isArray(data.keyframes)) setKeyframes(data.keyframes);
           postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
           break;
         case 'PRESETCHANGE':
@@ -420,6 +430,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           }
           if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
           if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
+          if (Array.isArray(data.keyframes)) setKeyframes(data.keyframes);
           break;
         case 'TIME_UPDATE':
           setCurrentProgress(data.progress || 0);
@@ -871,13 +882,26 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             )}
 
             {hasInteractive && displayConfig.showInteractiveCheckpoints && (
-              <span
+              <button
+                type="button"
+                onClick={() => postToPlayer({ type: 'TRIGGER_CHECKPOINT' })}
                 className="stj-badge stj-badge-success stj-pill"
-                style={{ fontSize: '0.72rem' }}
-                title="Interactive Checkpoint Challenges: Active recall quizzes trigger automatically during playback"
+                style={{
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                  border: '1px solid #10b981',
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  color: '#34d399',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: 700,
+                  padding: '3px 8px'
+                }}
+                title="Click to take interactive checkpoint challenge right now"
               >
-                🎯 Checkpoint Quizzes
-              </span>
+                <span>🎯 Take Checkpoint Quiz</span>
+              </button>
             )}
           </div>
 
@@ -1476,30 +1500,122 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           />
         </div>
 
-        {/* Live Keyframe Telemetry Bar */}
-        {activeKeyframe && (
+        {/* Interactive Slide Deck & Keyframe Presentation Bar */}
+        {(keyframes.length > 0 || activeKeyframe) && (
           <div
             style={{
-              background: 'var(--stj-surface-raised)',
-              borderTop: '1px solid var(--stj-border)',
-              padding: '8px 14px',
+              background: 'var(--stj-surface-raised, #0f172a)',
+              borderTop: '1px solid var(--stj-border, #334155)',
+              padding: '10px 14px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.78rem',
-              flexWrap: 'wrap',
+              flexDirection: 'column',
               gap: '8px',
+              fontSize: '0.78rem',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ color: 'var(--stj-warning)', fontWeight: 700 }}>💡 Milestone:</span>
-              <span style={{ color: 'var(--stj-text)', fontWeight: 600 }}>{activeKeyframe.title}</span>
-              <span style={{ color: 'var(--stj-text-muted)' }}>&bull;</span>
-              <span style={{ color: 'var(--stj-text-muted)' }}>{activeKeyframe.rule}</span>
+            {/* Slide Navigation Buttons & Carousel Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 800, color: 'var(--stj-primary, #38bdf8)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  📑 Slides ({keyframes.length || 1}):
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'STEP_PREV_KEYFRAME' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ padding: '3px 8px', fontSize: '0.74rem', fontWeight: 700 }}
+                  title="Previous Slide (PageUp / Left Arrow)"
+                >
+                  ⏮ Prev Slide
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ padding: '3px 8px', fontSize: '0.74rem', fontWeight: 700 }}
+                  title="Play / Pause Animation"
+                >
+                  ⏯ Play/Pause
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'STEP_NEXT_KEYFRAME' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ padding: '3px 8px', fontSize: '0.74rem', fontWeight: 700 }}
+                  title="Next Slide (PageDown / Right Arrow / Space)"
+                >
+                  ⏭ Next Slide
+                </button>
+
+                {keyframes.map((kf, idx) => {
+                  const isActive = activeKeyframe
+                    ? activeKeyframe.title === kf.title
+                    : (currentProgress >= kf.t - 0.02 && (idx === keyframes.length - 1 || currentProgress < keyframes[idx + 1].t));
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => postToPlayer({ type: 'STEP_TO_KEYFRAME', progress: kf.t })}
+                      style={{
+                        padding: '3px 9px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        background: isActive ? '#0284c7' : 'rgba(30, 41, 59, 0.85)',
+                        borderColor: isActive ? '#38bdf8' : 'rgba(255, 255, 255, 0.15)',
+                        color: isActive ? '#ffffff' : '#cbd5e1',
+                        border: '1px solid',
+                        boxShadow: isActive ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
+                      }}
+                      title={`${kf.title}: ${kf.rule} (Click to jump to this slide)`}
+                    >
+                      {idx + 1}. {kf.title}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {hasInteractive && (
+                  <button
+                    type="button"
+                    onClick={() => postToPlayer({ type: 'TRIGGER_CHECKPOINT' })}
+                    style={{
+                      padding: '3px 9px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      border: '1px solid #10b981',
+                      color: '#34d399',
+                      cursor: 'pointer',
+                    }}
+                    title="Launch interactive checkpoint recall challenge"
+                  >
+                    🎯 Quiz Challenge
+                  </button>
+                )}
+
+                <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
+                  {Math.round(currentProgress * 100)}% Complete
+                </span>
+              </div>
             </div>
-            <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
-              {Math.round(currentProgress * 100)}% Complete
-            </span>
+
+            {/* Current Active Milestone Text */}
+            {activeKeyframe && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--stj-text-muted)', fontSize: '0.76rem' }}>
+                <span style={{ color: 'var(--stj-warning)', fontWeight: 700 }}>💡 Milestone:</span>
+                <span style={{ color: 'var(--stj-text)', fontWeight: 600 }}>{activeKeyframe.title}</span>
+                <span>&bull;</span>
+                <span>{activeKeyframe.rule}</span>
+              </div>
+            )}
           </div>
         )}
 

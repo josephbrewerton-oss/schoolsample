@@ -1703,6 +1703,16 @@
         return match ? match[1].trim().replace(/^"|"$/g, '') : null;
       };
 
+      const extractQuoted = (text, key) => {
+        if (!text || typeof text !== 'string') return null;
+        const reg = new RegExp(`:${key}\\s+"((?:[^"\\\\]|\\\\.)*)"`, 'i');
+        const m = text.match(reg);
+        if (m) return m[1].replace(/\\"/g, '"');
+        const fallbackReg = new RegExp(`:${key}\\s+([^\\s\\)]+)`, 'i');
+        const fb = text.match(fallbackReg);
+        return fb ? fb[1].replace(/^"|"$/g, '') : null;
+      };
+
       const id = extractSlot(/:id\s+("[^"]+"|[^\s\)]+)/i);
       const title = extractSlot(/:title\s+"([^"]+)"/i);
       const stage = extractSlot(/:stage\s+"([^"]+)"/i) || 'CURRICULUM';
@@ -1788,10 +1798,10 @@
       const bindBlocks = extractSexprBlocks(astContent, ':target');
 
       bindBlocks.forEach(block => {
-        const target = extractSlot.call(null, block, /:target\s+"([^"]+)"/i);
+        const target = extractQuoted(block, 'target') || extractSlot.call(null, block, /:target\s+"([^"]+)"/i);
         const type = extractSlot.call(null, block, /:type\s+"([^"]+)"/i);
-        const attr = extractSlot.call(null, block, /:attr\s+"([^"]+)"/i);
-        const expr = extractSlot.call(null, block, /:expr\s+"([^"]+)"/i);
+        const attr = extractQuoted(block, 'attr') || extractSlot.call(null, block, /:attr\s+"([^"]+)"/i);
+        const expr = extractQuoted(block, 'expr') || extractSlot.call(null, block, /:expr\s+"([^"]+)"/i);
 
         if (type === '3d-node') {
           const x = extractSlot.call(null, block, /:x\s+"([^"]+)"/i) || '0';
@@ -1884,21 +1894,35 @@
         const explanation = extractSlot.call(null, cpText, /:explanation\s+"([^"]+)"/i) || '';
 
         const options = [];
-        // Support both (:options ("opt1" ...)) and :options ("opt1" ...)
-        const optMatch = cpText.match(/:options\s*\(([\s\S]*?)\)/i);
-        if (optMatch) {
-          const optRegex = /"([^"]+)"/g;
-          let om;
-          while ((om = optRegex.exec(optMatch[1])) !== null) {
-            options.push(om[1]);
-          }
-        } else {
-          const optBlocks = extractSexprBlocks(cpText, ':options');
-          if (optBlocks.length > 0) {
-            const optRegex = /"([^"]+)"/g;
-            let om;
-            while ((om = optRegex.exec(optBlocks[0])) !== null) {
-              options.push(om[1]);
+        const optTagIdx = cpText.indexOf(':options');
+        if (optTagIdx !== -1) {
+          const startParen = cpText.indexOf('(', optTagIdx);
+          if (startParen !== -1) {
+            let depth = 0;
+            let inString = false;
+            let endParen = -1;
+            for (let i = startParen; i < cpText.length; i++) {
+              const ch = cpText[i];
+              if (ch === '"' && (i === 0 || cpText[i - 1] !== '\\')) {
+                inString = !inString;
+              } else if (!inString) {
+                if (ch === '(') depth++;
+                else if (ch === ')') {
+                  depth--;
+                  if (depth === 0) {
+                    endParen = i;
+                    break;
+                  }
+                }
+              }
+            }
+            if (endParen !== -1) {
+              const inside = cpText.slice(startParen + 1, endParen);
+              const optRegex = /"((?:[^"\\]|\\.)*)"/g;
+              let om;
+              while ((om = optRegex.exec(inside)) !== null) {
+                options.push(om[1]);
+              }
             }
           }
         }
@@ -2017,7 +2041,7 @@
         const compEntries = extractSexprBlocks(compBlocks[0], ':name');
         compEntries.forEach(cText => {
           const name = extractSlot.call(null, cText, /:name\s+"([^"]+)"/i) || extractSlot.call(null, cText, /:name\s+([^\s\)]+)/i);
-          const expr = extractSlot.call(null, cText, /:expr\s+"([^"]+)"/i);
+          const expr = extractQuoted(cText, 'expr') || extractSlot.call(null, cText, /:expr\s+"([^"]+)"/i);
           if (name && expr) {
             computed.push({ name, expr });
           }
@@ -2925,7 +2949,7 @@
             if (node) {
               let evalFn = () => 0;
               try {
-                evalFn = new Function('t', 'vars', 'Math', `"use strict"; return (${b.expr});`);
+                evalFn = new Function('t', 'vars', 'Math', 'computed', `"use strict"; return (${b.expr});`);
               } catch (e) {
                 console.warn('[AST Engine] Failed compiling expr:', b.expr, e);
               }
@@ -3025,6 +3049,9 @@
 
       this.applyBindings(this.progress);
       this.translateInStageLabels();
+      if (typeof window !== 'undefined' && window.__astGestures && typeof window.__astGestures.enhanceSceneInteractivity === 'function') {
+        window.__astGestures.enhanceSceneInteractivity();
+      }
       } finally {
         this._isMounting = false;
       }
@@ -3261,7 +3288,7 @@
           const b = this.activeBindings[i];
           if (b.node) {
             try {
-              const val = b.evalFn(t, v, Math);
+              const val = b.evalFn(t, v, Math, v);
               if (b.lastVal !== val) {
                 b.lastVal = val;
                 if (b.attr === 'textContent') {
@@ -4551,6 +4578,8 @@
       license: ASTVectorPlayerEngine.LICENSE,
       has3D: engine.has3D(),
       hasInteractive: Boolean(engine.scene && engine.scene.interactive && engine.scene.interactive.checkpoints && engine.scene.interactive.checkpoints.length),
+      keyframes: (engine.scene && engine.scene.keyframes) || [],
+      interactive: (engine.scene && engine.scene.interactive) || null,
       preset: engine.activePresetId,
       presets: global.ASTSceneRegistry ? global.ASTSceneRegistry.list() : []
     });

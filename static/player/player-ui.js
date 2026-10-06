@@ -42,6 +42,8 @@
         shortcutsModal: document.getElementById('shortcuts-modal'),
         shortcutsClose: document.getElementById('shortcuts-close'),
         btnStepMode: document.getElementById('btn-step-mode'),
+        slideDeckBar: document.getElementById('slide-deck-bar'),
+        slideDeckPills: document.getElementById('slide-deck-pills'),
         btnNarrate: document.getElementById('btn-narrate'),
         btnVoiceCmd: document.getElementById('btn-voice-cmd'),
         voiceCmdOverlay: document.getElementById('voice-cmd-overlay'),
@@ -530,6 +532,24 @@
       });
     }
 
+    triggerFirstCheckpoint() {
+      const scene = this.engine && this.engine.scene;
+      if (!scene || !scene.interactive || !Array.isArray(scene.interactive.checkpoints) || scene.interactive.checkpoints.length === 0) {
+        this.showToast('ℹ️ No checkpoint quizzes found for this scene');
+        return;
+      }
+      let targetIdx = 0;
+      for (let i = 0; i < scene.interactive.checkpoints.length; i++) {
+        if (!this.completedCheckpoints.has(i)) {
+          targetIdx = i;
+          break;
+        }
+      }
+      const cp = scene.interactive.checkpoints[targetIdx];
+      this.engine.seek(cp.t);
+      this.triggerCheckpoint(cp, targetIdx);
+    }
+
     checkInteractiveCheckpoints() {
       if (!this.interactiveMode || this.activeCheckpoint !== null) return;
       const scene = this.engine.scene;
@@ -877,12 +897,57 @@
           this.elements.timelineTrack.appendChild(marker);
         });
       }
+
+      // Populate interactive slide deck pills
+      if (this.elements.slideDeckPills) {
+        this.elements.slideDeckPills.innerHTML = '';
+        const kfs = (scene && scene.keyframes) || [];
+        kfs.forEach((kf, idx) => {
+          const pill = document.createElement('button');
+          pill.type = 'button';
+          pill.className = 'slide-pill-btn';
+          pill.setAttribute('data-slide-idx', String(idx));
+          pill.setAttribute('data-slide-t', String(kf.t));
+          pill.style.cssText = 'padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; white-space: nowrap; cursor: pointer; transition: all 0.15s ease;';
+          pill.textContent = `Slide ${idx + 1}: ${kf.title}`;
+          pill.title = `${kf.title}: ${kf.rule} (Click to jump to this slide)`;
+          pill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.engine.seek(kf.t);
+            this.onStopReached(kf.t);
+          });
+          this.elements.slideDeckPills.appendChild(pill);
+        });
+      }
     }
 
     updateView() {
       const scene = this.engine.scene;
       if (this.elements.badgeStage) {
         this.elements.badgeStage.textContent = scene.stage || 'CURRICULUM';
+      }
+
+      // Highlight active slide pill
+      if (this.elements.slideDeckPills && scene && Array.isArray(scene.keyframes)) {
+        const curT = this.engine.progress;
+        let activeIdx = 0;
+        scene.keyframes.forEach((kf, idx) => {
+          if (kf.t <= curT + 0.02) activeIdx = idx;
+        });
+        const pills = this.elements.slideDeckPills.querySelectorAll('.slide-pill-btn');
+        pills.forEach((p, idx) => {
+          if (idx === activeIdx) {
+            p.style.background = '#0284c7';
+            p.style.borderColor = '#38bdf8';
+            p.style.color = '#ffffff';
+            p.style.boxShadow = '0 0 10px rgba(56, 189, 248, 0.5)';
+          } else {
+            p.style.background = 'rgba(30, 41, 59, 0.85)';
+            p.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            p.style.color = '#cbd5e1';
+            p.style.boxShadow = 'none';
+          }
+        });
       }
 
       // Render vector SVG via direct element attribute patching (zero DOM thrashing, 60 FPS)
@@ -931,9 +996,19 @@
         this.elements.timelineThumb.style.left = `${pct}%`;
       }
       if (this.elements.timeReadout) {
-        const curSec = this.engine.progress * this.engine.durationSec;
-        this.elements.timeReadout.textContent =
-          `${this.formatTime(curSec)} / ${this.formatTime(this.engine.durationSec)} (${Math.round(pct)}%)`;
+        const kfs = (scene && scene.keyframes) || [];
+        if (kfs.length > 0) {
+          const curT = this.engine.progress;
+          let activeIdx = 0;
+          kfs.forEach((kf, idx) => {
+            if (kf.t <= curT + 0.02) activeIdx = idx;
+          });
+          const curKf = kfs[activeIdx];
+          const cleanTitle = (curKf && curKf.title) ? curKf.title.replace(/^\d+[\.\s]*/, '') : 'Interactive Slide';
+          this.elements.timeReadout.textContent = `Slide ${activeIdx + 1} of ${kfs.length}: ${cleanTitle}`;
+        } else {
+          this.elements.timeReadout.textContent = `Interactive Slide • 60 FPS`;
+        }
       }
     }
 
@@ -1101,7 +1176,8 @@
 
       if (el.btnPrev) {
         el.btnPrev.addEventListener('click', () => {
-          if (this.stepMode) {
+          const scene = this.engine && this.engine.scene;
+          if (this.stepMode || (scene && scene.keyframes && scene.keyframes.length > 0)) {
             this.stepToPrevKeyframe();
           } else {
             this.engine.step(-0.05);
@@ -1111,7 +1187,8 @@
 
       if (el.btnNext) {
         el.btnNext.addEventListener('click', () => {
-          if (this.stepMode) {
+          const scene = this.engine && this.engine.scene;
+          if (this.stepMode || (scene && scene.keyframes && scene.keyframes.length > 0)) {
             this.stepToNextKeyframe();
           } else {
             this.engine.step(0.05);
@@ -1344,11 +1421,17 @@
       if (el.btnInteractive) {
         el.btnInteractive.classList.toggle('active', this.interactiveMode);
         el.btnInteractive.addEventListener('click', () => {
-          this.interactiveMode = !this.interactiveMode;
-          el.btnInteractive.classList.toggle('active', this.interactiveMode);
-          this.showToast(this.interactiveMode ? '🎯 Interactive Mode: ON' : '🎯 Interactive Mode: OFF');
-          if (!this.interactiveMode) {
+          if (this.activeCheckpoint !== null) {
             this.closeInteractiveCard();
+            return;
+          }
+          const scene = this.engine && this.engine.scene;
+          if (scene && scene.interactive && Array.isArray(scene.interactive.checkpoints) && scene.interactive.checkpoints.length > 0) {
+            this.triggerFirstCheckpoint();
+          } else {
+            this.interactiveMode = !this.interactiveMode;
+            el.btnInteractive.classList.toggle('active', this.interactiveMode);
+            this.showToast(this.interactiveMode ? '🎯 Interactive Mode: ON' : '🎯 Interactive Mode: OFF');
           }
         });
       }
@@ -2079,14 +2162,16 @@
           }
         } else if (e.code === 'ArrowLeft' || e.code === 'PageUp') {
           e.preventDefault();
-          if (this.stepMode) {
+          const scene = this.engine && this.engine.scene;
+          if (this.stepMode || (scene && scene.keyframes && scene.keyframes.length > 0)) {
             this.stepToPrevKeyframe();
           } else {
             this.engine.step(-0.05);
           }
         } else if (e.code === 'ArrowRight' || e.code === 'PageDown') {
           e.preventDefault();
-          if (this.stepMode) {
+          const scene = this.engine && this.engine.scene;
+          if (this.stepMode || (scene && scene.keyframes && scene.keyframes.length > 0)) {
             this.stepToNextKeyframe();
           } else {
             this.engine.step(0.05);
@@ -2685,14 +2770,16 @@
       const curT = this.engine.progress;
       const nextStop = stops.find(s => s > curT + 0.015);
       if (nextStop !== undefined) {
-        this.targetStop = nextStop;
-        this.engine.play();
+        this.targetStop = null;
+        this.engine.pause();
+        this.engine.seek(nextStop);
+        this.onStopReached(nextStop);
         if (this.elements.btnPlay) {
-          this.elements.btnPlay.textContent = '⏸ Pause';
-          this.elements.btnPlay.classList.add('active');
+          this.elements.btnPlay.textContent = '▶ Play';
+          this.elements.btnPlay.classList.remove('active');
         }
       } else {
-        this.showToast('🏁 End of Lesson Slide');
+        this.showToast('🏁 End of Lesson Slides');
       }
     }
 
