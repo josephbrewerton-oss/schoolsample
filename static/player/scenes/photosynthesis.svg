@@ -77,7 +77,7 @@
       <ellipse cx="540" cy="270" rx="18" ry="10" fill="url(#ps-chloroplast)" />
     </g>
 
-    <!-- Vascular Vein Network (Xylem & Phloem) -->
+    <!-- Vascular Vein Network (Xylem &amp; Phloem) -->
     <path id="ps-veins" d="M 120 240 L 680 240 M 260 240 L 340 160 M 380 240 L 460 160 M 500 240 L 570 175 M 260 240 L 340 320 M 380 240 L 460 320 M 500 240 L 570 305" stroke="#86efac" stroke-width="2.5" fill="none" opacity="0.75" stroke-linecap="round" />
   </g>
 

@@ -561,9 +561,9 @@
   </footer>
 
   <!-- Modular Scripts with Cache-Busting Version -->
-  <script src="./ast-phet-bridge.js?v=2.5.2"></script>
-  <script src="./ast-scenes.js?v=2.5.2"></script>
-  <script src="./ast-engine.js?v=2.5.2"></script>
+  <script src="./ast-phet-bridge.js?v=2.6.0"></script>
+  <script src="./ast-registry.js?v=2.6.0"></script>
+  <script src="./ast-engine.js?v=2.6.0"></script>
   <script src="./ast-compiler.js?v=2.5.2"></script>
   <script src="./obs-controller.js?v=2.5.2"></script>
   <script src="./player-ui.js?v=2.5.2"></script>
@@ -647,16 +647,14 @@
       const federatedManifest = params.get('manifest') || params.get('catalog');
       if (federatedManifest) {
         ui.populatePresets();
-      } else if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
-        const manifestUrl = basePath ? `${basePath.replace(/\/?$/, '/')}/scenes.manifest.json` : './scenes.manifest.json?v=2.5.2';
-        const fallbackUrl = basePath ? `${basePath.replace(/\/?$/, '/')}/scenes-config.json` : './scenes-config.json?v=2.5.2';
-        window.ASTSceneRegistry.loadConfig(manifestUrl).then(() => {
+      } else if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.autoDiscover === 'function') {
+        window.ASTSceneRegistry.autoDiscover(basePath || './').then(() => {
           ui.populatePresets();
         }).catch(() => {
-          window.ASTSceneRegistry.loadConfig(fallbackUrl).then(() => {
-            ui.populatePresets();
-          }).catch(() => {});
+          ui.populatePresets();
         });
+      } else {
+        ui.populatePresets();
       }
 
       // 6. Setup postMessage bridge for parent iframe communication

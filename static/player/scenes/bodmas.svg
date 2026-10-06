@@ -56,7 +56,7 @@
       ORDER OF OPERATIONS: BODMAS / BIDMAS
     </text>
     <text x="0" y="22" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#94a3b8">
-      The Mathematical Physics of Operator Precedence &bull; Grouping Before Loose Units
+      The Mathematical Physics of Operator Precedence • Grouping Before Loose Units
     </text>
   </g>
 
@@ -88,7 +88,7 @@
       <!-- Expression 3 x 4 -->
       <g id="bodmas-expr-3x4" transform="translate(130, 42)">
         <text font-family="system-ui, monospace" font-size="42" font-weight="900" fill="#38bdf8" text-anchor="middle">
-          3 &times; 4
+          3 × 4
         </text>
       </g>
 
@@ -101,7 +101,7 @@
 
       <!-- Forcefield Clamp Label -->
       <text id="bodmas-clamp-label" x="130" y="58" font-family="system-ui, sans-serif" font-size="9" font-weight="800" fill="#06b6d4" letter-spacing="1" text-anchor="middle">
-        &diams; HIGH-VOLTAGE MULTIPLICATION CLAMP &diams;
+        ♦ HIGH-VOLTAGE MULTIPLICATION CLAMP ♦
       </text>
     </g>
 
@@ -145,7 +145,7 @@
     <g id="bodmas-area-group" transform="translate(240, 10)">
       <rect width="250" height="190" rx="14" fill="rgba(30, 41, 59, 0.5)" stroke="#1e3a8a" stroke-width="1.5" />
       <text x="125" y="24" font-family="system-ui, sans-serif" font-size="12" font-weight="800" fill="#38bdf8" text-anchor="middle">
-        3 Rows &times; 4 Columns = 12 Tiles
+        3 Rows × 4 Columns = 12 Tiles
       </text>
 
       <!-- 12 Tiles Grid (3 x 4) -->
@@ -186,7 +186,7 @@
           5 + 3 = 8
         </text>
         <text x="100" y="82" font-family="system-ui, monospace" font-size="16" font-weight="800" fill="#fca5a5" text-anchor="middle">
-          8 &times; 4 = 32 ❌
+          8 × 4 = 32 ❌
         </text>
         <text x="100" y="118" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#fecaca" text-anchor="middle">
           Turning 3 groups into 8
@@ -206,7 +206,7 @@
           ✅ THE MATHEMATICAL PROOF
         </text>
         <text x="100" y="60" font-family="system-ui, monospace" font-size="15" font-weight="800" fill="#bbf7d0" text-anchor="middle">
-          Clamp 3 &times; 4 = 12
+          Clamp 3 × 4 = 12
         </text>
         <text x="100" y="88" font-family="system-ui, monospace" font-size="15" font-weight="800" fill="#bbf7d0" text-anchor="middle">
           Add 5 + 12 = 17

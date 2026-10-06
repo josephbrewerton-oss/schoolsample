@@ -40,7 +40,7 @@
     </pattern>
   </defs>
 
-  <!-- Ambient Backdrop & Geometry Grid -->
+  <!-- Ambient Backdrop &amp; Geometry Grid -->
   <rect width="800" height="480" fill="url(#pyth-bg-glow)" />
   <rect width="800" height="480" fill="url(#pyth-grid)" />
 
@@ -98,7 +98,7 @@
   <text x="420" y="302" fill="#60a5fa" font-size="14" font-weight="700" text-anchor="middle">b = 4</text>
   <text x="435" y="225" fill="#fbbf24" font-size="15" font-weight="800">c = 5</text>
 
-  <!-- Triangle Vertices & Draggable Handles -->
+  <!-- Triangle Vertices &amp; Draggable Handles -->
   <circle cx="360" cy="280" r="4.5" fill="#38bdf8" />
   <g id="pyth-handle-a" data-draggable="pyth-handle-a" data-pedagogical="pyth-handle-a" transform="translate(360, 190)" style="cursor:ns-resize;">
     <circle r="34" fill="transparent" pointer-events="all" />
