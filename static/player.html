@@ -306,6 +306,7 @@
   <script src="./player/ast-registry.js"></script>
   <script src="./player/ast-engine.js"></script>
   <script src="./player/player-ui.js"></script>
+  <script src="./player/ast-gestures.js"></script>
   <script>
     (function () {
       'use strict';
@@ -317,15 +318,27 @@
       const autoplay = params.get('autoplay') === '1' || params.get('play') === '1';
       const theme = params.get('theme') || 'dark';
 
+      const stageSvg = document.getElementById('stage-svg');
+      const stageRoot = document.getElementById('scene-root');
+
       // 1. Initialize Engine
       const engine = new window.ASTVectorPlayerEngine({
         preset: preset,
         lang: lang,
         speed: speed,
         autoplay: autoplay,
+        container: stageRoot,
       });
 
-      // 2. Initialize UI Controller
+      // 2. Initialize Direct In-Stage Gesture & Manipulation Subsystem
+      let gestures = null;
+      if (window.ASTDirectGestureSubsystem) {
+        gestures = new window.ASTDirectGestureSubsystem(engine);
+        gestures.init(stageSvg, stageRoot);
+        window.__astGestures = gestures;
+      }
+
+      // 3. Initialize UI Controller
       const ui = new window.ASTPlayerUI(engine);
       ui.setTheme(theme);
       window.AST_ENGINE = engine;

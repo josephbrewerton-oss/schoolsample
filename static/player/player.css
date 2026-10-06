@@ -389,14 +389,23 @@ main {
   color: #38bdf8;
 }
 
-/* Bottom Player Chrome: Permanently Retired for Clean Edge-to-Edge Instrument */
-footer, #legacy-player-footer {
-  display: none !important;
+/* Bottom Player Chrome & Transport Bar */
+footer, #player-footer, #legacy-player-footer {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 6px 14px 8px 14px;
+  gap: 6px;
+  z-index: 20;
 }
 
 /* Scrubber Row */
 .scrubber-container {
-  display: none !important;
+  display: block;
+  width: 100%;
+  padding: 4px 0 2px 0;
+  cursor: pointer;
 }
 
 /* Ambient 2.5px Narrative Hairline (Edge-to-Edge, Zero-Height Clutter) */

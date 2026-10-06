@@ -2,6 +2,14 @@
   (:vars (
     (:var :name "xVal" :val 5.0 :min 1.0 :max 10.0 :step 1.0 :label "Unknown Weight (x)")
   ))
+  (:inputs (
+    (:slider :var "xVal" :label "Unknown Weight (x)" :min 1.0 :max 10.0 :step 1.0)
+  ))
+  (:gestures (
+    (:draggable :target "#balance-beam" :axis "y" :min -30 :max 30)
+    (:draggable :target "#left-pan-weights" :axis "y" :min 200 :max 380)
+    (:draggable :target "#right-pan-weights" :axis "y" :min 200 :max 380)
+  ))
   (:subtitles (
     (:start 0.00 :end 3.50 :en "An equation is a physical balance scale! 2 unknown 'x' boxes plus 5 unit weights balance 15 weights." :es "¡Una ecuación es una balanza física! 2 cajas 'x' más 5 unidades equilibran 15 unidades.")
     (:start 3.50 :end 7.00 :en "To solve for x, whatever you do to one side, you MUST do to the other. Subtract 5 from both pans!" :es "Para despejar x, lo que hagas a un lado, ¡DEBES hacerlo al otro! Resta 5 de ambos lados.")

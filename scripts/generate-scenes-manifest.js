@@ -170,4 +170,16 @@ export interface ScenePresetOption {
   stage: string;
 }
 
-export const PRESET_OPTIONS: ScenePresetOption[] = ${JSON.stringify(presetEntries, null, 2)}
+export const PRESET_OPTIONS: ScenePresetOption[] = ${JSON.stringify(presetEntries, null, 2)};
+`;
+
+  fs.writeFileSync(tsExportPath, tsContent, 'utf8');
+  console.log(`[Manifest Generator] Successfully wrote ${presetEntries.length} typed presets to ${tsExportPath}`);
+
+  return output;
+}
+
+// Run when executed directly
+if (process.argv[1] && process.argv[1].endsWith('generate-scenes-manifest.js')) {
+  generateScenesManifest();
+}

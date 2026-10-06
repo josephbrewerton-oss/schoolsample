@@ -536,10 +536,22 @@
       if (!scene || !scene.interactive || !Array.isArray(scene.interactive.checkpoints)) return;
 
       const curT = this.engine.progress;
+      const prevT = this._lastCheckedT !== undefined ? this._lastCheckedT : curT;
+      this._lastCheckedT = curT;
+
+      // Rewind detection: allow re-taking checkpoints when seeking backwards
+      if (curT < prevT - 0.05) {
+        scene.interactive.checkpoints.forEach((cp, idx) => {
+          if (cp.t > curT) this.completedCheckpoints.delete(idx);
+        });
+      }
+
       scene.interactive.checkpoints.forEach((cp, idx) => {
         if (!this.completedCheckpoints.has(idx)) {
-          // If within 0.015 of the trigger point
-          if (Math.abs(curT - cp.t) < 0.015) {
+          // If playback crossed checkpoint or is within 0.018 of trigger point
+          const justCrossed = curT >= cp.t && prevT <= cp.t && (curT - prevT) < 0.15;
+          const isNear = Math.abs(curT - cp.t) < 0.018;
+          if (justCrossed || isNear) {
             this.triggerCheckpoint(cp, idx);
           }
         }

@@ -1875,18 +1875,25 @@
 
       // Checkpoints (Interactive Formative Assessment)
       const checkpoints = [];
-      const cpBlocks = extractSexprBlocks(astContent, ':checkpoints');
-      if (cpBlocks.length > 0) {
-        const cpEntryBlocks = extractSexprBlocks(cpBlocks[0], ':t');
-        cpEntryBlocks.forEach(cpText => {
-          const tMatch = cpText.match(/:t\s+([\d\.]+)/i);
-          const cpTitle = extractSlot.call(null, cpText, /:title\s+"([^"]+)"/i) || 'Checkpoint';
-          const prompt = extractSlot.call(null, cpText, /:prompt\s+"([^"]+)"/i) || '';
-          const ansMatch = cpText.match(/:answer\s+(\d+)/i);
-          const explanation = extractSlot.call(null, cpText, /:explanation\s+"([^"]+)"/i) || '';
+      const cpEntryBlocks = extractSexprBlocks(astContent, ':checkpoint');
+      cpEntryBlocks.forEach(cpText => {
+        const tMatch = cpText.match(/:t\s+([\d\.]+)/i);
+        const cpTitle = extractSlot.call(null, cpText, /:title\s+"([^"]+)"/i) || 'Checkpoint';
+        const prompt = extractSlot.call(null, cpText, /:prompt\s+"([^"]+)"/i) || '';
+        const ansMatch = cpText.match(/:answer\s+(\d+)/i);
+        const explanation = extractSlot.call(null, cpText, /:explanation\s+"([^"]+)"/i) || '';
 
+        const options = [];
+        // Support both (:options ("opt1" ...)) and :options ("opt1" ...)
+        const optMatch = cpText.match(/:options\s*\(([\s\S]*?)\)/i);
+        if (optMatch) {
+          const optRegex = /"([^"]+)"/g;
+          let om;
+          while ((om = optRegex.exec(optMatch[1])) !== null) {
+            options.push(om[1]);
+          }
+        } else {
           const optBlocks = extractSexprBlocks(cpText, ':options');
-          const options = [];
           if (optBlocks.length > 0) {
             const optRegex = /"([^"]+)"/g;
             let om;
@@ -1894,19 +1901,19 @@
               options.push(om[1]);
             }
           }
+        }
 
-          if (tMatch && prompt) {
-            checkpoints.push({
-              t: parseFloat(tMatch[1]),
-              title: cpTitle,
-              prompt: prompt,
-              options: options.length > 0 ? options : ['Correct', 'Incorrect'],
-              answer: ansMatch ? parseInt(ansMatch[1], 10) : 0,
-              explanation: explanation
-            });
-          }
-        });
-      }
+        if (tMatch && prompt) {
+          checkpoints.push({
+            t: parseFloat(tMatch[1]),
+            title: cpTitle,
+            prompt: prompt,
+            options: options.length > 0 ? options : ['Correct', 'Incorrect'],
+            answer: ansMatch ? parseInt(ansMatch[1], 10) : 0,
+            explanation: explanation
+          });
+        }
+      });
 
       // Micro-physics block parsing (:physics (:gravity 980 ...) (:body ...))
       const physicsBlocks = extractSexprBlocks(astContent, ':physics');
@@ -1976,16 +1983,28 @@
       const inputs = [];
       const inBlocks = extractSexprBlocks(astContent, ':inputs');
       if (inBlocks.length > 0) {
-        const inEntries = extractSexprBlocks(inBlocks[0], ':');
+        const blockText = inBlocks[0];
+        const inEntries = extractSexprBlocks(blockText, ':slider')
+          .concat(extractSexprBlocks(blockText, ':toggle'))
+          .concat(extractSexprBlocks(blockText, ':stepper'))
+          .concat(extractSexprBlocks(blockText, ':select'))
+          .concat(extractSexprBlocks(blockText, ':button'));
+
         inEntries.forEach(inText => {
           const typeMatch = inText.match(/^\(:([a-z0-9\-]+)/i);
           const vName = extractSlot.call(null, inText, /:var\s+"([^"]+)"/i) || extractSlot.call(null, inText, /:var\s+([^\s\)]+)/i);
           const inLabel = extractSlot.call(null, inText, /:label\s+"([^"]+)"/i) || vName;
+          const min = parseFloat(extractSlot.call(null, inText, /:min\s+([\d\.\-]+)/i) || '0');
+          const max = parseFloat(extractSlot.call(null, inText, /:max\s+([\d\.\-]+)/i) || '100');
+          const step = parseFloat(extractSlot.call(null, inText, /:step\s+([\d\.]+)/i) || '1');
           if (typeMatch && vName) {
             inputs.push({
               type: typeMatch[1],
               var: vName,
-              label: inLabel
+              label: inLabel,
+              min,
+              max,
+              step
             });
           }
         });
@@ -2001,6 +2020,48 @@
           const expr = extractSlot.call(null, cText, /:expr\s+"([^"]+)"/i);
           if (name && expr) {
             computed.push({ name, expr });
+          }
+        });
+      }
+
+      // Direct Manipulation Gestures (:gestures ((:draggable :target "#..." :axis "x" ...) (:interactive :target "#..." :action "...")))
+      const gestures = [];
+      const gestureBlocks = extractSexprBlocks(astContent, ':gestures');
+      if (gestureBlocks.length > 0) {
+        const gBlock = gestureBlocks[0];
+        const gEntries = extractSexprBlocks(gBlock, ':draggable')
+          .concat(extractSexprBlocks(gBlock, ':interactive'))
+          .concat(extractSexprBlocks(gBlock, ':rotatable'));
+
+        gEntries.forEach(gText => {
+          if (gText.startsWith('(:interactive (') || gText.startsWith('(:interactive\n')) return;
+          const isDraggable = gText.startsWith('(:draggable');
+          const isRotatable = gText.startsWith('(:rotatable');
+          const target = extractSlot.call(null, gText, /:target\s+"([^"]+)"/i) || extractSlot.call(null, gText, /:target\s+([^\s\)]+)/i);
+          const axis = extractSlot.call(null, gText, /:axis\s+"([^"]+)"/i) || 'xy';
+          const action = extractSlot.call(null, gText, /:action\s+"([^"]+)"/i);
+          const min = parseFloat(extractSlot.call(null, gText, /:min\s+([\d\.\-]+)/i) || '0');
+          const max = parseFloat(extractSlot.call(null, gText, /:max\s+([\d\.\-]+)/i) || '800');
+          const minX = parseFloat(extractSlot.call(null, gText, /:min-x\s+([\d\.\-]+)/i) || String(min));
+          const maxX = parseFloat(extractSlot.call(null, gText, /:max-x\s+([\d\.\-]+)/i) || String(max));
+          const minY = parseFloat(extractSlot.call(null, gText, /:min-y\s+([\d\.\-]+)/i) || String(min));
+          const maxY = parseFloat(extractSlot.call(null, gText, /:max-y\s+([\d\.\-]+)/i) || String(max));
+          const varName = extractSlot.call(null, gText, /:var\s+"([^"]+)"/i);
+
+          if (target) {
+            gestures.push({
+              type: isDraggable ? 'draggable' : (isRotatable ? 'rotatable' : 'interactive'),
+              target,
+              axis,
+              action,
+              min,
+              max,
+              minX,
+              maxX,
+              minY,
+              maxY,
+              var: varName
+            });
           }
         });
       }
@@ -2062,6 +2123,7 @@
         computed,
         staticElements,
         actors,
+        gestures,
         interactive: checkpoints.length > 0 ? { checkpoints, hotspots: [] } : null
       };
     }
@@ -2173,14 +2235,21 @@
           duration: (parsedAst && parsedAst.duration) || registryScene.duration || 10.0,
           camera: has3D ? ((parsedAst && parsedAst.camera) || registryScene.camera || { distance: 500, pitch: 20, yaw: 0, fov: 60 }) : null,
           has3D: has3D,
-          interactive: registryScene.interactive || (parsedAst && parsedAst.interactive) || null,
+          interactive: (parsedAst && parsedAst.interactive) || registryScene.interactive || (parsedAst && parsedAst.checkpoints && parsedAst.checkpoints.length ? { checkpoints: parsedAst.checkpoints, hotspots: [] } : null),
           keyframes: (parsedAst && parsedAst.keyframes && parsedAst.keyframes.length) ? parsedAst.keyframes : (registryScene.keyframes || []),
           subtitles: (parsedAst && parsedAst.subtitles && parsedAst.subtitles.length) ? parsedAst.subtitles : (registryScene.subtitles || []),
           rawBindings: (parsedAst && parsedAst.bindings) || [],
           svgText: svgText,
           mount: registryScene.mount,
           update: registryScene.update,
-          render: registryScene.render
+          render: registryScene.render,
+          vars: (parsedAst && parsedAst.vars) || registryScene.vars || {},
+          inputs: (parsedAst && parsedAst.inputs) || registryScene.inputs || [],
+          computed: (parsedAst && parsedAst.computed) || registryScene.computed || [],
+          gestures: (parsedAst && parsedAst.gestures) || registryScene.gestures || [],
+          physics: (parsedAst && parsedAst.physics) || registryScene.physics || null,
+          actors: (parsedAst && parsedAst.actors) || registryScene.actors || [],
+          staticElements: (parsedAst && parsedAst.staticElements) || registryScene.staticElements || []
         };
 
         this.sceneCache[presetId] = scene;
@@ -2207,6 +2276,7 @@
       if (this.container) {
         this.mountSceneAsset(scene, this.container);
       }
+      this.resetVars();
 
       this.emit('presetchange', {
         preset: this.activePresetId,
@@ -2215,6 +2285,7 @@
         duration: this.durationSec,
         has3D: this.has3D(),
         hasInteractive: Boolean(this.scene && this.scene.interactive && this.scene.interactive.checkpoints && this.scene.interactive.checkpoints.length),
+        interactive: this.scene.interactive,
         camera: this.scene.camera,
         keyframes: this.scene.keyframes || []
       });
@@ -2925,13 +2996,12 @@
             }
           });
         } else {
-          // Automatic inference: any top-level group or element with NO dynamic children gets static containment
+          // Automatic inference: top-level groups get layout containment without blocking user pointer events
           const directChildren = Array.from(container.children || []);
           directChildren.forEach(child => {
             if (child.id === 'annotation-ink-root' || child.id === 'dev-overlay-root') return;
             const containsDynamic = Array.from(dynamicTargets).some(dt => child.contains(dt));
             if (!containsDynamic && child.style) {
-              child.style.pointerEvents = 'none';
               child.style.contain = 'paint layout';
               child.setAttribute('data-static', 'true');
             }
@@ -4137,6 +4207,37 @@
         case 'SET_PRESET':
           if (data.preset) {
             engine.loadScene(data.preset, data.play !== false);
+          }
+          break;
+        case 'STEP_NEXT_KEYFRAME':
+        case 'NEXT_SLIDE':
+          if (uiController && typeof uiController.stepToNextKeyframe === 'function') {
+            uiController.stepToNextKeyframe();
+          } else {
+            engine.step(0.05);
+          }
+          break;
+        case 'STEP_PREV_KEYFRAME':
+        case 'PREV_SLIDE':
+          if (uiController && typeof uiController.stepToPrevKeyframe === 'function') {
+            uiController.stepToPrevKeyframe();
+          } else {
+            engine.step(-0.05);
+          }
+          break;
+        case 'STEP_TO_KEYFRAME':
+        case 'GOTO_SLIDE':
+          if (typeof data.progress === 'number') {
+            engine.seek(data.progress);
+            if (uiController && typeof uiController.onStopReached === 'function') {
+              uiController.onStopReached(data.progress);
+            }
+          }
+          break;
+        case 'TRIGGER_CHECKPOINT':
+        case 'TAKE_QUIZ':
+          if (uiController && typeof uiController.triggerFirstCheckpoint === 'function') {
+            uiController.triggerFirstCheckpoint();
           }
           break;
         case 'SET_THEME':
