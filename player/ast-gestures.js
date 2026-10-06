@@ -1430,8 +1430,8 @@
     // =========================================================================
     renderPythagorasGeometry(a, b) {
       if (!this.stageSvg) return;
-      const clampedA = Math.max(1, Math.min(8, Math.round(a || 3)));
-      const clampedB = Math.max(1, Math.min(8, Math.round(b || 4)));
+      const clampedA = Math.max(1, Math.min(10, Math.round(a || 3)));
+      const clampedB = Math.max(1, Math.min(10, Math.round(b || 4)));
       this._pythState = { a: clampedA, b: clampedB };
 
       const originX = 360;
@@ -1443,15 +1443,16 @@
       const vertBx = originX + clampedB * s;
       const vertBy = originY;
 
-      // Triangle polygon
+      // 1. Triangle polygon
       const tri = this.stageSvg.querySelector('#pyth-triangle') || this.stageSvg.querySelector('polygon[filter*="pyth-glow"]');
       if (tri) {
         tri.setAttribute('points', `${originX},${originY} ${vertBx},${vertBy} ${vertAx},${vertAy}`);
       }
 
-      // Square A (extends left from vertical leg)
+      // 2. Square A (extends left from vertical leg)
       const rectA = this.stageSvg.querySelector('#pyth-rect-a');
       const txtA = this.stageSvg.querySelector('#pyth-txt-a');
+      const gridA = this.stageSvg.querySelector('#pyth-grid-a');
       if (rectA) {
         rectA.setAttribute('x', String(originX - clampedA * s));
         rectA.setAttribute('y', String(vertAy));
@@ -1465,10 +1466,21 @@
         txtA.textContent = `a² = ${clampedA * clampedA}`;
         txtA.setAttribute('opacity', '1');
       }
+      if (gridA) {
+        let linesA = '';
+        for (let i = 1; i < clampedA; i++) {
+          const lx = originX - clampedA * s + i * s;
+          const ly = vertAy + i * s;
+          linesA += `<line x1="${lx}" y1="${vertAy}" x2="${lx}" y2="${originY}" />`;
+          linesA += `<line x1="${originX - clampedA * s}" y1="${ly}" x2="${originX}" y2="${ly}" />`;
+        }
+        gridA.innerHTML = linesA;
+      }
 
-      // Square B (extends down from horizontal leg)
+      // 3. Square B (extends down from horizontal leg)
       const rectB = this.stageSvg.querySelector('#pyth-rect-b');
       const txtB = this.stageSvg.querySelector('#pyth-txt-b');
+      const gridB = this.stageSvg.querySelector('#pyth-grid-b');
       if (rectB) {
         rectB.setAttribute('x', String(originX));
         rectB.setAttribute('y', String(originY));
@@ -1482,14 +1494,25 @@
         txtB.textContent = `b² = ${clampedB * clampedB}`;
         txtB.setAttribute('opacity', '1');
       }
+      if (gridB) {
+        let linesB = '';
+        for (let i = 1; i < clampedB; i++) {
+          const lx = originX + i * s;
+          const ly = originY + i * s;
+          linesB += `<line x1="${lx}" y1="${originY}" x2="${lx}" y2="${originY + clampedB * s}" />`;
+          linesB += `<line x1="${originX}" y1="${ly}" x2="${originX + clampedB * s}" y2="${ly}" />`;
+        }
+        gridB.innerHTML = linesB;
+      }
 
-      // Square C on hypotenuse
+      // 4. Square C on hypotenuse
       const c = Math.sqrt(clampedA * clampedA + clampedB * clampedB);
       const angleRad = Math.atan2(clampedA, clampedB);
       const angleDeg = (-angleRad * 180) / Math.PI;
       const groupC = this.stageSvg.querySelector('#pyth-group-c');
       const rectC = this.stageSvg.querySelector('#pyth-rect-c');
       const txtC = this.stageSvg.querySelector('#pyth-txt-c');
+      const gridC = this.stageSvg.querySelector('#pyth-grid-c');
       const cPx = c * s;
 
       if (groupC) {
@@ -1509,8 +1532,19 @@
         txtC.textContent = `c² = ${Math.round(c * c)} (c = ${cText})`;
         txtC.setAttribute('opacity', '1');
       }
+      if (gridC) {
+        let linesC = '';
+        const cSteps = Math.min(10, Math.max(1, Math.round(c)));
+        const stepSize = cPx / cSteps;
+        for (let i = 1; i < cSteps; i++) {
+          const pos = i * stepSize;
+          linesC += `<line x1="${pos.toFixed(1)}" y1="${(-cPx).toFixed(1)}" x2="${pos.toFixed(1)}" y2="0" />`;
+          linesC += `<line x1="0" y1="${(-cPx + pos).toFixed(1)}" x2="${cPx.toFixed(1)}" y2="${(-cPx + pos).toFixed(1)}" />`;
+        }
+        gridC.innerHTML = linesC;
+      }
 
-      // Handles
+      // 5. Handles
       const handleA = this.stageSvg.querySelector('#pyth-handle-a');
       const handleB = this.stageSvg.querySelector('#pyth-handle-b');
       if (handleA) {
@@ -1520,7 +1554,7 @@
         handleB.setAttribute('transform', `translate(${vertBx}, ${vertBy})`);
       }
 
-      // Side labels
+      // 6. Side labels
       const sideTexts = this.stageSvg.querySelectorAll('text');
       sideTexts.forEach(tNode => {
         const text = (tNode.textContent || '').trim();
@@ -1537,17 +1571,28 @@
         }
       });
 
-      // Banner formula text
+      // 7. Banner formula text
       const banner = this.stageSvg.querySelector('tspan');
       if (banner && banner.parentNode) {
         const cStr = Math.abs(c - Math.round(c)) < 0.001 ? String(Math.round(c)) : c.toFixed(2);
         banner.parentNode.innerHTML = `<tspan fill="#34d399">a² (${clampedA * clampedA})</tspan> + <tspan fill="#60a5fa">b² (${clampedB * clampedB})</tspan> = <tspan fill="#fbbf24">c² (${Math.round(c * c)})</tspan> ➔ ${clampedA}² + ${clampedB}² = ${cStr}²`;
       }
 
+      // 8. Sync state & engine variables
       if (this.engine && typeof this.engine.setVar === 'function') {
         this.engine.setVar('sideA', clampedA);
         this.engine.setVar('sideB', clampedB);
       }
+
+      // 9. Two-way sync to parameters HUD inputs
+      const numA = document.querySelector('.sim-param-num-input[data-var="sideA"]');
+      const numB = document.querySelector('.sim-param-num-input[data-var="sideB"]');
+      const sliderA = document.querySelector('.sim-param-slider[data-var="sideA"]');
+      const sliderB = document.querySelector('.sim-param-slider[data-var="sideB"]');
+      if (numA && Number(numA.value) !== clampedA) numA.value = clampedA;
+      if (numB && Number(numB.value) !== clampedB) numB.value = clampedB;
+      if (sliderA && Number(sliderA.value) !== clampedA) sliderA.value = clampedA;
+      if (sliderB && Number(sliderB.value) !== clampedB) sliderB.value = clampedB;
     }
 
     // =========================================================================
@@ -1642,7 +1687,38 @@
       for (let i = 0; i < 12; i++) {
         const id = `fish-${i + 1}`;
         let el = fishGroup.querySelector(`#${id}`);
-        if (!el) continue;
+        if (!el) {
+          const color = extraColors[i % extraColors.length];
+          el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          el.id = id;
+          el.style.cursor = 'pointer';
+          const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+          ellipse.setAttribute('cx', '0');
+          ellipse.setAttribute('cy', '0');
+          ellipse.setAttribute('rx', '24');
+          ellipse.setAttribute('ry', '14');
+          ellipse.setAttribute('fill', color);
+          ellipse.setAttribute('stroke', '#ffffff');
+          ellipse.setAttribute('stroke-width', '1.5');
+          const tail = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          tail.setAttribute('points', '-22,0 -36,-12 -36,12');
+          tail.setAttribute('fill', color);
+          const eye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          eye.setAttribute('cx', '14');
+          eye.setAttribute('cy', '-4');
+          eye.setAttribute('r', '3.5');
+          eye.setAttribute('fill', '#ffffff');
+          const pupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          pupil.setAttribute('cx', '15.5');
+          pupil.setAttribute('cy', '-4');
+          pupil.setAttribute('r', '1.8');
+          pupil.setAttribute('fill', '#000000');
+          el.appendChild(tail);
+          el.appendChild(ellipse);
+          el.appendChild(eye);
+          el.appendChild(pupil);
+          fishGroup.appendChild(el);
+        }
 
         el.style.cursor = 'pointer';
         el.setAttribute('data-pedagogical', 'aquarium-fish');
@@ -1762,7 +1838,21 @@
       let currentFps = 60.0;
 
       const tickBoids = (now) => {
-        if (!this.stageSvg || !this.stageSvg.contains(fishGroup)) return;
+        if (!this.stageSvg || !this.stageSvg.isConnected) return;
+
+        let curFishGroup = this.stageSvg.querySelector('#fish-school-group');
+        if (!curFishGroup) {
+          this._boidAnimId = requestAnimationFrame(tickBoids);
+          return;
+        }
+
+        // Reconnect boid element references if SVG was hot-reloaded or replaced
+        if (boids.length > 0 && (!boids[0].el || !curFishGroup.contains(boids[0].el))) {
+          for (let bIdx = 0; bIdx < boids.length; bIdx++) {
+            const reEl = curFishGroup.querySelector('#' + boids[bIdx].id);
+            if (reEl) boids[bIdx].el = reEl;
+          }
+        }
 
         const dt = Math.min((now - lastTickTime) / 1000, 0.05);
         lastTickTime = now;
@@ -2113,31 +2203,90 @@
         const unit = inp.unit || '';
         html += `
           <div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:600; color:#cbd5e1;">${inp.label || vName}</span>
-              <span id="param-badge-${vName}" style="font-family:ui-monospace, monospace; font-size:11px; font-weight:700; color:#38bdf8; background:rgba(56,189,248,0.14); padding:1px 6px; border-radius:4px;">${curVal}${unit ? ' ' + unit : ''}</span>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="number" min="${inp.min}" max="${inp.max}" step="${inp.step || 1}" value="${curVal}" data-var="${vName}" data-unit="${unit}" class="sim-param-num-input" style="width:48px; background:rgba(0,0,0,0.5); border:1px solid rgba(56,189,248,0.4); border-radius:4px; color:#38bdf8; font-family:ui-monospace, monospace; font-size:11px; font-weight:700; text-align:center; padding:1px 2px;" title="Type custom figure" />
+                ${unit ? `<span style="font-size:10px; color:#94a3b8;">${unit}</span>` : ''}
+              </div>
             </div>
             <input type="range" min="${inp.min}" max="${inp.max}" step="${inp.step}" value="${curVal}" data-var="${vName}" data-unit="${unit}" class="sim-param-slider" style="width:100%; accent-color:#38bdf8; cursor:pointer; height:6px; margin:0; display:block;" />
           </div>
         `;
       });
 
+      // Special pedagogical dock for Pythagoras: Quick Integer Triples
+      if (this.engine.scene && this.engine.scene.id === 'pythagoras') {
+        html += `
+          <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.12);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+              <span style="font-size:10px; font-weight:800; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px;">📐 Integer Triples</span>
+              <span style="font-size:9px; color:#94a3b8;">a² + b² = c²</span>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:4px;">
+              <button type="button" class="pyth-triple-chip" data-a="3" data-b="4" style="background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:5px; color:#f8fafc; font-size:10px; font-weight:700; padding:4px 2px; cursor:pointer; text-align:center;">3 - 4 - 5</button>
+              <button type="button" class="pyth-triple-chip" data-a="5" data-b="12" style="background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:5px; color:#f8fafc; font-size:10px; font-weight:700; padding:4px 2px; cursor:pointer; text-align:center;">5 - 12 - 13</button>
+              <button type="button" class="pyth-triple-chip" data-a="6" data-b="8" style="background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:5px; color:#f8fafc; font-size:10px; font-weight:700; padding:4px 2px; cursor:pointer; text-align:center;">6 - 8 - 10</button>
+              <button type="button" class="pyth-triple-chip" data-a="8" data-b="15" style="background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:5px; color:#f8fafc; font-size:10px; font-weight:700; padding:4px 2px; cursor:pointer; text-align:center;">8 - 15 - 17</button>
+              <button type="button" class="pyth-triple-chip" data-a="1" data-b="1" style="background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:5px; color:#f8fafc; font-size:10px; font-weight:700; padding:4px 2px; cursor:pointer; text-align:center;">1 - 1 - √2</button>
+              <button type="button" class="pyth-triple-chip" data-a="7" data-b="24" style="background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:5px; color:#f8fafc; font-size:10px; font-weight:700; padding:4px 2px; cursor:pointer; text-align:center;">7 - 24 - 25</button>
+            </div>
+          </div>
+        `;
+      }
+
       html += `</div>`;
       hud.innerHTML = html;
 
-      // Event listeners
+      // Event listeners for Sliders & Number inputs
+      const applyVal = (vName, val) => {
+        if (this.engine && typeof this.engine.setVar === 'function') {
+          this.engine.setVar(vName, val);
+        }
+        const s = hud.querySelector(`.sim-param-slider[data-var="${vName}"]`);
+        const num = hud.querySelector(`.sim-param-num-input[data-var="${vName}"]`);
+        if (s && Number(s.value) !== val) s.value = val;
+        if (num && Number(num.value) !== val) num.value = val;
+
+        if (this.engine.scene && this.engine.scene.id === 'pythagoras') {
+          const curVars = this.engine.vars || {};
+          const newA = vName === 'sideA' ? val : (curVars.sideA || 3);
+          const newB = vName === 'sideB' ? val : (curVars.sideB || 4);
+          this.renderPythagorasGeometry(newA, newB);
+        }
+      };
+
       const sliders = hud.querySelectorAll('.sim-param-slider');
       sliders.forEach(slider => {
         slider.addEventListener('input', (e) => {
           const vName = e.target.getAttribute('data-var');
-          const unit = e.target.getAttribute('data-unit') || '';
           const val = parseFloat(e.target.value);
-          if (this.engine && typeof this.engine.setVar === 'function') {
-            this.engine.setVar(vName, val);
-          }
-          const badge = hud.querySelector(\`#param-badge-\${vName}\`);
-          if (badge) badge.textContent = \`\${val}\${unit ? ' ' + unit : ''}\`;
+          applyVal(vName, val);
           this.playAudioTone(400 + val * 10, 'sine', 0.02, 0.05);
+        });
+      });
+
+      const numInputs = hud.querySelectorAll('.sim-param-num-input');
+      numInputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+          const vName = e.target.getAttribute('data-var');
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val)) {
+            applyVal(vName, val);
+            this.playAudioTone(440 + val * 12, 'triangle', 0.03, 0.08);
+          }
+        });
+      });
+
+      // Quick integer triple chips
+      const tripleChips = hud.querySelectorAll('.pyth-triple-chip');
+      tripleChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          const aVal = parseFloat(chip.getAttribute('data-a'));
+          const bVal = parseFloat(chip.getAttribute('data-b'));
+          applyVal('sideA', aVal);
+          applyVal('sideB', bVal);
+          this.playAudioTone(587.33, 'triangle', 0.08, 0.2);
         });
       });
 
@@ -2165,20 +2314,26 @@
         this._varChangeBound = true;
         this.engine.on('varchange', (data) => {
           const curHud = container.querySelector('#stage-sim-parameters');
-          if (!curHud || curHud.style.display === 'none') return;
-          const sList = curHud.querySelectorAll('.sim-param-slider');
-          sList.forEach(s => {
-            const vName = s.getAttribute('data-var');
-            const unit = s.getAttribute('data-unit') || '';
-            if (data.name === '*' || data.name === vName) {
-              const val = (data.vars && data.vars[vName] !== undefined) ? data.vars[vName] : data.value;
-              if (val !== undefined && Number(s.value) !== Number(val)) {
-                s.value = val;
-                const badge = curHud.querySelector(\`#param-badge-\${vName}\`);
-                if (badge) badge.textContent = \`\${val}\${unit ? ' ' + unit : ''}\`;
+          if (curHud && curHud.style.display !== 'none') {
+            const sList = curHud.querySelectorAll('.sim-param-slider');
+            sList.forEach(s => {
+              const vName = s.getAttribute('data-var');
+              if (data.name === '*' || data.name === vName) {
+                const val = (data.vars && data.vars[vName] !== undefined) ? data.vars[vName] : data.value;
+                if (val !== undefined) {
+                  if (Number(s.value) !== Number(val)) s.value = val;
+                  const numInput = curHud.querySelector(`.sim-param-num-input[data-var="${vName}"]`);
+                  if (numInput && Number(numInput.value) !== Number(val)) numInput.value = val;
+                }
               }
-            }
-          });
+            });
+          }
+
+          if (this.engine.scene && this.engine.scene.id === 'pythagoras') {
+            const curA = this.engine.vars && this.engine.vars.sideA;
+            const curB = this.engine.vars && this.engine.vars.sideB;
+            if (curA && curB) this.renderPythagorasGeometry(curA, curB);
+          }
         });
       }
     }

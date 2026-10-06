@@ -1,6 +1,6 @@
 {
   "version": "2.6.0",
-  "generatedAt": "2026-10-06T19:15:38.082Z",
+  "generatedAt": "2026-10-06T23:22:50.298Z",
   "totalScenes": 22,
   "scenes": [
     {
@@ -105,7 +105,7 @@
       "astFile": "scenes/fish-tank.ast",
       "keyframeCount": 4,
       "subtitleCount": 3,
-      "bindingsCount": 25
+      "bindingsCount": 13
     },
     {
       "id": "fractions",
@@ -222,7 +222,7 @@
       "astFile": "scenes/pythagoras.ast",
       "keyframeCount": 4,
       "subtitleCount": 3,
-      "bindingsCount": 7
+      "bindingsCount": 3
     },
     {
       "id": "shakespeare",
