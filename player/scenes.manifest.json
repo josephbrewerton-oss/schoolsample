@@ -1,6 +1,6 @@
 {
   "version": "2.6.0",
-  "generatedAt": "2026-10-06T18:30:42.974Z",
+  "generatedAt": "2026-10-06T19:15:38.082Z",
   "totalScenes": 22,
   "scenes": [
     {
@@ -105,7 +105,7 @@
       "astFile": "scenes/fish-tank.ast",
       "keyframeCount": 4,
       "subtitleCount": 3,
-      "bindingsCount": 4
+      "bindingsCount": 25
     },
     {
       "id": "fractions",

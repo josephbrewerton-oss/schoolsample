@@ -1551,60 +1551,360 @@
     }
 
     // =========================================================================
-    // Fish Tank Aquarium Boids Simulation
+    // Fish Tank Aquarium Boids Simulation (Living Reef & Hydrodynamics)
     // =========================================================================
     setupFishTankBoids() {
       const fishGroup = this.stageSvg && this.stageSvg.querySelector('#fish-school-group');
       if (!fishGroup) return;
-      fishGroup.innerHTML = '';
 
-      const count = 18;
-      const boids = [];
-      const colors = ['#f59e0b', '#38bdf8', '#34d399', '#ec4899', '#a855f7', '#fb7185'];
+      // Species metadata for pedagogical tooltips & CPA discovery
+      const speciesList = [
+        { id: 'fish-1', name: 'Clownfish', species: 'Amphiprion ocellaris', desc: 'Symbiotic anemone dweller' },
+        { id: 'fish-2', name: 'Royal Blue Tang', species: 'Paracanthurus hepatus', desc: 'Herbivorous surgeonfish' },
+        { id: 'fish-3', name: 'Yellow Tang', species: 'Zebrasoma flavescens', desc: 'Algae grazer with bright yellow disc' },
+        { id: 'fish-4', name: 'Neon Tetra', species: 'Paracheirodon innesi', desc: 'Schooling bioluminescent swimmer' },
+        { id: 'fish-5', name: 'Regal Angelfish', species: 'Pygoplites diacanthus', desc: 'Tall triangular coral browser' },
+        { id: 'fish-6', name: 'Purple Fairy Basslet', species: 'Gramma loreto', desc: 'Two-tone deep reef cave explorer' },
+        { id: 'fish-7', name: 'Baby Clownfish', species: 'Amphiprion ocellaris', desc: 'Juvenile schooling in tandem' },
+        { id: 'fish-8', name: 'Azure Damselfish', species: 'Chrysiptera hemicyanea', desc: 'Electric sapphire reef defender' },
+        { id: 'fish-9', name: 'Golden Guppy', species: 'Poecilia reticulata', desc: 'Flowing caudal fin surface cruiser' },
+        { id: 'fish-10', name: 'Neon Tetra Beta', species: 'Paracheirodon innesi', desc: 'Synchronized schooling companion' },
+        { id: 'fish-11', name: 'Turquoise Discus', species: 'Symphysodon aequifasciatus', desc: 'Majestic circular cichlid' },
+        { id: 'fish-12', name: 'Sunset Platy', species: 'Xiphophorus maculatus', desc: 'Vibrant coral orange omnivore' },
+      ];
 
-      for (let i = 0; i < count; i++) {
-        const color = colors[i % colors.length];
-        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        g.innerHTML = `
-          <ellipse cx="0" cy="0" rx="16" ry="8" fill="${color}" opacity="0.9" />
-          <polygon points="-16,0 -26,-7 -26,7" fill="${color}" opacity="0.8" />
-          <circle cx="8" cy="-2.5" r="2" fill="#ffffff" />
-          <circle cx="9" cy="-2.5" r="1" fill="#000000" />
-        `;
-        fishGroup.appendChild(g);
+      // Food Flakes Layer in Stage
+      let foodGroup = this.stageSvg.querySelector('#aquarium-food-group');
+      if (!foodGroup) {
+        foodGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        foodGroup.id = 'aquarium-food-group';
+        fishGroup.parentNode.insertBefore(foodGroup, fishGroup.nextSibling);
+      }
 
-        boids.push({
-          el: g,
-          x: 120 + Math.random() * 560,
-          y: 120 + Math.random() * 260,
-          vx: (Math.random() - 0.5) * 2.5,
-          vy: (Math.random() - 0.5) * 1.5,
-          color
+      const activeFoodFlakes = [];
+
+      // Drop food flakes function (clickable / interactive)
+      const dropFood = (x, y) => {
+        const flakeCount = 3;
+        for (let k = 0; k < flakeCount; k++) {
+          const flakeEl = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          const fx = x + (Math.random() * 24 - 12);
+          const fy = y + (Math.random() * 16 - 8);
+          flakeEl.setAttribute('cx', fx.toFixed(1));
+          flakeEl.setAttribute('cy', fy.toFixed(1));
+          flakeEl.setAttribute('r', '3');
+          flakeEl.setAttribute('fill', '#f59e0b');
+          flakeEl.setAttribute('stroke', '#b45309');
+          flakeEl.setAttribute('stroke-width', '0.75');
+          flakeEl.style.opacity = '0.9';
+          foodGroup.appendChild(flakeEl);
+
+          activeFoodFlakes.push({
+            el: flakeEl,
+            x: fx,
+            y: fy,
+            vy: 0.6 + Math.random() * 0.5,
+            vx: (Math.random() - 0.5) * 0.4,
+            life: 280
+          });
+        }
+        this.playAudioTone(720, 'sine', 0.04, 0.12);
+      };
+
+      // Listen for click on aquarium stage to feed fish
+      if (!this._fishTankClickBound) {
+        this._fishTankClickBound = true;
+        this.stageSvg.addEventListener('pointerdown', (e) => {
+          if (e.target && e.target.closest('#benchmark-hud')) return;
+          const rect = this.stageSvg.getBoundingClientRect();
+          const svgX = ((e.clientX - rect.left) / rect.width) * 800;
+          const svgY = ((e.clientY - rect.top) / rect.height) * 480;
+          if (svgY >= 60 && svgY <= 440 && svgX >= 40 && svgX <= 760) {
+            dropFood(svgX, svgY);
+          }
+        });
+        this.stageSvg.addEventListener('feed_fish', (e) => {
+          const detail = e.detail || {};
+          dropFood(detail.x || (300 + Math.random() * 200), detail.y || (100 + Math.random() * 80));
+        });
+        this.stageSvg.addEventListener('tap_glass', () => {
+          cursorX = 400;
+          cursorY = 240;
+          setTimeout(() => { cursorX = -999; cursorY = -999; }, 400);
         });
       }
 
+      // Collect existing 12 base fish elements or initialize them
+      const boids = [];
+      const extraColors = ['#f59e0b', '#38bdf8', '#34d399', '#ec4899', '#a855f7', '#fb7185', '#06b6d4', '#eab308'];
+
+      // Gather initial 12 fish
+      for (let i = 0; i < 12; i++) {
+        const id = `fish-${i + 1}`;
+        let el = fishGroup.querySelector(`#${id}`);
+        if (!el) continue;
+
+        el.style.cursor = 'pointer';
+        el.setAttribute('data-pedagogical', 'aquarium-fish');
+        const meta = speciesList[i] || { name: `Fish ${i + 1}`, species: 'Aquatic Boid', desc: 'Marine organism' };
+        el.setAttribute('title', `🐠 ${meta.name} (${meta.species})\n${meta.desc}`);
+
+        // Initial default positions across tank
+        const initX = 140 + (i % 4) * 160 + (Math.random() * 40 - 20);
+        const initY = 140 + Math.floor(i / 4) * 85 + (Math.random() * 30 - 15);
+        const speed = 1.2 + Math.random() * 1.0;
+        const dir = i % 2 === 0 ? 1 : -1;
+
+        boids.push({
+          id,
+          el,
+          x: initX,
+          y: initY,
+          vx: dir * speed,
+          vy: (Math.random() - 0.5) * 0.8,
+          targetVx: dir * speed,
+          targetVy: 0,
+          facing: dir,
+          scale: i === 6 ? 0.8 : (i === 4 || i === 10 ? 1.15 : 1.0),
+          wagPhase: Math.random() * Math.PI * 2,
+          isExtra: false
+        });
+      }
+
+      // Dynamically create extra boids if schoolSize > 12
+      const targetSize = Math.max(1, Math.min(30, (this.engine && this.engine.vars && this.engine.vars.schoolSize) || 12));
+      for (let j = 12; j < targetSize; j++) {
+        const id = `fish-${j + 1}`;
+        let el = fishGroup.querySelector(`#${id}`);
+        if (!el) {
+          const color = extraColors[(j - 12) % extraColors.length];
+          el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          el.id = id;
+          el.style.cursor = 'pointer';
+
+          const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+          ellipse.setAttribute('cx', '0');
+          ellipse.setAttribute('cy', '0');
+          ellipse.setAttribute('rx', '18');
+          ellipse.setAttribute('ry', '9');
+          ellipse.setAttribute('fill', color);
+          ellipse.setAttribute('stroke', '#ffffff');
+          ellipse.setAttribute('stroke-width', '1');
+
+          const tail = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          tail.setAttribute('points', '-18,0 -28,-8 -28,8');
+          tail.setAttribute('fill', color);
+
+          const eyeWhite = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          eyeWhite.setAttribute('cx', '11');
+          eyeWhite.setAttribute('cy', '-3');
+          eyeWhite.setAttribute('r', '2.8');
+          eyeWhite.setAttribute('fill', '#ffffff');
+
+          const eyePupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          eyePupil.setAttribute('cx', '12');
+          eyePupil.setAttribute('cy', '-3');
+          eyePupil.setAttribute('r', '1.4');
+          eyePupil.setAttribute('fill', '#000000');
+
+          el.appendChild(tail);
+          el.appendChild(ellipse);
+          el.appendChild(eyeWhite);
+          el.appendChild(eyePupil);
+          fishGroup.appendChild(el);
+        }
+
+        const initX = 100 + Math.random() * 600;
+        const initY = 120 + Math.random() * 260;
+        const dir = Math.random() > 0.5 ? 1 : -1;
+
+        boids.push({
+          id,
+          el,
+          x: initX,
+          y: initY,
+          vx: dir * (1.2 + Math.random() * 0.8),
+          vy: (Math.random() - 0.5) * 0.8,
+          targetVx: dir * 1.5,
+          targetVy: 0,
+          facing: dir,
+          scale: 0.9,
+          wagPhase: Math.random() * Math.PI * 2,
+          isExtra: true
+        });
+      }
+
+      // Track cursor position for acoustic avoidance in stage
+      let cursorX = -999;
+      let cursorY = -999;
+      const onStagePointerMove = (e) => {
+        const rect = this.stageSvg.getBoundingClientRect();
+        cursorX = ((e.clientX - rect.left) / rect.width) * 800;
+        cursorY = ((e.clientY - rect.top) / rect.height) * 480;
+      };
+      const onStagePointerLeave = () => {
+        cursorX = -999;
+        cursorY = -999;
+      };
+
+      if (!this._fishTankPointerBound) {
+        this._fishTankPointerBound = true;
+        this.stageSvg.addEventListener('pointermove', onStagePointerMove);
+        this.stageSvg.addEventListener('pointerleave', onStagePointerLeave);
+      }
+
+      // Cancel previous boid RAF if active
       if (this._boidAnimId) cancelAnimationFrame(this._boidAnimId);
 
-      const tickBoids = () => {
-        if (!this.stageSvg || !this.stageSvg.contains(fishGroup)) return;
-        const speedMultiplier = (this.engine && this.engine.vars && this.engine.vars.kelpTurbulence) || 1.0;
+      let lastTickTime = performance.now();
+      let frameCount = 0;
+      let lastFpsTime = performance.now();
+      let currentFps = 60.0;
 
+      const tickBoids = (now) => {
+        if (!this.stageSvg || !this.stageSvg.contains(fishGroup)) return;
+
+        const dt = Math.min((now - lastTickTime) / 1000, 0.05);
+        lastTickTime = now;
+
+        // FPS calculation for HUD
+        frameCount++;
+        if (now - lastFpsTime >= 500) {
+          currentFps = (frameCount * 1000) / (now - lastFpsTime);
+          frameCount = 0;
+          lastFpsTime = now;
+
+          const hudFps = this.stageSvg.querySelector('#hud-fps-val');
+          const hudBadge = this.stageSvg.querySelector('#hud-status-badge');
+          if (hudFps) hudFps.textContent = `${currentFps.toFixed(1)} FPS`;
+          if (hudBadge) hudBadge.textContent = `${Math.round(currentFps)} FPS`;
+        }
+
+        const currentVars = (this.engine && this.engine.vars) || {};
+        const flowVelocity = Number(currentVars.kelpTurbulence || 1.0);
+        const activeSchoolCount = Math.max(1, Math.min(boids.length, Number(currentVars.schoolSize || 12)));
+
+        // Update food flakes physics
+        for (let f = activeFoodFlakes.length - 1; f >= 0; f--) {
+          const flake = activeFoodFlakes[f];
+          flake.y += flake.vy;
+          flake.x += flake.vx + Math.sin(now * 0.003) * 0.2;
+          flake.life--;
+          flake.el.setAttribute('cy', flake.y.toFixed(1));
+          flake.el.setAttribute('cx', flake.x.toFixed(1));
+
+          // Despawn on seafloor
+          if (flake.y >= 445 || flake.life <= 0) {
+            flake.el.remove();
+            activeFoodFlakes.splice(f, 1);
+          }
+        }
+
+        // Boid steering & simulation loop
         for (let i = 0; i < boids.length; i++) {
           const b = boids[i];
-          b.x += b.vx * speedMultiplier;
-          b.y += b.vy * speedMultiplier;
 
-          if (b.x < 100) { b.x = 100; b.vx = Math.abs(b.vx); }
-          else if (b.x > 700) { b.x = 700; b.vx = -Math.abs(b.vx); }
-          if (b.y < 120) { b.y = 120; b.vy = Math.abs(b.vy); }
-          else if (b.y > 400) { b.y = 400; b.vy = -Math.abs(b.vy); }
+          // Visibility gating according to schoolSize slider
+          if (i >= activeSchoolCount) {
+            b.el.style.display = 'none';
+            continue;
+          } else {
+            b.el.style.display = '';
+          }
 
-          const angle = (Math.atan2(b.vy, b.vx) * 180) / Math.PI;
-          b.el.setAttribute('transform', `translate(${b.x.toFixed(1)}, ${b.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
+          // 1. Food tracking attraction (if flakes exist)
+          if (activeFoodFlakes.length > 0) {
+            let closestFlake = null;
+            let closestDist = 260;
+            for (let f = 0; f < activeFoodFlakes.length; f++) {
+              const flake = activeFoodFlakes[f];
+              const d = Math.hypot(flake.x - b.x, flake.y - b.y);
+              if (d < closestDist) {
+                closestDist = d;
+                closestFlake = flake;
+              }
+            }
+
+            if (closestFlake) {
+              const angleToFood = Math.atan2(closestFlake.y - b.y, closestFlake.x - b.x);
+              b.vx += Math.cos(angleToFood) * 0.12 * flowVelocity;
+              b.vy += Math.sin(angleToFood) * 0.12 * flowVelocity;
+
+              // Eat flake if reached
+              if (closestDist < 16) {
+                closestFlake.el.remove();
+                const idx = activeFoodFlakes.indexOf(closestFlake);
+                if (idx !== -1) activeFoodFlakes.splice(idx, 1);
+                this.playAudioTone(920, 'sine', 0.02, 0.08);
+              }
+            }
+          }
+
+          // 2. Cursor Acoustic Wave Avoidance
+          if (cursorX > 0 && cursorY > 0) {
+            const distToCursor = Math.hypot(cursorX - b.x, cursorY - b.y);
+            if (distToCursor < 140) {
+              const avoidAngle = Math.atan2(b.y - cursorY, b.x - cursorX);
+              const force = ((140 - distToCursor) / 140) * 0.45;
+              b.vx += Math.cos(avoidAngle) * force;
+              b.vy += Math.sin(avoidAngle) * force;
+            }
+          }
+
+          // 3. Fluid drag and speed capping
+          b.vx *= 0.985;
+          b.vy *= 0.985;
+          const maxSpeed = 2.4 * flowVelocity;
+          const curSpeed = Math.hypot(b.vx, b.vy);
+          if (curSpeed > maxSpeed) {
+            b.vx = (b.vx / curSpeed) * maxSpeed;
+            b.vy = (b.vy / curSpeed) * maxSpeed;
+          } else if (curSpeed < 0.6 * flowVelocity) {
+            b.vx += (b.facing > 0 ? 0.04 : -0.04) * flowVelocity;
+          }
+
+          // Update position
+          b.x += b.vx;
+          b.y += b.vy;
+
+          // 4. Aquarium Glass Boundary Soft Steer & Reflection
+          if (b.x < 110) { b.vx += 0.22; b.facing = 1; }
+          else if (b.x > 690) { b.vx -= 0.22; b.facing = -1; }
+          if (b.y < 110) { b.vy += 0.18; }
+          else if (b.y > 410) { b.vy -= 0.18; }
+
+          // Clamp hard boundaries
+          b.x = Math.max(70, Math.min(730, b.x));
+          b.y = Math.max(90, Math.min(425, b.y));
+
+          // Facing direction
+          if (b.vx > 0.2) b.facing = 1;
+          else if (b.vx < -0.2) b.facing = -1;
+
+          // Gentle vertical sinusoidal undulation & tail wag
+          b.wagPhase += dt * 6 * flowVelocity;
+          const pitchAngle = Math.max(-25, Math.min(25, (b.vy / 2.5) * 20));
+
+          // Apply clean SVG transform matrix
+          const scaleX = b.facing * b.scale;
+          const scaleY = b.scale;
+          b.el.setAttribute(
+            'transform',
+            `translate(${b.x.toFixed(1)}, ${b.y.toFixed(1)}) scale(${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}) rotate(${pitchAngle.toFixed(1)})`
+          );
         }
+
+        // Live HUD counts sync
+        const hudFishCount = this.stageSvg.querySelector('#hud-fish-count');
+        const hudPtsCount = this.stageSvg.querySelector('#hud-points-count');
+        const hudBudgetFill = this.stageSvg.querySelector('#hud-budget-fill');
+        if (hudFishCount) hudFishCount.textContent = `${activeSchoolCount} Fish`;
+        if (hudPtsCount) hudPtsCount.textContent = `${activeSchoolCount * 24 + 120} pts`;
+        if (hudBudgetFill) hudBudgetFill.setAttribute('width', String(Math.min(280, Math.max(20, (activeSchoolCount / 30) * 280))));
 
         this._boidAnimId = requestAnimationFrame(tickBoids);
       };
+
       this._boidAnimId = requestAnimationFrame(tickBoids);
     }
 
