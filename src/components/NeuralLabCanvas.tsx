@@ -9,6 +9,7 @@ import { hypervisor, GuestVMState, HypervisorMetrics } from '../engine/hyperviso
 import { hasUserGrantedAiConsent, setUserAiConsent } from '../engine/aicaller';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import { findCurriculumKnowledge } from '../data/oakCurriculumKnowledge';
+import { resolveCurriculumRoute } from '../curriculum/curriculumMesh';
 import { PRNG } from '../engine/prng';
 import { TrajectoryEngine, CognitiveTrajectoryState } from '../engine/trajectoryEngine';
 import { LessonSequencer, PedagogicalStage } from '../engine/lessonSequencer';
@@ -283,7 +284,7 @@ export default function NeuralLabCanvas({
           difficulty: diff,
           lang: targetLang,
           forceVariation,
-          excludePrompt: customSeed ? '' : currentPrompt,
+          excludePrompt: currentPrompt,
           seed: seedToUse,
           nonce: Math.floor(Math.random() * 1000000),
         },
@@ -294,29 +295,38 @@ export default function NeuralLabCanvas({
       if (res.ok && res.data) {
         let questionData = res.data;
         // Strict guard: If the returned question stem matches the current active question stem, rotate to an alternate question
-        if (!customSeed && currentPrompt && questionData.prompt && (questionData.prompt.trim() === currentPrompt.trim() || recentPromptsRef.current.includes(questionData.prompt.trim()))) {
+        const cleanPrompt = (questionData.prompt || '').trim();
+        const currentTrimmed = (currentPrompt || '').trim();
+        if (currentTrimmed && cleanPrompt && (cleanPrompt.toLowerCase() === currentTrimmed.toLowerCase() || recentPromptsRef.current.map(p => p.toLowerCase()).includes(cleanPrompt.toLowerCase()))) {
+          const route = resolveCurriculumRoute(ks, sub, u);
           const offline = findCurriculumKnowledge(ks, sub, u);
-          const candidateQuestions = (offline?.questions || []).filter(
-            (q) => q.prompt.trim() !== currentPrompt.trim() && !recentPromptsRef.current.includes(q.prompt.trim())
+          const allBankQuestions = [
+            ...(route?.questions || []),
+            ...(offline?.questions || [])
+          ];
+          const candidateQuestions = allBankQuestions.filter(
+            (q) => q.prompt && q.prompt.trim().toLowerCase() !== currentTrimmed.toLowerCase() && !recentPromptsRef.current.map(p => p.toLowerCase()).includes(q.prompt.trim().toLowerCase())
           );
           const alt = candidateQuestions.length > 0
             ? candidateQuestions[Math.floor(Math.random() * candidateQuestions.length)]
-            : offline?.questions?.find((q) => q.prompt.trim() !== currentPrompt.trim());
+            : allBankQuestions.find((q) => q.prompt && q.prompt.trim().toLowerCase() !== currentTrimmed.toLowerCase());
           if (alt) {
             questionData = {
               ...questionData,
+              id: alt.id || questionData.id,
               prompt: alt.prompt,
               options: alt.options,
               answerKey: alt.answerKey,
               hint: alt.hint || questionData.hint,
               explanation: alt.explanation || questionData.explanation,
             };
-          } else if (offline?.questions && offline.questions.length > 0) {
+          } else if (allBankQuestions.length > 0) {
             // All questions in this unit have been seen in this session; reset history and cycle cleanly
-            recentPromptsRef.current = [];
-            const recycled = offline.questions.find((q) => q.prompt.trim() !== currentPrompt.trim()) || offline.questions[0];
+            recentPromptsRef.current = [currentTrimmed];
+            const recycled = allBankQuestions.find((q) => q.prompt && q.prompt.trim().toLowerCase() !== currentTrimmed.toLowerCase()) || allBankQuestions[0];
             questionData = {
               ...questionData,
+              id: recycled.id || questionData.id,
               prompt: recycled.prompt,
               options: recycled.options,
               answerKey: recycled.answerKey,

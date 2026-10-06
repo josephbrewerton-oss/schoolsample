@@ -710,17 +710,28 @@ ${excludePrompt ? `Anti-Repetition Rule: Do NOT reuse or mirror this prior quest
             }
           }
 
-          if (excludePrompt && resultCandidate.prompt.trim() === excludePrompt) {
-            // Find an alternative question from offline bank so prompt and options remain aligned
-            const alternateQ = offlineKnowledge?.questions?.find((q) => q.prompt.trim() !== excludePrompt);
+          const cleanExclude = (excludePrompt || '').trim().toLowerCase();
+          const candidateClean = (resultCandidate?.prompt || '').trim().toLowerCase();
+          if (cleanExclude && (candidateClean === cleanExclude || candidateClean.startsWith(cleanExclude))) {
+            // Find an alternative question from route and offline bank so prompt and options remain aligned
+            const allBankQuestions = [
+              ...(route?.questions || []),
+              ...(offlineKnowledge?.questions || [])
+            ];
+            const alternateQ = allBankQuestions.find(
+              (q) => q.prompt && q.prompt.trim().toLowerCase() !== cleanExclude
+            );
             if (alternateQ) {
-              resultCandidate.prompt = alternateQ.prompt;
-              resultCandidate.options = [...alternateQ.options];
-              resultCandidate.answerKey = alternateQ.answerKey;
-              resultCandidate.hint = alternateQ.hint || resultCandidate.hint;
-              resultCandidate.explanation = alternateQ.explanation || resultCandidate.explanation;
-            } else {
-              resultCandidate.prompt = `🔄 [Parallel Concept] ${resultCandidate.prompt}`;
+              resultCandidate = {
+                ...resultCandidate,
+                id: alternateQ.id || resultCandidate.id,
+                prompt: alternateQ.prompt,
+                options: [...alternateQ.options],
+                answerKey: typeof alternateQ.answerKey === 'number' ? alternateQ.answerKey : 0,
+                hint: alternateQ.hint || resultCandidate.hint,
+                explanation: alternateQ.explanation || resultCandidate.explanation,
+                misconceptions: (alternateQ as any).misconceptions || resultCandidate.misconceptions,
+              };
             }
           }
 

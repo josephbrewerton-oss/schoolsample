@@ -457,14 +457,16 @@ export function getQuestionForRoute(
 ): CurriculumQuestionItem | null {
   if (!route || route.questions.length === 0) return null;
 
-  // 1. If a lesson title or ID was specified, find the 1:1 mapped lesson question
-  if (lessonTitleOrId) {
+  const cleanExclude = (excludePrompt || '').trim().toLowerCase();
+
+  // 1. If a lesson title or ID was specified AND not forcing variation to an alternate question
+  if (lessonTitleOrId && !forceVariation) {
     const lNorm = normalizeToken(lessonTitleOrId);
     const matchedLesson = route.lessons.find(
       (l) => l.id === lessonTitleOrId || normalizeToken(l.title).includes(lNorm) || lNorm.includes(normalizeToken(l.title))
     );
     if (matchedLesson && matchedLesson.question) {
-      if (!excludePrompt || matchedLesson.question.prompt.trim() !== excludePrompt.trim()) {
+      if (!cleanExclude || matchedLesson.question.prompt.trim().toLowerCase() !== cleanExclude) {
         return matchedLesson.question;
       }
     }
@@ -474,7 +476,7 @@ export function getQuestionForRoute(
     if (lNumMatch) {
       const idx = parseInt(lNumMatch[1], 10) - 1;
       if (idx >= 0 && idx < route.questions.length) {
-        if (!excludePrompt || route.questions[idx].prompt.trim() !== excludePrompt.trim()) {
+        if (!cleanExclude || route.questions[idx].prompt.trim().toLowerCase() !== cleanExclude) {
           return route.questions[idx];
         }
       }
@@ -482,25 +484,19 @@ export function getQuestionForRoute(
   }
 
   // Filter out excluded prompt if multiple questions exist
-  const candidates = (excludePrompt && route.questions.length > 1)
-    ? route.questions.filter((q) => q.prompt.trim() !== excludePrompt.trim())
+  const candidates = (cleanExclude && route.questions.length > 1)
+    ? route.questions.filter((q) => q.prompt && q.prompt.trim().toLowerCase() !== cleanExclude)
     : route.questions;
   const pool = candidates.length > 0 ? candidates : route.questions;
 
-  // 2. If seedToken is provided, pick deterministically based on seed
-  if (seedToken) {
+  // 2. If seedToken is provided and not forcing variation, pick deterministically based on seed
+  if (seedToken && !forceVariation) {
     const seedNum = (seedToken || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const idx = Math.abs(seedNum) % pool.length;
     return pool[idx] || pool[0];
   }
 
-  // 3. If forceVariation is requested or cycling in practice, pick from pool
-  if (forceVariation && pool.length > 1) {
-    const idx = Math.floor(Math.random() * pool.length);
-    return pool[idx] || pool[0];
-  }
-
-  // 4. By default, pick pseudo-randomly among candidates so repeated drills offer variety
+  // 3. If forceVariation is requested or cycling in practice, pick from non-excluded candidates
   if (pool.length > 1) {
     const idx = Math.floor(Math.random() * pool.length);
     return pool[idx] || pool[0];
