@@ -4307,6 +4307,15 @@
         case 'AUDIO_STOP_HUM':
           if (engine.audioSynth) engine.audioSynth.stopHum();
           break;
+        case 'SIM_ACTION':
+          if (data.action === 'FEED_FISH' && global.__astGestures && global.__astGestures.stageSvg) {
+            const evt = new CustomEvent('feed_fish', { detail: { x: 300 + Math.random() * 200, y: 100 + Math.random() * 80 } });
+            global.__astGestures.stageSvg.dispatchEvent(evt);
+          } else if (data.action === 'TAP_GLASS' && global.__astGestures && global.__astGestures.stageSvg) {
+            const evt = new CustomEvent('tap_glass', { detail: { x: 400, y: 240 } });
+            global.__astGestures.stageSvg.dispatchEvent(evt);
+          }
+          break;
         case 'TOGGLE_PEN':
           if (global.__astGestures) {
             global.__astGestures.isPenActive = data.enabled !== undefined ? Boolean(data.enabled) : !global.__astGestures.isPenActive;

@@ -9,6 +9,7 @@ import ShakespeareGlobeLab from '../components/ShakespeareGlobeLab';
 import MflLanguageLab from '../components/MflLanguageLab';
 import EarlyPhonicsLab from '../components/EarlyPhonicsLab';
 import MathsFundamentalsLab from '../components/MathsFundamentalsLab';
+import AquariumSimulationLab from '../components/AquariumSimulationLab';
 import { resolvePresetForTopic } from '../services/playerLauncher';
 
 interface PresetItem {
@@ -195,13 +196,13 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
 
-  // Initialize playMode from urlMode if provided, or default to 'game' for mountain-elevation, math-fishing, shakespeare, and languages
+  // Initialize playMode from urlMode if provided, or default to 'game' for interactive game-capable presets
   const initialPlayMode: 'video' | 'game' =
     urlMode === 'video'
       ? 'video'
       : urlMode === 'game'
       ? 'game'
-      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing' || initialPreset === 'shakespeare' || initialPreset === 'languages'
+      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing' || initialPreset === 'fish-tank' || initialPreset === 'shakespeare' || initialPreset === 'languages'
       ? 'game'
       : 'video';
 
@@ -210,7 +211,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
   useEffect(() => {
     if (urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset) && urlPreset !== activePreset) {
       setActivePreset(urlPreset);
-      if (urlMode === 'game' || urlPreset === 'mountain-elevation' || urlPreset === 'math-fishing' || urlPreset === 'shakespeare' || urlPreset === 'languages' || urlPreset === 'phonics-lab' || urlPreset === 'bodmas' || urlPreset === 'times-tables') {
+      if (urlMode === 'game' || urlPreset === 'mountain-elevation' || urlPreset === 'math-fishing' || urlPreset === 'fish-tank' || urlPreset === 'shakespeare' || urlPreset === 'languages' || urlPreset === 'phonics-lab' || urlPreset === 'bodmas' || urlPreset === 'times-tables') {
         setPlayMode('game');
       }
     } else if (urlMode && (urlMode === 'game' || urlMode === 'video') && urlMode !== playMode) {
@@ -220,7 +221,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
   const handleSelectPreset = (id: VectorPresetType, targetMode?: 'video' | 'game') => {
     setActivePreset(id);
-    const chosenMode = targetMode || (id === 'mountain-elevation' || id === 'math-fishing' || id === 'shakespeare' || id === 'languages' || id === 'phonics-lab' || id === 'bodmas' || id === 'times-tables' ? 'game' : playMode);
+    const chosenMode = targetMode || (id === 'mountain-elevation' || id === 'math-fishing' || id === 'fish-tank' || id === 'shakespeare' || id === 'languages' || id === 'phonics-lab' || id === 'bodmas' || id === 'times-tables' ? 'game' : playMode);
     setPlayMode(chosenMode);
     setSearchParams({ preset: id, mode: chosenMode });
   };
@@ -371,7 +372,17 @@ export default function MediaPlayerPage(): React.JSX.Element {
               <button
                 type="button"
                 onClick={() => {
-                  if (activePreset !== 'mountain-elevation' && activePreset !== 'church-tour') {
+                  if (
+                    activePreset !== 'mountain-elevation' &&
+                    activePreset !== 'church-tour' &&
+                    activePreset !== 'math-fishing' &&
+                    activePreset !== 'fish-tank' &&
+                    activePreset !== 'shakespeare' &&
+                    activePreset !== 'languages' &&
+                    activePreset !== 'phonics-lab' &&
+                    activePreset !== 'bodmas' &&
+                    activePreset !== 'times-tables'
+                  ) {
                     // Switch to the featured interactive climber game if currently on a static diagram
                     handleSelectPreset('mountain-elevation', 'game');
                   } else {
@@ -605,6 +616,17 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
         {activePreset === 'math-fishing' && playMode === 'game' && (
           <MathFishingGame
+            playerRef={playerRef}
+            onCloseGameMode={() => {
+              setPlayMode('video');
+              setSearchParams({ preset: activePreset, mode: 'video' });
+              playerRef.current?.play();
+            }}
+          />
+        )}
+
+        {activePreset === 'fish-tank' && playMode === 'game' && (
+          <AquariumSimulationLab
             playerRef={playerRef}
             onCloseGameMode={() => {
               setPlayMode('video');
@@ -938,13 +960,13 @@ export default function MediaPlayerPage(): React.JSX.Element {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleSelectPreset(p.id, 'video');
+                          handleSelectPreset(p.id, 'game');
                         }}
                         style={{
                           flex: 1,
                           padding: '6px 8px',
                           borderRadius: '6px',
-                          background: isSelected ? '#0284c7' : '#0ea5e9',
+                          background: isSelected && playMode === 'game' ? '#059669' : '#10b981',
                           color: '#ffffff',
                           border: 'none',
                           fontSize: '0.74rem',
@@ -954,10 +976,32 @@ export default function MediaPlayerPage(): React.JSX.Element {
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '4px',
-                          boxShadow: '0 1px 3px rgba(14, 165, 233, 0.3)',
+                          boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)',
                         }}
                       >
-                        <span>🐠</span> Run Stress Benchmark {isSelected ? '✔' : ''}
+                        <span>🐠</span> Play Lab {isSelected && playMode === 'game' ? '✔' : ''}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPreset(p.id, 'video');
+                        }}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          background: isSelected && playMode === 'video' ? '#0284c7' : '#f1f5f9',
+                          color: isSelected && playMode === 'video' ? '#ffffff' : '#334155',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <span>🎬</span> Video
                       </button>
                     </div>
                   ) : p.id === 'church-tour' ? (

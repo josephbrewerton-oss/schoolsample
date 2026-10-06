@@ -13,7 +13,7 @@ import { SUPPORTED_LANGUAGES } from './operational-language';
 import { MathQuestionGenerator } from './mathQuestionGenerator';
 import { ASTFlowGovernor } from './astGovernor';
 import { hypervisor, setHypercallDispatcher } from './hypervisor';
-import { extractQuestionFromAst } from '../utils/astQuestionExtractor';
+import { extractQuestionFromAst, stripPromptDecorators } from '../utils/astQuestionExtractor';
 import { PRNG } from './prng';
 import { MindSpaceEngine } from './mindSpaceEngine';
 import { LessonSequencer, PedagogicalStage } from './lessonSequencer';
@@ -446,21 +446,18 @@ const AST_NODE_MAP = new Map<string, { execute: (intent: string, payload: any) =
           let rawAnswerKey: number;
           let rawMisconceptions: string[];
 
-          if (routeQuestion && !activeSeedToken.startsWith('SOCRATIC-') && (!excludePrompt || routeQuestion.prompt.trim() !== excludePrompt.trim())) {
+          const cleanExclude = stripPromptDecorators(excludePrompt || '').toLowerCase();
+          const routeClean = stripPromptDecorators(routeQuestion?.prompt || '').toLowerCase();
+          const isRouteSame = Boolean(cleanExclude && routeClean && (cleanExclude === routeClean || cleanExclude.startsWith(routeClean) || routeClean.startsWith(cleanExclude)));
+
+          const shouldUseRoute = routeQuestion && !activeSeedToken.startsWith('SOCRATIC-') && !isRouteSame && (targetPedagogicalStage === 'PRACTICE' || !payload?.forceVariation);
+
+          if (shouldUseRoute) {
             recentTopicQuestionMap.set(topicCacheKey, routeQuestion.prompt.trim());
             basePrompt = routeQuestion.prompt;
             rawOptions = [...routeQuestion.options];
             rawAnswerKey = typeof routeQuestion.answerKey === 'number' ? routeQuestion.answerKey : 0;
             rawMisconceptions = [...routeQuestion.misconceptions];
-
-            if (payload?.forceVariation) {
-              const masteryVariations = [
-                `🔄 [Mastery Check] ${routeQuestion.prompt}`,
-                `🎯 [Concept Application] ${routeQuestion.prompt}`,
-                `💡 [Deepening Understanding] ${routeQuestion.prompt}`,
-              ];
-              basePrompt = prng.pick(masteryVariations);
-            }
           } else if (activeSeedToken.startsWith('SOCRATIC-') && (route?.socraticPivot || offlineKnowledge?.socraticPivot)) {
             // When remediating via Socratic seed, keep sequencedTemplate's aligned prompt and options
             basePrompt = sequencedTemplate.prompt || `⚖️ [Cognitive Counter-Proof] ${route?.socraticPivot || offlineKnowledge?.socraticPivot}`;
@@ -710,16 +707,19 @@ ${excludePrompt ? `Anti-Repetition Rule: Do NOT reuse or mirror this prior quest
             }
           }
 
-          const cleanExclude = (excludePrompt || '').trim().toLowerCase();
-          const candidateClean = (resultCandidate?.prompt || '').trim().toLowerCase();
-          if (cleanExclude && (candidateClean === cleanExclude || candidateClean.startsWith(cleanExclude))) {
+          const cleanExcludeFinal = stripPromptDecorators(excludePrompt || '').toLowerCase();
+          const candidateCleanFinal = stripPromptDecorators(resultCandidate?.prompt || '').toLowerCase();
+          if (cleanExcludeFinal && (candidateCleanFinal === cleanExcludeFinal || candidateCleanFinal.startsWith(cleanExcludeFinal) || cleanExcludeFinal.startsWith(candidateCleanFinal))) {
             // Find an alternative question from route and offline bank so prompt and options remain aligned
             const allBankQuestions = [
               ...(route?.questions || []),
               ...(offlineKnowledge?.questions || [])
             ];
             const alternateQ = allBankQuestions.find(
-              (q) => q.prompt && q.prompt.trim().toLowerCase() !== cleanExclude
+              (q) => {
+                const qClean = stripPromptDecorators(q.prompt || '').toLowerCase();
+                return qClean && qClean !== cleanExcludeFinal && !qClean.startsWith(cleanExcludeFinal) && !cleanExcludeFinal.startsWith(qClean);
+              }
             );
             if (alternateQ) {
               resultCandidate = {
@@ -732,6 +732,19 @@ ${excludePrompt ? `Anti-Repetition Rule: Do NOT reuse or mirror this prior quest
                 explanation: alternateQ.explanation || resultCandidate.explanation,
                 misconceptions: (alternateQ as any).misconceptions || resultCandidate.misconceptions,
               };
+            } else if (sequencedTemplate && sequencedTemplate.prompt) {
+              const seqClean = stripPromptDecorators(sequencedTemplate.prompt).toLowerCase();
+              if (seqClean !== cleanExcludeFinal) {
+                resultCandidate = {
+                  ...resultCandidate,
+                  prompt: sequencedTemplate.prompt,
+                  options: [...sequencedTemplate.options],
+                  answerKey: sequencedTemplate.answerKey,
+                  hint: sequencedTemplate.hint || resultCandidate.hint,
+                  explanation: sequencedTemplate.explanation || resultCandidate.explanation,
+                  misconceptions: sequencedTemplate.misconceptions || resultCandidate.misconceptions,
+                };
+              }
             }
           }
 

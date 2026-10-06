@@ -474,6 +474,26 @@ try {
   assert.strictEqual(tokens.length, 1);
   console.log(`  ${GREEN}✓${RESET} ReDoS immunity verified: 10,000 adversarial tokens parsed in ${elapsedReDos}ms (O(n) linear)`);
 
+  // Test 8: Multi-Dialect Scene Parsing & Harmonization
+  const sceneSExpr = '(:scene :id "kinetic-test" :title "Kinetic Test Scene" :duration 12.5 (:keyframes ((:t 0.0 :title "Start" :rule "Baseline state") (:t 1.0 :title "Finish" :rule "End state"))) (:bindings ((:target "#piston" :attr "transform" :expr "\'translate(\' + (t * 100) + \', 0)\'"))) (:interactive ((:checkpoint :t 0.5 :prompt "Boyle\'s law effect?" :options ("Doubles" "Halves") :answer 0))))';
+  const parsedScene = AstCompiler.parse(sceneSExpr);
+  assert.strictEqual(parsedScene.id, 'kinetic-test', 'AstCompiler failed to parse scene :id');
+  assert.strictEqual(parsedScene.duration, 12.5, 'AstCompiler failed to parse scene :duration');
+  assert.strictEqual(parsedScene.keyframes.length, 2, 'AstCompiler failed to parse scene keyframes');
+  assert.strictEqual(parsedScene.bindings.length, 1, 'AstCompiler failed to parse scene bindings');
+  assert.strictEqual(parsedScene.checkpoints.length, 1, 'AstCompiler failed to parse scene checkpoint');
+  assert.strictEqual(parsedScene.checkpoints[0].answerKey, 0, 'AstCompiler failed to harmonize checkpoint :answer to answerKey');
+  assert.strictEqual(AstCompiler.validate(parsedScene), true, 'AstCompiler.validate failed on valid scene');
+  console.log(`  ${GREEN}✓${RESET} Dialect 2 (Vector Scene) parsed & validated with harmonized checkpoints`);
+
+  // Test 9: Multi-Dialect Curriculum Lesson Parsing & Harmonization
+  const lessonSExpr = '(:lesson :id "maths-ks2-fractions" :title "Fractions and Decimals" :stage "KS2" :subject "Mathematics" :summary "Unit on equivalence")';
+  const parsedLesson = AstCompiler.parse(lessonSExpr);
+  assert.strictEqual(parsedLesson.id, 'maths-ks2-fractions');
+  assert.strictEqual(parsedLesson.stage, 'KS2');
+  assert.strictEqual(AstCompiler.validate(parsedLesson), true, 'AstCompiler.validate failed on valid lesson');
+  console.log(`  ${GREEN}✓${RESET} Dialect 3 (Curriculum Lesson) parsed & validated cleanly`);
+
   stats.suitesPassed++;
   console.log(`${GREEN}Suite 7 Passed!${RESET}\n`);
 } catch (err: any) {

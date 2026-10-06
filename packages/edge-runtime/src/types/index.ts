@@ -299,7 +299,7 @@ export type BackendTier = "chrome-nano" | "webrtc-daemon" | "rule-engine";
 export interface EngineExecutionResult {
   output: string;
   source: BackendTier;
-  ast?: AstQuestionNode;
+  ast?: UnifiedAstUnit;
   correctionsCount: number;
 }
 

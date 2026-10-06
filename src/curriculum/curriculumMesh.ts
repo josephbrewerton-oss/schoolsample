@@ -12,6 +12,7 @@ import { findCurriculumKnowledge, CurriculumTopicKnowledge } from '../data/oakCu
 import { MathQuestionGenerator } from '../engine/mathQuestionGenerator';
 import { getInstalledCurriculumPacks } from '../services/curriculumPackStore';
 import { saveVfsView, getVfsView } from '../services/dbStore';
+import { stripPromptDecorators } from '../utils/astQuestionExtractor';
 
 export type ExecutionEngineType = 'curriculum_bank' | 'procedural_generator' | 'socratic_nano';
 
@@ -457,7 +458,12 @@ export function getQuestionForRoute(
 ): CurriculumQuestionItem | null {
   if (!route || route.questions.length === 0) return null;
 
-  const cleanExclude = (excludePrompt || '').trim().toLowerCase();
+  const cleanExclude = stripPromptDecorators(excludePrompt || '').toLowerCase();
+  const isMatch = (prompt: string) => {
+    if (!cleanExclude) return false;
+    const pStem = stripPromptDecorators(prompt).toLowerCase();
+    return pStem === cleanExclude || pStem.startsWith(cleanExclude) || cleanExclude.startsWith(pStem);
+  };
 
   // 1. If a lesson title or ID was specified AND not forcing variation to an alternate question
   if (lessonTitleOrId && !forceVariation) {
@@ -466,7 +472,7 @@ export function getQuestionForRoute(
       (l) => l.id === lessonTitleOrId || normalizeToken(l.title).includes(lNorm) || lNorm.includes(normalizeToken(l.title))
     );
     if (matchedLesson && matchedLesson.question) {
-      if (!cleanExclude || matchedLesson.question.prompt.trim().toLowerCase() !== cleanExclude) {
+      if (!isMatch(matchedLesson.question.prompt)) {
         return matchedLesson.question;
       }
     }
@@ -476,7 +482,7 @@ export function getQuestionForRoute(
     if (lNumMatch) {
       const idx = parseInt(lNumMatch[1], 10) - 1;
       if (idx >= 0 && idx < route.questions.length) {
-        if (!cleanExclude || route.questions[idx].prompt.trim().toLowerCase() !== cleanExclude) {
+        if (!isMatch(route.questions[idx].prompt)) {
           return route.questions[idx];
         }
       }
@@ -485,7 +491,7 @@ export function getQuestionForRoute(
 
   // Filter out excluded prompt if multiple questions exist
   const candidates = (cleanExclude && route.questions.length > 1)
-    ? route.questions.filter((q) => q.prompt && q.prompt.trim().toLowerCase() !== cleanExclude)
+    ? route.questions.filter((q) => q.prompt && !isMatch(q.prompt))
     : route.questions;
   const pool = candidates.length > 0 ? candidates : route.questions;
 

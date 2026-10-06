@@ -1,4 +1,4 @@
-import { BackendTier, EngineExecutionResult, EngineOptions } from "../types";
+import { BackendTier, EngineExecutionResult, EngineOptions, UnifiedAstUnit } from "../types";
 import { AstCompiler } from "./AstCompiler";
 
 export class EdgeCognitiveEngine {
@@ -28,7 +28,20 @@ export class EdgeCognitiveEngine {
       }
     }
 
-    // 2. Offline Deterministic Rule Fallback
+    // 2. Offline Deterministic Rule Fallback (Harmonized across multi-dialect prompt context)
+    const lower = `${prompt} ${systemPrompt || ''}`.toLowerCase();
+    if (lower.includes('scene') || lower.includes('simulation') || lower.includes('vector')) {
+      return {
+        text: '(:scene :id "offline-sim" :title "Offline Simulation" :stage "KS3" :duration 10.0 (:keyframes ((:t 0.0 :title "Initial State" :rule "Baseline condition") (:t 1.0 :title "Final State" :rule "System equilibrium"))) (:bindings ((:target "#obj" :attr "transform" :expr "\'translate(\' + (t * 100) + \', 0)\'"))))',
+        source: "rule-engine"
+      };
+    }
+    if (lower.includes('lesson')) {
+      return {
+        text: '(:lesson :id "offline-lesson" :title "Offline Lesson" :stage "KS2" :subject "General" (:questions ((:route "quiz:mcq" :prompt "Foundational curriculum check?" :options ("True" "False") :answer-key 0))))',
+        source: "rule-engine"
+      };
+    }
     return {
       text: '(:prompt "Offline Rule Question" :options ("True" "False") :answer-key 0)',
       source: "rule-engine"

@@ -231,3 +231,17 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
     return null;
   }
 }
+
+/**
+ * Strips cosmetic pedagogical emoji headers and bracketed tags
+ * (e.g. "🔄 [Mastery Check] ", "🌍 [Step 1: Real-World Hook] ")
+ * to extract the authentic question stem for strict deduplication.
+ */
+export function stripPromptDecorators(prompt: string): string {
+  if (!prompt || typeof prompt !== 'string') return '';
+  return prompt
+    .replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\s]+/u, '')
+    .replace(/^\[[^\]]+\]\s*/, '')
+    .replace(/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\s]+/u, '')
+    .trim();
+}

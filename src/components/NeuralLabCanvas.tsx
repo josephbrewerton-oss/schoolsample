@@ -25,6 +25,7 @@ import {
   triggerMasteryConfetti,
 } from '../utils/confetti';
 import { openPlayerModal, resolvePresetForTopic } from '../services/playerLauncher';
+import { stripPromptDecorators } from '../utils/astQuestionExtractor';
 
 const AstVectorMediaPlayer = React.lazy(() => import('./AstVectorMediaPlayer'));
 
@@ -295,21 +296,26 @@ export default function NeuralLabCanvas({
       if (res.ok && res.data) {
         let questionData = res.data;
         // Strict guard: If the returned question stem matches the current active question stem, rotate to an alternate question
-        const cleanPrompt = (questionData.prompt || '').trim();
-        const currentTrimmed = (currentPrompt || '').trim();
-        if (currentTrimmed && cleanPrompt && (cleanPrompt.toLowerCase() === currentTrimmed.toLowerCase() || recentPromptsRef.current.map(p => p.toLowerCase()).includes(cleanPrompt.toLowerCase()))) {
+        const cleanStem = stripPromptDecorators(questionData.prompt || '').toLowerCase();
+        const currentStem = stripPromptDecorators(currentPrompt || '').toLowerCase();
+        const recentStems = recentPromptsRef.current.map(p => stripPromptDecorators(p).toLowerCase());
+        const isDuplicate = Boolean(currentStem && cleanStem && (cleanStem === currentStem || recentStems.includes(cleanStem)));
+
+        if (isDuplicate) {
           const route = resolveCurriculumRoute(ks, sub, u);
           const offline = findCurriculumKnowledge(ks, sub, u);
           const allBankQuestions = [
             ...(route?.questions || []),
             ...(offline?.questions || [])
           ];
-          const candidateQuestions = allBankQuestions.filter(
-            (q) => q.prompt && q.prompt.trim().toLowerCase() !== currentTrimmed.toLowerCase() && !recentPromptsRef.current.map(p => p.toLowerCase()).includes(q.prompt.trim().toLowerCase())
-          );
+          const isQMatch = (qPrompt: string) => {
+            const stem = stripPromptDecorators(qPrompt || '').toLowerCase();
+            return !stem || stem === currentStem || recentStems.includes(stem);
+          };
+          const candidateQuestions = allBankQuestions.filter((q) => !isQMatch(q.prompt));
           const alt = candidateQuestions.length > 0
             ? candidateQuestions[Math.floor(Math.random() * candidateQuestions.length)]
-            : allBankQuestions.find((q) => q.prompt && q.prompt.trim().toLowerCase() !== currentTrimmed.toLowerCase());
+            : allBankQuestions.find((q) => stripPromptDecorators(q.prompt || '').toLowerCase() !== currentStem);
           if (alt) {
             questionData = {
               ...questionData,
@@ -322,8 +328,8 @@ export default function NeuralLabCanvas({
             };
           } else if (allBankQuestions.length > 0) {
             // All questions in this unit have been seen in this session; reset history and cycle cleanly
-            recentPromptsRef.current = [currentTrimmed];
-            const recycled = allBankQuestions.find((q) => q.prompt && q.prompt.trim().toLowerCase() !== currentTrimmed.toLowerCase()) || allBankQuestions[0];
+            recentPromptsRef.current = [currentPrompt];
+            const recycled = allBankQuestions.find((q) => stripPromptDecorators(q.prompt || '').toLowerCase() !== currentStem) || allBankQuestions[0];
             questionData = {
               ...questionData,
               id: recycled.id || questionData.id,
