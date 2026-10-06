@@ -38,22 +38,11 @@ import { exportAirgapHtmlBundle } from '../utils/exportAirgapHtmlBundle';
 import { exportSubjectCartridge, AVAILABLE_CARTRIDGES } from '../utils/exportSubjectCartridge';
 import { getRelatedConcepts } from '../data/player/astConceptGraph';
 
-export type VectorPresetType =
-  | 'fractions'
-  | 'solar-system'
-  | 'photosynthesis'
-  | 'pythagoras'
-  | 'water-cycle'
-  | 'atom'
-  | 'velocity'
-  | 'dna-helix'
-  | 'church-tour'
-  | 'mountain-elevation'
-  | 'fish-tank'
-  | 'math-fishing'
-  | 'kinetic-gas'
-  | 'calculus-curves'
-  | string;
+// 1. Single Source of Truth: Import presets compiled from static/player/scenes/
+import { PRESET_OPTIONS, type ScenePresetOption } from '../data/player/generatedScenes';
+export { PRESET_OPTIONS, type ScenePresetOption };
+
+export type VectorPresetType = string;
 
 export interface AstVectorMediaPlayerProps {
   preset?: VectorPresetType;
@@ -100,30 +89,6 @@ export interface AstVectorMediaPlayerHandle {
     t?: number;
   }) => void;
 }
-
-export const PRESET_OPTIONS: { id: string; label: string; stage: string }[] = [
-  { id: 'calculus-curves', label: '📐 Calculus & Curves: Tangent Slopes & Integrals (dy/dx & ∫f(x)dx)', stage: 'GCSE & A-LEVEL MATHS' },
-  { id: 'kinetic-gas', label: '🌡️ Kinetic Gas Theory & Boyle\'s Law (PV = nRT)', stage: 'KS3/KS4 PHYSICS & CHEMISTRY' },
-  { id: 'algebra-balance', label: '⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)', stage: 'KS2/KS3 MATHS' },
-  { id: 'electric-circuits', label: '💡 Electrical Circuits: Ohm\'s Law & Electron Physics (V = I × R)', stage: 'KS2/KS3 PHYSICS' },
-  { id: 'bodmas', label: '🧮 BODMAS / BIDMAS: Forcefield Clamps & Area Physics', stage: 'KS2/KS3 MATHS' },
-  { id: 'times-tables', label: '📐 Times Tables: 2D Array & Distributive Splitter', stage: 'KS1/KS2 MATHS' },
-  { id: 'phonics-lab', label: '🔤 Early Phonics: Sound Buttons & Blending Mat', stage: 'EYFS/KS1 ENGLISH' },
-  { id: 'math-fishing', label: '🎣 Math Pond: Number Bonds Fishing Game', stage: 'KS1/KS2 MATHS' },
-  { id: 'mountain-elevation', label: '🧗 Mountain Altitude: Climber Game (Elevation & Slope)', stage: 'KS2/KS3 MATHS & GEOGRAPHY' },
-  { id: 'fish-tank', label: '🐠 Aquarium Stress Benchmark: Vector Point & FPS Limiter', stage: 'BENCHMARK & STRESS LAB' },
-  { id: 'church-tour', label: '⛪ Catholic Church: Sacred Architecture Tour', stage: 'CATHOLIC LIFE' },
-  { id: 'shakespeare', label: '🎭 The Globe Theatre: Shakespeare & Iambic Meter', stage: 'KS3/KS4 ENGLISH LITERATURE' },
-  { id: 'languages', label: '🌍 MFL & Polyglot Studio: Spanish, French & Latin', stage: 'KS2/KS3 MFL' },
-  { id: 'fractions', label: '📐 Fractions: Common Denominators', stage: 'KS2 MATHS' },
-  { id: 'solar-system', label: '🪐 Solar System: Heliocentric Orbits', stage: 'KS3 SCIENCE' },
-  { id: 'photosynthesis', label: '🌱 Photosynthesis: Leaf Factory', stage: 'KS3 BIOLOGY' },
-  { id: 'pythagoras', label: '📐 Pythagoras: Area Conservation', stage: 'KS3 GEOMETRY' },
-  { id: 'water-cycle', label: '💧 Water Cycle: Dynamic States', stage: 'KS2 GEOGRAPHY' },
-  { id: 'atom', label: '⚛️ Atomic Shells: Bohr Model', stage: 'KS3 CHEMISTRY' },
-  { id: 'velocity', label: '🏎️ Velocity & Distance Vectors', stage: 'KS3 PHYSICS' },
-  { id: 'dna-helix', label: '🧬 DNA Double Helix Transcription', stage: 'KS3 GENETICS' },
-];
 
 export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVectorMediaPlayerProps>(({
   preset = 'fractions',
@@ -216,11 +181,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [currentLang, setCurrentLang] = useState(() => lang || (typeof window !== 'undefined' ? getSavedLanguage() : 'en'));
   const [bilingualSubtitles, setBilingualSubtitles] = useState(true);
 
-  // Post message helper with strict targetOrigin (tightened from wildcard '*' to prevent LMS cross-frame snooping)
+  // Post message helper with strict targetOrigin
   const getVerifiedTargetOrigin = useCallback(() => {
     if (typeof window === 'undefined') return '*';
     const origin = window.location.origin;
-    // Fall back to '*' only when origin is opaque 'null' (e.g., sandboxed iframe without allow-same-origin)
     return origin && origin !== 'null' ? origin : '*';
   }, []);
 
@@ -249,7 +213,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   }, [postToPlayer, onPresetChange]);
 
   const togglePictureInPicture = useCallback(async () => {
-    // If desktop document PiP window is open, close it
     if (pipWindowRef.current) {
       try {
         pipWindowRef.current.close();
@@ -260,14 +223,13 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       return;
     }
 
-    // If docked in-page PiP is active, restore to regular viewport
     if (isPipActive && pipType === 'docked') {
       setIsPipActive(false);
       setPipType(null);
       return;
     }
 
-    // 1. Try Document Picture-in-Picture API (Chrome 116+, Edge, Opera)
+    // 1. Try Document Picture-in-Picture API
     if (typeof window !== 'undefined' && 'documentPictureInPicture' in window && typeof (window as any).documentPictureInPicture.requestWindow === 'function') {
       try {
         const pip = await (window as any).documentPictureInPicture.requestWindow({
@@ -278,7 +240,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
         setIsPipActive(true);
         setPipType('document');
 
-        // Copy stylesheets into PiP window
         document.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
           pip.document.head.appendChild(node.cloneNode(true));
         });
@@ -346,7 +307,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     setPipType('docked');
   }, [selectedPreset, isPipActive, pipType]);
 
-  // Expose imperative handle to parent components (for games, quizzes, external controls)
+  // Expose imperative handle to parent components
   useImperativeHandle(ref, () => ({
     postToPlayer,
     seek: (progress: number) => postToPlayer({ type: 'SEEK', progress }),
@@ -381,7 +342,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     }
   }, [initialCheckpoint, postToPlayer, selectedPreset]);
 
-  // Global keyboard shortcut: Press 'V' to toggle voice commands
+  // Global keyboard shortcut: Press 'V' for voice, 'Shift+P' for PiP
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
@@ -401,9 +362,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [postToPlayer]);
+  }, [postToPlayer, togglePictureInPicture]);
 
-  // Sync with global operational language changes
+  // Sync operational language changes
   useEffect(() => {
     if (lang) {
       setCurrentLang(lang);
@@ -417,7 +378,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     return unsub;
   }, [lang, postToPlayer]);
 
-  // Sync preset changes safely without loop
+  // Sync preset changes
   useEffect(() => {
     if (selectedPreset !== lastSentPresetRef.current) {
       lastSentPresetRef.current = selectedPreset;
@@ -430,10 +391,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     postToPlayer({ type: 'SET_THEME', theme: activeTheme });
   }, [activeTheme, postToPlayer]);
 
-  // Listen for telemetry and events from the iframe player
+  // Listen for telemetry and events from iframe player
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Security: Validate event source and origin directly to prevent cross-frame message spoofing in LMS embeds
       if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
       if (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') {
         if (event.origin && event.origin !== 'null' && event.origin !== window.location.origin) {
@@ -535,10 +495,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           break;
       }
     };
-
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange, togglePictureInPicture]);
+  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange, togglePictureInPicture, onPresetChange, onPlayModeToggle]);
 
   // Sync display config changes to player iframe
   useEffect(() => {
@@ -663,390 +622,271 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             </button>
           </div>
         )}
-      {/* Top Banner Toolbar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 14px',
-          background: 'var(--stj-surface-raised)',
-          borderBottom: '1px solid var(--stj-border)',
-          flexWrap: 'wrap',
-          gap: '8px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '1.05rem' }}>🎬</span>
-          <strong style={{ color: 'var(--stj-text)', fontSize: '0.85rem' }}>
-            AST Vector Motion Suite
-          </strong>
-          <span
-            className="stj-badge stj-badge-primary stj-pill"
-            style={{ fontSize: '0.72rem' }}
-          >
-            Sandboxed iFrame &bull; 0% Main Thread
-          </span>
 
-          {allowPresetSwitch && displayConfig.showPresetSelector && (
-            <select
-              value={selectedPreset}
-              onChange={(e) => handleSwitchPreset(e.target.value)}
-              className="stj-select"
-              style={{
-                padding: '3px 8px',
-                minHeight: '32px',
-                fontSize: '0.76rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              title="Switch Curriculum Scene"
-            >
-              {PRESET_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {relatedConcepts.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowConceptTrail((prev) => !prev)}
-              className={`stj-btn ${showConceptTrail ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-              style={{
-                padding: '3px 8px',
-                minHeight: '32px',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-              title="Explore mathematically and scientifically related concept slides"
-            >
-              <span>🧠 Concept Trail ({relatedConcepts.length})</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
-            className="stj-btn stj-btn-primary stj-btn-sm"
-            style={{
-              padding: '3px 8px',
-              minHeight: '32px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-            title="Toggle Playback in iFrame"
-          >
-            ▶ / ⏸ Play
-          </button>
-
-          <button
-            type="button"
-            onClick={() => postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' })}
-            className={`stj-btn ${isVoiceListening ? 'stj-btn-danger' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '3px 9px',
-              minHeight: '32px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontWeight: 700,
-              fontSize: '0.76rem',
-              backgroundColor: isVoiceListening ? '#ef4444' : undefined,
-              color: isVoiceListening ? '#ffffff' : undefined,
-              borderColor: isVoiceListening ? '#f87171' : undefined,
-              boxShadow: isVoiceListening ? '0 0 10px rgba(239, 68, 68, 0.5)' : undefined,
-            }}
-            title="Voice Commands: Speak 'play', 'pause', 'rewind', 'show me fractions' (Press 'V')"
-          >
-            <span>{isVoiceListening ? '🔴 Mic Active' : '🎤 Mic'}</span>
-          </button>
-
-          {voiceFeedback && (
+        {/* Top Banner Toolbar */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 14px',
+            background: 'var(--stj-surface-raised)',
+            borderBottom: '1px solid var(--stj-border)',
+            flexWrap: 'wrap',
+            gap: '8px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '1.05rem' }}>🎬</span>
+            <strong style={{ color: 'var(--stj-text)', fontSize: '0.85rem' }}>
+              AST Vector Motion Suite
+            </strong>
             <span
               className="stj-badge stj-badge-primary stj-pill"
-              style={{
-                fontSize: '0.72rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
+              style={{ fontSize: '0.72rem' }}
             >
-              🎙️ {voiceFeedback}
+              Sandboxed iFrame &bull; 0% Main Thread
             </span>
-          )}
 
-          {has3D && displayConfig.show3DControls && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+            {allowPresetSwitch && displayConfig.showPresetSelector && (
+              <select
+                value={selectedPreset}
+                onChange={(e) => handleSwitchPreset(e.target.value)}
+                className="stj-select"
+                style={{
+                  padding: '3px 8px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+                title="Switch Curriculum Scene"
+              >
+                {PRESET_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {relatedConcepts.length > 0 && (
               <button
                 type="button"
-                onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 10 })}
-                className="stj-btn stj-btn-secondary stj-btn-sm stj-pill"
+                onClick={() => setShowConceptTrail((prev) => !prev)}
+                className={`stj-btn ${showConceptTrail ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
                 style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  padding: '2px 8px',
-                  minHeight: '28px',
-                  color: 'var(--stj-primary)',
-                  borderColor: 'var(--stj-primary)',
-                  background: 'var(--stj-primary-surface)',
+                  padding: '3px 8px',
+                  minHeight: '32px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
                 }}
-                title="3D Spatial Engine: Click to orbit +45°, or click & drag canvas to orbit 360°"
+                title="Explore mathematically and scientifically related concept slides"
               >
-                🌐 3D Mode
+                <span>🧠 Concept Trail ({relatedConcepts.length})</span>
               </button>
+            )}
 
-              {/* Church-specific viewpoints only shown when Church Tour is active */}
-              {selectedPreset === 'church-tour' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 18, distanceScale: 1.05 });
-                      postToPlayer({ type: 'SEEK', progress: 0.05 });
-                    }}
-                    className="stj-btn stj-btn-ghost stj-btn-sm"
-                    style={{
-                      padding: '3px 7px',
-                      minHeight: '28px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      border: '1px solid var(--stj-border)',
-                      background: 'var(--stj-canvas)',
-                      color: 'var(--stj-text)',
-                    }}
-                    title="View from Nave Entrance"
-                  >
-                    ⛪ Nave
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 26, distanceScale: 1.45 });
-                      postToPlayer({ type: 'SEEK', progress: 0.60 });
-                    }}
-                    className="stj-btn stj-btn-ghost stj-btn-sm"
-                    style={{
-                      padding: '3px 7px',
-                      minHeight: '28px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      border: '1px solid var(--stj-border)',
-                      background: 'var(--stj-canvas)',
-                      color: 'var(--stj-text)',
-                    }}
-                    title="Focus on High Altar"
-                  >
-                    ✨ Altar
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      postToPlayer({ type: 'SET_CAMERA', yaw: 14, pitch: 28, distanceScale: 1.70 });
-                      postToPlayer({ type: 'SEEK', progress: 0.80 });
-                    }}
-                    className="stj-btn stj-btn-ghost stj-btn-sm"
-                    style={{
-                      padding: '3px 7px',
-                      minHeight: '28px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      border: '1px solid var(--stj-border)',
-                      background: 'var(--stj-canvas)',
-                      color: 'var(--stj-text)',
-                    }}
-                    title="Focus on Tabernacle & Sanctuary Lamp"
-                  >
-                    🕯️ Tabernacle
-                  </button>
-                </>
-              )}
-
-              <button
-                type="button"
-                onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 0 })}
-                className="stj-btn stj-btn-ghost stj-btn-sm"
-                style={{
-                  padding: '3px 7px',
-                  minHeight: '28px',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  border: '1px solid var(--stj-border)',
-                  background: 'var(--stj-canvas)',
-                  color: 'var(--stj-text)',
-                }}
-                title="Orbit 3D Camera 45°"
-              >
-                🔄 Orbit +45°
-              </button>
-
-              <button
-                type="button"
-                onClick={() => postToPlayer({ type: 'RESET_3D' })}
-                className="stj-btn stj-btn-secondary stj-btn-sm"
-                style={{
-                  padding: '3px 7px',
-                  minHeight: '28px',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  color: 'var(--stj-primary)',
-                  borderColor: 'var(--stj-primary)',
-                  background: 'var(--stj-primary-surface)',
-                }}
-                title="Reset 3D Camera to Scene Orientation"
-              >
-                ⏪ Reset
-              </button>
-            </div>
-          )}
-
-          {hasInteractive && displayConfig.showInteractiveCheckpoints && (
-            <span
-              className="stj-badge stj-badge-success stj-pill"
-              style={{ fontSize: '0.72rem' }}
-              title="Interactive Checkpoint Challenges: Active recall quizzes trigger automatically during playback"
-            >
-              🎯 Checkpoint Quizzes
-            </span>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Live Chalkboard Annotation Button */}
-          <button
-            type="button"
-            onClick={() => setShowChalkboard((prev) => !prev)}
-            className={`stj-btn ${showChalkboard ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: showChalkboard ? '#f59e0b' : undefined,
-              borderColor: showChalkboard ? '#d97706' : undefined,
-              color: showChalkboard ? '#1e1b4b' : undefined,
-            }}
-            title="Toggle Live Chalkboard & Annotation Layer"
-          >
-            <span>✏️ Chalkboard {showChalkboard ? 'ON' : ''}</span>
-          </button>
-
-          {/* Smartboard Vector Ink Pen Toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              const next = !inStagePenActive;
-              setInStagePenActive(next);
-              postToPlayer({ type: 'TOGGLE_PEN', enabled: next });
-            }}
-            className={`stj-btn ${inStagePenActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: inStagePenActive ? '#eab308' : undefined,
-              borderColor: inStagePenActive ? '#ca8a04' : undefined,
-              color: inStagePenActive ? '#090d16' : undefined,
-            }}
-            title="Toggle Direct In-Stage Whiteboard Pen (Smartboard / Stylus drawing)"
-          >
-            <span>✒️ Smartboard Pen {inStagePenActive ? 'ON' : ''}</span>
-          </button>
-
-          {/* Pedagogical X-Ray Inspection Toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              const next = !inStageXRayActive;
-              setInStageXRayActive(next);
-              postToPlayer({ type: 'TOGGLE_XRAY', enabled: next });
-            }}
-            className={`stj-btn ${inStageXRayActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: inStageXRayActive ? '#38bdf8' : undefined,
-              borderColor: inStageXRayActive ? '#0284c7' : undefined,
-              color: inStageXRayActive ? '#090d16' : undefined,
-            }}
-            title="Toggle In-Stage Pedagogical X-Ray Inspection Tooltips"
-          >
-            <span>🔍 X-Ray {inStageXRayActive ? 'ON' : ''}</span>
-          </button>
-
-          {/* Reactive Invariant Lab Button */}
-          <button
-            type="button"
-            onClick={() => setShowLabDrawer((prev) => !prev)}
-            className={`stj-btn ${showLabDrawer ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: showLabDrawer ? '#3b82f6' : undefined,
-              borderColor: showLabDrawer ? '#2563eb' : undefined,
-              color: showLabDrawer ? '#ffffff' : undefined,
-            }}
-            title="Open Reactive Mathematical & Scientific Invariant Sliders"
-          >
-            <span>🔬 Reactive Lab</span>
-          </button>
-
-          {/* Gemini Nano Edge AI Co-Pilot Button */}
-          <button
-            type="button"
-            onClick={() => setShowNanoAi((prev) => !prev)}
-            className={`stj-btn ${showNanoAi ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: showNanoAi ? '#0284c7' : undefined,
-              borderColor: showNanoAi ? '#0369a1' : undefined,
-              color: showNanoAi ? '#ffffff' : undefined,
-            }}
-            title="Open On-Device Gemini Nano Edge AI Co-Pilot & Lab Synthesizer (0 Cloud Egress)"
-          >
-            <span>✨ Ask Nano</span>
-          </button>
-
-          {/* Standalone Air-Gap HTML & Cartridge Exporter */}
-          <div style={{ position: 'relative' }}>
             <button
               type="button"
-              onClick={() => setShowCartridgeMenu((prev) => !prev)}
-              className={`stj-btn ${showCartridgeMenu ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
+              className="stj-btn stj-btn-primary stj-btn-sm"
+              style={{
+                padding: '3px 8px',
+                minHeight: '32px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Toggle Playback in iFrame"
+            >
+              ▶ / ⏸ Play
+            </button>
+
+            <button
+              type="button"
+              onClick={() => postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' })}
+              className={`stj-btn ${isVoiceListening ? 'stj-btn-danger' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '3px 9px',
+                minHeight: '32px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontWeight: 700,
+                fontSize: '0.76rem',
+                backgroundColor: isVoiceListening ? '#ef4444' : undefined,
+                color: isVoiceListening ? '#ffffff' : undefined,
+                borderColor: isVoiceListening ? '#f87171' : undefined,
+                boxShadow: isVoiceListening ? '0 0 10px rgba(239, 68, 68, 0.5)' : undefined,
+              }}
+              title="Voice Commands: Speak 'play', 'pause', 'rewind', 'show me fractions' (Press 'V')"
+            >
+              <span>{isVoiceListening ? '🔴 Mic Active' : '🎤 Mic'}</span>
+            </button>
+
+            {voiceFeedback && (
+              <span
+                className="stj-badge stj-badge-primary stj-pill"
+                style={{
+                  fontSize: '0.72rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                🎙️ {voiceFeedback}
+              </span>
+            )}
+
+            {has3D && displayConfig.show3DControls && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 10 })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm stj-pill"
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    minHeight: '28px',
+                    color: 'var(--stj-primary)',
+                    borderColor: 'var(--stj-primary)',
+                    background: 'var(--stj-primary-surface)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title="3D Spatial Engine: Click to orbit +45°, or click & drag canvas to orbit 360°"
+                >
+                  🌐 3D Mode
+                </button>
+
+                {selectedPreset === 'church-tour' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 18, distanceScale: 1.05 });
+                        postToPlayer({ type: 'SEEK', progress: 0.05 });
+                      }}
+                      className="stj-btn stj-btn-ghost stj-btn-sm"
+                      style={{
+                        padding: '3px 7px',
+                        minHeight: '28px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        border: '1px solid var(--stj-border)',
+                        background: 'var(--stj-canvas)',
+                        color: 'var(--stj-text)',
+                      }}
+                      title="View from Nave Entrance"
+                    >
+                      ⛪ Nave
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        postToPlayer({ type: 'SET_CAMERA', yaw: 0, pitch: 26, distanceScale: 1.45 });
+                        postToPlayer({ type: 'SEEK', progress: 0.60 });
+                      }}
+                      className="stj-btn stj-btn-ghost stj-btn-sm"
+                      style={{
+                        padding: '3px 7px',
+                        minHeight: '28px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        border: '1px solid var(--stj-border)',
+                        background: 'var(--stj-canvas)',
+                        color: 'var(--stj-text)',
+                      }}
+                      title="Focus on High Altar"
+                    >
+                      ✨ Altar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        postToPlayer({ type: 'SET_CAMERA', yaw: 14, pitch: 28, distanceScale: 1.70 });
+                        postToPlayer({ type: 'SEEK', progress: 0.80 });
+                      }}
+                      className="stj-btn stj-btn-ghost stj-btn-sm"
+                      style={{
+                        padding: '3px 7px',
+                        minHeight: '28px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        border: '1px solid var(--stj-border)',
+                        background: 'var(--stj-canvas)',
+                        color: 'var(--stj-text)',
+                      }}
+                      title="Focus on Tabernacle & Sanctuary Lamp"
+                    >
+                      🕯️ Tabernacle
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'ROTATE_3D', deltaYaw: 45, deltaPitch: 0 })}
+                  className="stj-btn stj-btn-ghost stj-btn-sm"
+                  style={{
+                    padding: '3px 7px',
+                    minHeight: '28px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    border: '1px solid var(--stj-border)',
+                    background: 'var(--stj-canvas)',
+                    color: 'var(--stj-text)',
+                  }}
+                  title="Orbit 3D Camera 45°"
+                >
+                  🔄 Orbit +45°
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'RESET_3D' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{
+                    padding: '3px 7px',
+                    minHeight: '28px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: 'var(--stj-primary)',
+                    borderColor: 'var(--stj-primary)',
+                    background: 'var(--stj-primary-surface)',
+                  }}
+                  title="Reset 3D Camera to Scene Orientation"
+                >
+                  ⏪ Reset
+                </button>
+              </div>
+            )}
+
+            {hasInteractive && displayConfig.showInteractiveCheckpoints && (
+              <span
+                className="stj-badge stj-badge-success stj-pill"
+                style={{ fontSize: '0.72rem' }}
+                title="Interactive Checkpoint Challenges: Active recall quizzes trigger automatically during playback"
+              >
+                🎯 Checkpoint Quizzes
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Live Chalkboard Annotation Button */}
+            <button
+              type="button"
+              onClick={() => setShowChalkboard((prev) => !prev)}
+              className={`stj-btn ${showChalkboard ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
               style={{
                 padding: '4px 10px',
                 minHeight: '32px',
@@ -1055,102 +895,241 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
+                background: showChalkboard ? '#f59e0b' : undefined,
+                borderColor: showChalkboard ? '#d97706' : undefined,
+                color: showChalkboard ? '#1e1b4b' : undefined,
               }}
-              title="Download standalone, 100% offline single-file HTML lessons and cartridges for rural or air-gapped schools"
+              title="Toggle Live Chalkboard & Annotation Layer"
             >
-              <span>📦 Offline Packs ▾</span>
+              <span>✏️ Chalkboard {showChalkboard ? 'ON' : ''}</span>
             </button>
 
-            {showCartridgeMenu && (
-              <div
+            {/* Smartboard Vector Ink Pen Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !inStagePenActive;
+                setInStagePenActive(next);
+                postToPlayer({ type: 'TOGGLE_PEN', enabled: next });
+              }}
+              className={`stj-btn ${inStagePenActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: inStagePenActive ? '#eab308' : undefined,
+                borderColor: inStagePenActive ? '#ca8a04' : undefined,
+                color: inStagePenActive ? '#090d16' : undefined,
+              }}
+              title="Toggle Direct In-Stage Whiteboard Pen (Smartboard / Stylus drawing)"
+            >
+              <span>✒️ Smartboard Pen {inStagePenActive ? 'ON' : ''}</span>
+            </button>
+
+            {/* Pedagogical X-Ray Inspection Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !inStageXRayActive;
+                setInStageXRayActive(next);
+                postToPlayer({ type: 'TOGGLE_XRAY', enabled: next });
+              }}
+              className={`stj-btn ${inStageXRayActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: inStageXRayActive ? '#38bdf8' : undefined,
+                borderColor: inStageXRayActive ? '#0284c7' : undefined,
+                color: inStageXRayActive ? '#090d16' : undefined,
+              }}
+              title="Toggle In-Stage Pedagogical X-Ray Inspection Tooltips"
+            >
+              <span>🔍 X-Ray {inStageXRayActive ? 'ON' : ''}</span>
+            </button>
+
+            {/* Reactive Invariant Lab Button */}
+            <button
+              type="button"
+              onClick={() => setShowLabDrawer((prev) => !prev)}
+              className={`stj-btn ${showLabDrawer ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: showLabDrawer ? '#3b82f6' : undefined,
+                borderColor: showLabDrawer ? '#2563eb' : undefined,
+                color: showLabDrawer ? '#ffffff' : undefined,
+              }}
+              title="Open Reactive Mathematical & Scientific Invariant Sliders"
+            >
+              <span>🔬 Reactive Lab</span>
+            </button>
+
+            {/* Gemini Nano Edge AI Co-Pilot Button */}
+            <button
+              type="button"
+              onClick={() => setShowNanoAi((prev) => !prev)}
+              className={`stj-btn ${showNanoAi ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              style={{
+                padding: '4px 10px',
+                minHeight: '32px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: showNanoAi ? '#0284c7' : undefined,
+                borderColor: showNanoAi ? '#0369a1' : undefined,
+                color: showNanoAi ? '#ffffff' : undefined,
+              }}
+              title="Open On-Device Gemini Nano Edge AI Co-Pilot & Lab Synthesizer (0 Cloud Egress)"
+            >
+              <span>✨ Ask Nano</span>
+            </button>
+
+            {/* Standalone Air-Gap HTML & Cartridge Exporter */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowCartridgeMenu((prev) => !prev)}
+                className={`stj-btn ${showCartridgeMenu ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
                 style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '6px',
-                  background: '#0f172a',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                  width: '310px',
-                  zIndex: 70,
-                  padding: '8px',
-                  color: '#f8fafc',
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
+                title="Download standalone, 100% offline single-file HTML lessons and cartridges for rural or air-gapped schools"
               >
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', padding: '4px 8px', textTransform: 'uppercase' }}>
-                  Single Lesson Micro-Pack:
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const opt = PRESET_OPTIONS.find((p) => p.id === selectedPreset);
-                    exportAirgapHtmlBundle(selectedPreset, opt?.label || selectedPreset);
-                    setShowCartridgeMenu(false);
-                  }}
+                <span>📦 Offline Packs ▾</span>
+              </button>
+
+              {showCartridgeMenu && (
+                <div
                   style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '8px 10px',
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '6px',
+                    background: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+                    width: '310px',
+                    zIndex: 70,
+                    padding: '8px',
                     color: '#f8fafc',
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    marginBottom: '8px',
                   }}
                 >
-                  <div style={{ fontWeight: 800, color: '#38bdf8' }}>📄 This Slide Only (&lt; 45 KB)</div>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Standalone self-executing lesson for {selectedPreset}</div>
-                </button>
-
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', padding: '4px 8px', textTransform: 'uppercase' }}>
-                  Multi-Lesson Offline Cartridges:
-                </div>
-                {AVAILABLE_CARTRIDGES.map((cart) => (
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', padding: '4px 8px', textTransform: 'uppercase' }}>
+                    Single Lesson Micro-Pack:
+                  </div>
                   <button
-                    key={cart.id}
                     type="button"
                     onClick={() => {
-                      exportSubjectCartridge(cart.id);
+                      const opt = PRESET_OPTIONS.find((p) => p.id === selectedPreset);
+                      exportAirgapHtmlBundle(selectedPreset, opt?.label || selectedPreset);
                       setShowCartridgeMenu(false);
                     }}
                     style={{
                       width: '100%',
                       textAlign: 'left',
-                      background: 'rgba(255,255,255,0.04)',
+                      background: 'rgba(255,255,255,0.06)',
                       border: 'none',
                       borderRadius: '6px',
                       padding: '8px 10px',
                       color: '#f8fafc',
                       fontSize: '0.78rem',
                       cursor: 'pointer',
-                      marginBottom: '4px',
+                      marginBottom: '8px',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                   >
-                    <div style={{ fontWeight: 800, color: '#facc15' }}>📦 {cart.title}</div>
-                    <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>{cart.description}</div>
+                    <div style={{ fontWeight: 800, color: '#38bdf8' }}>📄 This Slide Only (&lt; 45 KB)</div>
+                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Standalone self-executing lesson for {selectedPreset}</div>
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* EAL Bilingual Subtitles Bridge Toggle */}
-          {currentLang !== 'en' && (
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', padding: '4px 8px', textTransform: 'uppercase' }}>
+                    Multi-Lesson Offline Cartridges:
+                  </div>
+                  {AVAILABLE_CARTRIDGES.map((cart) => (
+                    <button
+                      key={cart.id}
+                      type="button"
+                      onClick={() => {
+                        exportSubjectCartridge(cart.id);
+                        setShowCartridgeMenu(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        background: 'rgba(255,255,255,0.04)',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 10px',
+                        color: '#f8fafc',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        marginBottom: '4px',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                    >
+                      <div style={{ fontWeight: 800, color: '#facc15' }}>📦 {cart.title}</div>
+                      <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>{cart.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* EAL Bilingual Subtitles Bridge Toggle */}
+            {currentLang !== 'en' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBilingualSubtitles((prev) => {
+                    const next = !prev;
+                    postToPlayer({ type: 'SET_BILINGUAL_SUBTITLES', enabled: next });
+                    return next;
+                  });
+                }}
+                className={`stj-btn ${bilingualSubtitles ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+                style={{
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                title="Toggle dual bilingual subtitles (EN + Localized) for EAL English learners"
+              >
+                <span>🌐 {bilingualSubtitles ? 'Bilingual: ON' : 'Bilingual: OFF'}</span>
+              </button>
+            )}
+
+            {/* Display & Mode Settings Button */}
             <button
               type="button"
-              onClick={() => {
-                setBilingualSubtitles((prev) => {
-                  const next = !prev;
-                  postToPlayer({ type: 'SET_BILINGUAL_SUBTITLES', enabled: next });
-                  return next;
-                });
-              }}
-              className={`stj-btn ${bilingualSubtitles ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+              onClick={() => setShowSettingsModal((prev) => !prev)}
+              className={`stj-btn ${showSettingsModal ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
               style={{
                 padding: '4px 10px',
                 minHeight: '32px',
@@ -1158,313 +1137,310 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                 fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
               }}
-              title="Toggle dual bilingual subtitles (EN + Localized) for EAL English learners"
+              title="Configure player view mode and hide/show links"
             >
-              <span>🌐 {bilingualSubtitles ? 'Bilingual: ON' : 'Bilingual: OFF'}</span>
+              <span>⚙️ {MODE_METADATA[displayConfig.mode]?.icon || '⚙️'} {MODE_METADATA[displayConfig.mode]?.label || 'Settings'}</span>
             </button>
-          )}
 
-          {/* Display & Mode Settings Button */}
-          <button
-            type="button"
-            onClick={() => setShowSettingsModal((prev) => !prev)}
-            className={`stj-btn ${showSettingsModal ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-            style={{
-              padding: '4px 10px',
-              minHeight: '32px',
-              fontSize: '0.76rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-            title="Configure player view mode and hide/show links"
-          >
-            <span>⚙️ {MODE_METADATA[displayConfig.mode]?.icon || '⚙️'} {MODE_METADATA[displayConfig.mode]?.label || 'Settings'}</span>
-          </button>
+            {displayConfig.showDevInspect && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !isDevMode;
+                  setIsDevMode(next);
+                  postToPlayer({ type: 'SET_DEV_MODE', enabled: next });
+                }}
+                className={`stj-btn ${isDevMode ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+                style={{
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                }}
+                title="Toggle Point-and-Click SVG Element Inspector"
+              >
+                <span>🛠️ Inspect {isDevMode ? 'ON' : ''}</span>
+              </button>
+            )}
 
-          {displayConfig.showDevInspect && (
-            <button
-              type="button"
-              onClick={() => {
-                const next = !isDevMode;
-                setIsDevMode(next);
-                postToPlayer({ type: 'SET_DEV_MODE', enabled: next });
-              }}
-              className={`stj-btn ${isDevMode ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-              style={{
-                padding: '4px 10px',
-                minHeight: '32px',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-              }}
-              title="Toggle Point-and-Click SVG Element Inspector"
-            >
-              <span>🛠️ Inspect {isDevMode ? 'ON' : ''}</span>
-            </button>
-          )}
+            {displayConfig.showDevStudio && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !showDevStudio;
+                  setShowDevStudio(next);
+                  if (next) {
+                    postToPlayer({ type: 'GET_STAGE_SVG' });
+                  }
+                }}
+                className={`stj-btn ${showDevStudio ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+                style={{
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                }}
+                title="Open Live SVG & AST Developer Studio"
+              >
+                <span>💻 Studio</span>
+              </button>
+            )}
 
-          {displayConfig.showDevStudio && (
-            <button
-              type="button"
-              onClick={() => {
-                const next = !showDevStudio;
-                setShowDevStudio(next);
-                if (next) {
-                  postToPlayer({ type: 'GET_STAGE_SVG' });
-                }
-              }}
-              className={`stj-btn ${showDevStudio ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-              style={{
-                padding: '4px 10px',
-                minHeight: '32px',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-              }}
-              title="Open Live SVG & AST Developer Studio"
-            >
-              <span>💻 Studio</span>
-            </button>
-          )}
+            {displayConfig.showExportSpa && (
+              <button
+                type="button"
+                onClick={() => {
+                  postToPlayer({ type: 'EXPORT_STANDALONE_APPLET' });
+                }}
+                className={`stj-btn ${exportSuccessNotice ? 'stj-btn-success' : 'stj-btn-secondary'} stj-btn-sm`}
+                style={{
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  color: exportSuccessNotice ? '#10b981' : undefined,
+                  borderColor: exportSuccessNotice ? '#10b981' : undefined,
+                }}
+                title="Export as an Autonomous, Offline-Executable Single Page Application in a single .svg file"
+              >
+                <span>{exportSuccessNotice ? '✔ Exported SPA!' : '🚀 Standalone SPA'}</span>
+              </button>
+            )}
 
-          {displayConfig.showExportSpa && (
-            <button
-              type="button"
-              onClick={() => {
-                postToPlayer({ type: 'EXPORT_STANDALONE_APPLET' });
-              }}
-              className={`stj-btn ${exportSuccessNotice ? 'stj-btn-success' : 'stj-btn-secondary'} stj-btn-sm`}
-              style={{
-                padding: '4px 10px',
-                minHeight: '32px',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-                color: exportSuccessNotice ? '#10b981' : undefined,
-                borderColor: exportSuccessNotice ? '#10b981' : undefined,
-              }}
-              title="Export as an Autonomous, Offline-Executable Single Page Application in a single .svg file"
-            >
-              <span>{exportSuccessNotice ? '✔ Exported SPA!' : '🚀 Standalone SPA'}</span>
-            </button>
-          )}
+            {displayConfig.showStandaloneLink && (
+              <button
+                type="button"
+                onClick={openStandalone}
+                className="stj-btn stj-btn-secondary stj-btn-sm"
+                style={{
+                  padding: '4px 9px',
+                  minHeight: '32px',
+                  fontSize: '0.75rem',
+                }}
+                title="Open Player in Standalone Window"
+              >
+                <span>↗ Standalone</span>
+              </button>
+            )}
 
-          {displayConfig.showStandaloneLink && (
-            <button
-              type="button"
-              onClick={openStandalone}
-              className="stj-btn stj-btn-secondary stj-btn-sm"
-              style={{
-                padding: '4px 9px',
-                minHeight: '32px',
-                fontSize: '0.75rem',
-              }}
-              title="Open Player in Standalone Window"
-            >
-              <span>↗ Standalone</span>
-            </button>
-          )}
+            {displayConfig.showPipButton !== false && (
+              <button
+                type="button"
+                onClick={togglePictureInPicture}
+                className={`stj-btn ${isPipActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
+                style={{
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  color: isPipActive ? '#ffffff' : undefined,
+                  background: isPipActive ? 'var(--stj-primary)' : undefined,
+                }}
+                title="Picture-in-Picture: Always-on-top desktop window or docked floating mini-player (Shift+P)"
+              >
+                <span>{isPipActive ? '📺 Dock Back' : '📺 PiP'}</span>
+              </button>
+            )}
 
-          {displayConfig.showPipButton !== false && (
-            <button
-              type="button"
-              onClick={togglePictureInPicture}
-              className={`stj-btn ${isPipActive ? 'stj-btn-primary' : 'stj-btn-secondary'} stj-btn-sm`}
-              style={{
-                padding: '4px 10px',
-                minHeight: '32px',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-                color: isPipActive ? '#ffffff' : undefined,
-                background: isPipActive ? 'var(--stj-primary)' : undefined,
-              }}
-              title="Picture-in-Picture: Always-on-top desktop window or docked floating mini-player (Shift+P)"
-            >
-              <span>{isPipActive ? '📺 Dock Back' : '📺 PiP'}</span>
-            </button>
-          )}
+            {displayConfig.showObsLink && (
+              <button
+                type="button"
+                onClick={() => {
+                  postToPlayer({ type: 'TOGGLE_OBS_DRAWER' });
+                }}
+                className="stj-btn stj-btn-secondary stj-btn-sm"
+                style={{
+                  padding: '4px 9px',
+                  minHeight: '32px',
+                  fontSize: '0.75rem',
+                }}
+                title="Open OBS Studio WebSocket Broadcast Controller (ws://127.0.0.1:4455)"
+              >
+                <span>📡 OBS Link</span>
+              </button>
+            )}
 
-          {displayConfig.showObsLink && (
-            <button
-              type="button"
-              onClick={() => {
-                postToPlayer({ type: 'TOGGLE_OBS_DRAWER' });
-              }}
-              className="stj-btn stj-btn-secondary stj-btn-sm"
-              style={{
-                padding: '4px 9px',
-                minHeight: '32px',
-                fontSize: '0.75rem',
-              }}
-              title="Open OBS Studio WebSocket Broadcast Controller (ws://127.0.0.1:4455)"
-            >
-              <span>📡 OBS Link</span>
-            </button>
-          )}
-
-          {displayConfig.showLmsEmbed && (
-            <button
-              type="button"
-              onClick={() => setShowEmbedCode(!showEmbedCode)}
-              className="stj-btn stj-btn-secondary stj-btn-sm"
-              style={{
-                padding: '4px 10px',
-                minHeight: '32px',
-                fontSize: '0.76rem',
-              }}
-              title="Get standalone embed code for Canvas, Google Classroom, Moodle"
-            >
-              <span>🔗 Embed in LMS</span>
-            </button>
-          )}
+            {displayConfig.showLmsEmbed && (
+              <button
+                type="button"
+                onClick={() => setShowEmbedCode(!showEmbedCode)}
+                className="stj-btn stj-btn-secondary stj-btn-sm"
+                style={{
+                  padding: '4px 10px',
+                  minHeight: '32px',
+                  fontSize: '0.76rem',
+                }}
+                title="Get standalone embed code for Canvas, Google Classroom, Moodle"
+              >
+                <span>🔗 Embed in LMS</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Settings & Display Configuration Drawer */}
-      <PlayerSettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        displayConfig={displayConfig}
-        setDisplayConfig={setDisplayConfig}
-        postToPlayer={postToPlayer}
-      />
+        {/* Settings & Display Configuration Drawer */}
+        <PlayerSettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          displayConfig={displayConfig}
+          setDisplayConfig={setDisplayConfig}
+          postToPlayer={postToPlayer}
+        />
 
-      {/* Embed Code Drawer */}
-      <PlayerEmbedModal
-        isOpen={showEmbedCode}
-        onClose={() => setShowEmbedCode(false)}
-        embedTargetMode={embedTargetMode}
-        setEmbedTargetMode={setEmbedTargetMode}
-        copiedEmbed={copiedEmbed}
-        onCopyEmbedCode={copyEmbedCode}
-        embedCode={embedCode}
-      />
+        {/* Embed Code Drawer */}
+        <PlayerEmbedModal
+          isOpen={showEmbedCode}
+          onClose={() => setShowEmbedCode(false)}
+          embedTargetMode={embedTargetMode}
+          setEmbedTargetMode={setEmbedTargetMode}
+          copiedEmbed={copiedEmbed}
+          onCopyEmbedCode={copyEmbedCode}
+          embedCode={embedCode}
+        />
 
-      {/* Sandboxed iFrame Element or Dual Comparative Viewports */}
-      <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height, overflow: 'hidden', borderRadius: '12px' }}>
-        {comparisonPreset ? (
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '8px',
-              background: '#090d16',
-              overflow: 'hidden',
-              border: '1px solid #1e293b',
-            }}
-          >
-            {/* Primary Viewport */}
-            <div style={{ position: 'relative', height: '100%', borderRight: '1px solid #1e293b' }}>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  left: '8px',
-                  zIndex: 10,
-                  background: 'rgba(15, 23, 42, 0.88)',
-                  backdropFilter: 'blur(4px)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  color: '#38bdf8',
-                  fontWeight: 800,
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                }}
-              >
-                Primary: {selectedPreset}
-              </div>
-              <iframe
-                key={`primary-${selectedPreset}-${currentLang}`}
-                ref={iframeRef}
-                src={playerSrc}
-                title="Primary Concept Viewport"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                  display: 'block',
-                }}
-                allow="fullscreen; microphone"
-              />
-            </div>
-
-            {/* Comparative Secondary Mini Browser Viewport */}
-            <div style={{ position: 'relative', height: '100%' }}>
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  left: '8px',
-                  right: '8px',
-                  zIndex: 10,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <span
+        {/* Sandboxed iFrame Element or Dual Comparative Viewports */}
+        <div style={{ position: 'relative', width: '100%', height: typeof height === 'number' ? `${height}px` : height, overflow: 'hidden', borderRadius: '12px' }}>
+          {comparisonPreset ? (
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '8px',
+                background: '#090d16',
+                overflow: 'hidden',
+                border: '1px solid #1e293b',
+              }}
+            >
+              {/* Primary Viewport */}
+              <div style={{ position: 'relative', height: '100%', borderRight: '1px solid #1e293b' }}>
+                <div
                   style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    zIndex: 10,
                     background: 'rgba(15, 23, 42, 0.88)',
                     backdropFilter: 'blur(4px)',
                     padding: '3px 8px',
                     borderRadius: '6px',
                     fontSize: '0.72rem',
-                    color: '#4ade80',
+                    color: '#38bdf8',
                     fontWeight: 800,
-                    border: '1px solid rgba(74, 222, 128, 0.3)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
                   }}
                 >
-                  Comparing: {comparisonPreset}
-                </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = comparisonPreset;
-                      setComparisonPreset(null);
-                      handleSwitchPreset(target);
-                    }}
-                    style={{
-                      background: '#22c55e',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '2px 8px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                    title="Promote comparison slide into full view"
-                  >
-                    ⛶ Expand Full
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setComparisonPreset(null)}
-                    style={{
-                      background: '#ef4444',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '2px 6px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                    title="Close comparison viewport"
-                  >
-                    ✕
-                  </button>
+                  Primary: {selectedPreset}
                 </div>
+                <iframe
+                  key={`primary-${selectedPreset}-${currentLang}`}
+                  ref={iframeRef}
+                  src={playerSrc}
+                  title="Primary Concept Viewport"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    display: 'block',
+                  }}
+                  allow="fullscreen; microphone"
+                />
               </div>
+
+              {/* Comparative Secondary Mini Browser Viewport */}
+              <div style={{ position: 'relative', height: '100%' }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    right: '8px',
+                    zIndex: 10,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.88)',
+                      backdropFilter: 'blur(4px)',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      color: '#4ade80',
+                      fontWeight: 800,
+                      border: '1px solid rgba(74, 222, 128, 0.3)',
+                    }}
+                  >
+                    Comparing: {comparisonPreset}
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = comparisonPreset;
+                        setComparisonPreset(null);
+                        handleSwitchPreset(target);
+                      }}
+                      style={{
+                        background: '#22c55e',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '2px 8px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                      title="Promote comparison slide into full view"
+                    >
+                      ⛶ Expand Full
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComparisonPreset(null)}
+                      style={{
+                        background: '#ef4444',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '2px 6px',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                      title="Close comparison viewport"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                <iframe
+                  key={`compare-${comparisonPreset}-${currentLang}`}
+                  src={`${cleanBase}player/index.html?preset=${encodeURIComponent(comparisonPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=1&theme=${encodeURIComponent(activeTheme)}&mode=minimal&v=2.5.0`}
+                  title="Comparative Concept Viewport"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    display: 'block',
+                  }}
+                  allow="fullscreen; microphone"
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <iframe
-                key={`compare-${comparisonPreset}-${currentLang}`}
-                src={`${cleanBase}player/index.html?preset=${encodeURIComponent(comparisonPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=1&theme=${encodeURIComponent(activeTheme)}&mode=minimal&v=2.5.0`}
-                title="Comparative Concept Viewport"
+                key={`${selectedPreset}-${currentLang}`}
+                ref={iframeRef}
+                src={playerSrc}
+                title="Lumina Vector Player"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -1474,233 +1450,216 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                 allow="fullscreen; microphone"
               />
             </div>
-          </div>
-        ) : (
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <iframe
-              key={`${selectedPreset}-${currentLang}`}
-              ref={iframeRef}
-              src={playerSrc}
-              title="Lumina Vector Player"
-              style={{
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                display: 'block',
-              }}
-              allow="fullscreen; microphone"
-            />
+          )}
+
+          {/* Live Chalkboard & Annotation Layer */}
+          <AstChalkboardOverlay
+            isActive={showChalkboard}
+            onClose={() => setShowChalkboard(false)}
+          />
+
+          {/* Reactive Invariant Parameter Manipulation Lab */}
+          <AstInteractiveLabDrawer
+            isOpen={showLabDrawer}
+            onClose={() => setShowLabDrawer(false)}
+            preset={selectedPreset}
+          />
+
+          {/* Gemini Nano Edge AI Co-Pilot & Lab Synthesizer */}
+          <NanoAiTutorDrawer
+            isOpen={showNanoAi}
+            onClose={() => setShowNanoAi(false)}
+            preset={selectedPreset}
+            postToPlayer={postToPlayer}
+            currentProgress={currentProgress}
+            activeKeyframe={activeKeyframe}
+          />
+        </div>
+
+        {/* Live Keyframe Telemetry Bar */}
+        {activeKeyframe && (
+          <div
+            style={{
+              background: 'var(--stj-surface-raised)',
+              borderTop: '1px solid var(--stj-border)',
+              padding: '8px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.78rem',
+              flexWrap: 'wrap',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: 'var(--stj-warning)', fontWeight: 700 }}>💡 Milestone:</span>
+              <span style={{ color: 'var(--stj-text)', fontWeight: 600 }}>{activeKeyframe.title}</span>
+              <span style={{ color: 'var(--stj-text-muted)' }}>&bull;</span>
+              <span style={{ color: 'var(--stj-text-muted)' }}>{activeKeyframe.rule}</span>
+            </div>
+            <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
+              {Math.round(currentProgress * 100)}% Complete
+            </span>
           </div>
         )}
 
-        {/* Live Chalkboard & Annotation Layer */}
-        <AstChalkboardOverlay
-          isActive={showChalkboard}
-          onClose={() => setShowChalkboard(false)}
-        />
+        {/* Semantic Concept Trail & Related Slide Portal */}
+        {relatedConcepts.length > 0 && (
+          <div
+            style={{
+              background: 'var(--stj-surface-raised, #0f172a)',
+              borderTop: '1px solid var(--stj-border, #334155)',
+              padding: '12px 16px',
+              marginTop: '0px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showConceptTrail ? '10px' : '0px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.1rem' }}>🔗</span>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--stj-text, #f8fafc)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Semantic Concept Trail (AST Graph)
+                </strong>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                  {relatedConcepts.length} Linked Concepts
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConceptTrail((prev) => !prev)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--stj-text-muted, #94a3b8)',
+                  fontSize: '0.76rem',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {showConceptTrail ? '▲ Hide Concept Trail' : '▼ Show Concept Trail'}
+              </button>
+            </div>
 
-        {/* Reactive Invariant Parameter Manipulation Lab */}
-        <AstInteractiveLabDrawer
-          isOpen={showLabDrawer}
-          onClose={() => setShowLabDrawer(false)}
-          preset={selectedPreset}
-        />
+            {showConceptTrail && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+                {relatedConcepts.map((rel) => (
+                  <div
+                    key={rel.id}
+                    onClick={() => handleSwitchPreset(rel.id)}
+                    style={{
+                      background: 'var(--stj-surface, #1e293b)',
+                      border: '1px solid var(--stj-border, #334155)',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#38bdf8';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--stj-border, #334155)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{rel.icon}</span> {rel.title}
+                        </span>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>
+                          {rel.stage}
+                        </span>
+                      </div>
 
-        {/* Gemini Nano Edge AI Co-Pilot & Lab Synthesizer */}
-        <NanoAiTutorDrawer
-          isOpen={showNanoAi}
-          onClose={() => setShowNanoAi(false)}
-          preset={selectedPreset}
+                      <p style={{ margin: '0 0 6px 0', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                        {rel.reason}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.08)', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 600 }}>
+                        ⚡ Invariant: {rel.invariantConcept}
+                      </span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setComparisonPreset((prev) => prev === rel.id ? null : rel.id);
+                          }}
+                          style={{
+                            background: comparisonPreset === rel.id ? '#2563eb' : 'rgba(59, 130, 246, 0.15)',
+                            color: comparisonPreset === rel.id ? '#ffffff' : '#60a5fa',
+                            border: '1px solid rgba(59, 130, 246, 0.4)',
+                            borderRadius: '4px',
+                            padding: '3px 8px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                          title="Open this related concept in a side-by-side mini browser viewport"
+                        >
+                          {comparisonPreset === rel.id ? '✕ Close Split' : '🪟 Compare Dual'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setComparisonPreset(null);
+                            handleSwitchPreset(rel.id);
+                          }}
+                          style={{
+                            background: 'rgba(34, 197, 94, 0.15)',
+                            color: '#4ade80',
+                            border: '1px solid rgba(34, 197, 94, 0.4)',
+                            borderRadius: '4px',
+                            padding: '3px 8px',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                          title="Morph player directly into this concept slide"
+                        >
+                          Jump Slide &rarr;
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Developer Studio & Interactive SVG Sandbox Panel */}
+        <DevStudioDrawer
+          isOpen={showDevStudio}
+          onClose={() => setShowDevStudio(false)}
+          studioTab={studioTab}
+          setStudioTab={setStudioTab}
+          inspectedElement={inspectedElement}
+          setInspectedElement={setInspectedElement}
+          customSvgCode={customSvgCode}
+          setCustomSvgCode={setCustomSvgCode}
+          customAstCode={customAstCode}
+          setCustomAstCode={setCustomAstCode}
+          hotReloadFlash={hotReloadFlash}
+          setHotReloadFlash={setHotReloadFlash}
           postToPlayer={postToPlayer}
-          currentProgress={currentProgress}
-          activeKeyframe={activeKeyframe}
+          swfResult={swfResult}
+          setSwfResult={setSwfResult}
+          isParsingSwf={isParsingSwf}
+          setIsParsingSwf={setIsParsingSwf}
+          swfError={swfError}
+          setSwfError={setSwfError}
+          swfDragActive={swfDragActive}
+          setSwfDragActive={setSwfDragActive}
         />
       </div>
-
-      {/* Live Keyframe Telemetry Bar */}
-      {activeKeyframe && (
-        <div
-          style={{
-            background: 'var(--stj-surface-raised)',
-            borderTop: '1px solid var(--stj-border)',
-            padding: '8px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: '0.78rem',
-            flexWrap: 'wrap',
-            gap: '8px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: 'var(--stj-warning)', fontWeight: 700 }}>💡 Milestone:</span>
-            <span style={{ color: 'var(--stj-text)', fontWeight: 600 }}>{activeKeyframe.title}</span>
-            <span style={{ color: 'var(--stj-text-muted)' }}>&bull;</span>
-            <span style={{ color: 'var(--stj-text-muted)' }}>{activeKeyframe.rule}</span>
-          </div>
-          <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
-            {Math.round(currentProgress * 100)}% Complete
-          </span>
-        </div>
-      )}
-
-      {/* Semantic Concept Trail & Related Slide Portal (AST Knowledge Graph Traversal) */}
-      {relatedConcepts.length > 0 && (
-        <div
-          style={{
-            background: 'var(--stj-surface-raised, #0f172a)',
-            borderTop: '1px solid var(--stj-border, #334155)',
-            padding: '12px 16px',
-            marginTop: '0px',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showConceptTrail ? '10px' : '0px', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.1rem' }}>🔗</span>
-              <strong style={{ fontSize: '0.85rem', color: 'var(--stj-text, #f8fafc)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Semantic Concept Trail (AST Graph)
-              </strong>
-              <span style={{ fontSize: '0.72rem', background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-                {relatedConcepts.length} Linked Concepts
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowConceptTrail((prev) => !prev)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--stj-text-muted, #94a3b8)',
-                fontSize: '0.76rem',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
-            >
-              {showConceptTrail ? '▲ Hide Concept Trail' : '▼ Show Concept Trail'}
-            </button>
-          </div>
-
-          {showConceptTrail && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
-              {relatedConcepts.map((rel) => (
-                <div
-                  key={rel.id}
-                  onClick={() => handleSwitchPreset(rel.id)}
-                  style={{
-                    background: 'var(--stj-surface, #1e293b)',
-                    border: '1px solid var(--stj-border, #334155)',
-                    borderRadius: '10px',
-                    padding: '10px 12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#38bdf8';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--stj-border, #334155)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>{rel.icon}</span> {rel.title}
-                      </span>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px' }}>
-                        {rel.stage}
-                      </span>
-                    </div>
-
-                    <p style={{ margin: '0 0 6px 0', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.4 }}>
-                      {rel.reason}
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.08)', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 600 }}>
-                      ⚡ Invariant: {rel.invariantConcept}
-                    </span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setComparisonPreset((prev) => prev === rel.id ? null : rel.id);
-                        }}
-                        style={{
-                          background: comparisonPreset === rel.id ? '#2563eb' : 'rgba(59, 130, 246, 0.15)',
-                          color: comparisonPreset === rel.id ? '#ffffff' : '#60a5fa',
-                          border: '1px solid rgba(59, 130, 246, 0.4)',
-                          borderRadius: '4px',
-                          padding: '3px 8px',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                        title="Open this related concept in a side-by-side mini browser viewport"
-                      >
-                        {comparisonPreset === rel.id ? '✕ Close Split' : '🪟 Compare Dual'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setComparisonPreset(null);
-                          handleSwitchPreset(rel.id);
-                        }}
-                        style={{
-                          background: 'rgba(34, 197, 94, 0.15)',
-                          color: '#4ade80',
-                          border: '1px solid rgba(34, 197, 94, 0.4)',
-                          borderRadius: '4px',
-                          padding: '3px 8px',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                        }}
-                        title="Morph player directly into this concept slide"
-                      >
-                        Jump Slide &rarr;
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Developer Studio & Interactive SVG Sandbox Panel */}
-      <DevStudioDrawer
-        isOpen={showDevStudio}
-        onClose={() => setShowDevStudio(false)}
-        studioTab={studioTab}
-        setStudioTab={setStudioTab}
-        inspectedElement={inspectedElement}
-        setInspectedElement={setInspectedElement}
-        customSvgCode={customSvgCode}
-        setCustomSvgCode={setCustomSvgCode}
-        customAstCode={customAstCode}
-        setCustomAstCode={setCustomAstCode}
-        hotReloadFlash={hotReloadFlash}
-        setHotReloadFlash={setHotReloadFlash}
-        postToPlayer={postToPlayer}
-        swfResult={swfResult}
-        setSwfResult={setSwfResult}
-        isParsingSwf={isParsingSwf}
-        setIsParsingSwf={setIsParsingSwf}
-        swfError={swfError}
-        setSwfError={setSwfError}
-        swfDragActive={swfDragActive}
-        setSwfDragActive={setSwfDragActive}
-      />
-    </div>
     </>
   );
 });
