@@ -303,7 +303,7 @@
   <!-- Modular Scripts -->
   <script src="./player/ast-compiler.js"></script>
   <script src="./player/ast-phet-bridge.js"></script>
-  <script src="./player/ast-scenes.js"></script>
+  <script src="./player/ast-registry.js"></script>
   <script src="./player/ast-engine.js"></script>
   <script src="./player/player-ui.js"></script>
   <script>
@@ -352,10 +352,14 @@
       const federatedManifest = params.get('manifest') || params.get('catalog');
       if (federatedManifest) {
         ui.populatePresets();
-      } else if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.loadConfig === 'function') {
-        window.ASTSceneRegistry.loadConfig('./player/scenes-config.json').then(() => {
+      } else if (window.ASTSceneRegistry && typeof window.ASTSceneRegistry.autoDiscover === 'function') {
+        window.ASTSceneRegistry.autoDiscover('./player/').then(() => {
           ui.populatePresets();
-        }).catch(() => {});
+        }).catch(() => {
+          ui.populatePresets();
+        });
+      } else {
+        ui.populatePresets();
       }
 
       // 5. Setup postMessage bridge for parent iframe communication

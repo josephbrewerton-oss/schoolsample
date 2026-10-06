@@ -28,12 +28,12 @@
   <rect width="800" height="480" fill="#090d16"/>
   <rect x="0" y="0" width="800" height="480" fill="none" stroke="#1e293b" stroke-width="2"/>
 
-  <!-- Title & Curriculum Banner -->
+  <!-- Title &amp; Curriculum Banner -->
   <text x="400" y="38" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">
-    Kinetic Gas Theory & Thermodynamics (PV = nRT)
+    Kinetic Gas Theory &amp; Thermodynamics (PV = nRT)
   </text>
   <text x="400" y="58" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle">
-    KS3/KS4 Physics & Chemistry: Elastic Wall Collisions, Boyle's Law & Thermal Speed
+    KS3/KS4 Physics &amp; Chemistry: Elastic Wall Collisions, Boyle's Law &amp; Thermal Speed
   </text>
 
   <!-- Piston Cylinder Container Outer Frame -->
@@ -71,7 +71,7 @@
     <circle id="brownian-grain" cx="200" cy="210" r="16" fill="#f59e0b" stroke="#fef3c7" stroke-width="3" opacity="0.9"/>
   </g>
 
-  <!-- Movable Piston Head & Mechanical Shaft -->
+  <!-- Movable Piston Head &amp; Mechanical Shaft -->
   <g id="piston-assembly" transform="translate(430, 0)">
     <!-- Piston Face -->
     <rect x="0" y="80" width="28" height="300" rx="4" fill="url(#piston-shaft)" stroke="#cbd5e1" stroke-width="2"/>
@@ -93,7 +93,7 @@
     <circle cx="0" cy="0" r="56" fill="#090d16" stroke="#1e293b" stroke-width="2"/>
     <!-- Gauge Dial Ticks -->
     <path d="M -40 25 A 50 50 0 1 1 40 25" fill="none" stroke="#64748b" stroke-width="3" stroke-dasharray="2 8"/>
-    <!-- Needle Pivot & Arm -->
+    <!-- Needle Pivot &amp; Arm -->
     <g id="gauge-needle" transform="rotate(-45 0 0)">
       <line x1="0" y1="8" x2="0" y2="-44" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
       <circle cx="0" cy="0" r="6" fill="#f8fafc"/>
@@ -145,7 +145,7 @@
         BOYLE'S LAW INVARIANT (T = CONSTANT):
       </text>
       <text x="0" y="24" fill="#22c55e" font-size="16" font-weight="900" font-family="monospace" id="pv-equation">
-        P &times; V = k &nbsp;&bull;&nbsp; (101.3 kPa &times; 100% Volume = 10,130)
+        P × V = k  •  (101.3 kPa × 100% Volume = 10,130)
       </text>
     </g>
     <!-- Collision Momentum Telemetry -->

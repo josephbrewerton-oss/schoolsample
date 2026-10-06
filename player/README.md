@@ -17,7 +17,7 @@ static/player/
 ├── demo-webcomponent.html  # Interactive test & demo for Web Component
 ├── player.css              # Responsive, zero-CLS Dark/Light styling
 ├── ast-engine.js           # Timeline, keyframe interpolator, speech & postMessage bridge
-├── ast-scenes.js           # Curriculum scene definitions & ASTSceneRegistry
+├── ast-registry.js         # Streaming scene catalog loader & ASTSceneRegistry
 ├── player-ui.js            # Scrubber, keyboard shortcuts, print/export controller
 ├── schema/                 # Formal Minimal AST Specifications
 │   ├── SPECIFICATION.md    # Detailed human-readable spec

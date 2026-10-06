@@ -1,0 +1,61 @@
+<svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldBeam" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="480" fill="#090d16"/>
+  <!-- Title Header -->
+  <text x="400" y="40" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle">Algebraic Balance Scale: Golden Rule of Equality</text>
+  <text id="eq-display" x="400" y="70" fill="#38bdf8" font-size="22" font-weight="900" text-anchor="middle">2x + 5 = 15</text>
+  
+  <!-- Fulcrum / Stand -->
+  <polygon points="400,240 370,410 430,410" fill="#334155" stroke="#475569" stroke-width="2"/>
+  <circle cx="400" cy="240" r="14" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+  <rect x="300" y="410" width="200" height="20" rx="4" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  
+  <!-- Moving Balance Beam Assembly -->
+  <g id="balance-beam" transform="rotate(0, 400, 240)">
+    <!-- Horizontal Beam -->
+    <rect x="120" y="235" width="560" height="10" rx="5" fill="url(#goldBeam)" stroke="#b45309" stroke-width="1.5"/>
+    
+    <!-- Left Pan Strings &amp; Tray -->
+    <line x1="200" y1="240" x2="160" y2="330" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="200" y1="240" x2="240" y2="330" stroke="#94a3b8" stroke-width="2"/>
+    <ellipse cx="200" cy="330" rx="70" ry="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+    
+    <!-- Left Pan Weights Group -->
+    <g id="left-pan-weights">
+      <!-- 2x Boxes -->
+      <rect x="150" y="280" width="40" height="40" rx="6" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+      <text x="170" y="306" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">x</text>
+      <rect x="195" y="280" width="40" height="40" rx="6" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+      <text x="215" y="306" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">x</text>
+      <!-- 5 unit dots -->
+      <g id="left-5-units">
+        <circle cx="160" cy="265" r="7" fill="#f59e0b"/>
+        <circle cx="180" cy="265" r="7" fill="#f59e0b"/>
+        <circle cx="200" cy="265" r="7" fill="#f59e0b"/>
+        <circle cx="220" cy="265" r="7" fill="#f59e0b"/>
+        <circle cx="240" cy="265" r="7" fill="#f59e0b"/>
+        <text x="200" y="250" fill="#fde68a" font-size="12" font-weight="800" text-anchor="middle">+5 units</text>
+      </g>
+    </g>
+    
+    <!-- Right Pan Strings &amp; Tray -->
+    <line x1="600" y1="240" x2="560" y2="330" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="600" y1="240" x2="640" y2="330" stroke="#94a3b8" stroke-width="2"/>
+    <ellipse cx="600" cy="330" rx="70" ry="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+    
+    <!-- Right Pan Weights -->
+    <g id="right-pan-weights">
+      <rect x="560" y="280" width="80" height="40" rx="6" fill="#22c55e" stroke="#4ade80" stroke-width="2"/>
+      <text id="right-weight-text" x="600" y="306" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle">15</text>
+    </g>
+  </g>
+  
+  <!-- Status Indicator -->
+  <rect x="230" y="440" width="340" height="30" rx="6" fill="rgba(34, 197, 94, 0.15)" stroke="#22c55e" stroke-width="1"/>
+  <text id="balance-status" x="400" y="460" fill="#4ade80" font-size="13" font-weight="800" text-anchor="middle">⚖️ Scale Balanced • Left (2x + 5) = Right (15)</text>
+</svg>

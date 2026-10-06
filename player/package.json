@@ -21,7 +21,7 @@
     "ast-engine.js",
     "ast-compiler.js",
     "obs-controller.js",
-    "ast-scenes.js",
+    "ast-registry.js",
     "player-ui.js",
     "micro-vector-player.js",
     "demo-webcomponent.html",

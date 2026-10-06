@@ -29,8 +29,8 @@
   <path d="M 310 440 L 310 240 L 160 240 L 160 160 L 310 160 L 310 50 Q 400 30, 490 50 L 490 160 L 640 160 L 640 240 L 490 240 L 490 440 Z" fill="#0b1120" stroke="#334155" stroke-width="3" />
   <path d="M 310 390 L 490 390 M 310 340 L 490 340 M 310 290 L 490 290 M 310 240 L 490 240" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="2 4" />
 
-  <!-- 2. Nave Central Royal Carpet & Pews -->
-  <g class="ast-hotspot" data-target-t="0.20" data-label="2. The Nave & Central Aisle" style="cursor: pointer;">
+  <!-- 2. Nave Central Royal Carpet &amp; Pews -->
+  <g class="ast-hotspot" data-target-t="0.20" data-label="2. The Nave &amp; Central Aisle" style="cursor: pointer;">
     <rect x="375" y="180" width="50" height="260" fill="#7f1d1d" opacity="0.85" rx="2" />
     <line x1="375" y1="180" x2="375" y2="440" stroke="#dc2626" stroke-width="1.5" />
     <line x1="425" y1="180" x2="425" y2="440" stroke="#dc2626" stroke-width="1.5" />
@@ -61,7 +61,7 @@
     <line x1="438" y1="398" x2="476" y2="398" stroke="#92400e" stroke-width="1" />
   </g>
 
-  <!-- 3. Elevated Sanctuary Platform & Altar of Sacrifice -->
+  <!-- 3. Elevated Sanctuary Platform &amp; Altar of Sacrifice -->
   <path d="M 310 180 L 490 180 L 490 60 Q 400 45, 310 60 Z" fill="#1e293b" stroke="#475569" stroke-width="2" />
   <path d="M 325 170 L 475 170 L 475 70 Q 400 58, 325 70 Z" fill="#0f172a" stroke="#64748b" stroke-width="1.5" />
   <g class="ast-hotspot" data-target-t="0.60" data-label="4. The Altar of Sacrifice" style="cursor: pointer;">
@@ -74,8 +74,8 @@
     <text x="400" y="138" fill="#0f172a" font-size="9" font-weight="900" text-anchor="middle">ALTAR</text>
   </g>
 
-  <!-- 4. Tabernacle of the Blessed Sacrament & Red Sanctuary Lamp -->
-  <g class="ast-hotspot" data-target-t="0.80" data-label="5. The Tabernacle & Sanctuary Lamp" style="cursor: pointer;">
+  <!-- 4. Tabernacle of the Blessed Sacrament &amp; Red Sanctuary Lamp -->
+  <g class="ast-hotspot" data-target-t="0.80" data-label="5. The Tabernacle &amp; Sanctuary Lamp" style="cursor: pointer;">
     <rect x="382" y="58" width="36" height="28" rx="3" fill="#eab308" stroke="#fef08a" stroke-width="2" filter="url(#glow)" />
     <line x1="400" y1="62" x2="400" y2="76" stroke="#78350f" stroke-width="2" />
     <line x1="392" y1="68" x2="408" y2="68" stroke="#78350f" stroke-width="1.5" />
@@ -110,23 +110,23 @@
     <text x="562" y="208" fill="#bbf7d0" font-size="8">Sacrament of Initiation</text>
   </g>
 
-  <!-- 8. Narthex & Holy Water Stoup (Entrance) -->
-  <g class="ast-hotspot" data-target-t="0.00" data-label="1. Narthex & Holy Water Stoup" style="cursor: pointer;">
+  <!-- 8. Narthex &amp; Holy Water Stoup (Entrance) -->
+  <g class="ast-hotspot" data-target-t="0.00" data-label="1. Narthex &amp; Holy Water Stoup" style="cursor: pointer;">
     <rect x="310" y="415" width="180" height="30" rx="3" fill="#1e293b" stroke="#475569" stroke-width="1.5" />
     <circle cx="330" cy="430" r="6" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" />
     <circle cx="470" cy="430" r="6" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" />
-    <text x="400" y="434" fill="#cbd5e1" font-size="10" font-weight="bold" text-anchor="middle">NARTHEX &bull; ENTRANCE</text>
+    <text x="400" y="434" fill="#cbd5e1" font-size="10" font-weight="bold" text-anchor="middle">NARTHEX • ENTRANCE</text>
   </g>
 
-  <!-- 9. Moving Pilgrim Spotlight & Avatar -->
+  <!-- 9. Moving Pilgrim Spotlight &amp; Avatar -->
   <circle id="spot-halo" cx="400" cy="430" r="38" fill="rgba(56, 189, 248, 0.14)" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 3" filter="url(#glow)" />
   <circle id="spot-dot" cx="400" cy="430" r="8" fill="#38bdf8" filter="url(#glow)" />
   <circle id="spot-core" cx="400" cy="430" r="4" fill="#ffffff" />
 
   <!-- 10. Architectural Station HUD Banner -->
   <rect x="110" y="12" width="580" height="42" rx="8" fill="#090d16" stroke="#38bdf8" stroke-width="1.5" />
-  <text id="church-hud-title" x="130" y="29" fill="#38bdf8" font-size="12" font-weight="800">1. NARTHEX & HOLY WATER STOUP</text>
-  <text id="church-hud-desc" x="130" y="44" fill="#94a3b8" font-size="10">Vestibulum & Aqua Benedicta &bull; Blessing ourselves with Holy Water...</text>
+  <text id="church-hud-title" x="130" y="29" fill="#38bdf8" font-size="12" font-weight="800">1. NARTHEX &amp; HOLY WATER STOUP</text>
+  <text id="church-hud-desc" x="130" y="44" fill="#94a3b8" font-size="10">Vestibulum &amp; Aqua Benedicta • Blessing ourselves with Holy Water...</text>
   <circle cx="664" cy="33" r="11" fill="#2563eb" />
   <text x="664" y="37" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle">⛪</text>
 </svg>

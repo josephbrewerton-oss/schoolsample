@@ -2104,17 +2104,36 @@
         if (typeof fetch !== 'undefined') {
           try {
             const base = (this.options.basePath || './').replace(/\/?$/, '/');
-            const cacheBust = '?v=2.5.1';
-            const svgPath = `${base}scenes/${presetId}.svg${cacheBust}`;
-            const astPath = `${base}scenes/${presetId}.ast${cacheBust}`;
+            const cacheBust = '?v=2.6.0';
+            const candidateBases = [base, './', '/player/', '/', 'player/'];
 
-            const [svgRes, astRes] = await Promise.all([
-              fetch(svgPath).catch(() => null),
-              fetch(astPath).catch(() => null)
+            const fetchAsset = async (ext) => {
+              for (const cBase of candidateBases) {
+                const cleanCBase = cBase.endsWith('/') ? cBase : `${cBase}/`;
+                const candidatePath = `${cleanCBase}scenes/${presetId}.${ext}${cacheBust}`;
+                try {
+                  const res = await fetch(candidatePath).catch(() => null);
+                  if (res && res.ok) {
+                    const text = await res.text();
+                    // Guard against SPA HTML 404 fallback
+                    if (ext === 'svg' && text.includes('<svg') && !text.startsWith('<!DOCTYPE') && !text.startsWith('<html')) {
+                      return text;
+                    }
+                    if (ext === 'ast' && (text.includes(':scene') || text.startsWith('(') || text.startsWith('{')) && !text.startsWith('<!DOCTYPE') && !text.startsWith('<html')) {
+                      return text;
+                    }
+                  }
+                } catch (_) {}
+              }
+              return '';
+            };
+
+            const [foundSvg, foundAst] = await Promise.all([
+              fetchAsset('svg'),
+              fetchAsset('ast')
             ]);
-
-            if (svgRes && svgRes.ok) svgText = await svgRes.text();
-            if (astRes && astRes.ok) astText = await astRes.text();
+            if (foundSvg) svgText = foundSvg;
+            if (foundAst) astText = foundAst;
           } catch (e) {
             console.warn('[AST Engine] Asset fetch notice for:', presetId, e);
           }
@@ -2165,6 +2184,20 @@
         };
 
         this.sceneCache[presetId] = scene;
+
+        // Auto-register dynamically found scene so teacher does not have to reprocess index
+        if (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.register === 'function') {
+          global.ASTSceneRegistry.register(presetId, {
+            id: presetId,
+            title: scene.title,
+            stage: scene.stage,
+            duration: scene.duration,
+            has3D: scene.has3D,
+            svgFile: `scenes/${presetId}.svg`,
+            astFile: `scenes/${presetId}.ast`
+          });
+        }
+        this.emit('scene_registered', { id: presetId, scene });
       }
 
       this.scene = scene;
@@ -2644,18 +2677,49 @@
         // 1. Mount SVG template if available
         if (scene.svgText) {
           try {
-            const safeSvg = this.sanitizeSvg(scene.svgText);
+            let safeSvg = this.sanitizeSvg(scene.svgText);
+            // Replace legacy HTML entities if present to guarantee clean XML parsing
+            safeSvg = safeSvg
+              .replace(/&times;/g, '×')
+              .replace(/&bull;/g, '•')
+              .replace(/&Omega;/g, 'Ω')
+              .replace(/&nbsp;/g, '&#160;')
+              .replace(/&divide;/g, '÷')
+              .replace(/&diams;/g, '♦')
+              .replace(/&mdash;/g, '—')
+              .replace(/&ne;/g, '≠')
+              .replace(/&deg;/g, '°');
 
+            let mounted = false;
             if (safeSvg && typeof DOMParser !== 'undefined') {
               const parser = new DOMParser();
-              const doc = parser.parseFromString(safeSvg, 'image/svg+xml');
+              let doc = parser.parseFromString(safeSvg, 'image/svg+xml');
 
               if (!doc.querySelector('parsererror')) {
                 const rootSvg = doc.querySelector('svg');
                 if (rootSvg) {
                   this.sanitizeSvgElement(rootSvg);
-                  container.replaceChildren(...rootSvg.childNodes);
+                  container.innerHTML = rootSvg.innerHTML;
+                  mounted = true;
                 }
+              }
+
+              // Fallback to HTML parser if XML parser had an entity or parse warning
+              if (!mounted) {
+                const htmlDoc = parser.parseFromString(safeSvg, 'text/html');
+                const rootSvg = htmlDoc.querySelector('svg');
+                if (rootSvg) {
+                  this.sanitizeSvgElement(rootSvg);
+                  container.innerHTML = rootSvg.innerHTML;
+                  mounted = true;
+                }
+              }
+            }
+
+            if (!mounted && container) {
+              const innerMatch = safeSvg.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
+              if (innerMatch) {
+                container.innerHTML = innerMatch[1];
               }
             }
           } catch (err) {

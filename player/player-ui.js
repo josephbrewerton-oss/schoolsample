@@ -674,28 +674,41 @@
         }
       }
 
-      // 2. Fetch default built-in local manifests
+      // 2. Dynamic Auto-Find & Manifest Ingestion (Zero-Reindexing)
       try {
-        let res = await fetch('./scenes.manifest.json?v=2.5.0').catch(() => null);
-        if (!res || !res.ok) {
-          res = await fetch('./scenes-config.json?v=2.5.0').catch(() => null);
-        }
-        if (res && res.ok) {
-          const manifest = await res.json();
-          if (manifest && Array.isArray(manifest.scenes)) {
-            manifest.scenes.forEach(sc => {
-              sc._source = 'builtin';
-              list.push(sc);
+        if (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.autoDiscover === 'function') {
+          const autoResult = await global.ASTSceneRegistry.autoDiscover(this.engine.options.basePath || './');
+          if (autoResult && Array.isArray(autoResult.scenes)) {
+            autoResult.scenes.forEach(sc => {
+              if (sc && sc.id && !list.some(item => item.id === sc.id)) {
+                sc._source = 'builtin';
+                list.push(sc);
+              }
             });
           }
         }
       } catch (err) {
-        console.warn('[Player UI] Manifest load fallback:', err);
+        console.warn('[Player UI] Auto-discover fallback notice:', err);
       }
 
       // 3. Fallback to in-memory scene registry
-      if (!list.length && global.ASTSceneRegistry) {
-        list = global.ASTSceneRegistry.list().map(sc => ({ ...sc, _source: 'builtin' }));
+      if (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.list === 'function') {
+        const regList = global.ASTSceneRegistry.list();
+        regList.forEach(sc => {
+          if (!list.some(item => item.id === sc.id)) {
+            list.push({ ...sc, _source: 'builtin' });
+          }
+        });
+      }
+
+      // If active preset is not yet in the list, auto-mount it
+      if (this.engine.activePresetId && !list.some(item => item.id === this.engine.activePresetId)) {
+        list.push({
+          id: this.engine.activePresetId,
+          title: (this.engine.scene && this.engine.scene.title) || this.engine.activePresetId,
+          stage: (this.engine.scene && this.engine.scene.stage) || 'CURRICULUM',
+          _source: 'builtin'
+        });
       }
 
       // 4. Ingest In-Browser Local Vault (offline user simulations)
@@ -748,10 +761,10 @@
         this.elements.presetSelector.appendChild(fedGroup);
       }
 
-      // Built-in Curriculum Group
+      // Built-in / Auto-Found Curriculum Group
       const builtInItems = list.filter(item => item._source === 'builtin');
       const curriculumGroup = document.createElement('optgroup');
-      curriculumGroup.label = '📚 Standard Curriculum Presets';
+      curriculumGroup.label = '📚 Curriculum Simulations (Auto-Discovered)';
       builtInItems.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
@@ -762,6 +775,20 @@
         curriculumGroup.appendChild(opt);
       });
       this.elements.presetSelector.appendChild(curriculumGroup);
+
+      // Teacher Auto-Find Actions
+      const actionGroup = document.createElement('optgroup');
+      actionGroup.label = '⚡ Dynamic Auto-Finder';
+      const optFind = document.createElement('option');
+      optFind.value = '__custom_find__';
+      optFind.textContent = '🔍 Open Any Scene by Name / ID...';
+      actionGroup.appendChild(optFind);
+
+      const optOpen = document.createElement('option');
+      optOpen.value = '__open_local__';
+      optOpen.textContent = '📂 Open Local .ast or .svg File...';
+      actionGroup.appendChild(optOpen);
+      this.elements.presetSelector.appendChild(actionGroup);
 
       // Explicitly sync the select value to the engine's active preset
       if (activeId) {
@@ -1218,8 +1245,29 @@
       if (el.presetSelector) {
         el.presetSelector.addEventListener('change', (e) => {
           if (this._isPopulating) return;
-          if (e.target.value && e.target.value !== this.engine.activePresetId) {
-            this.engine.setPreset(e.target.value, true);
+          const val = e.target.value;
+          if (val === '__custom_find__') {
+            const id = prompt('Enter scene filename or ID to auto-find (e.g. electric-circuits or your-new-file):');
+            if (id && id.trim()) {
+              this.engine.loadScene(id.trim(), true).then(loaded => {
+                if (!loaded) {
+                  this.showToast('❌ Scene "' + id.trim() + '" not found in ./scenes/', 3500);
+                  el.presetSelector.value = this.engine.activePresetId || '';
+                }
+              });
+            } else {
+              el.presetSelector.value = this.engine.activePresetId || '';
+            }
+            return;
+          }
+          if (val === '__open_local__') {
+            const fileInput = el.fileInputHidden || document.getElementById('file-input-hidden');
+            if (fileInput) fileInput.click();
+            el.presetSelector.value = this.engine.activePresetId || '';
+            return;
+          }
+          if (val && val !== this.engine.activePresetId) {
+            this.engine.setPreset(val, true);
           }
         });
       }
@@ -2553,6 +2601,19 @@
 
       this.engine.on('presetchange', (data) => {
         if (this.elements.presetSelector) {
+          let found = false;
+          for (let i = 0; i < this.elements.presetSelector.options.length; i++) {
+            if (this.elements.presetSelector.options[i].value === data.preset) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            const opt = document.createElement('option');
+            opt.value = data.preset;
+            opt.textContent = `★ ${data.title || data.preset} (${data.stage || 'AUTO-FOUND'})`;
+            this.elements.presetSelector.appendChild(opt);
+          }
           this.elements.presetSelector.value = data.preset;
         }
         this.completedCheckpoints.clear();

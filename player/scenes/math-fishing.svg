@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%">
   <defs>
-    <!-- Sky & Water Gradients -->
+    <!-- Sky &amp; Water Gradients -->
     <linearGradient id="fish-sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#0284c7" />
       <stop offset="100%" stop-color="#38bdf8" />
@@ -40,7 +40,7 @@
     </filter>
   </defs>
 
-  <!-- Sky & Hills -->
+  <!-- Sky &amp; Hills -->
   <rect x="0" y="0" width="800" height="150" fill="url(#fish-sky)" />
   <path d="M 0,150 L 120,95 L 260,150 L 410,105 L 560,150 L 710,90 L 800,150 Z" fill="#0369a1" opacity="0.4" />
   <path d="M 0,150 L 190,115 L 350,150 L 490,120 L 660,150 L 800,125 Z" fill="#0284c7" opacity="0.6" />
@@ -53,7 +53,7 @@
   <path id="water-wave-1" d="M 0,155 Q 100,150 200,155 T 400,155 T 600,155 T 800,155" fill="none" stroke="#bae6fd" stroke-width="2.5" opacity="0.75" />
   <path id="water-wave-2" d="M 0,165 Q 150,160 300,165 T 600,165 T 800,165" fill="none" stroke="#7dd3fc" stroke-width="1.5" opacity="0.5" />
 
-  <!-- Reeds & Lilypads -->
+  <!-- Reeds &amp; Lilypads -->
   <path d="M 50,480 Q 70,360 60,300 Q 50,240 65,180" fill="none" stroke="#059669" stroke-width="6" opacity="0.6" stroke-linecap="round" />
   <path d="M 80,480 Q 100,380 85,310 Q 70,240 90,200" fill="none" stroke="#10b981" stroke-width="5" opacity="0.5" stroke-linecap="round" />
   <path d="M 720,480 Q 700,370 725,290 Q 740,220 710,180" fill="none" stroke="#059669" stroke-width="6" opacity="0.6" stroke-linecap="round" />

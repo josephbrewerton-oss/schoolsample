@@ -86,7 +86,7 @@
   <!-- Ambient Backdrop -->
   <rect width="800" height="480" fill="url(#frac-stage-glow)" />
 
-  <!-- Holographic Reticle Grid & Circular Compass -->
+  <!-- Holographic Reticle Grid &amp; Circular Compass -->
   <circle cx="400" cy="240" r="150" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="3 9" opacity="0.6" />
   <circle id="frac-guide" cx="400" cy="240" r="140" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="6 6" opacity="0.45" />
   <circle cx="400" cy="240" r="140" fill="#0f172a" fill-opacity="0.4" />

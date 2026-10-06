@@ -1,0 +1,46 @@
+(:scene :id "electric-circuits" :title "💡 Electrical Circuits & Ohm's Law (V = I × R)" :stage "KS2/KS3 PHYSICS" :duration 12.0
+  (:vars (
+    (:var :name "voltage" :val 12.0 :min 1.5 :max 24.0 :step 0.5 :label "Battery Voltage (V)")
+    (:var :name "resistance" :val 4.0 :min 1.0 :max 12.0 :step 0.5 :label "Circuit Resistance (Ω)")
+    (:var :name "switchClosed" :val true :label "Knife Switch Position")
+  ))
+  (:inputs (
+    (:slider :var "voltage" :label "Voltage (V)" :min 1.5 :max 24.0 :step 0.5)
+    (:slider :var "resistance" :label "Resistance (Ω)" :min 1.0 :max 12.0 :step 0.5)
+  ))
+  (:computed (
+    (:name "current" :expr "(vars.switchClosed ? vars.voltage / vars.resistance : 0).toFixed(2)")
+    (:name "power" :expr "(vars.switchClosed ? (vars.voltage * vars.voltage) / vars.resistance : 0).toFixed(1)")
+  ))
+  (:gestures (
+    (:interactive :target "#circuit-switch" :action "toggle-switch")
+  ))
+  (:subtitles (
+    (:start 0.00 :end 3.50 :en "An electrical circuit is a closed loop! The battery voltage pushes electrons through the copper wires." :es "¡Un circuito eléctrico es un lazo cerrado! El voltaje de la batería empuja electrones por los cables.")
+    (:start 3.50 :end 7.50 :en "Watch the yellow electrons move! Current is the rate of charge flow: I = Voltage divided by Resistance." :es "¡Mira cómo se mueven los electrones! La corriente es la tasa de flujo: I = Voltaje dividido entre Resistencia.")
+    (:start 7.50 :end 12.00 :en "Inside the lightbulb, resistance forces electrons to collide, heating the filament into brilliant glowing light!" :es "Dentro de la bombilla, la resistencia hace chocar los electrones, ¡calentando el filamento y emitiendo luz!")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "1. Closed Loop Circuit" :rule "Current (I) only flows through an unbroken conductive loop from positive to negative terminal")
+    (:t 0.35 :title "2. Voltage Drives Potential" :rule "Voltage (V) is electrical pressure. Higher voltage pushes more coulombs per second")
+    (:t 0.70 :title "3. Resistance Opposes Flow" :rule "Resistance (R) in ohms restricts electron velocity: Ohm's Law I = V / R")
+    (:t 1.00 :title "4. Energy Dissipation" :rule "Electrons collide with tungsten atoms, converting electrical energy into radiant photon light (P = I²R)")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.34
+      :prompt "According to Ohm's Law (I = V / R), what happens if we double the battery voltage while keeping resistance the same?"
+      :options ("The electrical current (I) doubles and the lightbulb shines brighter" "The electrical current is cut in half" "The resistance increases automatically")
+      :answer 0
+      :explanation "Current is directly proportional to voltage. Doubling the voltage doubles the rate of electron flow (amperage).")
+    (:checkpoint :t 0.85
+      :prompt "What form of energy is electrical energy converted into inside the incandescent lightbulb?"
+      :options ("Thermal (heat) and Radiant (light) energy" "Nuclear potential energy" "Chemical bonding energy")
+      :answer 0
+      :explanation "High resistance in the filament causes electrons to collide with tungsten ions, releasing intense thermal heat and visible light photons.")
+  ))
+  (:bindings (
+    (:target "#telemetry-display" :attr "textContent" :expr "'Voltage: ' + vars.voltage + 'V | Resistance: ' + vars.resistance + 'Ω | Current: ' + computed.current + 'A | Power: ' + computed.power + 'W'")
+    (:target "#bulb-halo" :attr "opacity" :expr "vars.switchClosed !== false ? Math.min(1.0, 0.4 + (computed.power / 60)) : 0.05")
+    (:target "#bulb-halo" :attr "r" :expr "vars.switchClosed !== false ? String(40 + Math.min(40, computed.power * 0.8)) : '20'")
+  ))
+)

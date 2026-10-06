@@ -1,0 +1,24 @@
+(:scene :id "languages" :title "MFL & Polyglot Studio: Spanish, French & Latin" :stage "KS2/KS3 MFL" :duration 15.0
+  (:subtitles (
+    (:start 0.00 :end 4.00 :en "Welcome to the Polyglot Lab. Let's explore how Spanish, French, and Latin construct meaning through sounds and stems." :es "Bienvenidos al Laboratorio Políglota. Exploremos cómo el español, francés y latín construyen significado.")
+    (:start 4.00 :end 9.00 :en "Notice how the verb stem stays stable while the ending signals WHO is doing the action." :es "Observa cómo la raíz del verbo se mantiene estable mientras la terminación indica QUIÉN realiza la acción.")
+    (:start 9.00 :end 15.00 :en "Because the ending uniquely tells us the subject, Spanish and Latin drop the pronoun: 'Hablo' means 'I speak'." :es "Debido a que la terminación indica el sujeto, el español no necesita el pronombre: 'Hablo' ya significa 'Yo hablo'.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "1. The Soundboard" :rule "Phonics first: Sound-to-spelling correspondence across European languages")
+    (:t 0.35 :title "2. The Stem & Ending" :rule "Morphology: Stripping the infinitive (-ar, -er, -ir) and attaching person markers")
+    (:t 0.70 :title "3. Pro-Drop Syntax" :rule "Spanish & Latin omit pronouns ('Hablo') because the ending encodes the subject")
+    (:t 1.00 :title "4. Polyglot Mastery" :rule "60% of academic English connects back to Latin and Romance language cognates")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.38
+      :prompt "In Spanish, what does the verb ending '-o' indicate in words like 'hablo' and 'como'?"
+      :options ("First person singular: 'I' (yo)" "Plural: 'we' (nosotros)" "Past tense yesterday")
+      :answer 0
+      :explanation "The '-o' ending in Spanish regular present tense uniquely signals the first person singular ('I').")
+  ))
+  (:bindings (
+    (:target "#pronoun-display" :attr "textContent" :expr "['Yo (I)', 'Tú (You)', 'Él (He)', 'Nosotros (We)', 'Vosotros (You all)', 'Ellos (They)'][Math.floor(t * 6) % 6]")
+    (:target "#suffix-display" :attr "textContent" :expr "['-o', '-as', '-a', '-amos', '-áis', '-an'][Math.floor(t * 6) % 6]")
+  ))
+)

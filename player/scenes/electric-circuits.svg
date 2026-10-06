@@ -1,0 +1,77 @@
+<svg viewBox="0 0 800 480" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ec-bulbGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#facc15" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="480" fill="#090d16"/>
+  <!-- Title Header -->
+  <text x="400" y="38" fill="#f8fafc" font-size="20" font-weight="900" text-anchor="middle">Electrical Circuit: Ohm's Law (V = I × R)</text>
+  <text id="telemetry-display" x="400" y="68" fill="#38bdf8" font-size="15" font-weight="700" text-anchor="middle">Voltage: 12V | Resistance: 4Ω | Current: 3.0A | Power: 36W</text>
+  
+  <!-- Circuit Wire Loop (Rounded Rect) -->
+  <rect x="150" y="105" width="500" height="260" rx="30" fill="none" stroke="#475569" stroke-width="8"/>
+  <rect x="150" y="105" width="500" height="260" rx="30" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8 8"/>
+  
+  <!-- Moving Electron Charges Group -->
+  <g id="electron-charges">
+    <circle class="e-dot" id="edot-1" cx="150" cy="180" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-2" cx="150" cy="240" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-3" cx="250" cy="105" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-4" cx="350" cy="105" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-5" cx="450" cy="105" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-6" cx="550" cy="105" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-7" cx="650" cy="180" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-8" cx="650" cy="280" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-9" cx="550" cy="365" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-10" cx="450" cy="365" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-11" cx="350" cy="365" r="5" fill="#fde047"/>
+    <circle class="e-dot" id="edot-12" cx="250" cy="365" r="5" fill="#fde047"/>
+  </g>
+  
+  <!-- Component 1: DC Battery (Left side) -->
+  <g transform="translate(110, 195)" data-pedagogical="ec-battery">
+    <rect x="0" y="0" width="80" height="70" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+    <text x="40" y="28" fill="#f8fafc" font-size="14" font-weight="800" text-anchor="middle">BATTERY</text>
+    <text x="40" y="52" fill="#60a5fa" font-size="16" font-weight="900" text-anchor="middle">12V</text>
+    <line x1="40" y1="-10" x2="40" y2="0" stroke="#ef4444" stroke-width="4"/>
+    <text x="55" y="-2" fill="#ef4444" font-size="14" font-weight="900">+</text>
+    <line x1="40" y1="70" x2="40" y2="80" stroke="#38bdf8" stroke-width="4"/>
+    <text x="55" y="80" fill="#38bdf8" font-size="16" font-weight="900">-</text>
+  </g>
+  
+  <!-- Component 2: Resistor (Top side) -->
+  <g transform="translate(360, 75)" data-pedagogical="ec-resistor">
+    <rect x="0" y="10" width="80" height="40" rx="6" fill="#334155" stroke="#f59e0b" stroke-width="2"/>
+    <text x="40" y="28" fill="#f8fafc" font-size="11" font-weight="800" text-anchor="middle">RESISTOR</text>
+    <text x="40" y="44" fill="#fde047" font-size="13" font-weight="900" text-anchor="middle">4 Ω</text>
+  </g>
+  
+  <!-- Component 3: Lightbulb (Right side) -->
+  <g transform="translate(650, 235)" data-pedagogical="ec-bulb">
+    <!-- Bulb Glow Aura -->
+    <circle id="bulb-halo" cx="0" cy="0" r="60" fill="url(#ec-bulbGlow)" opacity="0.85"/>
+    <!-- Glass Dome -->
+    <circle cx="0" cy="0" r="26" fill="rgba(255, 255, 255, 0.2)" stroke="#facc15" stroke-width="2"/>
+    <!-- Filament -->
+    <path d="M -8 10 L -4 -6 L 0 6 L 4 -6 L 8 10" fill="none" stroke="#fef08a" stroke-width="2"/>
+    <text x="0" y="45" fill="#facc15" font-size="12" font-weight="800" text-anchor="middle">LIGHTBULB</text>
+  </g>
+  
+  <!-- Component 4: Interactive Knife Switch (Bottom side) -->
+  <g id="circuit-switch" data-interactive="switch" data-state="closed" transform="translate(370, 345)" style="cursor: pointer;" data-pedagogical="ec-switch">
+    <rect x="-10" y="0" width="80" height="60" fill="transparent"/>
+    <circle cx="0" cy="20" r="5" fill="#22c55e"/>
+    <line id="switch-blade" x1="0" y1="20" x2="60" y2="20" stroke="#22c55e" stroke-width="4"/>
+    <circle cx="60" cy="20" r="5" fill="#22c55e"/>
+    <text id="switch-text" x="30" y="48" fill="#4ade80" font-size="11" font-weight="800" text-anchor="middle">SWITCH: CLOSED (Click to toggle)</text>
+  </g>
+  
+  <!-- Legend Card -->
+  <rect x="180" y="420" width="440" height="40" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#1e293b" stroke-width="1"/>
+  <text x="400" y="445" fill="#cbd5e1" font-size="12" font-weight="700" text-anchor="middle">
+    Formula: Current I = 12V ÷ 4Ω = 3.0 Amperes • Power P = 12V × 3.0A = 36 Watts
+  </text>
+</svg>
