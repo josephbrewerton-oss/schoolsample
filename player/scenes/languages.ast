@@ -1,4 +1,14 @@
 (:scene :id "languages" :title "MFL & Polyglot Studio: Spanish, French & Latin" :stage "KS2/KS3 MFL" :duration 15.0
+  (:vars (
+    (:var :name "personIndex" :val 0 :min 0 :max 5 :step 1 :label "Grammatical Person (1st to 3rd)")
+  ))
+  (:inputs (
+    (:slider :var "personIndex" :label "Person / Conjugation Index" :min 0 :max 5 :step 1)
+  ))
+  (:gestures (
+    (:draggable :target "#suffix-display" :axis "x" :min 460 :max 580)
+    (:interactive :target "#pronoun-display" :action "toggle")
+  ))
   (:subtitles (
     (:start 0.00 :end 4.00 :en "Welcome to the Polyglot Lab. Let's explore how Spanish, French, and Latin construct meaning through sounds and stems." :es "Bienvenidos al Laboratorio Políglota. Exploremos cómo el español, francés y latín construyen significado.")
     (:start 4.00 :end 9.00 :en "Notice how the verb stem stays stable while the ending signals WHO is doing the action." :es "Observa cómo la raíz del verbo se mantiene estable mientras la terminación indica QUIÉN realiza la acción.")

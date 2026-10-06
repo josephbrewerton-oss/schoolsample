@@ -210,6 +210,60 @@
         hook.setAttribute('data-draggable', 'fishing-hook');
         hook.setAttribute('data-pedagogical', 'math-hook');
       }
+
+      // 7. Mountain Climber Beacon
+      const climberMarker = this.stageSvg.querySelector('#climber-marker');
+      const climberPulse = this.stageSvg.querySelector('#climber-pulse');
+      if (climberMarker) {
+        climberMarker.style.cursor = 'grab';
+        climberMarker.setAttribute('data-draggable', 'climber');
+        climberMarker.setAttribute('data-pedagogical', 'mtn-climber');
+      }
+      if (climberPulse) {
+        climberPulse.style.cursor = 'grab';
+        climberPulse.setAttribute('data-draggable', 'climber');
+      }
+
+      // 8. Procedural Scene Ingestions (Fish Pond & Aquarium Boids)
+      const fishGroup = this.stageSvg.querySelector('#fish-school-group');
+      if (fishGroup) {
+        if (hook) {
+          this.setupMathFishingFish();
+        } else if (this.stageSvg.querySelector('#tank-water') || this.stageSvg.querySelector('#benchmark-hud')) {
+          this.setupFishTankBoids();
+        }
+      }
+
+      // 9. Pythagoras Geometry Initialization
+      if (pythHandleA && pythHandleB) {
+        this.renderPythagorasGeometry(3, 4);
+      }
+
+      // 10. Dynamic Declarative Scene Gestures
+      const scene = this.engine && this.engine.scene;
+      if (scene && scene.gestures && Array.isArray(scene.gestures)) {
+        scene.gestures.forEach(g => {
+          if (!g.target) return;
+          const el = this.stageSvg.querySelector(g.target);
+          if (el) {
+            el.style.pointerEvents = 'auto';
+            if (g.type === 'interactive') {
+              el.style.cursor = 'pointer';
+              el.setAttribute('data-interactive', g.action || 'toggle');
+              if (g.action) el.setAttribute('data-action', g.action);
+            } else {
+              el.style.cursor = g.axis === 'y' ? 'ns-resize' : (g.axis === 'x' ? 'ew-resize' : 'grab');
+              el.setAttribute('data-draggable', 'generic');
+              el.setAttribute('data-gesture-axis', g.axis || 'xy');
+              if (g.minX !== undefined) el.setAttribute('data-gesture-min-x', String(g.minX));
+              if (g.maxX !== undefined) el.setAttribute('data-gesture-max-x', String(g.maxX));
+              if (g.minY !== undefined) el.setAttribute('data-gesture-min-y', String(g.minY));
+              if (g.maxY !== undefined) el.setAttribute('data-gesture-max-y', String(g.maxY));
+              if (g.var) el.setAttribute('data-gesture-var', g.var);
+            }
+          }
+        });
+      }
     }
 
     /**
@@ -231,7 +285,7 @@
       }
 
       // B. Check for interactive direct-grab targets or action buttons
-      const target = e.target.closest('[data-draggable], [data-interactive], [data-action], #kg-piston, #piston-assembly, #cc-tangent-assembly, #tangent-assembly, #tangent-probe, #pyth-handle-a, #pyth-handle-b, #fishing-hook, #fishing-bobber, #fishing-bobber-rig');
+      const target = e.target.closest('[data-draggable], [data-interactive], [data-action], #kg-piston, #piston-assembly, #cc-tangent-assembly, #tangent-assembly, #tangent-probe, #pyth-handle-a, #pyth-handle-b, #fishing-hook, #fishing-bobber, #fishing-bobber-rig, #climber-marker, #climber-pulse, #mtn-climber');
 
       if (target) {
         // Direct Action Buttons (e.g. Pythagoras steppers, presets, toggles)
@@ -252,7 +306,7 @@
         this.dragStart = { x: svgPt.x, y: svgPt.y };
 
         // Determine specific drag mode
-        if (target.id === 'mtn-climber' || target.getAttribute('data-draggable') === 'climber' || target.closest('#mtn-climber')) {
+        if (target.id === 'mtn-climber' || target.id === 'climber-marker' || target.id === 'climber-pulse' || target.getAttribute('data-draggable') === 'climber' || target.closest('#mtn-climber')) {
           this.dragMode = 'climber';
           target.style.cursor = 'grabbing';
           if (this.engine && this.engine._cachedElements) this.engine._cachedElements.isUserControlled = true;
@@ -284,7 +338,35 @@
           target.style.cursor = 'grabbing';
           if (this.engine && this.engine._cachedElements) this.engine._cachedElements.isUserControlled = true;
           this.playAudioTone(320, 'sine', 0.08, 0.18);
-        } else if (target.getAttribute('data-interactive') === 'switch') {
+        } else if (target.getAttribute('data-draggable') === 'generic' || target.closest('[data-draggable="generic"]')) {
+          const genTarget = target.getAttribute('data-draggable') === 'generic' ? target : target.closest('[data-draggable="generic"]');
+          this.dragTarget = genTarget;
+          this.dragMode = 'generic';
+          genTarget.style.cursor = 'grabbing';
+          if (this.engine) this.engine.pause();
+          let initX = 0;
+          let initY = 0;
+          const tr = genTarget.getAttribute('transform') || '';
+          const trM = /translate\(\s*([\d\.\-]+)(?:[\s,]+([\d\.\-]+))?\s*\)/i.exec(tr);
+          const initTx = trM ? parseFloat(trM[1]) : 0;
+          const initTy = (trM && trM[2]) ? parseFloat(trM[2]) : 0;
+          try {
+            const bbox = genTarget.getBBox();
+            initX = bbox.x;
+            initY = bbox.y;
+          } catch (_) {
+            initX = parseFloat(genTarget.getAttribute('x') || genTarget.getAttribute('cx') || '0');
+            initY = parseFloat(genTarget.getAttribute('y') || genTarget.getAttribute('cy') || '0');
+          }
+          this.targetInitial = {
+            transform: tr,
+            initTx,
+            initTy,
+            x: initX,
+            y: initY
+          };
+          this.playAudioTone(380, 'triangle', 0.06);
+        } else if (target.getAttribute('data-interactive') === 'switch' || target.getAttribute('data-interactive') === 'toggle-switch' || target.getAttribute('data-action') === 'toggle-switch') {
           this.toggleSwitch(target);
           return;
         }
@@ -330,6 +412,8 @@
           this.handlePythagorasDragB(svgPt.x);
         } else if (this.dragMode === 'fishing-hook') {
           this.handleFishingHookDrag(svgPt);
+        } else if (this.dragMode === 'generic') {
+          this.handleGenericDrag(this.dragTarget, svgPt);
         }
       } else if (this.isXRayActive) {
         const pedNode = e.target.closest('[data-pedagogical]');
@@ -373,6 +457,10 @@
         } else if (this.dragMode === 'fishing-hook') {
           if (this.dragTarget) this.dragTarget.style.cursor = 'grab';
           this.finishFishingHookDrag();
+        } else if (this.dragMode === 'generic') {
+          const axis = this.dragTarget.getAttribute('data-gesture-axis') || 'xy';
+          this.dragTarget.style.cursor = axis === 'y' ? 'ns-resize' : (axis === 'x' ? 'ew-resize' : 'grab');
+          this.playAudioTone(440, 'sine', 0.05);
         }
 
         this.isDragging = false;
@@ -383,6 +471,64 @@
 
     handlePointerCancel(e) {
       this.handlePointerUp(e);
+    }
+
+    handleGenericDrag(target, svgPt) {
+      if (!target) return;
+      const axis = target.getAttribute('data-gesture-axis') || 'xy';
+      const minX = parseFloat(target.getAttribute('data-gesture-min-x') || '0');
+      const maxX = parseFloat(target.getAttribute('data-gesture-max-x') || '800');
+      const minY = parseFloat(target.getAttribute('data-gesture-min-y') || '0');
+      const maxY = parseFloat(target.getAttribute('data-gesture-max-y') || '480');
+      const varName = target.getAttribute('data-gesture-var');
+
+      const dx = svgPt.x - this.dragStart.x;
+      const dy = svgPt.y - this.dragStart.y;
+
+      let targetTx = (this.targetInitial.initTx || 0) + (axis !== 'y' ? dx : 0);
+      let targetTy = (this.targetInitial.initTy || 0) + (axis !== 'x' ? dy : 0);
+
+      if (axis === 'x' || axis === 'xy') {
+        if (!isNaN(minX) && !isNaN(maxX) && maxX > minX) {
+          if (minX <= 0 && maxX <= 100) {
+            targetTx = Math.max(minX, Math.min(maxX, targetTx));
+          } else {
+            const absX = (this.targetInitial.x || 0) + (targetTx - (this.targetInitial.initTx || 0));
+            if (absX < minX) targetTx = (this.targetInitial.initTx || 0) + (minX - (this.targetInitial.x || 0));
+            if (absX > maxX) targetTx = (this.targetInitial.initTx || 0) + (maxX - (this.targetInitial.x || 0));
+          }
+        }
+      }
+      if (axis === 'y' || axis === 'xy') {
+        if (!isNaN(minY) && !isNaN(maxY) && maxY > minY) {
+          if (minY <= 0 && maxY <= 100) {
+            targetTy = Math.max(minY, Math.min(maxY, targetTy));
+          } else {
+            const absY = (this.targetInitial.y || 0) + (targetTy - (this.targetInitial.initTy || 0));
+            if (absY < minY) targetTy = (this.targetInitial.initTy || 0) + (minY - (this.targetInitial.y || 0));
+            if (absY > maxY) targetTy = (this.targetInitial.initTy || 0) + (maxY - (this.targetInitial.y || 0));
+          }
+        }
+      }
+
+      target.setAttribute('transform', `translate(${targetTx.toFixed(1)}, ${targetTy.toFixed(1)})`);
+
+      if (varName && this.engine && typeof this.engine.setVar === 'function') {
+        const ratio = axis === 'y'
+          ? Math.max(0, Math.min(1, (svgPt.y - minY) / (maxY - minY || 1)))
+          : Math.max(0, Math.min(1, (svgPt.x - minX) / (maxX - minX || 1)));
+        const vConfig = this.engine.scene && this.engine.scene.vars && this.engine.scene.vars[varName];
+        if (vConfig && typeof vConfig.min === 'number' && typeof vConfig.max === 'number') {
+          const mapped = vConfig.min + ratio * (vConfig.max - vConfig.min);
+          const stepVal = vConfig.step || 1;
+          const stepped = Math.round(mapped / stepVal) * stepVal;
+          this.engine.setVar(varName, stepped);
+        }
+      }
+
+      if (this.engine) {
+        this.engine.applyBindings(this.engine.progress);
+      }
     }
 
     // =========================================================================

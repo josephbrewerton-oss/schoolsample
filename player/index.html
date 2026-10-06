@@ -518,8 +518,14 @@
     <div id="ast-toast" class="ast-toast">Station Selected</div>
   </main>
 
-  <!-- Legacy Player Chrome (Retained in DOM for Headless Script Compatibility, Visually Retired) -->
-  <footer id="legacy-player-footer" style="display: none !important;" class="hidden" aria-hidden="true">
+  <!-- Slide Navigation & Player Controls Footer -->
+  <footer id="player-footer">
+    <!-- Slide / Keyframe Carousel Quick Jump Bar -->
+    <div id="slide-deck-bar" class="slide-deck-bar" style="display:flex; align-items:center; gap:6px; overflow-x:auto; padding:3px 0; margin-bottom:4px;">
+      <span style="font-size:11px; font-weight:800; color:#38bdf8; white-space:nowrap; display:flex; align-items:center; gap:4px;">📑 Slides:</span>
+      <div id="slide-deck-pills" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;"></div>
+    </div>
+
     <!-- Interactive Timeline Scrubber -->
     <div class="scrubber-container" id="scrubber-box">
       <div class="timeline-track" id="timeline-track">
@@ -532,8 +538,9 @@
     <div class="controls-row">
       <div class="controls-left">
         <button type="button" id="btn-play" title="Play / Pause (Spacebar)">▶ Play</button>
-        <button type="button" id="btn-prev" title="Step Back 5% (Left Arrow)">⏮</button>
-        <button type="button" id="btn-next" title="Step Forward 5% (Right Arrow)">⏭</button>
+        <button type="button" id="btn-prev" title="Previous Slide / Keyframe (PageUp / Left Arrow)">⏮ Prev</button>
+        <button type="button" id="btn-next" title="Next Slide / Keyframe (PageDown / Right Arrow / Space)">⏭ Next</button>
+        <button type="button" id="btn-step-mode" class="step-mode-btn" title="Toggle Step / Clicker Presentation Mode (S)">👣 <span class="btn-label">Step Mode</span></button>
         <button type="button" id="btn-reset" title="Rewind to Beginning (Home / 0)">↺</button>
         <button type="button" id="btn-loop" title="Toggle Auto-Repeat Loop (L)">🔁 <span class="btn-label" id="loop-label">Loop</span></button>
         <span class="time-readout" id="time-readout">00:00 / 00:16 (0%)</span>

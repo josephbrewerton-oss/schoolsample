@@ -1,4 +1,13 @@
 (:scene :id "shakespeare" :title "The Globe Theatre: Shakespeare & Iambic Pentameter" :stage "KS3/KS4 ENGLISH LITERATURE" :duration 15.0
+  (:vars (
+    (:var :name "tempo" :val 72 :min 40 :max 140 :step 2 :unit "BPM" :label "Heartbeat Metronome Tempo")
+  ))
+  (:inputs (
+    (:slider :var "tempo" :label "Iambic Pulse Tempo (BPM)" :min 40 :max 140 :step 2)
+  ))
+  (:gestures (
+    (:draggable :target "#iambic-dot" :axis "x" :min 20 :max 480 :var "tempo")
+  ))
   (:subtitles (
     (:start 0.00 :end 4.50 :en "Welcome to the 1599 Globe Theatre. Actors perform on a raised thrust stage surrounded by 1,000 groundlings." :es "Bienvenidos al Globe Theatre de 1599. Los actores actúan en un escenario rodeado de espectadores.")
     (:start 4.50 :end 9.50 :en "Shakespeare writes in Iambic Pentameter: five pairs of unstressed and stressed syllables matching human heartbeat." :es "Shakespeare escribe en pentámetro yámbico: cinco pares de sílabas que siguen el latido del corazón.")
