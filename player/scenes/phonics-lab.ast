@@ -35,6 +35,6 @@
     (:target "#ph-btn-a" :attr "fill" :expr "(t >= 0.40 && t < 0.65) ? '#38bdf8' : '#0284c7'")
     (:target "#ph-btn-t" :attr "fill" :expr "(t >= 0.65 && t < 0.80) ? '#38bdf8' : '#0284c7'")
     (:target "#ph-blended-result" :attr "opacity" :expr "t >= 0.80 ? Math.min(1, (t - 0.80) / 0.15) : 0")
-    (:target "#ph-banner-txt" :attr "textContent" :expr "t < 0.20 ? 'Sound Buttons: Press each pure sound button in order.' : (t < 0.80 ? 'Pure phonemes: /k/ ... /a/ ... /t/ (No schwa!).' : 'Blended reading: /k/ - /a/ - /t/ = \"cat\"! 🐱')")
+    (:target "#ph-banner-txt" :attr "textContent" :expr "t < 0.20 ? 'Sound Buttons: Press each pure sound button in order.' : (t < 0.80 ? 'Pure phonemes: /k/ ... /a/ ... /t/ (No schwa!).' : 'Blended reading: /k/ - /a/ - /t/ = cat! 🐱')")
   ))
 )

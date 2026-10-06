@@ -98,6 +98,7 @@
         hudGroup.id = 'stage-hud-root';
         this.stageSvg.appendChild(hudGroup);
       }
+      hudGroup.style.pointerEvents = 'none';
       this.hudRoot = hudGroup;
     }
 
@@ -239,6 +240,14 @@
         this.renderPythagorasGeometry(3, 4);
       }
 
+      // 9b. Circuit Electron Flow Loop
+      if (this.stageSvg.querySelector('#circuit-switch') || this.stageSvg.querySelector('.e-dot')) {
+        this.startCircuitElectronsLoop();
+      }
+
+      // 9c. Simulation Parameters Live Controls Dock
+      this.setupSimParametersHud();
+
       // 10. Dynamic Declarative Scene Gestures
       const scene = this.engine && this.engine.scene;
       if (scene && scene.gestures && Array.isArray(scene.gestures)) {
@@ -247,6 +256,10 @@
           const el = this.stageSvg.querySelector(g.target);
           if (el) {
             el.style.pointerEvents = 'auto';
+            el.style.touchAction = 'none';
+            el.querySelectorAll('*').forEach(child => {
+              if (child && child.style) child.style.pointerEvents = 'auto';
+            });
             if (g.type === 'interactive') {
               el.style.cursor = 'pointer';
               el.setAttribute('data-interactive', g.action || 'toggle');
@@ -475,6 +488,19 @@
 
     handleGenericDrag(target, svgPt) {
       if (!target) return;
+
+      // Special physical resolution for Algebraic Balance Scale
+      if (this.engine && this.engine.activePresetId === 'algebra-balance') {
+        const dy = svgPt.y - this.dragStart.y;
+        const curX = (this.engine.vars && this.engine.vars.xVal) || 5;
+        const targetX = Math.max(1, Math.min(10, Math.round(5 - dy / 18)));
+        if (targetX !== curX) {
+          this.engine.setVar('xVal', targetX);
+          this.playAudioTone(300 + targetX * 35, 'triangle', 0.04, 0.12);
+        }
+        return;
+      }
+
       const axis = target.getAttribute('data-gesture-axis') || 'xy';
       const minX = parseFloat(target.getAttribute('data-gesture-min-x') || '0');
       const maxX = parseFloat(target.getAttribute('data-gesture-max-x') || '800');
@@ -689,7 +715,25 @@
       this.playAudioTone(isClosed ? 180 : 360, 'square', 0.04, 0.3);
 
       const bulbGlow = this.stageSvg.querySelector('#bulb-halo');
+      const blade = this.stageSvg.querySelector('#switch-blade');
+      const swText = this.stageSvg.querySelector('#switch-text');
       const dots = this.stageSvg.querySelectorAll('.e-dot');
+
+      if (blade) {
+        if (newState === 'open') {
+          blade.setAttribute('x2', '45');
+          blade.setAttribute('y2', '0');
+          blade.setAttribute('stroke', '#ef4444');
+        } else {
+          blade.setAttribute('x2', '60');
+          blade.setAttribute('y2', '20');
+          blade.setAttribute('stroke', '#22c55e');
+        }
+      }
+      if (swText) {
+        swText.textContent = newState === 'open' ? 'SWITCH: OPEN (Click to close)' : 'SWITCH: CLOSED (Click to open)';
+        swText.setAttribute('fill', newState === 'open' ? '#f87171' : '#4ade80');
+      }
 
       if (newState === 'open') {
         if (bulbGlow) bulbGlow.setAttribute('opacity', '0.05');
@@ -704,73 +748,32 @@
     // Direct Manipulation Action 4: Pythagoras Theorem PhET Geometry & Controls
     // =========================================================================
     handlePythagorasDragA(svgY) {
-      const el = this.engine && this.engine._cachedElements;
-      if (!el || typeof el.renderGeometry !== 'function') return;
-
-      el.isUserControlled = true;
-      const originY = el.oy !== undefined ? el.oy : 270;
-      const scale = el.s !== undefined ? el.s : 20;
-
-      // Vertical leg a extends upwards: topY = oy - a * s => a = (oy - svgY) / s
-      const rawA = (originY - svgY) / scale;
-      const clampedA = Math.max(2, Math.min(8, Math.round(rawA)));
-
-      if (clampedA !== el.curA) {
-        el.renderGeometry(clampedA, el.curB);
-        if (this.engine && typeof this.engine.setVar === 'function') {
-          this.engine.setVar('sideA', clampedA);
-        }
-        // Sonification & integer triple detection
-        const c = Math.sqrt(clampedA * clampedA + el.curB * el.curB);
-        const isTriple = Math.abs(c - Math.round(c)) < 0.001;
-        if (isTriple) {
-          this.playAudioTone(880, 'sine', 0.22, 0.22);
-        } else {
-          this.playAudioTone(300 + clampedA * 45, 'triangle', 0.05, 0.12);
-        }
-      }
+      const originY = 280;
+      const s = 28;
+      const rawA = (originY - svgY) / s;
+      const clampedA = Math.max(1, Math.min(8, Math.round(rawA)));
+      const curB = (this._pythState && this._pythState.b) || 4;
+      this.renderPythagorasGeometry(clampedA, curB);
+      this.playAudioTone(300 + clampedA * 45, 'triangle', 0.05, 0.12);
     }
 
     handlePythagorasDragB(svgX) {
-      const el = this.engine && this.engine._cachedElements;
-      if (!el || typeof el.renderGeometry !== 'function') return;
-
-      el.isUserControlled = true;
-      const originX = el.ox !== undefined ? el.ox : 290;
-      const scale = el.s !== undefined ? el.s : 20;
-
-      // Horizontal leg b extends rightwards: rightX = ox + b * s => b = (svgX - ox) / s
-      const rawB = (svgX - originX) / scale;
-      const clampedB = Math.max(2, Math.min(10, Math.round(rawB)));
-
-      if (clampedB !== el.curB) {
-        el.renderGeometry(el.curA, clampedB);
-        if (this.engine && typeof this.engine.setVar === 'function') {
-          this.engine.setVar('sideB', clampedB);
-        }
-        // Sonification & integer triple detection
-        const c = Math.sqrt(el.curA * el.curA + clampedB * clampedB);
-        const isTriple = Math.abs(c - Math.round(c)) < 0.001;
-        if (isTriple) {
-          this.playAudioTone(880, 'sine', 0.22, 0.22);
-        } else {
-          this.playAudioTone(320 + clampedB * 40, 'triangle', 0.05, 0.12);
-        }
-      }
+      const originX = 360;
+      const s = 28;
+      const rawB = (svgX - originX) / s;
+      const clampedB = Math.max(1, Math.min(8, Math.round(rawB)));
+      const curA = (this._pythState && this._pythState.a) || 3;
+      this.renderPythagorasGeometry(curA, clampedB);
+      this.playAudioTone(320 + clampedB * 40, 'triangle', 0.05, 0.12);
     }
 
     /**
      * Direct Manipulation of Mountain Elevation Climber
-     * Projects pointer position onto slope line segment from (180, 380) to (400, 130)
+     * Projects pointer position onto slope line segment from (180, 380) to (400, 140)
      */
     handleClimberDrag(svgPt) {
-      const el = this.engine && this.engine._cachedElements;
-      if (!el || typeof el.updateGeometry !== 'function') return;
-
-      el.isUserControlled = true;
-
       const startX = 180, startY = 380;
-      const endX = 400, endY = 130;
+      const endX = 400, endY = 140;
       const dx = endX - startX;
       const dy = endY - startY;
       const segLenSq = dx * dx + dy * dy;
@@ -781,7 +784,14 @@
       let t = dot / segLenSq;
       t = Math.max(0, Math.min(1, t));
 
-      el.updateGeometry(t);
+      if (this.engine) {
+        this.engine.seek(t);
+      }
+      const el = this.engine && this.engine._cachedElements;
+      if (el) {
+        el.isUserControlled = true;
+        if (typeof el.updateGeometry === 'function') el.updateGeometry(t);
+      }
 
       // Footstep & altitude audio feedback
       const freq = 360 + t * 300;
@@ -1413,6 +1423,464 @@
         osc.start();
         osc.stop(this.audioCtx.currentTime + duration);
       } catch {}
+    }
+
+    // =========================================================================
+    // Direct Manipulation Action 5: Pythagoras Theorem Geometry Synthesis
+    // =========================================================================
+    renderPythagorasGeometry(a, b) {
+      if (!this.stageSvg) return;
+      const clampedA = Math.max(1, Math.min(8, Math.round(a || 3)));
+      const clampedB = Math.max(1, Math.min(8, Math.round(b || 4)));
+      this._pythState = { a: clampedA, b: clampedB };
+
+      const originX = 360;
+      const originY = 280;
+      const s = 28; // scale px per unit
+
+      const vertAx = originX;
+      const vertAy = originY - clampedA * s;
+      const vertBx = originX + clampedB * s;
+      const vertBy = originY;
+
+      // Triangle polygon
+      const tri = this.stageSvg.querySelector('#pyth-triangle') || this.stageSvg.querySelector('polygon[filter*="pyth-glow"]');
+      if (tri) {
+        tri.setAttribute('points', `${originX},${originY} ${vertBx},${vertBy} ${vertAx},${vertAy}`);
+      }
+
+      // Square A (extends left from vertical leg)
+      const rectA = this.stageSvg.querySelector('#pyth-rect-a');
+      const txtA = this.stageSvg.querySelector('#pyth-txt-a');
+      if (rectA) {
+        rectA.setAttribute('x', String(originX - clampedA * s));
+        rectA.setAttribute('y', String(vertAy));
+        rectA.setAttribute('width', String(clampedA * s));
+        rectA.setAttribute('height', String(clampedA * s));
+        rectA.setAttribute('opacity', '1');
+      }
+      if (txtA) {
+        txtA.setAttribute('x', String(originX - (clampedA * s) / 2));
+        txtA.setAttribute('y', String(originY - (clampedA * s) / 2 + 5));
+        txtA.textContent = `a² = ${clampedA * clampedA}`;
+        txtA.setAttribute('opacity', '1');
+      }
+
+      // Square B (extends down from horizontal leg)
+      const rectB = this.stageSvg.querySelector('#pyth-rect-b');
+      const txtB = this.stageSvg.querySelector('#pyth-txt-b');
+      if (rectB) {
+        rectB.setAttribute('x', String(originX));
+        rectB.setAttribute('y', String(originY));
+        rectB.setAttribute('width', String(clampedB * s));
+        rectB.setAttribute('height', String(clampedB * s));
+        rectB.setAttribute('opacity', '1');
+      }
+      if (txtB) {
+        txtB.setAttribute('x', String(originX + (clampedB * s) / 2));
+        txtB.setAttribute('y', String(originY + (clampedB * s) / 2 + 5));
+        txtB.textContent = `b² = ${clampedB * clampedB}`;
+        txtB.setAttribute('opacity', '1');
+      }
+
+      // Square C on hypotenuse
+      const c = Math.sqrt(clampedA * clampedA + clampedB * clampedB);
+      const angleRad = Math.atan2(clampedA, clampedB);
+      const angleDeg = (-angleRad * 180) / Math.PI;
+      const groupC = this.stageSvg.querySelector('#pyth-group-c');
+      const rectC = this.stageSvg.querySelector('#pyth-rect-c');
+      const txtC = this.stageSvg.querySelector('#pyth-txt-c');
+      const cPx = c * s;
+
+      if (groupC) {
+        groupC.setAttribute('transform', `translate(${vertAx}, ${vertAy}) rotate(${angleDeg.toFixed(2)})`);
+      }
+      if (rectC) {
+        rectC.setAttribute('x', '0');
+        rectC.setAttribute('y', String(-cPx));
+        rectC.setAttribute('width', String(cPx));
+        rectC.setAttribute('height', String(cPx));
+        rectC.setAttribute('opacity', '1');
+      }
+      if (txtC) {
+        txtC.setAttribute('x', String(cPx / 2));
+        txtC.setAttribute('y', String(-cPx / 2 + 6));
+        const cText = Math.abs(c - Math.round(c)) < 0.001 ? String(Math.round(c)) : c.toFixed(2);
+        txtC.textContent = `c² = ${Math.round(c * c)} (c = ${cText})`;
+        txtC.setAttribute('opacity', '1');
+      }
+
+      // Handles
+      const handleA = this.stageSvg.querySelector('#pyth-handle-a');
+      const handleB = this.stageSvg.querySelector('#pyth-handle-b');
+      if (handleA) {
+        handleA.setAttribute('transform', `translate(${vertAx}, ${vertAy})`);
+      }
+      if (handleB) {
+        handleB.setAttribute('transform', `translate(${vertBx}, ${vertBy})`);
+      }
+
+      // Side labels
+      const sideTexts = this.stageSvg.querySelectorAll('text');
+      sideTexts.forEach(tNode => {
+        const text = (tNode.textContent || '').trim();
+        if (text.startsWith('a =')) {
+          tNode.textContent = `a = ${clampedA}`;
+          tNode.setAttribute('y', String(originY - (clampedA * s) / 2));
+        } else if (text.startsWith('b =')) {
+          tNode.textContent = `b = ${clampedB}`;
+          tNode.setAttribute('x', String(originX + (clampedB * s) / 2));
+        } else if (text.startsWith('c =')) {
+          tNode.textContent = `c = ${c.toFixed(2)}`;
+          tNode.setAttribute('x', String((vertAx + vertBx) / 2 + 15));
+          tNode.setAttribute('y', String((vertAy + vertBy) / 2));
+        }
+      });
+
+      // Banner formula text
+      const banner = this.stageSvg.querySelector('tspan');
+      if (banner && banner.parentNode) {
+        const cStr = Math.abs(c - Math.round(c)) < 0.001 ? String(Math.round(c)) : c.toFixed(2);
+        banner.parentNode.innerHTML = `<tspan fill="#34d399">a² (${clampedA * clampedA})</tspan> + <tspan fill="#60a5fa">b² (${clampedB * clampedB})</tspan> = <tspan fill="#fbbf24">c² (${Math.round(c * c)})</tspan> ➔ ${clampedA}² + ${clampedB}² = ${cStr}²`;
+      }
+
+      if (this.engine && typeof this.engine.setVar === 'function') {
+        this.engine.setVar('sideA', clampedA);
+        this.engine.setVar('sideB', clampedB);
+      }
+    }
+
+    // =========================================================================
+    // Fish Tank Aquarium Boids Simulation
+    // =========================================================================
+    setupFishTankBoids() {
+      const fishGroup = this.stageSvg && this.stageSvg.querySelector('#fish-school-group');
+      if (!fishGroup) return;
+      fishGroup.innerHTML = '';
+
+      const count = 18;
+      const boids = [];
+      const colors = ['#f59e0b', '#38bdf8', '#34d399', '#ec4899', '#a855f7', '#fb7185'];
+
+      for (let i = 0; i < count; i++) {
+        const color = colors[i % colors.length];
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.innerHTML = `
+          <ellipse cx="0" cy="0" rx="16" ry="8" fill="${color}" opacity="0.9" />
+          <polygon points="-16,0 -26,-7 -26,7" fill="${color}" opacity="0.8" />
+          <circle cx="8" cy="-2.5" r="2" fill="#ffffff" />
+          <circle cx="9" cy="-2.5" r="1" fill="#000000" />
+        `;
+        fishGroup.appendChild(g);
+
+        boids.push({
+          el: g,
+          x: 120 + Math.random() * 560,
+          y: 120 + Math.random() * 260,
+          vx: (Math.random() - 0.5) * 2.5,
+          vy: (Math.random() - 0.5) * 1.5,
+          color
+        });
+      }
+
+      if (this._boidAnimId) cancelAnimationFrame(this._boidAnimId);
+
+      const tickBoids = () => {
+        if (!this.stageSvg || !this.stageSvg.contains(fishGroup)) return;
+        const speedMultiplier = (this.engine && this.engine.vars && this.engine.vars.kelpTurbulence) || 1.0;
+
+        for (let i = 0; i < boids.length; i++) {
+          const b = boids[i];
+          b.x += b.vx * speedMultiplier;
+          b.y += b.vy * speedMultiplier;
+
+          if (b.x < 100) { b.x = 100; b.vx = Math.abs(b.vx); }
+          else if (b.x > 700) { b.x = 700; b.vx = -Math.abs(b.vx); }
+          if (b.y < 120) { b.y = 120; b.vy = Math.abs(b.vy); }
+          else if (b.y > 400) { b.y = 400; b.vy = -Math.abs(b.vy); }
+
+          const angle = (Math.atan2(b.vy, b.vx) * 180) / Math.PI;
+          b.el.setAttribute('transform', `translate(${b.x.toFixed(1)}, ${b.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
+        }
+
+        this._boidAnimId = requestAnimationFrame(tickBoids);
+      };
+      this._boidAnimId = requestAnimationFrame(tickBoids);
+    }
+
+    // =========================================================================
+    // Math Fishing Pond Fish School Setup
+    // =========================================================================
+    setupMathFishingFish() {
+      const fishGroup = this.stageSvg && this.stageSvg.querySelector('#fish-school-group');
+      if (!fishGroup) return;
+      fishGroup.innerHTML = '';
+
+      if (!this.engine._cachedElements) {
+        this.engine._cachedElements = {};
+      }
+      this.engine._cachedElements.fishEls = [];
+      this.engine._cachedElements.caughtList = [];
+
+      const values = [3, 7, 4, 6, 2, 8, 5, 1, 9];
+      const fishColors = ['#f97316', '#38bdf8', '#ec4899', '#10b981', '#a855f7', '#eab308', '#06b6d4', '#f43f5e', '#84cc16'];
+
+      values.forEach((val, idx) => {
+        const color = fishColors[idx % fishColors.length];
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.style.cursor = 'pointer';
+        g.innerHTML = `
+          <ellipse cx="0" cy="0" rx="22" ry="13" fill="${color}" />
+          <polygon points="-22,0 -34,-10 -34,10" fill="${color}" />
+          <circle cx="12" cy="-4" r="3" fill="#ffffff" />
+          <circle cx="13" cy="-4" r="1.5" fill="#000000" />
+          <text x="0" y="5" fill="#ffffff" font-size="14" font-weight="900" text-anchor="middle">${val}</text>
+        `;
+        fishGroup.appendChild(g);
+
+        const startX = 140 + (idx % 3) * 200 + (Math.random() * 40 - 20);
+        const startY = 220 + Math.floor(idx / 3) * 65 + (Math.random() * 20 - 10);
+
+        const fishObj = {
+          el: g,
+          val,
+          x: startX,
+          y: startY,
+          curX: startX,
+          curY: startY,
+          caught: false,
+          speed: 0.6 + Math.random() * 0.5,
+          offset: Math.random() * Math.PI * 2
+        };
+        this.engine._cachedElements.fishEls.push(fishObj);
+      });
+
+      if (this._fishSwimId) cancelAnimationFrame(this._fishSwimId);
+
+      let swimT = 0;
+      const swimTick = () => {
+        if (!this.stageSvg || !this.stageSvg.contains(fishGroup)) return;
+        swimT += 0.02;
+
+        const fishList = this.engine && this.engine._cachedElements && this.engine._cachedElements.fishEls;
+        if (fishList) {
+          fishList.forEach(fish => {
+            if (fish.caught || fish.isHooked) return;
+            fish.curX = fish.x + Math.sin(swimT * fish.speed + fish.offset) * 25;
+            fish.curY = fish.y + Math.cos(swimT * 0.8 + fish.offset) * 10;
+            const dir = Math.cos(swimT * fish.speed + fish.offset) >= 0 ? 1 : -1;
+            fish.el.setAttribute('transform', `translate(${fish.curX.toFixed(1)}, ${fish.curY.toFixed(1)}) scale(${dir}, 1)`);
+          });
+        }
+        this._fishSwimId = requestAnimationFrame(swimTick);
+      };
+      this._fishSwimId = requestAnimationFrame(swimTick);
+    }
+
+    // =========================================================================
+    // Continuous Electron Flow Drift for Electrical Circuits
+    // =========================================================================
+    startCircuitElectronsLoop() {
+      if (this._circuitAnimId) cancelAnimationFrame(this._circuitAnimId);
+      const dots = this.stageSvg && this.stageSvg.querySelectorAll('.e-dot');
+      if (!dots || !dots.length) return;
+
+      const L1 = 500;
+      const L2 = 260;
+      const L3 = 500;
+      const L4 = 260;
+      const perimeter = L1 + L2 + L3 + L4;
+
+      const getPointOnPerimeter = (d) => {
+        d = ((d % perimeter) + perimeter) % perimeter;
+        if (d < L1) return { x: 150 + d, y: 105 };
+        d -= L1;
+        if (d < L2) return { x: 650, y: 105 + d };
+        d -= L2;
+        if (d < L3) return { x: 650 - d, y: 365 };
+        d -= L3;
+        return { x: 150, y: 365 - d };
+      };
+
+      let driftOffset = 0;
+      const tick = () => {
+        if (!this.stageSvg || !this.stageSvg.querySelector('#circuit-switch')) return;
+        const v = (this.engine && this.engine.vars) || {};
+        const isClosed = v.switchClosed !== false;
+        const voltage = v.voltage !== undefined ? v.voltage : 12;
+        const resistance = v.resistance !== undefined ? v.resistance : 4;
+        const current = isClosed ? voltage / Math.max(0.5, resistance) : 0;
+
+        if (isClosed && current > 0) {
+          driftOffset = (driftOffset + current * 0.7) % perimeter;
+        }
+
+        const count = dots.length;
+        dots.forEach((dot, idx) => {
+          const pt = getPointOnPerimeter(driftOffset + (idx * perimeter) / count);
+          dot.setAttribute('cx', pt.x.toFixed(1));
+          dot.setAttribute('cy', pt.y.toFixed(1));
+          dot.setAttribute('opacity', isClosed ? '0.95' : '0.15');
+        });
+
+        this._circuitAnimId = requestAnimationFrame(tick);
+      };
+      this._circuitAnimId = requestAnimationFrame(tick);
+    }
+
+    // =========================================================================
+    // Live Simulation Parameters & Controls HUD Dock
+    // =========================================================================
+    setupSimParametersHud() {
+      const container = this.stageSvg && this.stageSvg.parentNode;
+      if (!container || !this.engine) return;
+
+      let hud = container.querySelector('#stage-sim-parameters');
+      const scene = this.engine.scene;
+      if (!scene) {
+        if (hud) hud.style.display = 'none';
+        return;
+      }
+
+      // Collect parameters: from scene.inputs or numeric scene.vars
+      let inputs = Array.isArray(scene.inputs) && scene.inputs.length > 0 ? [...scene.inputs] : [];
+      if (inputs.length === 0 && scene.vars && typeof scene.vars === 'object') {
+        Object.entries(scene.vars).forEach(([k, v]) => {
+          if (v && typeof v === 'object' && typeof v.min === 'number' && typeof v.max === 'number') {
+            inputs.push({
+              type: 'slider',
+              var: k,
+              label: v.label || k,
+              min: v.min,
+              max: v.max,
+              step: v.step || 1,
+              unit: v.unit || ''
+            });
+          }
+        });
+      }
+
+      if (inputs.length === 0) {
+        if (hud) hud.style.display = 'none';
+        return;
+      }
+
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'stage-sim-parameters';
+        hud.style.cssText = `
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          min-width: 230px;
+          max-width: 280px;
+          background: rgba(15, 23, 42, 0.92);
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+          padding: 10px 14px;
+          color: #f8fafc;
+          z-index: 28;
+          user-select: none;
+          font-family: ui-sans-serif, system-ui, sans-serif;
+          font-size: 12px;
+          transition: opacity 0.2s ease;
+        `;
+        container.appendChild(hud);
+      } else {
+        hud.style.display = 'block';
+      }
+
+      const currentVars = this.engine.vars || {};
+
+      let html = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:6px;">
+          <span style="font-weight:800; font-size:12px; color:#38bdf8; display:flex; align-items:center; gap:5px;">
+            <span>🎛️</span> Parameters
+          </span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button id="sim-btn-reset-vars" type="button" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16); border-radius:6px; color:#94a3b8; font-size:10px; font-weight:700; padding:2px 7px; cursor:pointer;" title="Reset variables to defaults">↺ Reset</button>
+            <button id="sim-btn-collapse" type="button" style="background:none; border:none; color:#94a3b8; font-size:12px; cursor:pointer; padding:0 3px;">▲</button>
+          </div>
+        </div>
+        <div id="sim-param-body" style="display:flex; flex-direction:column; gap:8px;">
+      `;
+
+      inputs.forEach(inp => {
+        const vName = inp.var;
+        const curVal = currentVars[vName] !== undefined ? currentVars[vName] : (inp.min + (inp.max - inp.min) / 2);
+        const unit = inp.unit || '';
+        html += `
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+              <span style="font-size:11px; font-weight:600; color:#cbd5e1;">${inp.label || vName}</span>
+              <span id="param-badge-${vName}" style="font-family:ui-monospace, monospace; font-size:11px; font-weight:700; color:#38bdf8; background:rgba(56,189,248,0.14); padding:1px 6px; border-radius:4px;">${curVal}${unit ? ' ' + unit : ''}</span>
+            </div>
+            <input type="range" min="${inp.min}" max="${inp.max}" step="${inp.step}" value="${curVal}" data-var="${vName}" data-unit="${unit}" class="sim-param-slider" style="width:100%; accent-color:#38bdf8; cursor:pointer; height:6px; margin:0; display:block;" />
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      hud.innerHTML = html;
+
+      // Event listeners
+      const sliders = hud.querySelectorAll('.sim-param-slider');
+      sliders.forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const vName = e.target.getAttribute('data-var');
+          const unit = e.target.getAttribute('data-unit') || '';
+          const val = parseFloat(e.target.value);
+          if (this.engine && typeof this.engine.setVar === 'function') {
+            this.engine.setVar(vName, val);
+          }
+          const badge = hud.querySelector(\`#param-badge-\${vName}\`);
+          if (badge) badge.textContent = \`\${val}\${unit ? ' ' + unit : ''}\`;
+          this.playAudioTone(400 + val * 10, 'sine', 0.02, 0.05);
+        });
+      });
+
+      const btnReset = hud.querySelector('#sim-btn-reset-vars');
+      if (btnReset) {
+        btnReset.addEventListener('click', () => {
+          if (this.engine) this.engine.resetVars();
+          this.setupSimParametersHud();
+          this.playAudioTone(523, 'triangle', 0.08, 0.15);
+        });
+      }
+
+      const btnCollapse = hud.querySelector('#sim-btn-collapse');
+      const body = hud.querySelector('#sim-param-body');
+      if (btnCollapse && body) {
+        btnCollapse.addEventListener('click', () => {
+          const isCollapsed = body.style.display === 'none';
+          body.style.display = isCollapsed ? 'flex' : 'none';
+          btnCollapse.textContent = isCollapsed ? '▲' : '▼';
+        });
+      }
+
+      // Synchronize slider values when variables update externally
+      if (!this._varChangeBound && this.engine && typeof this.engine.on === 'function') {
+        this._varChangeBound = true;
+        this.engine.on('varchange', (data) => {
+          const curHud = container.querySelector('#stage-sim-parameters');
+          if (!curHud || curHud.style.display === 'none') return;
+          const sList = curHud.querySelectorAll('.sim-param-slider');
+          sList.forEach(s => {
+            const vName = s.getAttribute('data-var');
+            const unit = s.getAttribute('data-unit') || '';
+            if (data.name === '*' || data.name === vName) {
+              const val = (data.vars && data.vars[vName] !== undefined) ? data.vars[vName] : data.value;
+              if (val !== undefined && Number(s.value) !== Number(val)) {
+                s.value = val;
+                const badge = curHud.querySelector(\`#param-badge-\${vName}\`);
+                if (badge) badge.textContent = \`\${val}\${unit ? ' ' + unit : ''}\`;
+              }
+            }
+          });
+        });
+      }
     }
   }
 
