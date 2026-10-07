@@ -77,7 +77,7 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
   try {
     const rawTrimmed = rawLisp.trim();
 
-    // Strategy 1: Attempt JSON extraction (Gemini Nano frequently generates JSON or markdown-fenced JSON)
+    // Strategy 1: Attempt JSON extraction
     const jsonMatch = rawTrimmed.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
@@ -85,7 +85,9 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
         const prompt = parsed.prompt || parsed.question || parsed.q || parsed.stem;
         const rawOptions = parsed.options || parsed.choices || parsed.answers || parsed.opts;
         if (prompt && Array.isArray(rawOptions) && rawOptions.length >= 2) {
-          const options = rawOptions.map((o: any) => typeof o === 'string' ? o.replace(/^[A-D]\)\s*/i, '').trim() : String(o));
+          const options = rawOptions.map((o: any) =>
+            typeof o === 'string' ? o.replace(/^[A-D]\)\s*/i, '').trim() : String(o)
+          );
           let answerKey = 0;
           if (typeof parsed.answerKey === 'number') answerKey = parsed.answerKey;
           else if (typeof parsed.answer === 'number') answerKey = parsed.answer;
@@ -112,14 +114,12 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
 
     const clean = healSExprString(rawLisp);
 
-    // Strategy 2: Lisp S-Expression Parsing (:prompt "..." :options (...) :answer-key ...)
-    // 1. Prompt stem extraction (Longhand :prompt or Shorthand :q / :question)
+    // Strategy 2: Lisp S-Expression Parsing
     const promptMatch =
       clean.match(/:(?:prompt|q|question)\s+"([^"]+)"/i) ||
       clean.match(/:(?:prompt|q|question)\s+([^\s:]+)/i) ||
       clean.match(/\(question\s+(?:\(text\s+)?"([^"]+)"/i);
 
-    // 2. Options list extraction (Longhand :options or Shorthand :opts, with either () or [])
     const optionsMatch =
       clean.match(/:(?:options|opts|choices)\s+[\(\[](?:list\s+)?([^\]\)]*)[\)\]]/i);
 
@@ -141,7 +141,7 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
       }
     }
 
-    // Strategy 3: Markdown / Plain Text MCQ fallback (Question: ... A) ... B) ... Answer: ...)
+    // Strategy 3: Markdown / Plain Text MCQ fallback
     if (!promptMatch || optionMatches.length < 2) {
       const lines = rawTrimmed.split('\n').map((l) => l.trim()).filter(Boolean);
       let detectedPrompt = '';
@@ -182,7 +182,7 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
 
     const prompt = promptMatch[1].trim();
 
-    // 4. Answer key extraction (Longhand :answer-key, :answerKey, :answer_key or Shorthand :ans)
+    // 4. Answer key extraction
     let answerKey = detectedAnswerKey >= 0 ? detectedAnswerKey : 0;
     const answerKeyMatch = clean.match(/:(?:answer-key|ans|answerKey|answer_key)\s+(\d+)/i);
     if (answerKeyMatch) {
@@ -192,18 +192,18 @@ export function extractQuestionFromAst(rawLisp: string): ExtractedQuestion | nul
       }
     }
 
-    // 5. Scratchpad / Arithmetic reasoning extraction (:scratchpad or :calc)
+    // 5. Scratchpad
     const scratchpadMatch = clean.match(/:(?:scratchpad|calc|reasoning)\s+"([^"]+)"/i);
     const scratchpad = scratchpadMatch ? scratchpadMatch[1].trim() : undefined;
 
-    // 6. Hint extraction (:hint or :hints)
+    // 6. Hint
     const hintMatch =
       clean.match(/:hint\s+"([^"]+)"/i) ||
       clean.match(/:hints\s+\((?:list\s+)?(?:"([^"]+)")?/i) ||
       clean.match(/:hints\s+"([^"]+)"/i);
     const hint = hintMatch ? hintMatch[1].trim() : undefined;
 
-    // 7. Misconceptions extraction (:misconceptions or :misc)
+    // 7. Misconceptions
     const miscMatch = clean.match(/:(?:misconceptions|misc)\s+[\(\[](?:list\s+)?([^\]\)]*)[\)\]]/i);
     let misconceptions: string[] | undefined = undefined;
     if (miscMatch) {
