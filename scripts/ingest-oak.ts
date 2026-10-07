@@ -283,27 +283,34 @@ async function buildSystem() {
             c: challenges
           };
 
-catalogItems.push({
-  id: lessonSlug,
-  stream: 'academic',
-  keyStage: phaseTitle.toUpperCase(),
-  subject: subjectTitle,
-  unit: lessonTitle,
-  title: lessonTitle,
-  badgeIcon: getSubjectEmoji(subjectTitle),
-  manifestPath: `manifests/lessons/${outFileName}`, // Removed leading slash
-});
+          fs.writeFileSync(path.join(lessonsDir, outFileName), JSON.stringify(manifest), 'utf-8');
 
-ragIndex.push({
-  id: lessonSlug,
-  stream: 'academic',
-  phase: phaseTitle,
-  subject: subjectTitle,
-  title: lessonTitle,
-  tokens: tokenize(combinedText),
-  ragContext: `[${subjectTitle} - ${phaseTitle}] ${lessonTitle}\nCore Concepts: ${challenges.map(c => c.p).join(' | ')}\nKey Rules: ${challenges.map(c => c.a).join(' | ')}`,
-  manifestPath: `manifests/lessons/${outFileName}`, // Removed leading slash
-});
+          catalogItems.push({
+            id: lessonSlug,
+            stream: 'academic',
+            keyStage: phaseTitle.toUpperCase(),
+            subject: subjectTitle,
+            unit: lessonTitle,
+            title: lessonTitle,
+            badgeIcon: getSubjectEmoji(subjectTitle),
+            manifestPath: `manifests/lessons/${outFileName}`,
+          });
+
+          const combinedText = `${lessonTitle} ${subjectTitle} ${phaseTitle} ${
+            challenges.map(c => `${c.p} ${c.a} ${c.r.map((r: any) => r[0]).join(' ')}`).join(' ')
+          }`;
+
+          ragIndex.push({
+            id: lessonSlug,
+            stream: 'academic',
+            phase: phaseTitle,
+            subject: subjectTitle,
+            title: lessonTitle,
+            tokens: tokenize(combinedText),
+            ragContext: `[${subjectTitle} - ${phaseTitle}] ${lessonTitle}\nCore Concepts: ${challenges.map(c => c.p).join(' | ')}\nKey Rules: ${challenges.map(c => c.a).join(' | ')}`,
+            manifestPath: `manifests/lessons/${outFileName}`,
+          });
+        });
 
         console.log(`✅ Processed ${file} (${selectedLessons.length} modular manifests generated)`);
       } catch (err: any) {

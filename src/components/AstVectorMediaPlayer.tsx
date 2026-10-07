@@ -1536,18 +1536,18 @@ const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(sel
           ) : (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <iframe
-  key={`vector-player-viewport-${selectedPreset}-${currentLang}`}
-  ref={iframeRef}
-  src={playerSrc}
-  title="Lumina Vector Player"
-  style={{
-    width: '100%',
-    height: '100%',
-    border: 'none',
-    display: 'block',
-  }}
-  allow="fullscreen; microphone"
-/>
+                key={`vector-player-viewport-${currentLang}`}
+                ref={iframeRef}
+                src={playerSrc}
+                title="Lumina Vector Player"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  display: 'block',
+                }}
+                allow="fullscreen; microphone"
+              />
             </div>
           )}
 

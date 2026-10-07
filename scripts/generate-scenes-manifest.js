@@ -146,12 +146,19 @@ export function generateScenesManifest() {
     scenes: manifest
   };
 
-  fs.writeFileSync(manifestPath, JSON.stringify(output, null, 2) + '\n', 'utf8');
+  const jsonStr = JSON.stringify(output, null, 2) + '\n';
+  fs.writeFileSync(manifestPath, jsonStr, 'utf8');
   console.log(`[Manifest Generator] Successfully wrote ${manifest.length} scenes to ${manifestPath}`);
 
-  // Also emit scenes-config.json for backward compatibility
+  // Also emit to root static/ directory for root-level fetches
+  const rootManifestPath = path.join(rootDir, 'static', 'scenes.manifest.json');
+  fs.writeFileSync(rootManifestPath, jsonStr, 'utf8');
+
+  // Also emit scenes-config.json for backward compatibility in both locations
   const legacyConfigPath = path.join(rootDir, 'static', 'player', 'scenes-config.json');
-  fs.writeFileSync(legacyConfigPath, JSON.stringify(output, null, 2) + '\n', 'utf8');
+  fs.writeFileSync(legacyConfigPath, jsonStr, 'utf8');
+  const rootLegacyConfigPath = path.join(rootDir, 'static', 'scenes-config.json');
+  fs.writeFileSync(rootLegacyConfigPath, jsonStr, 'utf8');
 
   // Synchronize cartridge folders
   const cartridgesDir = path.join(rootDir, 'static', 'cartridges');
