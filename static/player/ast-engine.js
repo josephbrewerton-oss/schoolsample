@@ -2258,59 +2258,57 @@
             ].filter(Boolean);
 
 const fetchAsset = async (ext) => {
-  // Determine current directory of player/index.html
-  const baseHref = (typeof document !== 'undefined' && document.baseURI) 
-    ? document.baseURI 
-    : window.location.href;
-  const playerDirUrl = new URL('.', baseHref); // Guarantees trailing slash on folder
+    // 1. Determine current directory of player/index.html
+    const baseHref = (typeof document !== 'undefined' && document.baseURI) 
+      ? document.baseURI 
+      : window.location.href;
+    const playerDirUrl = new URL('.', baseHref);
 
-  const candidateDirs = [
-    'scenes/',
-    'cartridges/',
-    '../scenes/',
-    '../cartridges/',
-    './'
-  ];
+    // Read optional ?base= query parameter passed from parent React component
+    const urlParams = new URLSearchParams(window.location.search);
+    const customBase = urlParams.get('base') || '';
 
-  for (const dir of candidateDirs) {
-    const searchFilenames = [
-      `${presetId}.${ext}`,
-      `${presetId}.${ext}${cacheBust}`
+    const candidateUrls = [
+      new URL(`scenes/${sceneId}.${ext}`, playerDirUrl).href,
+      new URL(`cartridges/${sceneId}.${ext}`, playerDirUrl).href,
+      new URL(`../scenes/${sceneId}.${ext}`, playerDirUrl).href,
+      new URL(`../cartridges/${sceneId}.${ext}`, playerDirUrl).href,
+      ...(customBase ? [
+        new URL(`${customBase.replace(/\/$/, '')}/player/scenes/${sceneId}.${ext}`, window.location.origin).href,
+        new URL(`${customBase.replace(/\/$/, '')}/scenes/${sceneId}.${ext}`, window.location.origin).href,
+      ] : []),
+      new URL(`${sceneId}.${ext}`, playerDirUrl).href
     ];
 
-    for (const filename of searchFilenames) {
+    for (const url of candidateUrls) {
       try {
-        // Native URL resolution safely respects repository subpaths:
-        const targetUrl = new URL(dir + filename, playerDirUrl).href;
-        const res = await fetch(targetUrl).catch(() => null);
+        const res = await fetch(url);
+        if (!res.ok) continue;
 
-        if (res && res.ok) {
-          const text = await res.text();
-          const trimmed = (text || '').trim();
+        const text = await res.text();
+        const trimmed = text.trim();
 
-          // Reject HTML fallback responses from SPA / 404 handlers
-          if (
-            ext === 'svg' && 
-            trimmed.includes('<svg') && 
-            !trimmed.startsWith('<!DOCTYPE') && 
-            !trimmed.startsWith('<html')
-          ) {
-            return text;
-          }
-
-          if (
-            ext === 'ast' && 
-            (trimmed.includes(':scene') || trimmed.startsWith('(') || trimmed.startsWith('{')) && 
-            !trimmed.startsWith('<!DOCTYPE') && 
-            !trimmed.startsWith('<html')
-          ) {
-            return text;
-          }
+        // 🛡️ Guard against AI Studio / proxy serving HTML 200 fallbacks instead of actual raw assets
+        if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
+          continue;
         }
-      } catch (_) {}
+
+        // Validate payload matches requested file extension
+        if (ext === 'svg' && !trimmed.includes('<svg')) {
+          continue;
+        }
+        if (ext === 'ast' && !trimmed.startsWith('(') && !trimmed.startsWith(';')) {
+          continue;
+        }
+
+        return trimmed;
+      } catch (_) {
+        // Fall through to next candidate URL
+      }
     }
-  }
-  return '';
+
+    return null;
+  };
 };
 
             const [foundSvg, foundAst] = await Promise.all([
@@ -2410,6 +2408,27 @@ const fetchAsset = async (ext) => {
       }
       this.resetVars();
 
+// 1. Hide the "Loading AST Vector Scene..." overlay immediately
+      const loaderEl = document.getElementById('loading-indicator') || 
+                       document.getElementById('loading') ||
+                       document.querySelector('.loading-badge') ||
+                       (this.container && this.container.parentElement && this.container.parentElement.querySelector('[id*="load"]'));
+      if (loaderEl) {
+        loaderEl.style.display = 'none';
+      }
+
+      // 2. Pulse Frame 0 so vector attributes, coordinates, and physics bind immediately
+      try {
+        if (typeof this.applyBindings === 'function') {
+          this.applyBindings(0);
+        }
+        if (typeof this.render === 'function') {
+          this.render(0);
+        }
+      } catch (bindErr) {
+        console.warn('[AST Engine] Initial frame bind notice:', bindErr);
+      }
+
       this.emit('presetchange', {
         preset: this.activePresetId,
         title: this.scene.title,
@@ -2420,6 +2439,19 @@ const fetchAsset = async (ext) => {
         interactive: this.scene.interactive,
         camera: this.scene.camera,
         keyframes: this.scene.keyframes || []
+      });
+
+// 3. Notify parent host that cartridge DOM is mounted and ready
+      this.notifyParent({
+        type: 'PLAYER_READY',
+        preset: this.activePresetId,
+        title: this.scene.title,
+        stage: this.scene.stage,
+        duration: this.durationSec,
+        has3D: this.has3D(),
+        hasInteractive: Boolean(this.scene && this.scene.interactive && this.scene.interactive.checkpoints && this.scene.interactive.checkpoints.length),
+        keyframes: this.scene.keyframes || [],
+        isPlaying: this.isPlaying
       });
 
       this.seek(0);
@@ -3085,35 +3117,69 @@ const fetchAsset = async (ext) => {
         });
       }
 
-      // Initialize zero-bloat micro-physics if defined on the scene
-      if (scene.physics) {
+// 1. Initialize zero-bloat micro-physics if defined on the scene
+      if (this.physics && scene.physics) {
         this.physics.clear();
         if (scene.physics.gravity !== undefined) this.physics.setGravity(scene.physics.gravity);
         if (scene.physics.friction !== undefined) this.physics.friction = scene.physics.friction;
         if (scene.physics.groundY !== undefined) this.physics.groundY = scene.physics.groundY;
         if (Array.isArray(scene.physics.bodies)) {
-          scene.physics.bodies.forEach(b => this.physics.addBody(b));
+          scene.physics.bodies.forEach(b => {
+            if (b && typeof b === 'object') {
+              this.physics.addBody(b);
+            }
+          });
         }
       }
 
-      // Initialize reactive variables for the loaded scene
+      // 2. Initialize reactive variables for the loaded scene
       this.resetVars();
 
       // 3. Optimized DOM Partitioning & Hardware Promotion (Static vs Kinematic Actors)
       try {
+        if (!container) return;
         const dynamicTargets = new Set();
-        if (this.activeBindings) {
-          this.activeBindings.forEach(b => { if (b.node) dynamicTargets.add(b.node); });
-        }
-        if (this.active3DItems) {
-          this.active3DItems.forEach(item => { if (item.domNode) dynamicTargets.add(item.domNode); });
-        }
-        if (scene.actors && Array.isArray(scene.actors)) {
-          scene.actors.forEach(a => {
-            const el = container.querySelector(a.target);
-            if (el) dynamicTargets.add(el);
+        
+        if (Array.isArray(this.activeBindings)) {
+          this.activeBindings.forEach(b => { 
+            if (b && b.node && b.node.isConnected) {
+              dynamicTargets.add(b.node); 
+            } else if (b && b.target) {
+              const freshEl = container.querySelector(b.target);
+              if (freshEl) {
+                b.node = freshEl; // Re-bind to fresh live DOM node
+                dynamicTargets.add(freshEl);
+              }
+            }
           });
         }
+        
+        if (Array.isArray(this.active3DItems)) {
+          this.active3DItems.forEach(item => { 
+            if (item && item.domNode && item.domNode.isConnected) {
+              dynamicTargets.add(item.domNode); 
+            }
+          });
+        }
+        
+        if (scene.actors && Array.isArray(scene.actors)) {
+          scene.actors.forEach(a => {
+            if (a && a.target) {
+              const el = container.querySelector(a.target);
+              if (el) dynamicTargets.add(el);
+            }
+          });
+        }
+
+        // Apply hardware promotion safely
+        dynamicTargets.forEach(el => {
+          if (el && el.style && typeof el.style.setProperty === 'function') {
+            el.style.setProperty('will-change', 'transform, opacity');
+          }
+        });
+      } catch (domPartitionErr) {
+        console.warn('[AST Engine] Non-fatal DOM partitioning notice:', domPartitionErr);
+      }        }
         if (scene.gestures && Array.isArray(scene.gestures)) {
           scene.gestures.forEach(g => {
             const el = container.querySelector(g.target);

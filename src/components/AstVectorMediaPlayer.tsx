@@ -193,7 +193,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       postToPlayer({ type: 'SET_PRESET', preset: canonical, play: autoPlayRef.current });
 
       const cart = getCartridge(canonical);
-      if (cart && cart.svgMarkup && cart.astSource) {
+      if (cart && typeof cart.svgMarkup === 'string' && cart.svgMarkup.includes('<svg') && cart.astSource) {
         postToPlayer({
           type: 'LOAD_CARTRIDGE',
           cartridge: {
