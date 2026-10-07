@@ -178,10 +178,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
 
   const postToPlayer = useCallback((payload: Record<string, any>) => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
-      const targetOrigin = getVerifiedTargetOrigin();
-      iframeRef.current.contentWindow.postMessage(payload, targetOrigin);
+      // Use '*' so GitHub Pages subpaths (/schoolsample/) never drop postMessage packets
+      iframeRef.current.contentWindow.postMessage(payload, '*');
     }
-  }, [getVerifiedTargetOrigin]);
+  }, []);
 
   // Sync internal selected preset if external preset prop changes
   useEffect(() => {
