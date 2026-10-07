@@ -1367,8 +1367,16 @@
             el.presetSelector.value = this.engine.activePresetId || '';
             return;
           }
-          if (val && val !== this.engine.activePresetId) {
-            this.engine.setPreset(val, true);
+if (val) {
+  this.engine.setPreset(val, true);
+  if (this.engine && typeof this.engine.notifyParent === 'function') {
+    this.engine.notifyParent({
+      type: 'PRESETCHANGE',
+      preset: val,
+      title: el.presetSelector.options[el.presetSelector.selectedIndex]?.textContent || val,
+    });
+  }
+}
             if (this.engine && typeof this.engine.notifyParent === 'function') {
               this.engine.notifyParent({
                 type: 'PRESETCHANGE',
@@ -1493,6 +1501,20 @@
             stage.classList.add('is-orbiting');
           }
         });
+
+window.addEventListener('message', (e) => {
+  const data = e.data;
+  if (!data) return;
+
+  if (data.type === 'SET_PRESET' && data.preset) {
+    if (el.presetSelector && el.presetSelector.value !== data.preset) {
+      el.presetSelector.value = data.preset;
+    }
+    if (this.engine) {
+      this.engine.setPreset(data.preset, Boolean(data.play));
+    }
+  }
+});
 
         window.addEventListener('mousemove', (e) => {
           if (this.isOrbitDragging && this.engine.has3D()) {
