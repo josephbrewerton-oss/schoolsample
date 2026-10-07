@@ -1369,6 +1369,13 @@
           }
           if (val && val !== this.engine.activePresetId) {
             this.engine.setPreset(val, true);
+            if (this.engine && typeof this.engine.notifyParent === 'function') {
+              this.engine.notifyParent({
+                type: 'PRESETCHANGE',
+                preset: val,
+                title: el.presetSelector.options[el.presetSelector.selectedIndex]?.textContent || val,
+              });
+            }
           }
         });
       }

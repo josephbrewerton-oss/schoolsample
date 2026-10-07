@@ -351,38 +351,55 @@
         }
       } catch (_) {}
 
-      // 3. Fallback: Load static configuration manifest
-      let manifestRes = await this.loadConfig(`${base}scenes.manifest.json`);
-      if (manifestRes) return manifestRes;
-      manifestRes = await this.loadConfig(`${currentDir}scenes.manifest.json`);
-      if (manifestRes) return manifestRes;
-      return this.loadConfig('./scenes.manifest.json');
+      // 3. Fallback: Load static configuration manifest with resilient fallback cascade
+      const candidateUrls = [
+        './scenes.manifest.json',
+        './scenes-config.json',
+        `${currentDir}scenes.manifest.json`,
+        `${currentDir}scenes-config.json`,
+        `${base}player/scenes.manifest.json`,
+        `${base}player/scenes-config.json`,
+        `${base}scenes.manifest.json`,
+        `${base}scenes-config.json`,
+        '/player/scenes.manifest.json',
+        '/player/scenes-config.json',
+        '/scenes.manifest.json',
+        '/scenes-config.json'
+      ];
+
+      for (const url of candidateUrls) {
+        const manifestRes = await this.loadConfig(url);
+        if (manifestRes) return manifestRes;
+      }
+
+      return { totalScenes: Object.keys(scenes).length, scenes: SceneRegistry.list() };
     },
 
     async loadConfig(url = './scenes.manifest.json') {
       try {
-        let res = await fetch(url).catch(() => null);
-        if (!res || !res.ok) {
-          res = await fetch('./scenes-config.json').catch(() => null);
-        }
-        if (!res || !res.ok) {
-          const currentDir = (typeof window !== 'undefined' && window.location && window.location.pathname)
-            ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)
-            : './';
-          res = await fetch(`${currentDir}scenes.manifest.json`).catch(() => null);
-        }
+        const res = await fetch(url).catch(() => null);
         if (!res || !res.ok) return null;
-        const config = await res.json();
-        if (config && Array.isArray(config.scenes)) {
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('text/html')) return null;
+
+        const text = await res.text();
+        const trimmed = (text || '').trim();
+        if (!trimmed || trimmed.startsWith('<') || trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
+          return null; // Reject SPA HTML fallbacks
+        }
+
+        const config = JSON.parse(trimmed);
+        if (config && Array.isArray(config.scenes) && config.scenes.length > 0) {
           config.scenes.forEach(sc => {
             if (sc && sc.id) {
               SceneRegistry.register(sc.id, sc);
             }
           });
+          return config;
         }
-        return config;
+        return null;
       } catch (err) {
-        console.warn('[AST Registry] loadConfig notice:', err);
         return null;
       }
     }
