@@ -37,6 +37,7 @@ import AstInteractiveLabDrawer from './player/AstInteractiveLabDrawer';
 import { exportAirgapHtmlBundle } from '../utils/exportAirgapHtmlBundle';
 import { exportSubjectCartridge, AVAILABLE_CARTRIDGES } from '../utils/exportSubjectCartridge';
 import { getRelatedConcepts } from '../data/player/astConceptGraph';
+import { getCartridge, normalizeCartridgeId } from '../services/cartridgeStore';
 
 // 1. Single Source of Truth: Import presets compiled from static/player/scenes/
 import { PRESET_OPTIONS, type ScenePresetOption } from '../data/player/generatedScenes';
@@ -112,9 +113,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   initialCheckpoint,
 }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(preset);
-  const selectedPresetRef = useRef(preset);
-  const lastSentPresetRef = useRef(preset);
+  const normalizedInitialPreset = normalizeCartridgeId(preset) || 'fractions';
+  const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(normalizedInitialPreset);
+  const selectedPresetRef = useRef(normalizedInitialPreset);
+  const lastSentPresetRef = useRef(normalizedInitialPreset);
   const autoPlayRef = useRef(autoPlay);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [has3D, setHas3D] = useState(false);
@@ -210,12 +212,46 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   }, [postToPlayer]);
 
   const handleSwitchPreset = useCallback((nextPreset: string) => {
-    setSelectedPreset(nextPreset);
-    selectedPresetRef.current = nextPreset;
-    lastSentPresetRef.current = nextPreset;
-    postToPlayer({ type: 'SET_PRESET', preset: nextPreset, play: true });
-    onPresetChange?.(nextPreset);
+    const canonical = normalizeCartridgeId(nextPreset);
+    setSelectedPreset(canonical);
+    selectedPresetRef.current = canonical;
+    lastSentPresetRef.current = canonical;
+    postToPlayer({ type: 'SET_PRESET', preset: canonical, play: true });
+    onPresetChange?.(canonical);
+
+    // If it's a decentralized custom or PhET cartridge, immediately supply the SVG and AST payload
+    const cart = getCartridge(canonical);
+    if (cart && (cart.source === 'phet' || cart.source === 'user' || cart.source === 'imported') && cart.svgMarkup && cart.astSource) {
+      postToPlayer({
+        type: 'LOAD_CARTRIDGE',
+        cartridge: {
+          id: cart.id,
+          title: cart.title,
+          stage: cart.stage,
+          svg: cart.svgMarkup,
+          ast: cart.astSource,
+        },
+      });
+    }
   }, [postToPlayer, onPresetChange]);
+
+  // Sync decentralized custom/PhET cartridge on initial ready
+  useEffect(() => {
+    if (!isPlayerReady) return;
+    const cart = getCartridge(selectedPreset);
+    if (cart && (cart.source === 'phet' || cart.source === 'user' || cart.source === 'imported') && cart.svgMarkup && cart.astSource) {
+      postToPlayer({
+        type: 'LOAD_CARTRIDGE',
+        cartridge: {
+          id: cart.id,
+          title: cart.title,
+          stage: cart.stage,
+          svg: cart.svgMarkup,
+          ast: cart.astSource,
+        },
+      });
+    }
+  }, [selectedPreset, isPlayerReady, postToPlayer]);
 
   const togglePictureInPicture = useCallback(async () => {
     if (pipWindowRef.current) {

@@ -11,170 +11,16 @@ import EarlyPhonicsLab from '../components/EarlyPhonicsLab';
 import MathsFundamentalsLab from '../components/MathsFundamentalsLab';
 import AquariumSimulationLab from '../components/AquariumSimulationLab';
 import { resolvePresetForTopic } from '../services/playerLauncher';
-
-interface PresetItem {
-  id: VectorPresetType;
-  title: string;
-  stage: string;
-  category: string;
-  desc: string;
-  icon: string;
-}
-
-const PRESET_LIBRARY: PresetItem[] = [
-  {
-    id: 'algebra-balance',
-    title: 'Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)',
-    stage: 'KS2/KS3 MATHS',
-    category: 'Mathematics',
-    desc: 'Physical 2-pan balance scale demystifying linear equations. Whatever operation you apply to one side, you must apply to the other to preserve equilibrium.',
-    icon: '⚖️',
-  },
-  {
-    id: 'electric-circuits',
-    title: "Electrical Circuits & Ohm's Law (V = I × R)",
-    stage: 'KS2/KS3 PHYSICS',
-    category: 'Science',
-    desc: 'Live closed-loop circuit with electron charge kinematics, battery electromotive force, resistance dissipation, and lightbulb filament luminance.',
-    icon: '💡',
-  },
-  {
-    id: 'bodmas',
-    title: 'BODMAS / BIDMAS: Forcefield & Magnetic Clamping',
-    stage: 'KS2/KS3 MATHS',
-    category: 'Mathematics',
-    desc: 'Interactive operator physics: titanium bracket shields, magnetic multiplication clamps, and the concrete Area Model showing why 5 + 3 × 4 ≠ 32.',
-    icon: '🧮',
-  },
-  {
-    id: 'times-tables',
-    title: 'Times Tables Arrays & Distributive Splitter (12×12)',
-    stage: 'KS1/KS2 MATHS',
-    category: 'Mathematics',
-    desc: 'Visual 2D arrays, 90° commutative rotation, and mental arithmetic decomposition: 7 × 8 = (7 × 5) + (7 × 3) = 56.',
-    icon: '📐',
-  },
-  {
-    id: 'fractions',
-    title: 'Fractions & Proportions',
-    stage: 'KS2 MATHS',
-    category: 'Mathematics',
-    desc: 'Visual slice partitioning, equivalent denominators, and geometric whole unit assembly.',
-    icon: '🥧',
-  },
-  {
-    id: 'pythagoras',
-    title: "Pythagoras' Theorem (a² + b² = c²)",
-    stage: 'KS3 MATHS',
-    category: 'Mathematics',
-    desc: 'Geometric visual proof illustrating area conservation across orthogonal right triangles.',
-    icon: '📐',
-  },
-  {
-    id: 'solar-system',
-    title: 'Solar System Planetary Orbits',
-    stage: 'KS3 SCIENCE',
-    category: 'Science',
-    desc: '3D Heliocentric orbital velocities, Keplerian mechanics, and scale celestial dynamics.',
-    icon: '🪐',
-  },
-  {
-    id: 'photosynthesis',
-    title: 'Photosynthesis & Leaf Anatomy',
-    stage: 'KS3 BIOLOGY',
-    category: 'Science',
-    desc: 'Light-dependent chloroplast reactions, stomata gas exchange, and glucose synthesis.',
-    icon: '🍃',
-  },
-  {
-    id: 'cell-mitosis',
-    title: 'Cell Division: Mitosis Phases',
-    stage: 'KS3 BIOLOGY',
-    category: 'Science',
-    desc: 'Prophase to telophase chromosome replication, spindle fibres, and cytokinesis.',
-    icon: '🔬',
-  },
-  {
-    id: 'atom',
-    title: 'Atomic Structure: Bohr Shells',
-    stage: 'KS3 CHEMISTRY',
-    category: 'Science',
-    desc: 'Quantized electron orbits, proton/neutron nucleus binding, and valence energy states.',
-    icon: '⚛️',
-  },
-  {
-    id: 'velocity',
-    title: 'Velocity & Distance Vectors',
-    stage: 'KS3 PHYSICS',
-    category: 'Science',
-    desc: 'Continuous motion physics, displacement vectors, and acceleration mechanics.',
-    icon: '🏎️',
-  },
-  {
-    id: 'dna-helix',
-    title: 'DNA Double Helix & Base Pairs',
-    stage: 'KS3 GENETICS',
-    category: 'Science',
-    desc: 'Antiparallel sugar-phosphate backbone and hydrogen-bonded A-T / C-G base pairing.',
-    icon: '🧬',
-  },
-  {
-    id: 'church-tour',
-    title: 'Catholic Church Sanctuary Tour',
-    stage: 'CATHOLIC LIFE',
-    category: 'Catholic Faith',
-    desc: 'Latin cross basilica architecture, Nave, High Altar, golden Tabernacle, and Marian Chapel.',
-    icon: '⛪',
-  },
-  {
-    id: 'shakespeare',
-    title: 'The Globe Theatre: Shakespeare & Iambic Meter',
-    stage: 'KS3/KS4 ENGLISH LITERATURE',
-    category: 'English & Drama',
-    desc: 'The Zero-Bloat Bard: 1599 Globe Theatre vector stage, real-time Iambic Pentameter heartbeat metronome, First Folio to modern translation scrubber, and dramatic irony tension matrix.',
-    icon: '🎭',
-  },
-  {
-    id: 'languages',
-    title: 'MFL & Polyglot Studio: Spanish, French & Latin',
-    stage: 'KS2/KS3 MFL',
-    category: 'Languages & MFL',
-    desc: 'Interactive Modern Foreign Languages & Polyglot Lab: Spanish & French phonics studio, dynamic verb conjugation engine (-ar, -er, -ir), and rapid vocabulary recall sprints with native audio.',
-    icon: '🌍',
-  },
-  {
-    id: 'phonics-lab',
-    title: 'EYFS & KS1 Phonics: Soundboard & Screening Check',
-    stage: 'EYFS/KS1 PHONICS',
-    category: 'Early Literacy & Phonics',
-    desc: 'DfE Letters and Sounds synthetic phonics: Phase 2–5 pure soundboard with mouth tips, interactive sound button blending mat, tricky words, and statutory Year 1 Alien Words Screening Check.',
-    icon: '🔤',
-  },
-  {
-    id: 'math-fishing',
-    title: 'Math Pond: Number Bonds Fishing Game',
-    stage: 'KS1/KS2 MATHS',
-    category: 'Games & Simulations',
-    desc: 'Interactive vector pond fishing adventure: cast your line, hook swimming fish with numerals and ten-frame dots, adding them together for number bonds to 10 & 20, doubles, and mental arithmetic.',
-    icon: '🎣',
-  },
-  {
-    id: 'mountain-elevation',
-    title: 'Mountain Altitude: Climber Game & Trigonometry',
-    stage: 'KS2/KS3 MATHS & GEOGRAPHY',
-    category: 'Games & Simulations',
-    desc: 'Interactive hill climber game: ascending the mountain slope while contrasting true vertical altitude against slope distance, right-angle hypotenuse, and atmospheric lapse rate.',
-    icon: '🧗',
-  },
-  {
-    id: 'fish-tank',
-    title: 'Aquarium Stress Benchmark & Point Limiter',
-    stage: 'BENCHMARK & STRESS LAB',
-    category: 'Diagnostics & Games',
-    desc: 'Multi-species vector fish tank stress test: measures real-time 60 FPS performance, active vector points, and frame render budget to determine the device safe point limit.',
-    icon: '🐠',
-  },
-];
+import {
+  getAllCartridges,
+  getCartridge,
+  normalizeCartridgeId,
+  importCartridgeFile,
+  createCustomCartridge,
+  deleteCustomCartridge,
+  type CartridgeDefinition,
+} from '../services/cartridgeStore';
+import { exportSubjectCartridge, exportCustomCartridgeBundle } from '../utils/exportSubjectCartridge';
 
 export default function MediaPlayerPage(): React.JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -183,18 +29,58 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const urlSubject = searchParams.get('sub') || searchParams.get('subject');
   const urlMode = searchParams.get('mode');
 
-  // Default to the featured Mountain Climber interactive simulation if no specific preset is requested
+  // Dynamic Decentralized Cartridges
+  const [cartridges, setCartridges] = useState<CartridgeDefinition[]>(() => getAllCartridges());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setCartridges(getAllCartridges());
+    };
+    window.addEventListener('cartridges_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('cartridges_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
+  // Fault-tolerant preset resolution with alias mapping (e.g. pythagorus -> pythagoras, or user/phet cartridge)
+  const resolvedPreset = urlPreset ? getCartridge(urlPreset) : null;
   const initialPreset: VectorPresetType =
-    urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset)
-      ? urlPreset
+    resolvedPreset
+      ? resolvedPreset.id
       : urlTopic || urlSubject
       ? resolvePresetForTopic(urlSubject || '', urlTopic || '')
-      : 'mountain-elevation';
+      : 'pythagoras';
 
   const [activePreset, setActivePreset] = useState<VectorPresetType>(initialPreset);
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
+
+  // Modals for Decentralized Cartridge Management
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPackModal, setShowPackModal] = useState(false);
+
+  // Import State
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Create Cartridge State
+  const [createTitle, setCreateTitle] = useState('');
+  const [createCategory, setCreateCategory] = useState('Mathematics');
+  const [createStage, setCreateStage] = useState('KS3 MATHS');
+  const [createDesc, setCreateDesc] = useState('');
+  const [createSvg, setCreateSvg] = useState('');
+  const [createAst, setCreateAst] = useState('');
+
+  // Pack Builder State
+  const [selectedPackIds, setSelectedPackIds] = useState<string[]>(['pythagoras', 'algebra-balance', 'electric-circuits']);
+  const [packTitle, setPackTitle] = useState('Classroom Custom STEM Pack');
+  const [packDesc, setPackDesc] = useState('Offline interactive laboratory cartridge bundle.');
 
   // Initialize playMode from urlMode if provided, or default to 'game' for interactive game-capable presets
   const initialPlayMode: 'video' | 'game' =
@@ -209,10 +95,13 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [playMode, setPlayMode] = useState<'video' | 'game'>(initialPlayMode);
 
   useEffect(() => {
-    if (urlPreset && PRESET_LIBRARY.some((p) => p.id === urlPreset) && urlPreset !== activePreset) {
-      setActivePreset(urlPreset);
-      if (urlMode === 'game' || urlPreset === 'mountain-elevation' || urlPreset === 'math-fishing' || urlPreset === 'fish-tank' || urlPreset === 'shakespeare' || urlPreset === 'languages' || urlPreset === 'phonics-lab' || urlPreset === 'bodmas' || urlPreset === 'times-tables') {
-        setPlayMode('game');
+    if (urlPreset) {
+      const target = getCartridge(urlPreset);
+      if (target && target.id !== activePreset) {
+        setActivePreset(target.id);
+        if (urlMode === 'game' || target.id === 'mountain-elevation' || target.id === 'math-fishing' || target.id === 'fish-tank' || target.id === 'shakespeare' || target.id === 'languages' || target.id === 'phonics-lab' || target.id === 'bodmas' || target.id === 'times-tables') {
+          setPlayMode('game');
+        }
       }
     } else if (urlMode && (urlMode === 'game' || urlMode === 'video') && urlMode !== playMode) {
       setPlayMode(urlMode);
@@ -220,16 +109,32 @@ export default function MediaPlayerPage(): React.JSX.Element {
   }, [urlPreset, urlMode, activePreset, playMode]);
 
   const handleSelectPreset = (id: VectorPresetType, targetMode?: 'video' | 'game') => {
-    setActivePreset(id);
-    const chosenMode = targetMode || (id === 'mountain-elevation' || id === 'math-fishing' || id === 'fish-tank' || id === 'shakespeare' || id === 'languages' || id === 'phonics-lab' || id === 'bodmas' || id === 'times-tables' ? 'game' : playMode);
+    const canonical = normalizeCartridgeId(id);
+    setActivePreset(canonical);
+    const chosenMode = targetMode || (canonical === 'mountain-elevation' || canonical === 'math-fishing' || canonical === 'fish-tank' || canonical === 'shakespeare' || canonical === 'languages' || canonical === 'phonics-lab' || canonical === 'bodmas' || canonical === 'times-tables' ? 'game' : playMode);
     setPlayMode(chosenMode);
-    setSearchParams({ preset: id, mode: chosenMode });
+    setSearchParams({ preset: canonical, mode: chosenMode });
   };
 
-  const currentPresetMeta = PRESET_LIBRARY.find((p) => p.id === activePreset) || PRESET_LIBRARY[0];
-  const filteredPresets = PRESET_LIBRARY.filter((p) => {
+  const currentPresetMeta = cartridges.find((p) => p.id === activePreset) || cartridges[0] || {
+    id: 'pythagoras',
+    title: "Pythagoras' Theorem",
+    stage: 'KS3 GEOMETRY',
+    category: 'Mathematics',
+    desc: 'Area conservation proof',
+    icon: '📐',
+    source: 'builtin'
+  };
+
+  const filteredPresets = cartridges.filter((p) => {
     const matchesCategory =
-      filterCategory === 'All' ? true : p.category === filterCategory;
+      filterCategory === 'All'
+        ? true
+        : filterCategory === 'PhET Distilled'
+        ? p.source === 'phet'
+        : filterCategory === 'User Created'
+        ? p.source === 'user' || p.source === 'imported'
+        : p.category === filterCategory;
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
       !q ||
@@ -775,80 +680,162 @@ export default function MediaPlayerPage(): React.JSX.Element {
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>
-              📚 Curriculum Preset Library
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📚 Decentralized Cartridge Library</span>
+              <span style={{ fontSize: '0.72rem', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
+                {cartridges.length} Cartridges
+              </span>
             </h3>
             <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
-              Select any National Curriculum or Catholic Life interactive vector model to play.
+              Explore built-in STEM labs, import external PhET/Flash simulations, or author your own decentralized cartridges.
             </p>
           </div>
 
-          {/* Search Input & Category Filter Pills */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Search games & models (e.g. climber, altitude)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  padding: '6px 12px 6px 30px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '0.8rem',
-                  outline: 'none',
-                  minWidth: '220px',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                }}
-              />
-              <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: '#94a3b8' }}>
-                🔍
-              </span>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    position: 'absolute',
-                    right: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+          {/* Decentralized Cartridge Action Toolbar */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setImportStatus(null);
+                setImportError(null);
+                setShowImportModal(true);
+              }}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(2, 132, 199, 0.25)',
+              }}
+              title="Import PhET HTML5 bundles, Flash SWF, or AST/SVG capsules directly into local browser storage"
+            >
+              <span>📥 Import PhET / Cartridge</span>
+            </button>
 
-            <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
-              {['All', 'Languages & MFL', 'Games & Simulations', 'Mathematics', 'Science', 'English & Drama', 'Catholic Faith'].map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setFilterCategory(cat)}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '7px',
-                    border: 'none',
-                    background: filterCategory === cat ? '#ffffff' : 'transparent',
-                    color: filterCategory === cat ? '#0f172a' : '#64748b',
-                    fontSize: '0.8rem',
-                    fontWeight: filterCategory === cat ? 700 : 500,
-                    cursor: 'pointer',
-                    boxShadow: filterCategory === cat ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {cat === 'Languages & MFL' ? '🌍 Languages & MFL' : cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'English & Drama' ? '🎭 English & Drama' : cat}
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCreateTitle('');
+                setCreateDesc('');
+                setCreateSvg('');
+                setCreateAst('');
+                setShowCreateModal(true);
+              }}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                background: '#10b981',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(16, 185, 129, 0.25)',
+              }}
+              title="Create a new interactive SVG & AST physics simulation"
+            >
+              <span>➕ Create Cartridge</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPackModal(true)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                background: '#6366f1',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(99, 102, 241, 0.25)',
+              }}
+              title="Bundle multiple cartridges into a single, 100% offline self-executing HTML file for air-gapped schools"
+            >
+              <span>📦 Build Offline Pack</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Search Input & Category Filter Pills */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Search games & cartridges (e.g. pythagoras, circuits)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: '6px 12px 6px 30px',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.8rem',
+                outline: 'none',
+                minWidth: '240px',
+                background: '#ffffff',
+                color: '#0f172a',
+              }}
+            />
+            <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: '#94a3b8' }}>
+              🔍
+            </span>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
+            {['All', 'Mathematics', 'Science', 'PhET Distilled', 'User Created', 'Games & Simulations', 'Languages & MFL', 'Catholic Faith'].map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setFilterCategory(cat)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: filterCategory === cat ? '#ffffff' : 'transparent',
+                  color: filterCategory === cat ? '#0f172a' : '#64748b',
+                  fontSize: '0.8rem',
+                  fontWeight: filterCategory === cat ? 700 : 500,
+                  cursor: 'pointer',
+                  boxShadow: filterCategory === cat ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {cat === 'Languages & MFL' ? '🌍 Languages & MFL' : cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'PhET Distilled' ? '🧪 PhET Distilled' : cat === 'User Created' ? '✨ User Created' : cat}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -862,6 +849,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
         >
           {filteredPresets.map((p) => {
             const isSelected = p.id === activePreset;
+            const isCustom = p.source === 'user' || p.source === 'imported' || p.source === 'phet';
             return (
               <div
                 key={p.id}
@@ -882,18 +870,34 @@ export default function MediaPlayerPage(): React.JSX.Element {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                     <span style={{ fontSize: '1.6rem' }}>{p.icon}</span>
-                    <span
-                      style={{
-                        fontSize: '0.68rem',
-                        fontWeight: 800,
-                        padding: '2px 7px',
-                        borderRadius: '9999px',
-                        background: isSelected ? '#0284c7' : '#f1f5f9',
-                        color: isSelected ? '#ffffff' : '#475569',
-                      }}
-                    >
-                      {p.stage}
-                    </span>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: p.source === 'phet' ? '#f0fdf4' : p.source === 'user' ? '#fdf2f8' : isSelected ? '#0284c7' : '#f1f5f9',
+                          color: p.source === 'phet' ? '#166534' : p.source === 'user' ? '#9d174d' : isSelected ? '#ffffff' : '#475569',
+                          border: `1px solid ${p.source === 'phet' ? '#bbf7d0' : p.source === 'user' ? '#fbcfe8' : 'transparent'}`,
+                        }}
+                      >
+                        {p.source === 'phet' ? 'PhET Distilled' : p.source === 'user' ? 'User Authored' : p.source === 'imported' ? 'Imported' : 'Built-in'}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: '#f8fafc',
+                          color: '#64748b',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        {p.stage}
+                      </span>
+                    </div>
                   </div>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', margin: '0 0 4px' }}>
                     {p.title}
@@ -1004,58 +1008,56 @@ export default function MediaPlayerPage(): React.JSX.Element {
                         <span>🎬</span> Video
                       </button>
                     </div>
-                  ) : p.id === 'church-tour' ? (
-                    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPreset(p.id, 'game');
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '6px 8px',
-                          borderRadius: '6px',
-                          background: isSelected && playMode === 'game' ? '#9333ea' : '#a855f7',
-                          color: '#ffffff',
-                          border: 'none',
-                          fontSize: '0.74rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <span>⛪</span> 3D Quest {isSelected && playMode === 'game' ? '✔' : ''}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPreset(p.id, 'video');
-                        }}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          background: isSelected && playMode === 'video' ? '#0284c7' : '#f1f5f9',
-                          color: isSelected && playMode === 'video' ? '#ffffff' : '#334155',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.74rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <span>🎬</span> Tour
-                      </button>
-                    </div>
                   ) : (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.74rem', color: isSelected ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
-                        {isSelected ? (playMode === 'game' ? '🎮 Playing Game' : '🎬 Playing Video') : 'Click to Load'}
+                      <span style={{ fontSize: '0.74rem', color: isSelected ? '#0284c7' : '#64748b', fontWeight: 700 }}>
+                        {isSelected ? '▶ Active in Viewport' : 'Click to Load'}
                       </span>
-                      <span style={{ fontSize: '0.8rem', color: isSelected ? '#0284c7' : '#94a3b8' }}>➔</span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            exportSubjectCartridge(p.id);
+                          }}
+                          style={{
+                            background: '#f1f5f9',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '4px',
+                            padding: '3px 7px',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            color: '#334155',
+                            cursor: 'pointer',
+                          }}
+                          title="Download standalone 100% offline HTML cartridge"
+                        >
+                          💾 Single HTML
+                        </button>
+                        {isCustom && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete cartridge "${p.title}" from local decentralized storage?`)) {
+                                deleteCustomCartridge(p.id);
+                              }
+                            }}
+                            style={{
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              borderRadius: '4px',
+                              padding: '3px 6px',
+                              fontSize: '0.7rem',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                            }}
+                            title="Delete this custom cartridge"
+                          >
+                            🗑
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1064,6 +1066,483 @@ export default function MediaPlayerPage(): React.JSX.Element {
           })}
         </div>
       </div>
+
+      {/* 1. Modal: Import PhET / Flash / Cartridge Package */}
+      {showImportModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+          onClick={() => setShowImportModal(false)}
+        >
+          <div
+            style={{
+              background: '#0f172a',
+              border: '1px solid #334155',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '1.5rem',
+              color: '#f8fafc',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📥 Import PhET / Flash / Cartridge</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5, marginBottom: '1rem' }}>
+              Import monolithic PhET simulations (HTML5, SWF, JSON) or custom AST cartridges. They are distilled into zero-cloud <strong style={{ color: '#4ade80' }}>&lt; 4 KB AST S-Expressions</strong> and saved directly to your browser's decentralized IndexedDB/LocalStorage.
+            </p>
+
+            {/* Drag & Drop File Zone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: '2px dashed #38bdf8',
+                borderRadius: '12px',
+                padding: '2rem 1rem',
+                textAlign: 'center',
+                background: 'rgba(56, 189, 248, 0.05)',
+                cursor: 'pointer',
+                marginBottom: '1rem',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".html,.phet,.json,.swf,.ast,.svg"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setIsImporting(true);
+                  setImportError(null);
+                  setImportStatus(null);
+                  try {
+                    const cart = await importCartridgeFile(file);
+                    setImportStatus(`Successfully imported "${cart.title}"! Distilled into ${cart.stage} and stored offline.`);
+                    handleSelectPreset(cart.id);
+                  } catch (err: any) {
+                    setImportError(err?.message || 'Error processing cartridge file.');
+                  } finally {
+                    setIsImporting(false);
+                  }
+                }}
+              />
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📂</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc' }}>
+                {isImporting ? 'Transpiling & Distilling Simulation...' : 'Click or Drag & Drop File Here'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '4px' }}>
+                Supports PhET HTML5 (.html, .phet), Flash (.swf), Vector Capsules (.ast.svg), or Cartridge Packages (.json)
+              </div>
+            </div>
+
+            {/* Quick Benchmark PhET Synthesizers */}
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Or 1-Click Import PhET Benchmark Model:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '6px' }}>
+                {[
+                  { id: 'phet-ohms-law', title: "💡 Ohm's Law (V=IR)", cat: 'Science', stage: 'PhET PHYSICS' },
+                  { id: 'phet-faraday', title: "🧲 Faraday Induction", cat: 'Science', stage: 'PhET ELECTROMAG' },
+                  { id: 'phet-pendulum', title: "⏱️ Pendulum Lab", cat: 'Science', stage: 'PhET HARMONICS' },
+                  { id: 'phet-acid-base', title: "🧪 Acid-Base pH", cat: 'Science', stage: 'PhET CHEMISTRY' },
+                ].map((bench) => (
+                  <button
+                    key={bench.id}
+                    type="button"
+                    onClick={() => {
+                      const newCart = createCustomCartridge({
+                        title: bench.title,
+                        category: bench.cat,
+                        stage: bench.stage,
+                        desc: `Distilled from PhET monolithic benchmark model into clean 60 FPS vector loop.`,
+                      });
+                      setImportStatus(`Imported PhET preset: ${bench.title}!`);
+                      handleSelectPreset(newCart.id);
+                    }}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '6px',
+                      padding: '6px 8px',
+                      color: '#cbd5e1',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    {bench.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {importStatus && (
+              <div style={{ padding: '8px 12px', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid #4ade80', borderRadius: '8px', color: '#4ade80', fontSize: '0.78rem', marginBottom: '1rem' }}>
+                ✓ {importStatus}
+              </div>
+            )}
+
+            {importError && (
+              <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', fontSize: '0.78rem', marginBottom: '1rem' }}>
+                ✕ {importError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#334155', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Modal: Create New Cartridge */}
+      {showCreateModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            style={{
+              background: '#0f172a',
+              border: '1px solid #334155',
+              borderRadius: '16px',
+              maxWidth: '620px',
+              width: '100%',
+              padding: '1.5rem',
+              color: '#f8fafc',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>➕ Create Decentralized Cartridge</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1rem' }}>
+              Author your own interactive learning manipulative. Saved locally to your decentralized storage without needing to touch server files.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                  Simulation Title *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Mechanical Lever & Moments (F1 × d1 = F2 × d2)"
+                  value={createTitle}
+                  onChange={(e) => setCreateTitle(e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', background: '#1e293b', border: '1px solid #475569', color: '#ffffff', fontSize: '0.82rem', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                    Subject Category
+                  </label>
+                  <select
+                    value={createCategory}
+                    onChange={(e) => setCreateCategory(e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', background: '#1e293b', border: '1px solid #475569', color: '#ffffff', fontSize: '0.82rem', outline: 'none' }}
+                  >
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Science">Science & Physics</option>
+                    <option value="Biology">Biology & Nature</option>
+                    <option value="English & Drama">English & Drama</option>
+                    <option value="Languages & MFL">Languages & MFL</option>
+                    <option value="Games & Simulations">Games & Simulations</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                    Key Stage / Level
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. KS3 PHYSICS"
+                    value={createStage}
+                    onChange={(e) => setCreateStage(e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', background: '#1e293b', border: '1px solid #475569', color: '#ffffff', fontSize: '0.82rem', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                  Educational Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe the mathematical or physical invariant being preserved..."
+                  value={createDesc}
+                  onChange={(e) => setCreateDesc(e.target.value)}
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', background: '#1e293b', border: '1px solid #475569', color: '#ffffff', fontSize: '0.82rem', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                  Choose Starter Template:
+                </label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[
+                    { label: '📐 Geometry Proof', cat: 'Mathematics', desc: 'Area conservation right triangle' },
+                    { label: '💡 Circuit Lab', cat: 'Science', desc: "Closed-loop Ohm's law circuit" },
+                    { label: '⚖️ Dynamic Balance', cat: 'Mathematics', desc: 'Linear equation balance scale' },
+                  ].map((tpl) => (
+                    <button
+                      key={tpl.label}
+                      type="button"
+                      onClick={() => {
+                        if (!createTitle) setCreateTitle(tpl.label.slice(2).trim());
+                        setCreateCategory(tpl.cat);
+                        setCreateDesc(tpl.desc);
+                      }}
+                      style={{
+                        padding: '5px 10px',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '6px',
+                        color: '#cbd5e1',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {tpl.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#334155', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!createTitle.trim()) {
+                    alert('Please enter a simulation title.');
+                    return;
+                  }
+                  const created = createCustomCartridge({
+                    title: createTitle.trim(),
+                    category: createCategory,
+                    stage: createStage.trim() || 'CUSTOM STEM',
+                    desc: createDesc.trim() || 'Decentralized interactive vector simulation.',
+                    svgMarkup: createSvg || undefined,
+                    astSource: createAst || undefined,
+                  });
+                  setShowCreateModal(false);
+                  handleSelectPreset(created.id);
+                }}
+                style={{ padding: '7px 18px', borderRadius: '6px', background: '#10b981', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Save & Launch Cartridge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Modal: Build Multi-Lesson Offline Cartridge Pack */}
+      {showPackModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+          onClick={() => setShowPackModal(false)}
+        >
+          <div
+            style={{
+              background: '#0f172a',
+              border: '1px solid #334155',
+              borderRadius: '16px',
+              maxWidth: '560px',
+              width: '100%',
+              padding: '1.5rem',
+              color: '#f8fafc',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#818cf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📦 Build Offline Air-Gapped Cartridge Pack</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowPackModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1rem' }}>
+              Select ANY combination of built-in, PhET-imported, or user-authored cartridges to export into a single, self-contained HTML file (&lt; 75 KB) for air-gapped classrooms.
+            </p>
+
+            <div style={{ marginBottom: '10px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
+                Pack Title
+              </label>
+              <input
+                type="text"
+                value={packTitle}
+                onChange={(e) => setPackTitle(e.target.value)}
+                style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', background: '#1e293b', border: '1px solid #475569', color: '#ffffff', fontSize: '0.82rem', outline: 'none' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '6px' }}>
+                Select Cartridges to Include ({selectedPackIds.length} selected):
+              </label>
+              <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #334155', borderRadius: '8px', padding: '6px', background: '#1e293b' }}>
+                {cartridges.map((c) => {
+                  const isChecked = selectedPackIds.includes(c.id);
+                  return (
+                    <label
+                      key={c.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        background: isChecked ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '0.78rem',
+                        color: isChecked ? '#ffffff' : '#cbd5e1',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          if (isChecked) {
+                            setSelectedPackIds(selectedPackIds.filter((id) => id !== c.id));
+                          } else {
+                            setSelectedPackIds([...selectedPackIds, c.id]);
+                          }
+                        }}
+                      />
+                      <span>{c.icon}</span>
+                      <strong style={{ flex: 1 }}>{c.title}</strong>
+                      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>({c.category})</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setShowPackModal(false)}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#334155', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedPackIds.length === 0) {
+                    alert('Please select at least 1 cartridge.');
+                    return;
+                  }
+                  const chosenScenes = selectedPackIds.map((id) => {
+                    const cart = cartridges.find((c) => c.id === id);
+                    return {
+                      id,
+                      title: cart?.title || id,
+                      category: cart?.category || 'STEM',
+                      svgMarkup: cart?.svgMarkup,
+                      astSource: cart?.astSource,
+                    };
+                  });
+                  exportCustomCartridgeBundle(chosenScenes, packTitle, packDesc, `stj-cartridge-pack.html`);
+                  setShowPackModal(false);
+                }}
+                style={{ padding: '7px 18px', borderRadius: '6px', background: '#6366f1', color: '#ffffff', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Download Offline HTML Pack
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
