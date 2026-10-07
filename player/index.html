@@ -12,8 +12,30 @@
   <header>
     <div class="header-left">
       <span class="badge" id="badge-stage">CATHOLIC LIFE</span>
-      <select id="preset-selector" title="Select Curriculum Vector Preset">
-        <!-- Injected dynamically from ASTSceneRegistry -->
+      <select id="preset-selector" title="Select Curriculum Vector Preset" style="pointer-events:auto; cursor:pointer; user-select:auto;">
+        <optgroup label="📚 Curriculum Simulations" style="background:#0f172a; color:#38bdf8;">
+          <option value="algebra-balance" style="background:#0f172a; color:#f8fafc;">⚖️ Algebraic Balance Scale (KS2/KS3 MATHS)</option>
+          <option value="atom" style="background:#0f172a; color:#f8fafc;">Atomic Structure: Bohr Shells (KS3 CHEMISTRY)</option>
+          <option value="bodmas" style="background:#0f172a; color:#f8fafc;">BODMAS / BIDMAS Forcefield (KS2/KS3 MATHS)</option>
+          <option value="calculus-curves" style="background:#0f172a; color:#f8fafc;">Calculus: Tangent Slopes (GCSE/A-LEVEL)</option>
+          <option value="church-tour" style="background:#0f172a; color:#f8fafc;">Catholic Church Sacred Tour (CATHOLIC LIFE)</option>
+          <option value="dna-helix" style="background:#0f172a; color:#f8fafc;">Genetics: DNA Base Pairing (KS3 GENETICS)</option>
+          <option value="electric-circuits" style="background:#0f172a; color:#f8fafc;">💡 Electrical Circuits &amp; Ohm's Law (KS2/KS3 PHYSICS)</option>
+          <option value="fish-tank" style="background:#0f172a; color:#f8fafc;">Aquarium Stress Benchmark (BENCHMARK)</option>
+          <option value="fractions" style="background:#0f172a; color:#f8fafc;">Fractions: Common Denominators (KS2 MATHS)</option>
+          <option value="kinetic-gas" style="background:#0f172a; color:#f8fafc;">Kinetic Gas Theory &amp; Boyle's Law (KS3/KS4 PHYSICS)</option>
+          <option value="languages" style="background:#0f172a; color:#f8fafc;">MFL &amp; Polyglot Studio (KS2/KS3 MFL)</option>
+          <option value="math-fishing" style="background:#0f172a; color:#f8fafc;">Math Pond: Number Bonds (KS1/KS2 MATHS)</option>
+          <option value="mountain-elevation" style="background:#0f172a; color:#f8fafc;">Mountain Elevation &amp; Hypotenuse (KS2/KS3 MATHS)</option>
+          <option value="phonics-lab" style="background:#0f172a; color:#f8fafc;">Early Phonics Sound Buttons (EYFS/KS1 ENGLISH)</option>
+          <option value="photosynthesis" style="background:#0f172a; color:#f8fafc;">Photosynthesis Solar Engine (KS3 BIOLOGY)</option>
+          <option value="pythagoras" style="background:#0f172a; color:#f8fafc;">Pythagoras Theorem: Area Conservation (KS3 GEOMETRY)</option>
+          <option value="shakespeare" style="background:#0f172a; color:#f8fafc;">The Globe Theatre: Shakespeare (KS3/KS4 ENGLISH)</option>
+          <option value="solar-system" style="background:#0f172a; color:#f8fafc;">Solar System Heliocentric Motion (KS3 SCIENCE)</option>
+          <option value="times-tables" style="background:#0f172a; color:#f8fafc;">Times Tables: 2D Array Splitter (KS1/KS2 MATHS)</option>
+          <option value="velocity" style="background:#0f172a; color:#f8fafc;">Kinematics: Velocity Vectors (KS3 PHYSICS)</option>
+          <option value="water-cycle" style="background:#0f172a; color:#f8fafc;">Water Cycle Continuous Earth Cycle (KS2 GEOGRAPHY)</option>
+        </optgroup>
       </select>
       <button type="button" id="btn-open-file" class="btn btn-secondary btn-sm" title="Open local simulation (.ast, .svg, .json) or capsule" style="padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 6px; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; cursor: pointer;">📂 Open...</button>
       <input type="file" id="file-input-hidden" accept=".ast,.svg,.json,.html,.phet" style="display:none;" />
@@ -509,7 +531,7 @@
     <div id="stage-play-indicator" class="stage-play-indicator hidden" aria-hidden="true">▶</div>
 
     <!-- Ambient 2.5px Narrative Hairline (Edge-to-Edge, Zero-Height Progress) -->
-    <div id="ambient-timeline" class="ambient-timeline" title="Click or drag to scrub timeline (Space to Play/Pause)">
+    <div id="ambient-timeline" class="ambient-timeline" style="display:none;" aria-hidden="true">
       <div id="ambient-timeline-fill" class="ambient-timeline-fill"></div>
       <div id="ambient-timeline-thumb" class="ambient-timeline-thumb"></div>
     </div>
@@ -518,49 +540,21 @@
     <div id="ast-toast" class="ast-toast">Station Selected</div>
   </main>
 
-  <!-- Slide Navigation & Player Controls Footer -->
+  <!-- PhET / Flash Style Minimal Simulator Dock (Zero-Bloat: Only Reset & Stop/Resume Sim) -->
   <footer id="player-footer">
-    <!-- Slide / Keyframe Carousel Quick Jump Bar -->
-    <div id="slide-deck-bar" class="slide-deck-bar" style="display:flex; align-items:center; gap:6px; overflow-x:auto; padding:3px 0; margin-bottom:4px;">
-      <span style="font-size:11px; font-weight:800; color:#38bdf8; white-space:nowrap; display:flex; align-items:center; gap:4px;">📑 Slides:</span>
-      <div id="slide-deck-pills" style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;"></div>
-    </div>
-
-    <!-- Interactive Timeline Scrubber -->
-    <div class="scrubber-container" id="scrubber-box">
-      <div class="timeline-track" id="timeline-track">
-        <div class="timeline-fill" id="timeline-fill"></div>
-        <div class="timeline-thumb" id="timeline-thumb"></div>
-      </div>
-    </div>
-
-    <!-- Controls Row -->
     <div class="controls-row">
       <div class="controls-left">
-        <button type="button" id="btn-play" title="Play / Pause Continuous Simulation Physics (Spacebar)">▶ Sim Physics</button>
-        <button type="button" id="btn-prev" title="Previous Slide (PageUp / Left Arrow)">⏮ Prev Slide</button>
-        <button type="button" id="btn-next" title="Next Slide (PageDown / Right Arrow / Space)">Next Slide ⏭</button>
-        <button type="button" id="btn-reset" title="Reset Slide to Default (Home / 0)">↺ Reset</button>
-        <span class="time-readout" id="time-readout">Slide 1 • Interactive Lab</span>
+        <button type="button" id="btn-reset" title="Reset Simulation to Initial Conditions (Home / 0)">↺ Reset Sim</button>
+        <button type="button" id="btn-play" title="Stop or Resume Simulation Physics (Spacebar)">⏹ Stop Sim</button>
+        <span class="time-readout" id="time-readout" style="color: #38bdf8; font-weight: 700;">⚡ Interactive Simulator</span>
       </div>
 
       <div class="controls-right">
         <!-- Master Audio Volume & Mute -->
-        <div class="volume-control-box" id="volume-box" title="Master Audio &amp; Speech Volume">
+        <div class="volume-control-box" id="volume-box" title="Master Audio Volume">
           <button type="button" id="btn-volume-mute" class="volume-mute-btn" title="Mute / Unmute Audio (M)">🔊</button>
           <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="1.0" />
         </div>
-
-        <!-- Speed Multipliers -->
-        <select id="speed-selector" title="Playback Speed">
-          <option value="0.5">0.5×</option>
-          <option value="1" selected>1.0×</option>
-          <option value="1.5">1.5×</option>
-          <option value="2">2.0×</option>
-        </select>
-
-        <!-- Voice Command Speech Recognition Toggle -->
-        <button type="button" id="btn-voice-cmd" class="voice-cmd-btn" title="Voice Control: Speak 'play', 'pause', 'rewind' (V)">🎤 Mic</button>
       </div>
     </div>
   </footer>
@@ -579,10 +573,10 @@
       const params = new URLSearchParams(window.location.search);
       const src = params.get('src') || params.get('file');
       const basePath = params.get('basePath') || params.get('base');
-      const preset = params.get('preset') || (src ? null : 'fractions');
+      const preset = params.get('preset') || params.get('cartridge') || (src ? null : 'fractions');
       const lang = params.get('lang') || 'en';
       const speed = parseFloat(params.get('speed') || '1.0');
-      const autoplay = params.get('autoplay') === '1' || params.get('play') === '1';
+      const autoplay = params.get('autoplay') !== '0' && params.get('play') !== '0';
       const theme = params.get('theme') || 'dark';
 
       const stageSvg = document.getElementById('stage-svg');

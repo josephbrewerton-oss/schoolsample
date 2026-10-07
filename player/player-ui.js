@@ -679,7 +679,8 @@
     async populatePresets() {
       if (!this.elements.presetSelector || this._isPopulating) return;
       this._isPopulating = true;
-      let list = [];
+      try {
+        let list = [];
 
       // 1. Check for Federated Manifest URLs (?manifest=... or ?catalog=...)
       const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -797,10 +798,14 @@
       const builtInItems = list.filter(item => item._source === 'builtin');
       const curriculumGroup = document.createElement('optgroup');
       curriculumGroup.label = '📚 Curriculum Simulations (Auto-Discovered)';
+      curriculumGroup.style.background = '#0f172a';
+      curriculumGroup.style.color = '#38bdf8';
       builtInItems.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
         opt.textContent = `${item.title} (${item.stage})`;
+        opt.style.background = '#0f172a';
+        opt.style.color = '#f8fafc';
         if (item.id === activeId) {
           opt.selected = true;
         }
@@ -811,22 +816,30 @@
       // Teacher Auto-Find Actions
       const actionGroup = document.createElement('optgroup');
       actionGroup.label = '⚡ Dynamic Auto-Finder';
+      actionGroup.style.background = '#0f172a';
+      actionGroup.style.color = '#fbbf24';
       const optFind = document.createElement('option');
       optFind.value = '__custom_find__';
       optFind.textContent = '🔍 Open Any Scene by Name / ID...';
+      optFind.style.background = '#0f172a';
+      optFind.style.color = '#f8fafc';
       actionGroup.appendChild(optFind);
 
       const optOpen = document.createElement('option');
       optOpen.value = '__open_local__';
       optOpen.textContent = '📂 Open Local .ast or .svg File...';
+      optOpen.style.background = '#0f172a';
+      optOpen.style.color = '#f8fafc';
       actionGroup.appendChild(optOpen);
       this.elements.presetSelector.appendChild(actionGroup);
 
-      // Explicitly sync the select value to the engine's active preset
-      if (activeId) {
-        this.elements.presetSelector.value = activeId;
+        // Explicitly sync the select value to the engine's active preset
+        if (activeId) {
+          this.elements.presetSelector.value = activeId;
+        }
+      } finally {
+        this._isPopulating = false;
       }
-      this._isPopulating = false;
     }
 
     /**
@@ -1164,12 +1177,8 @@
 
       if (el.btnPlay) {
         el.btnPlay.addEventListener('click', () => {
-          if (this.stepMode) {
-            this.stepToNextKeyframe();
-            return;
-          }
           const playing = this.engine.togglePlay();
-          el.btnPlay.textContent = playing ? '⏸ Pause' : '▶ Play';
+          el.btnPlay.textContent = playing ? '⏹ Stop Sim' : '▶ Resume Sim';
           el.btnPlay.classList.toggle('active', playing);
         });
       }
@@ -1199,7 +1208,11 @@
       if (el.btnReset) {
         el.btnReset.addEventListener('click', () => {
           this.targetStop = null;
+          this.engine.resetVars();
+          if (this.engine.physics) this.engine.physics.reset();
+          this.engine.resetCamera();
           this.engine.seek(0);
+          this.showToast('↺ Simulation Reset to Initial State');
         });
       }
 
@@ -1333,7 +1346,6 @@
 
       if (el.presetSelector) {
         el.presetSelector.addEventListener('change', (e) => {
-          if (this._isPopulating) return;
           const val = e.target.value;
           if (val === '__custom_find__') {
             const id = prompt('Enter scene filename or ID to auto-find (e.g. electric-circuits or your-new-file):');
@@ -2317,7 +2329,7 @@
         base.showVoiceCommands = false;
         base.showPhysicsControls = false;
       } else if (mode === 'embed' || mode === 'embedded' || mode === 'minimal') {
-        base.showPresetSelector = false;
+        base.showPresetSelector = true;
         base.showPrintWorksheet = false;
         base.showStandaloneLink = false;
         base.showDevInspect = false;
@@ -2621,6 +2633,12 @@
     }
 
     bindEngineEvents() {
+      // Synchronize initial play button state immediately with the engine's real current state
+      if (this.elements.btnPlay) {
+        this.elements.btnPlay.textContent = this.engine.isPlaying ? '⏸ Pause Sim' : '▶ Resume Sim';
+        this.elements.btnPlay.classList.toggle('active', Boolean(this.engine.isPlaying));
+      }
+
       this.engine.on('timeupdate', () => {
         this.updateView();
         this.checkInteractiveCheckpoints();
@@ -2632,7 +2650,7 @@
           this.engine.seek(reached);
           this.engine.pause();
           if (this.elements.btnPlay) {
-            this.elements.btnPlay.textContent = '▶ Play';
+            this.elements.btnPlay.textContent = '▶ Resume Sim';
             this.elements.btnPlay.classList.remove('active');
           }
           this.onStopReached(reached);
@@ -2646,7 +2664,7 @@
 
       this.engine.on('statechange', (data) => {
         if (this.elements.btnPlay) {
-          this.elements.btnPlay.textContent = data.isPlaying ? '⏸ Pause' : '▶ Play';
+          this.elements.btnPlay.textContent = data.isPlaying ? '⏹ Stop Sim' : '▶ Resume Sim';
           this.elements.btnPlay.classList.toggle('active', data.isPlaying);
         }
         if (this.obs && this.obs.isConnected && this.obs.settings.syncRecording) {

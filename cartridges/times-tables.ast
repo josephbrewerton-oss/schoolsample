@@ -1,0 +1,44 @@
+(:scene :id "times-tables" :title "Times Tables: 2D Array & Distributive Splitter" :stage "KS1/KS2 MATHS" :duration 14.0
+  (:vars (
+    (:var :name "rows" :val 7 :min 1 :max 12 :step 1 :label "Rows Multiplier")
+    (:var :name "cols" :val 8 :min 1 :max 12 :step 1 :label "Columns Multiplicand")
+  ))
+  (:inputs (
+    (:slider :var "rows" :label "Matrix Rows" :min 1 :max 12 :step 1)
+    (:slider :var "cols" :label "Matrix Columns" :min 1 :max 12 :step 1)
+  ))
+  (:computed (
+    (:name "totalTiles" :expr "vars.rows * vars.cols")
+  ))
+  (:gestures (
+    (:draggable :target "#tt-splitter-laser" :axis "x" :min 200 :max 440)
+  ))
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "Memorizing times tables like 7 × 8 can feel intimidating. But you never need to panic when you understand the Distributive Property!" :es "Memorizar tablas de multiplicar como 7 × 8 puede dar miedo. ¡Pero nunca debes asustarte si comprendes la propiedad distributiva!")
+    (:start 0.35 :end 0.70 :en "Watch the splitter cut 8 columns into friendly chunks: 5 columns and 3 columns. 7 × 5 is easy: 35! And 7 × 3 is 21." :es "Mira cómo la línea divide 8 columnas en partes fáciles: 5 columnas y 3 columnas. 7 × 5 es fácil: ¡35! Y 7 × 3 es 21.")
+    (:start 0.70 :end 1.00 :en "Now simply combine the green and amber areas: 35 + 21 = 56! Any tricky table can be conquered using 5s and 2s." :es "¡Ahora solo suma las áreas verde y ámbar: 35 + 21 = 56! Cualquier tabla difícil se resuelve usando 5 y 2.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Step 1: The 7×8 Array" :rule "A 2D matrix of 7 rows by 8 columns representing 56 total area units.")
+    (:t 0.35 :title "Step 2: The Distributive Cut" :rule "Decompose 8 into friendly chunks: 8 = 5 + 3.")
+    (:t 0.55 :title "Step 3: Friendly 5s" :rule "Evaluate the first block: 7 × 5 = 35 emerald units.")
+    (:t 0.75 :title "Step 4: Remaining 3s" :rule "Evaluate the second block: 7 × 3 = 21 amber units.")
+    (:t 1.00 :title "Step 5: Mental Addition" :rule "Combine: 35 + 21 = 56. 7 × 8 = 56 Q.E.D.")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.60
+      :prompt "How does the Distributive Property allow you to solve 7 × 8 using known facts?"
+      :options ("Split 8 into 5 + 3: (7 × 5 = 35) + (7 × 3 = 21) = 56" "Subtract 8 from 70" "Divide 56 by 2" "Add 7 + 8 to get 15")
+      :answer 0
+      :explanation "The distributive property states a(b + c) = ab + ac. 7 × (5 + 3) breaks a difficult fact into 35 + 21 = 56.")
+  ))
+  (:bindings (
+    (:target "#tt-splitter-laser" :attr "opacity" :expr "(t >= 0.30 && t < 0.80) ? 1 : 0")
+    (:target "#tt-col-5-label" :attr "opacity" :expr "t >= 0.35 ? 1 : 0")
+    (:target "#tt-col-3-label" :attr "opacity" :expr "t >= 0.35 ? 1 : 0")
+    (:target "#tt-step2-box" :attr "opacity" :expr "t >= 0.40 ? Math.min(1, (t - 0.40) / 0.15) : 0")
+    (:target "#tt-step3-box" :attr "opacity" :expr "t >= 0.60 ? Math.min(1, (t - 0.60) / 0.15) : 0")
+    (:target "#tt-step4-box" :attr "opacity" :expr "t >= 0.80 ? Math.min(1, (t - 0.80) / 0.15) : 0")
+    (:target "#tt-banner-txt" :attr "textContent" :expr "t < 0.35 ? 'A 2D array of 7 rows × 8 columns = 56 tiles.' : (t < 0.70 ? 'Split 8 into 5 + 3: (7 × 5 = 35) + (7 × 3 = 21).' : 'Distributive Mastery: 35 + 21 = 56. 7 × 8 = 56!')")
+  ))
+)

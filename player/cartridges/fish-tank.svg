@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%">
+  <defs>
+    <!-- Deep Water Aquarium Gradient -->
+    <linearGradient id="tank-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0369a1" />
+      <stop offset="35%" stop-color="#0284c7" />
+      <stop offset="70%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <!-- Caustic Light Rays Gradient -->
+    <linearGradient id="caustic-ray" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.0" />
+    </linearGradient>
+
+    <!-- Sandy Seabed Gradient -->
+    <linearGradient id="seabed-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b45309" />
+      <stop offset="40%" stop-color="#78350f" />
+      <stop offset="100%" stop-color="#451a03" />
+    </linearGradient>
+
+    <!-- Fish Shading Gradients -->
+    <linearGradient id="fish-clown" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="50%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <linearGradient id="fish-blue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="fish-tang" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+    <linearGradient id="fish-neon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+
+    <!-- Bubble Glow Filter -->
+    <filter id="bubble-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Tank Background &amp; Water Volume -->
+  <rect x="0" y="0" width="800" height="480" fill="url(#tank-water)" />
+
+  <!-- Volumetric Caustic Sun Rays -->
+  <polygon points="120,0 240,0 360,440 200,440" fill="url(#caustic-ray)" />
+  <polygon points="400,0 520,0 660,440 500,440" fill="url(#caustic-ray)" />
+  <polygon points="620,0 720,0 800,440 700,440" fill="url(#caustic-ray)" />
+
+  <!-- Seabed Sand &amp; Rocks Layer -->
+  <path d="M 0,440 Q 200,420 400,435 T 800,430 L 800,480 L 0,480 Z" fill="url(#seabed-grad)" />
+  <ellipse cx="140" cy="445" rx="35" ry="14" fill="#57534e" />
+  <ellipse cx="180" cy="450" rx="20" ry="10" fill="#44403c" />
+  <ellipse cx="640" cy="442" rx="45" ry="16" fill="#57534e" />
+  <ellipse cx="690" cy="448" rx="28" ry="12" fill="#44403c" />
+
+  <!-- Swaying Deep Sea Seaweed / Kelp (Multi-point Beziers) -->
+  <g id="kelp-forest">
+    <path id="kelp-1" d="M 60,450 Q 80,340 50,240 T 70,120 T 40,30" fill="none" stroke="#16a34a" stroke-width="8" stroke-linecap="round" opacity="0.85" />
+    <path id="kelp-2" d="M 90,460 Q 120,360 85,260 T 110,150 T 80,50" fill="none" stroke="#15803d" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+    <path id="kelp-3" d="M 720,450 Q 700,340 735,240 T 710,130 T 740,35" fill="none" stroke="#16a34a" stroke-width="9" stroke-linecap="round" opacity="0.85" />
+    <path id="kelp-4" d="M 750,460 Q 730,370 760,270 T 735,160 T 765,60" fill="none" stroke="#15803d" stroke-width="6" stroke-linecap="round" opacity="0.8" />
+  </g>
+
+  <!-- Interactive Dynamic Fish School Layer -->
+  <g id="fish-school-group">
+    <!-- Fish 1: Clownfish (Orange Anemonefish with white stripes) -->
+    <g id="fish-1" transform="translate(280, 260)" style="cursor: pointer;">
+      <polygon points="-24,0 -38,-10 -38,10" fill="url(#fish-clown)" stroke="#c2410c" stroke-width="1" />
+      <polygon points="-24,0 -34,-6 -34,6" fill="#ffffff" opacity="0.8" />
+      <ellipse cx="0" cy="0" rx="26" ry="15" fill="url(#fish-clown)" stroke="#c2410c" stroke-width="1.5" />
+      <path d="M -8,-14 Q -5,0 -8,14 Q -11,0 -11,-14 Z" fill="#ffffff" stroke="#0f172a" stroke-width="1" />
+      <path d="M 6,-13 Q 9,0 6,13 Q 3,0 3,-13 Z" fill="#ffffff" stroke="#0f172a" stroke-width="1" />
+      <path d="M -2,4 Q 6,12 -2,16 Z" fill="#ea580c" stroke="#ffffff" stroke-width="1" />
+      <circle cx="16" cy="-4" r="3.5" fill="#ffffff" stroke="#ea580c" stroke-width="0.5" />
+      <circle cx="17.5" cy="-4" r="2" fill="#0f172a" />
+      <circle cx="18" cy="-5" r="0.8" fill="#ffffff" />
+    </g>
+
+    <!-- Fish 2: Royal Blue Tang (Azure body with yellow tail &amp; black swirl) -->
+    <g id="fish-2" transform="translate(450, 190)" style="cursor: pointer;">
+      <polygon points="-26,0 -42,-12 -42,12" fill="#eab308" stroke="#ca8a04" stroke-width="1" />
+      <ellipse cx="0" cy="0" rx="28" ry="17" fill="url(#fish-blue)" stroke="#0369a1" stroke-width="1.5" />
+      <path d="M -20,-6 Q 0,-14 12,-10 Q 0,-4 -12,-2 Z" fill="#0f172a" />
+      <polygon points="-4,2 10,6 6,12" fill="#facc15" stroke="#ca8a04" stroke-width="0.8" />
+      <circle cx="18" cy="-5" r="3.5" fill="#ffffff" />
+      <circle cx="19.5" cy="-5" r="2" fill="#0284c7" />
+      <circle cx="20" cy="-6" r="0.8" fill="#ffffff" />
+    </g>
+
+    <!-- Fish 3: Yellow Tang (Bright lemon disc body with dorsal crest) -->
+    <g id="fish-3" transform="translate(620, 310)" style="cursor: pointer;">
+      <polygon points="-24,0 -38,-14 -38,14" fill="#facc15" stroke="#eab308" stroke-width="1" />
+      <ellipse cx="0" cy="0" rx="25" ry="20" fill="url(#fish-tang)" stroke="#ca8a04" stroke-width="1.5" />
+      <ellipse cx="-18" cy="0" rx="3" ry="1.5" fill="#ffffff" />
+      <polygon points="0,-18 10,-8 -10,-8" fill="#fef08a" opacity="0.6" />
+      <circle cx="16" cy="-6" r="3" fill="#ffffff" />
+      <circle cx="17" cy="-6" r="1.8" fill="#0f172a" />
+      <circle cx="17.5" cy="-7" r="0.6" fill="#ffffff" />
+    </g>
+
+    <!-- Fish 4: Neon Tetra (Slender glowing pink and cyan schooling fish) -->
+    <g id="fish-4" transform="translate(210, 340)" style="cursor: pointer;">
+      <polygon points="-18,0 -28,-7 -28,7" fill="#8b5cf6" opacity="0.8" />
+      <ellipse cx="0" cy="0" rx="20" ry="8" fill="#0f172a" />
+      <path d="M -18,-2 L 14,-2 L 18,2 L -18,2 Z" fill="url(#fish-neon)" />
+      <path d="M -10,3 L 12,3 L 16,6 L -8,6 Z" fill="#38bdf8" />
+      <circle cx="12" cy="-2" r="2.5" fill="#38bdf8" />
+      <circle cx="13" cy="-2" r="1.3" fill="#0f172a" />
+    </g>
+
+    <!-- Fish 5: Regal Angelfish (Tall emerald &amp; lime triangular silhouette) -->
+    <g id="fish-5" transform="translate(380, 140)" style="cursor: pointer;">
+      <polygon points="-6,-18 2,-36 12,-16" fill="#10b981" stroke="#059669" stroke-width="1" />
+      <polygon points="-6,18 2,36 12,16" fill="#10b981" stroke="#059669" stroke-width="1" />
+      <polygon points="-26,0 -40,-12 -40,12" fill="#34d399" />
+      <polygon points="26,0 -16,-20 -22,0 -16,20" fill="#065f46" stroke="#10b981" stroke-width="1.5" />
+      <line x1="-4" y1="-18" x2="-4" y2="18" stroke="#facc15" stroke-width="2.5" />
+      <line x1="8" y1="-12" x2="8" y2="12" stroke="#facc15" stroke-width="2" />
+      <circle cx="18" cy="-3" r="3" fill="#ffffff" />
+      <circle cx="19" cy="-3" r="1.6" fill="#064e3b" />
+    </g>
+
+    <!-- Fish 6: Purple Fairy Basslet (Violet &amp; gold reef dweller) -->
+    <g id="fish-6" transform="translate(530, 270)" style="cursor: pointer;">
+      <polygon points="-20,0 -32,-8 -32,8" fill="#facc15" />
+      <ellipse cx="0" cy="0" rx="22" ry="11" fill="url(#fish-neon)" stroke="#a855f7" stroke-width="1" />
+      <path d="M -6,0 L 22,0" stroke="#facc15" stroke-width="2" opacity="0.7" />
+      <circle cx="14" cy="-3" r="2.8" fill="#ffffff" />
+      <circle cx="15" cy="-3" r="1.5" fill="#0f172a" />
+    </g>
+
+    <!-- Fish 7: Baby Clownfish (Playful companion swimming in tandem) -->
+    <g id="fish-7" transform="translate(240, 285)" style="cursor: pointer;">
+      <polygon points="-14,0 -24,-6 -24,6" fill="url(#fish-clown)" />
+      <ellipse cx="0" cy="0" rx="16" ry="9" fill="url(#fish-clown)" stroke="#c2410c" stroke-width="1" />
+      <path d="M -5,-8 Q -3,0 -5,8 Z" fill="#ffffff" />
+      <path d="M 4,-7 Q 6,0 4,7 Z" fill="#ffffff" />
+      <circle cx="10" cy="-2.5" r="2.2" fill="#ffffff" />
+      <circle cx="11" cy="-2.5" r="1.2" fill="#0f172a" />
+    </g>
+
+    <!-- Fish 8: Azure Damselfish (Vibrant electric sapphire blue) -->
+    <g id="fish-8" transform="translate(150, 220)" style="cursor: pointer;">
+      <polygon points="-16,0 -26,-7 -26,7" fill="#0284c7" />
+      <ellipse cx="0" cy="0" rx="18" ry="10" fill="#0284c7" stroke="#38bdf8" stroke-width="1.2" />
+      <polygon points="0,2 8,6 4,10" fill="#38bdf8" opacity="0.8" />
+      <circle cx="11" cy="-3" r="2.6" fill="#38bdf8" />
+      <circle cx="12" cy="-3" r="1.4" fill="#0f172a" />
+    </g>
+
+    <!-- Fish 9: Golden Guppy (Shimmering flowing fin) -->
+    <g id="fish-9" transform="translate(670, 180)" style="cursor: pointer;">
+      <path d="M -14,0 Q -28,-14 -38,-6 Q -30,0 -38,6 Q -28,14 -14,0 Z" fill="#f59e0b" opacity="0.85" />
+      <ellipse cx="0" cy="0" rx="17" ry="8" fill="url(#fish-tang)" stroke="#b45309" stroke-width="1" />
+      <circle cx="10" cy="-2" r="2.2" fill="#ffffff" />
+      <circle cx="11" cy="-2" r="1.2" fill="#0f172a" />
+    </g>
+
+    <!-- Fish 10: Neon Tetra Beta (Schooling companion in lower depths) -->
+    <g id="fish-10" transform="translate(330, 390)" style="cursor: pointer;">
+      <polygon points="-16,0 -24,-6 -24,6" fill="#a855f7" opacity="0.75" />
+      <ellipse cx="0" cy="0" rx="17" ry="7" fill="#0f172a" />
+      <path d="M -15,-2 L 12,-2 L 15,2 L -15,2 Z" fill="#ec4899" />
+      <path d="M -8,2 L 10,2 L 13,5 L -6,5 Z" fill="#38bdf8" />
+      <circle cx="10" cy="-1.5" r="2" fill="#38bdf8" />
+      <circle cx="11" cy="-1.5" r="1" fill="#0f172a" />
+    </g>
+
+    <!-- Fish 11: Turquoise Discus (Circular disc reef fish) -->
+    <g id="fish-11" transform="translate(480, 360)" style="cursor: pointer;">
+      <polygon points="-22,0 -34,-10 -34,10" fill="#06b6d4" />
+      <ellipse cx="0" cy="0" rx="24" ry="18" fill="#0891b2" stroke="#22d3ee" stroke-width="1.5" />
+      <path d="M -10,-14 Q 0,-6 -10,0 Q 0,6 -10,14" fill="none" stroke="#67e8f9" stroke-width="1.5" />
+      <path d="M 6,-14 Q 14,-6 6,0 Q 14,6 6,14" fill="none" stroke="#67e8f9" stroke-width="1.5" />
+      <circle cx="15" cy="-5" r="3" fill="#ffffff" />
+      <circle cx="16" cy="-5" r="1.6" fill="#0e7490" />
+    </g>
+
+    <!-- Fish 12: Sunset Platy (Coral orange with dark fin tips) -->
+    <g id="fish-12" transform="translate(590, 220)" style="cursor: pointer;">
+      <polygon points="-18,0 -30,-8 -30,8" fill="#ea580c" />
+      <ellipse cx="0" cy="0" rx="20" ry="11" fill="#f97316" stroke="#c2410c" stroke-width="1.2" />
+      <polygon points="2,-12 8,-4 0,-4" fill="#0f172a" opacity="0.6" />
+      <circle cx="13" cy="-3" r="2.6" fill="#ffffff" />
+      <circle cx="14" cy="-3" r="1.4" fill="#0f172a" />
+    </g>
+  </g>
+
+  <!-- Dynamic Physics Bubbles Layer -->
+  <g id="bubbles-group">
+    <g id="bubble-1" transform="translate(140, 360)">
+      <circle cx="0" cy="0" r="8" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(255, 255, 255, 0.7)" stroke-width="1" />
+      <path d="M -4,-4 Q 0,-6 4,-4" fill="none" stroke="#ffffff" stroke-width="1" />
+    </g>
+    <g id="bubble-2" transform="translate(155, 280)">
+      <circle cx="0" cy="0" r="5" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1" />
+    </g>
+    <g id="bubble-3" transform="translate(130, 200)">
+      <circle cx="0" cy="0" r="10" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(255, 255, 255, 0.7)" stroke-width="1.2" />
+      <path d="M -5,-5 Q 0,-8 5,-5" fill="none" stroke="#ffffff" stroke-width="1.2" />
+    </g>
+    <g id="bubble-4" transform="translate(680, 340)">
+      <circle cx="0" cy="0" r="7" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(255, 255, 255, 0.7)" stroke-width="1" />
+    </g>
+    <g id="bubble-5" transform="translate(695, 250)">
+      <circle cx="0" cy="0" r="11" fill="rgba(255, 255, 255, 0.25)" stroke="rgba(255, 255, 255, 0.8)" stroke-width="1.2" />
+      <path d="M -6,-6 Q 0,-9 6,-6" fill="none" stroke="#ffffff" stroke-width="1.2" />
+    </g>
+    <g id="bubble-6" transform="translate(670, 160)">
+      <circle cx="0" cy="0" r="6" fill="rgba(255, 255, 255, 0.2)" stroke="rgba(255, 255, 255, 0.6)" stroke-width="1" />
+    </g>
+  </g>
+
+  <!-- Surface Light Ripple -->
+  <line x1="0" y1="2" x2="800" y2="2" stroke="#38bdf8" stroke-width="3" opacity="0.6" stroke-dasharray="16 8" />
+
+  <!-- On-Canvas HUD Glassmorphic Diagnostics Panel -->
+  <g id="benchmark-hud" transform="translate(16, 16)">
+    <!-- Panel Backdrop -->
+    <rect x="0" y="0" width="310" height="152" rx="10" fill="#0f172a" fill-opacity="0.88" stroke="#334155" stroke-width="1.5" />
+    
+    <!-- Title &amp; Badge -->
+    <text x="14" y="24" fill="#38bdf8" font-size="12" font-weight="bold" font-family="system-ui, sans-serif">🐠 HARDWARE STRESS BENCHMARK</text>
+    <rect x="238" y="12" width="58" height="16" rx="4" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="1" />
+    <text id="hud-status-badge" x="267" y="24" fill="#34d399" font-size="9" font-weight="bold" text-anchor="middle" font-family="system-ui, sans-serif">60 FPS</text>
+
+    <!-- Metrics Grid -->
+    <!-- FPS &amp; Frame Time -->
+    <text x="14" y="48" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Render Performance:</text>
+    <text id="hud-fps-val" x="120" y="48" fill="#34d399" font-size="12" font-weight="bold" font-family="monospace">60.0 FPS</text>
+    <text id="hud-frametime-val" x="200" y="48" fill="#94a3b8" font-size="10" font-family="monospace">(16.6ms)</text>
+
+    <!-- Active Entities &amp; Points Count -->
+    <text x="14" y="68" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Active Animated Fish:</text>
+    <text id="hud-fish-count" x="120" y="68" fill="#f8fafc" font-size="11" font-weight="bold" font-family="monospace">80 Fish</text>
+    <text x="175" y="68" fill="#94a3b8" font-size="10" font-family="system-ui, sans-serif">Points:</text>
+    <text id="hud-points-count" x="220" y="68" fill="#38bdf8" font-size="11" font-weight="bold" font-family="monospace">1,920 pts</text>
+
+    <!-- Frame Render Budget Bar -->
+    <rect x="14" y="78" width="282" height="6" rx="3" fill="#1e293b" />
+    <rect id="hud-budget-fill" x="14" y="78" width="80" height="6" rx="3" fill="#10b981" />
+
+    <!-- Safe Hardware Ceiling Recommendation -->
+    <rect x="14" y="92" width="282" height="24" rx="4" fill="rgba(30, 41, 59, 0.7)" stroke="#334155" stroke-width="1" />
+    <text id="hud-recommendation" x="22" y="108" fill="#cbd5e1" font-size="9.5" font-family="system-ui, sans-serif">Safe Device Limit: ~4,200 points (~175 fish)</text>
+
+    <!-- Quick Control Hint -->
+    <text x="14" y="132" fill="#64748b" font-size="8.5" font-family="system-ui, sans-serif">Use slider below or click Auto-Calibrate to determine limit</text>
+  </g>
+</svg>

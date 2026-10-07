@@ -1,0 +1,33 @@
+(:scene :id "shakespeare" :title "The Globe Theatre: Shakespeare & Iambic Pentameter" :stage "KS3/KS4 ENGLISH LITERATURE" :duration 15.0
+  (:vars (
+    (:var :name "tempo" :val 72 :min 40 :max 140 :step 2 :unit "BPM" :label "Heartbeat Metronome Tempo")
+  ))
+  (:inputs (
+    (:slider :var "tempo" :label "Iambic Pulse Tempo (BPM)" :min 40 :max 140 :step 2)
+  ))
+  (:gestures (
+    (:draggable :target "#iambic-dot" :axis "x" :min 20 :max 480 :var "tempo")
+  ))
+  (:subtitles (
+    (:start 0.00 :end 4.50 :en "Welcome to the 1599 Globe Theatre. Actors perform on a raised thrust stage surrounded by 1,000 groundlings." :es "Bienvenidos al Globe Theatre de 1599. Los actores actúan en un escenario rodeado de espectadores.")
+    (:start 4.50 :end 9.50 :en "Shakespeare writes in Iambic Pentameter: five pairs of unstressed and stressed syllables matching human heartbeat." :es "Shakespeare escribe en pentámetro yámbico: cinco pares de sílabas que siguen el latido del corazón.")
+    (:start 9.50 :end 15.00 :en "Notice when Macbeth wavers: 'Is this a dagger which I see before me' adds an 11th beat to show a fractured mind." :es "Nota cómo Macbeth duda: 'Is this a dagger which I see before me' añade un 11° tiempo que refleja una mente fracturada.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "1. The Globe Thrust Stage" :rule "Built 1599 on Bankside. Thrust stage surrounded on three sides by 3,000 spectators")
+    (:t 0.30 :title "2. The Iambic Heartbeat" :rule "Five metrical feet per line: da-DUM da-DUM da-DUM da-DUM da-DUM (10 syllables)")
+    (:t 0.65 :title "3. The Meter Breaks" :rule "Feminine endings (11th unstressed beat) mirror moral hesitation and psychological collapse")
+    (:t 1.00 :title "4. The Tragic Catastrophe" :rule "Verse structure reveals inner psychology: Shakespeare turns meter into character")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.50
+      :prompt "How many metrical feet (iambs) are found in a standard line of Shakespearean iambic pentameter?"
+      :options ("5 feet (10 syllables total)" "4 feet (8 syllables)" "6 feet (alexandrine)")
+      :answer 0
+      :explanation "Penta means five: five iambs (unstressed + stressed) make 10 syllables per regular blank verse line.")
+  ))
+  (:bindings (
+    (:target "#iambic-status-text" :attr "textContent" :expr "t < 0.3 ? 'THE 1599 GLOBE: 360° Thrust Stage & Standing Yard' : (t < 0.65 ? 'IAMBIC PENTAMETER (10 beats): da-DUM da-DUM da-DUM da-DUM da-DUM' : 'METER BREAK: Feminine Ending (11th syllable waver in Macbeth)')")
+    (:target "#iambic-dot" :attr "cx" :expr "String(20 + ((t * 4) % 1) * 460)")
+  ))
+)

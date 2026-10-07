@@ -1,0 +1,41 @@
+(:scene :id "calculus-curves" :title "Calculus: Tangent Slopes & Definite Integrals" :stage "GCSE & A-LEVEL MATHS" :duration 14.0
+  (:vars (
+    (:var :name "probeX" :val 1.0 :min -3.0 :max 4.0 :step 0.05 :label "Tangent Probe X Coordinate")
+  ))
+  (:inputs (
+    (:slider :var "probeX" :label "Probe Position (x)" :min -3.0 :max 4.0 :step 0.05)
+  ))
+  (:computed (
+    (:name "slope" :expr "(2 * vars.probeX - 2).toFixed(2)")
+    (:name "curveY" :expr "(vars.probeX * vars.probeX - 2 * vars.probeX).toFixed(2)")
+  ))
+  (:gestures (
+    (:draggable :target "#tangent-assembly" :axis "curve" :min 80 :max 460)
+  ))
+  (:subtitles (
+    (:start 0.00 :end 3.50 :en "Calculus reveals how mathematical curves change locally and accumulate globally." :es "El cálculo revela cómo las curvas matemáticas cambian localmente y se acumulan globalmente.")
+    (:start 3.50 :end 7.20 :en "Differentiation finds the derivative dy/dx, the exact instantaneous gradient of the tangent line." :es "La diferenciación encuentra la derivada dy/dx, la pendiente instantánea exacta de la recta tangente.")
+    (:start 7.20 :end 10.80 :en "At stationary points where dy/dx = 0, the tangent line is completely horizontal, marking maximums and minimums." :es "En los puntos estacionarios donde dy/dx = 0, la recta tangente es horizontal, marcando máximos y mínimos.")
+    (:start 10.80 :end 14.00 :en "Integration reverses differentiation, accumulating continuous area under the curve between boundaries a and b." :es "La integración invierte la diferenciación, acumulando el área continua bajo la curva entre los límites a y b.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "1. Function Graph f(x)" :rule "Quadratic parabola f(x) = x² - 2x with vertex minimum at (1, -1)")
+    (:t 0.35 :title "2. Tangent Gradient (dy/dx)" :rule "Slope probe moves along curve: dy/dx = 2x - 2 evaluates instantaneous rate of change")
+    (:t 0.70 :title "3. Stationary Turning Point" :rule "At x = 1, dy/dx = 0 -> Horizontal tangent marks local minimum vertex")
+    (:t 1.00 :title "4. Definite Integration Area" :rule "Definite integral ∫[0, 3] (x² - 2x) dx computes net accumulated area")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.69
+      :prompt "What is the numerical slope (dy/dx) of f(x) = x² - 2x at the vertex minimum (x = 1)?"
+      :options ("dy/dx = 0 (horizontal stationary point)" "dy/dx = 1" "dy/dx = -2" "dy/dx = ∞ (undefined)")
+      :answer 0
+      :explanation "The derivative is f'(x) = 2x - 2. Substituting x = 1 gives 2(1) - 2 = 0. A gradient of 0 defines a stationary turning point.")
+  ))
+  (:bindings (
+    (:target "#tangent-assembly" :attr "transform" :expr "'translate(' + (150 + 200 * Math.min(1, t / 0.85)) + ', ' + (210 - (Math.pow((150 + 200 * Math.min(1, t / 0.85) - 250) / 50, 2) - 2 * ((150 + 200 * Math.min(1, t / 0.85) - 250) / 50)) * 25) + ')'")
+    (:target "#tangent-line" :attr "transform" :expr "'rotate(' + (-Math.atan((2 * ((150 + 200 * Math.min(1, t / 0.85) - 250) / 50) - 2)) * 180 / Math.PI) + ')'")
+    (:target "#card-slope-val" :attr "textContent" :expr "'m = ' + (2 * ((150 + 200 * Math.min(1, t / 0.85) - 250) / 50) - 2 >= 0 ? '+' : '') + (2 * ((150 + 200 * Math.min(1, t / 0.85) - 250) / 50) - 2).toFixed(2)")
+    (:target "#integral-shaded-area" :attr "opacity" :expr "t > 0.65 ? Math.min(1, (t - 0.65) / 0.25) : 0.2")
+    (:target "#calc-theorem-note" :attr "textContent" :expr "t < 0.65 ? 'Differentiation: Tangent slope dy/dx = lim(Δy/Δx) evaluates instantaneous rate of change.' : 'Fundamental Theorem: ∫[a,b] f(x)dx = F(b) - F(a) calculates exact geometric area.'")
+  ))
+)
