@@ -102,7 +102,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   theme,
   height = '520px',
   className = '',
-  allowPresetSwitch = true,
+  allowPresetSwitch = false,
   defaultMode,
   initialConfig,
   onPresetChange,
