@@ -173,7 +173,7 @@ async function buildSystem() {
       unit: item.unitTitle,
       title: item.title,
       badgeIcon: getSubjectEmoji(item.subjectTitle),
-      manifestPath: `/manifests/lessons/${fileName}`,
+      manifestPath: `manifests/lessons/${fileName}`,
     });
 
     const combinedText = `${item.title} ${item.subjectTitle} ${item.keyStageTitle} ${
@@ -188,7 +188,7 @@ async function buildSystem() {
       title: item.title,
       tokens: tokenize(combinedText),
       ragContext: `[${item.subjectTitle} - ${item.keyStageTitle}] ${item.title}\nCore Concepts: ${challenges.map(c => c.p).join(' | ')}\nAnswers: ${challenges.map(c => c.a).join(' | ')}`,
-      manifestPath: `/manifests/lessons/${fileName}`
+      manifestPath: `manifests/lessons/${outFileName}`,
     });
 
     console.log(`📦 Compiled Custom AST: ${fileName}`);

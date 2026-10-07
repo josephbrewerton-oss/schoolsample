@@ -2257,40 +2257,61 @@
               '/'
             ].filter(Boolean);
 
-            const fetchAsset = async (ext) => {
-              for (const cBase of candidateBases) {
-                const cleanCBase = cBase.endsWith('/') ? cBase : `${cBase}/`;
-                const searchPaths = [];
-                if (cleanCBase.includes('cartridges/') || cleanCBase.includes('scenes/')) {
-                  searchPaths.push(`${cleanCBase}${presetId}.${ext}`);
-                  searchPaths.push(`${cleanCBase}${presetId}.${ext}${cacheBust}`);
-                } else {
-                  searchPaths.push(`${cleanCBase}scenes/${presetId}.${ext}`);
-                  searchPaths.push(`${cleanCBase}cartridges/${presetId}.${ext}`);
-                  searchPaths.push(`${cleanCBase}scenes/${presetId}.${ext}${cacheBust}`);
-                  searchPaths.push(`${cleanCBase}cartridges/${presetId}.${ext}${cacheBust}`);
-                  searchPaths.push(`${cleanCBase}${presetId}.${ext}`);
-                }
-                for (let candidatePath of searchPaths) {
-                  candidatePath = candidatePath.replace(/\/+/g, '/').replace(':/', '://');
-                  try {
-                    const res = await fetch(candidatePath).catch(() => null);
-                    if (res && res.ok) {
-                      const text = await res.text();
-                      const trimmed = (text || '').trim();
-                      // Guard against SPA HTML 404 fallback (e.g. dist/404.html returning index.html)
-                      if (ext === 'svg' && trimmed.includes('<svg') && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
-                        return text;
-                      }
-                      if (ext === 'ast' && (trimmed.includes(':scene') || trimmed.startsWith('(') || trimmed.startsWith('{')) && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
-                        return text;
-                      }
-                    }
-                  } catch (_) {}
-                }
-              }
-              return '';
-            };
+const fetchAsset = async (ext) => {
+  // Determine current directory of player/index.html
+  const baseHref = (typeof document !== 'undefined' && document.baseURI) 
+    ? document.baseURI 
+    : window.location.href;
+  const playerDirUrl = new URL('.', baseHref); // Guarantees trailing slash on folder
+
+  const candidateDirs = [
+    'scenes/',
+    'cartridges/',
+    '../scenes/',
+    '../cartridges/',
+    './'
+  ];
+
+  for (const dir of candidateDirs) {
+    const searchFilenames = [
+      `${presetId}.${ext}`,
+      `${presetId}.${ext}${cacheBust}`
+    ];
+
+    for (const filename of searchFilenames) {
+      try {
+        // Native URL resolution safely respects repository subpaths:
+        const targetUrl = new URL(dir + filename, playerDirUrl).href;
+        const res = await fetch(targetUrl).catch(() => null);
+
+        if (res && res.ok) {
+          const text = await res.text();
+          const trimmed = (text || '').trim();
+
+          // Reject HTML fallback responses from SPA / 404 handlers
+          if (
+            ext === 'svg' && 
+            trimmed.includes('<svg') && 
+            !trimmed.startsWith('<!DOCTYPE') && 
+            !trimmed.startsWith('<html')
+          ) {
+            return text;
+          }
+
+          if (
+            ext === 'ast' && 
+            (trimmed.includes(':scene') || trimmed.startsWith('(') || trimmed.startsWith('{')) && 
+            !trimmed.startsWith('<!DOCTYPE') && 
+            !trimmed.startsWith('<html')
+          ) {
+            return text;
+          }
+        }
+      } catch (_) {}
+    }
+  }
+  return '';
+};
 
             const [foundSvg, foundAst] = await Promise.all([
               fetchAsset('svg'),
