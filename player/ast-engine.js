@@ -2184,28 +2184,65 @@
 
       if (!scene) {
         const registryScene = (global.ASTSceneRegistry && global.ASTSceneRegistry.get(presetId)) || (global.ASTScenes && global.ASTScenes[presetId]) || {};
-        let svgText = '';
-        let astText = '';
+        let svgText = registryScene.svgMarkup || registryScene.svgText || '';
+        let astText = registryScene.astSource || registryScene.astText || '';
 
-        if (typeof fetch !== 'undefined') {
+        // If not already in registry/decentralized store, fetch dynamically
+        if ((!svgText || !astText) && typeof fetch !== 'undefined') {
           try {
-            const base = (this.options.basePath || './').replace(/\/?$/, '/');
+            const currentDir = (typeof window !== 'undefined' && window.location && window.location.pathname)
+              ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)
+              : './';
+            const base = (this.options.basePath || currentDir || './').replace(/\/?$/, '/');
             const cacheBust = '?v=2.6.0';
-            const candidateBases = [base, './', '/player/', '/', 'player/'];
+
+            // Automatic GitHub Pages repository prefix detection (e.g. /my-repo/player/)
+            const ghRepoMatch = (typeof window !== 'undefined' && window.location && window.location.pathname)
+              ? window.location.pathname.match(/^(\/[^\/]+)\//)
+              : null;
+            const ghRepoPrefix = (ghRepoMatch && ghRepoMatch[1] && !ghRepoMatch[1].startsWith('/player') && !ghRepoMatch[1].startsWith('/api'))
+              ? ghRepoMatch[1]
+              : '';
+
+            const candidateBases = [
+              base,
+              currentDir,
+              `${currentDir}scenes/`,
+              `${base}player/`,
+              `${base}player/scenes/`,
+              ghRepoPrefix ? `${ghRepoPrefix}/player/` : '',
+              ghRepoPrefix ? `${ghRepoPrefix}/player/scenes/` : '',
+              './',
+              './scenes/',
+              './player/',
+              './player/scenes/',
+              '../',
+              '../player/',
+              '../player/scenes/',
+              '/player/',
+              '/player/scenes/',
+              'player/',
+              'player/scenes/',
+              '/'
+            ].filter(Boolean);
 
             const fetchAsset = async (ext) => {
               for (const cBase of candidateBases) {
                 const cleanCBase = cBase.endsWith('/') ? cBase : `${cBase}/`;
-                const candidatePath = `${cleanCBase}scenes/${presetId}.${ext}${cacheBust}`;
+                let candidatePath = cleanCBase.includes('scenes/')
+                  ? `${cleanCBase}${presetId}.${ext}${cacheBust}`
+                  : `${cleanCBase}scenes/${presetId}.${ext}${cacheBust}`;
+                candidatePath = candidatePath.replace(/\/+/g, '/').replace(':/', '://');
                 try {
                   const res = await fetch(candidatePath).catch(() => null);
                   if (res && res.ok) {
                     const text = await res.text();
-                    // Guard against SPA HTML 404 fallback
-                    if (ext === 'svg' && text.includes('<svg') && !text.startsWith('<!DOCTYPE') && !text.startsWith('<html')) {
+                    const trimmed = (text || '').trim();
+                    // Guard against SPA HTML 404 fallback (e.g. dist/404.html returning index.html)
+                    if (ext === 'svg' && trimmed.includes('<svg') && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
                       return text;
                     }
-                    if (ext === 'ast' && (text.includes(':scene') || text.startsWith('(') || text.startsWith('{')) && !text.startsWith('<!DOCTYPE') && !text.startsWith('<html')) {
+                    if (ext === 'ast' && (trimmed.includes(':scene') || trimmed.startsWith('(') || trimmed.startsWith('{')) && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
                       return text;
                     }
                   }
@@ -2222,6 +2259,15 @@
             if (foundAst) astText = foundAst;
           } catch (e) {
             console.warn('[AST Engine] Asset fetch notice for:', presetId, e);
+          }
+        }
+
+        // Secondary fallback for core cartridges if network fetch failed on GitHub Pages
+        if (!svgText && (presetId === 'pythagoras' || presetId === 'pythagorus') && global.ASTSceneRegistry) {
+          const fb = global.ASTSceneRegistry.get('pythagoras');
+          if (fb) {
+            svgText = fb.svgMarkup || fb.svgText || '';
+            astText = fb.astSource || fb.astText || '';
           }
         }
 
@@ -4414,6 +4460,32 @@
             engine.pause();
             if (uiController && typeof uiController.triggerCheckpoint === 'function') {
               uiController.triggerCheckpoint(cp, engine.scene.interactive.checkpoints.length - 1);
+            }
+          }
+          break;
+        case 'LOAD_CARTRIDGE':
+          if (data.cartridge) {
+            const cart = data.cartridge;
+            const cid = cart.id || 'custom-cartridge';
+            const parsed = cart.ast ? engine.parseAst(cart.ast) : null;
+            const sceneMeta = {
+              id: cid,
+              title: cart.title || (parsed && parsed.title) || cid,
+              stage: cart.stage || (parsed && parsed.stage) || 'CUSTOM CARTRIDGE',
+              duration: cart.duration || (parsed && parsed.duration) || 12.0,
+              svgMarkup: cart.svg || cart.svgMarkup || '',
+              svgText: cart.svg || cart.svgMarkup || '',
+              astSource: cart.ast || cart.astSource || '',
+              astText: cart.ast || cart.astSource || '',
+              ...parsed
+            };
+            if (global.ASTSceneRegistry) {
+              global.ASTSceneRegistry.register(cid, sceneMeta);
+            }
+            engine.sceneCache[cid] = null; // force fresh reload
+            engine.loadScene(cid, true);
+            if (uiController && uiController.showToast) {
+              uiController.showToast(`⚡ Loaded Cartridge: ${sceneMeta.title}`);
             }
           }
           break;
