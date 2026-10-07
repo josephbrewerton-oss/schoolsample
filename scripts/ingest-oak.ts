@@ -188,7 +188,7 @@ async function buildSystem() {
       title: item.title,
       tokens: tokenize(combinedText),
       ragContext: `[${item.subjectTitle} - ${item.keyStageTitle}] ${item.title}\nCore Concepts: ${challenges.map(c => c.p).join(' | ')}\nAnswers: ${challenges.map(c => c.a).join(' | ')}`,
-      manifestPath: `manifests/lessons/${outFileName}`,
+      manifestPath: `manifests/lessons/${fileName}`,
     });
 
     console.log(`📦 Compiled Custom AST: ${fileName}`);
