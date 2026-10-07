@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "compositeHash": "d1759336ac86",
-  "generatedAt": "2026-10-07T08:08:12.494Z",
+  "compositeHash": "a751b895c766",
+  "generatedAt": "2026-10-07T09:28:58.371Z",
   "files": {
     "nano-map.ast": "568a99c10f2f08b8",
     "manifest.json": "5b581a737ccec74d",
@@ -13,13 +13,13 @@
     "patterns/media-player.ast": "0b265d6009c3a742",
     "patterns/numeric.ast": "ae97bf1a5d2591ff",
     "patterns/pair-sort.ast": "c40900be04c53763",
-    "manifests/catalog.json": "3c813cecb102a017",
+    "manifests/catalog.json": "5b5d8bb51a899077",
     "manifests/curriculum-mesh.ast": "0d07b1bd17b71ee1",
     "manifests/curriculum-mesh.json": "76548359c9371b91",
     "manifests/history-ks2.json": "7c550309d1880c07",
     "manifests/oak-angles-triangles.json": "8d23026f8cb8fc7a",
     "manifests/oak-states-of-matter.json": "a8d7bc12c80bd1bf",
-    "manifests/rag-index.json": "43868d052ee24d55",
+    "manifests/rag-index.json": "489431211fd82313",
     "manifests/seasonal-changes.json": "7d5635d852542c40"
   }
 }
