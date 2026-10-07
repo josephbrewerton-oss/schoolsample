@@ -118,6 +118,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const selectedPresetRef = useRef(normalizedInitialPreset);
   const lastSentPresetRef = useRef(normalizedInitialPreset);
   const autoPlayRef = useRef(autoPlay);
+  const [isPlaying, setIsPlaying] = useState<boolean>(Boolean(autoPlay));
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [has3D, setHas3D] = useState(false);
   const [hasInteractive, setHasInteractive] = useState(false);
@@ -168,26 +169,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const pipWindowRef = useRef<Window | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
 
-  // Sync internal selected preset if external preset prop changes
-  useEffect(() => {
-    setSelectedPreset(preset);
-    selectedPresetRef.current = preset;
-    lastSentPresetRef.current = preset;
-  }, [preset]);
-
-  useEffect(() => {
-    selectedPresetRef.current = selectedPreset;
-  }, [selectedPreset]);
-
-  useEffect(() => {
-    autoPlayRef.current = autoPlay;
-  }, [autoPlay]);
-
-  // Derive system theme if not explicitly passed
-  const activeTheme = theme || (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark' ? 'dark' : 'dark');
-  const [currentLang, setCurrentLang] = useState(() => lang || (typeof window !== 'undefined' ? getSavedLanguage() : 'en'));
-  const [bilingualSubtitles, setBilingualSubtitles] = useState(true);
-
   // Post message helper with strict targetOrigin
   const getVerifiedTargetOrigin = useCallback(() => {
     if (typeof window === 'undefined') return '*';
@@ -201,6 +182,41 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       iframeRef.current.contentWindow.postMessage(payload, targetOrigin);
     }
   }, [getVerifiedTargetOrigin]);
+
+  // Sync internal selected preset if external preset prop changes
+  useEffect(() => {
+    const canonical = normalizeCartridgeId(preset);
+    if (canonical && canonical !== lastSentPresetRef.current) {
+      setSelectedPreset(canonical);
+      selectedPresetRef.current = canonical;
+      lastSentPresetRef.current = canonical;
+      postToPlayer({ type: 'SET_PRESET', preset: canonical, play: autoPlayRef.current });
+
+      const cart = getCartridge(canonical);
+      if (cart && cart.svgMarkup && cart.astSource) {
+        postToPlayer({
+          type: 'LOAD_CARTRIDGE',
+          cartridge: {
+            id: cart.id,
+            title: cart.title,
+            stage: cart.stage,
+            svg: cart.svgMarkup,
+            ast: cart.astSource,
+          },
+        });
+      }
+    }
+  }, [preset, postToPlayer]);
+
+  useEffect(() => {
+    autoPlayRef.current = autoPlay;
+    setIsPlaying(Boolean(autoPlay));
+  }, [autoPlay]);
+
+  // Derive system theme if not explicitly passed
+  const activeTheme = theme || (typeof window !== 'undefined' && localStorage.getItem('theme') === 'dark' ? 'dark' : 'dark');
+  const [currentLang, setCurrentLang] = useState(() => lang || (typeof window !== 'undefined' ? getSavedLanguage() : 'en'));
+  const [bilingualSubtitles, setBilingualSubtitles] = useState(true);
 
   // Synchronize language changes from the UniversalTranslatorBar with the player engine
   useEffect(() => {
@@ -352,9 +368,18 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   useImperativeHandle(ref, () => ({
     postToPlayer,
     seek: (progress: number) => postToPlayer({ type: 'SEEK', progress }),
-    pause: () => postToPlayer({ type: 'PAUSE' }),
-    play: () => postToPlayer({ type: 'PLAY' }),
-    togglePlay: () => postToPlayer({ type: 'TOGGLE_PLAY' }),
+    pause: () => {
+      postToPlayer({ type: 'PAUSE' });
+      setIsPlaying(false);
+    },
+    play: () => {
+      postToPlayer({ type: 'PLAY' });
+      setIsPlaying(true);
+    },
+    togglePlay: () => {
+      postToPlayer({ type: 'TOGGLE_PLAY' });
+      setIsPlaying((prev) => !prev);
+    },
     toggleVoiceCommands: () => postToPlayer({ type: 'TOGGLE_VOICE_COMMANDS' }),
     startVoiceCommands: () => postToPlayer({ type: 'START_VOICE_COMMANDS' }),
     stopVoiceCommands: () => postToPlayer({ type: 'STOP_VOICE_COMMANDS' }),
@@ -452,10 +477,25 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       switch (data.type) {
         case 'PLAYER_READY':
           setIsPlayerReady(true);
+          if (typeof data.isPlaying === 'boolean') {
+            setIsPlaying(data.isPlaying);
+          } else if (autoPlayRef.current) {
+            setIsPlaying(true);
+          }
           if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
           if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
           if (Array.isArray(data.keyframes)) setKeyframes(data.keyframes);
-          postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
+          // Only send SET_PRESET if the iframe booted with a different preset than selectedPresetRef.current
+          if (data.preset && normalizeCartridgeId(data.preset) !== normalizeCartridgeId(selectedPresetRef.current)) {
+            postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
+          } else if (autoPlayRef.current) {
+            postToPlayer({ type: 'PLAY' });
+          }
+          break;
+        case 'STATECHANGE':
+          if (typeof data.isPlaying === 'boolean') {
+            setIsPlaying(data.isPlaying);
+          }
           break;
         case 'PRESETCHANGE':
           if (data.preset && data.preset !== selectedPresetRef.current) {
@@ -695,23 +735,38 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
               Sandboxed iFrame &bull; 0% Main Thread
             </span>
 
-            {allowPresetSwitch && displayConfig.showPresetSelector && (
+            {allowPresetSwitch && (
               <select
                 value={selectedPreset}
                 onChange={(e) => handleSwitchPreset(e.target.value)}
                 className="stj-select"
                 style={{
-                  padding: '3px 8px',
+                  padding: '4px 10px',
                   minHeight: '32px',
-                  fontSize: '0.76rem',
-                  fontWeight: 600,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
+                  background: '#1e293b',
+                  color: '#ffffff',
+                  border: '1.5px solid #0284c7',
+                  borderRadius: '6px',
+                  outline: 'none',
+                  pointerEvents: 'auto',
+                  userSelect: 'auto',
                 }}
                 title="Switch Curriculum Scene"
               >
                 {PRESET_OPTIONS.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
+                  <option
+                    key={opt.id}
+                    value={opt.id}
+                    style={{
+                      background: '#0f172a',
+                      color: '#f8fafc',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    {opt.label} ({opt.stage})
                   </option>
                 ))}
               </select>
@@ -736,22 +791,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                 <span>🧠 Concept Trail ({relatedConcepts.length})</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
-              className="stj-btn stj-btn-primary stj-btn-sm"
-              style={{
-                padding: '3px 8px',
-                minHeight: '32px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-              title="Toggle Playback in iFrame"
-            >
-              ▶ / ⏸ Play
-            </button>
 
             <button
               type="button"
@@ -1397,7 +1436,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
                   Primary: {selectedPreset}
                 </div>
                 <iframe
-                  key={`primary-${selectedPreset}-${currentLang}`}
+                  key={`primary-player-viewport-${currentLang}`}
                   ref={iframeRef}
                   src={playerSrc}
                   title="Primary Concept Viewport"
@@ -1497,7 +1536,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           ) : (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <iframe
-                key={`${selectedPreset}-${currentLang}`}
+                key={`vector-player-viewport-${currentLang}`}
                 ref={iframeRef}
                 src={playerSrc}
                 title="Lumina Vector Player"
@@ -1535,125 +1574,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
             activeKeyframe={activeKeyframe}
           />
         </div>
-
-        {/* Interactive Slide Deck & Keyframe Presentation Bar */}
-        {(keyframes.length > 0 || activeKeyframe) && (
-          <div
-            style={{
-              background: 'var(--stj-surface-raised, #0f172a)',
-              borderTop: '1px solid var(--stj-border, #334155)',
-              padding: '10px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              fontSize: '0.78rem',
-            }}
-          >
-            {/* Slide Navigation Buttons & Carousel Pills */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 800, color: 'var(--stj-primary, #38bdf8)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  📑 Slides ({keyframes.length || 1}):
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => postToPlayer({ type: 'STEP_PREV_KEYFRAME' })}
-                  className="stj-btn stj-btn-secondary stj-btn-sm"
-                  style={{ padding: '3px 8px', fontSize: '0.74rem', fontWeight: 700 }}
-                  title="Previous Slide (PageUp / Left Arrow)"
-                >
-                  ⏮ Prev Slide
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => postToPlayer({ type: 'TOGGLE_PLAY' })}
-                  className="stj-btn stj-btn-secondary stj-btn-sm"
-                  style={{ padding: '3px 8px', fontSize: '0.74rem', fontWeight: 700 }}
-                  title="Play / Pause Animation"
-                >
-                  ⏯ Play/Pause
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => postToPlayer({ type: 'STEP_NEXT_KEYFRAME' })}
-                  className="stj-btn stj-btn-secondary stj-btn-sm"
-                  style={{ padding: '3px 8px', fontSize: '0.74rem', fontWeight: 700 }}
-                  title="Next Slide (PageDown / Right Arrow / Space)"
-                >
-                  ⏭ Next Slide
-                </button>
-
-                {keyframes.map((kf, idx) => {
-                  const isActive = activeKeyframe
-                    ? activeKeyframe.title === kf.title
-                    : (currentProgress >= kf.t - 0.02 && (idx === keyframes.length - 1 || currentProgress < keyframes[idx + 1].t));
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => postToPlayer({ type: 'STEP_TO_KEYFRAME', progress: kf.t })}
-                      style={{
-                        padding: '3px 9px',
-                        borderRadius: '6px',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                        background: isActive ? '#0284c7' : 'rgba(30, 41, 59, 0.85)',
-                        borderColor: isActive ? '#38bdf8' : 'rgba(255, 255, 255, 0.15)',
-                        color: isActive ? '#ffffff' : '#cbd5e1',
-                        border: '1px solid',
-                        boxShadow: isActive ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
-                      }}
-                      title={`${kf.title}: ${kf.rule} (Click to jump to this slide)`}
-                    >
-                      {idx + 1}. {kf.title}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {hasInteractive && (
-                  <button
-                    type="button"
-                    onClick={() => postToPlayer({ type: 'TRIGGER_CHECKPOINT' })}
-                    style={{
-                      padding: '3px 9px',
-                      borderRadius: '6px',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      background: 'rgba(16, 185, 129, 0.2)',
-                      border: '1px solid #10b981',
-                      color: '#34d399',
-                      cursor: 'pointer',
-                    }}
-                    title="Launch interactive checkpoint recall challenge"
-                  >
-                    🎯 Quiz Challenge
-                  </button>
-                )}
-
-                <span style={{ color: 'var(--stj-primary)', fontWeight: 700 }}>
-                  {Math.round(currentProgress * 100)}% Complete
-                </span>
-              </div>
-            </div>
-
-            {/* Current Active Milestone Text */}
-            {activeKeyframe && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--stj-text-muted)', fontSize: '0.76rem' }}>
-                <span style={{ color: 'var(--stj-warning)', fontWeight: 700 }}>💡 Milestone:</span>
-                <span style={{ color: 'var(--stj-text)', fontWeight: 600 }}>{activeKeyframe.title}</span>
-                <span>&bull;</span>
-                <span>{activeKeyframe.rule}</span>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Semantic Concept Trail & Related Slide Portal */}
         {relatedConcepts.length > 0 && (

@@ -648,7 +648,7 @@ button.active {
   white-space: nowrap;
 }
 
-select {
+select, #preset-selector {
   background: var(--surface-raised);
   color: var(--text);
   border: 1px solid var(--border);
@@ -658,7 +658,30 @@ select {
   font-weight: 600;
   outline: none;
   cursor: pointer;
-  max-width: 190px;
+  max-width: 280px;
+  position: relative;
+  z-index: 60;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+}
+
+select option,
+select optgroup,
+#preset-selector option,
+#preset-selector optgroup {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  font-size: 12px !important;
+  padding: 5px 8px !important;
+  cursor: pointer !important;
+}
+
+header,
+.header-left {
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
 }
 
 /* Responsive Mobile Layout Overrides */

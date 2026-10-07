@@ -1,0 +1,45 @@
+(:scene :id "pythagoras" :title "Pythagoras Theorem: Area Conservation" :stage "KS3 GEOMETRY" :duration 11.0
+  (:vars (
+    (:var :name "sideA" :val 3 :min 1 :max 8 :step 1 :unit "units" :label "Leg a")
+    (:var :name "sideB" :val 4 :min 1 :max 8 :step 1 :unit "units" :label "Leg b")
+  ))
+  (:inputs (
+    (:number :var "sideA" :label "Triangle Leg a" :min 1 :max 10 :step 1)
+    (:number :var "sideB" :label "Triangle Leg b" :min 1 :max 10 :step 1)
+  ))
+  (:computed (
+    (:name "hypotenuse" :expr "Math.sqrt(vars.sideA * vars.sideA + vars.sideB * vars.sideB).toFixed(2)")
+    (:name "areaA" :expr "vars.sideA * vars.sideA")
+    (:name "areaB" :expr "vars.sideB * vars.sideB")
+    (:name "areaC" :expr "vars.sideA * vars.sideA + vars.sideB * vars.sideB")
+  ))
+  (:gestures (
+    (:draggable :target "#pyth-handle-a" :axis "y" :min 100 :max 250)
+    (:draggable :target "#pyth-handle-b" :axis "x" :min 380 :max 640)
+    (:draggable :target "#pyth-rect-a" :axis "y" :min 100 :max 250)
+    (:draggable :target "#pyth-rect-b" :axis "x" :min 380 :max 640)
+  ))
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "Drag the handles, pans, or type your own figures for leg a and leg b." :es "Arrastra los controles o introduce tus propios números para los catetos a y b.")
+    (:start 0.35 :end 0.70 :en "Observe area conservation: square a² (emerald) plus square b² (sapphire) always equals square c² (amber)." :es "Observa la conservación de área: el cuadrado a² más el cuadrado b² siempre es igual a c².")
+    (:start 0.70 :end 1.00 :en "a² + b² = c². The total number of unit tiles is strictly conserved for all right triangles." :es "a² + b² = c². El número total de baldosas unitarias se conserva estrictamente.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "Interactive Manipulative" :rule "Drag handles or enter custom figures to test Pythagorean triples")
+    (:t 0.35 :title "Area Conservation" :rule "Square of side a has area a²; square of side b has area b²")
+    (:t 0.70 :title "Vector Area Sum" :rule "Total square units: a² + b² = c²")
+    (:t 1.00 :title "Hypotenuse Square c²" :rule "c = √(a² + b²) preserved across continuous geometry")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.68
+      :prompt "If triangle legs have lengths a = 3 and b = 4, what is the exact area of the square on hypotenuse c?"
+      :options ("25 square units (3² + 4² = 9 + 16)" "7 square units (3 + 4)" "12 square units (3 × 4)" "50 square units")
+      :answer 0
+      :explanation "Pythagorean Theorem: a² + b² = c². Area of square a is 3² = 9, area of square b is 4² = 16. Sum = 25 units².")
+  ))
+  (:bindings (
+    (:target "#pyth-txt-a" :attr "opacity" :expr "1")
+    (:target "#pyth-txt-b" :attr "opacity" :expr "1")
+    (:target "#pyth-txt-c" :attr "opacity" :expr "1")
+  ))
+)

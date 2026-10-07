@@ -56,6 +56,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [activePreset, setActivePreset] = useState<VectorPresetType>(initialPreset);
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSimStopped, setIsSimStopped] = useState(false);
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
 
   // Modals for Decentralized Cartridge Management
@@ -82,38 +83,20 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [packTitle, setPackTitle] = useState('Classroom Custom STEM Pack');
   const [packDesc, setPackDesc] = useState('Offline interactive laboratory cartridge bundle.');
 
-  // Initialize playMode from urlMode if provided, or default to 'game' for interactive game-capable presets
-  const initialPlayMode: 'video' | 'game' =
-    urlMode === 'video'
-      ? 'video'
-      : urlMode === 'game'
-      ? 'game'
-      : initialPreset === 'mountain-elevation' || initialPreset === 'math-fishing' || initialPreset === 'fish-tank' || initialPreset === 'shakespeare' || initialPreset === 'languages'
-      ? 'game'
-      : 'video';
-
-  const [playMode, setPlayMode] = useState<'video' | 'game'>(initialPlayMode);
-
+  // Direct cartridge navigation
   useEffect(() => {
     if (urlPreset) {
       const target = getCartridge(urlPreset);
       if (target && target.id !== activePreset) {
         setActivePreset(target.id);
-        if (urlMode === 'game' || target.id === 'mountain-elevation' || target.id === 'math-fishing' || target.id === 'fish-tank' || target.id === 'shakespeare' || target.id === 'languages' || target.id === 'phonics-lab' || target.id === 'bodmas' || target.id === 'times-tables') {
-          setPlayMode('game');
-        }
       }
-    } else if (urlMode && (urlMode === 'game' || urlMode === 'video') && urlMode !== playMode) {
-      setPlayMode(urlMode);
     }
-  }, [urlPreset, urlMode, activePreset, playMode]);
+  }, [urlPreset, activePreset]);
 
-  const handleSelectPreset = (id: VectorPresetType, targetMode?: 'video' | 'game') => {
+  const handleSelectPreset = (id: VectorPresetType) => {
     const canonical = normalizeCartridgeId(id);
     setActivePreset(canonical);
-    const chosenMode = targetMode || (canonical === 'mountain-elevation' || canonical === 'math-fishing' || canonical === 'fish-tank' || canonical === 'shakespeare' || canonical === 'languages' || canonical === 'phonics-lab' || canonical === 'bodmas' || canonical === 'times-tables' ? 'game' : playMode);
-    setPlayMode(chosenMode);
-    setSearchParams({ preset: canonical, mode: chosenMode });
+    setSearchParams({ preset: canonical });
   };
 
   const currentPresetMeta = cartridges.find((p) => p.id === activePreset) || cartridges[0] || {
@@ -262,99 +245,149 @@ export default function MediaPlayerPage(): React.JSX.Element {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {/* Primary Mode Selector Bar — Always visible so Play Mode and Lesson Video Mode can always be toggled */}
-            <div
-              style={{
-                display: 'inline-flex',
-                background: '#090d16',
-                padding: '4px',
-                borderRadius: '10px',
-                border: '1px solid #334155',
-                gap: '4px',
-                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.4)',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    activePreset !== 'mountain-elevation' &&
-                    activePreset !== 'church-tour' &&
-                    activePreset !== 'math-fishing' &&
-                    activePreset !== 'fish-tank' &&
-                    activePreset !== 'shakespeare' &&
-                    activePreset !== 'languages' &&
-                    activePreset !== 'phonics-lab' &&
-                    activePreset !== 'bodmas' &&
-                    activePreset !== 'times-tables'
-                  ) {
-                    // Switch to the featured interactive climber game if currently on a static diagram
-                    handleSelectPreset('mountain-elevation', 'game');
-                  } else {
-                    setPlayMode('game');
-                    setSearchParams({ preset: activePreset, mode: 'game' });
-                  }
-                  playerRef.current?.pause();
-                }}
+            {/* Physical Dropdown Selector on Simulators */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <label
+                htmlFor="main-sim-dropdown-selector"
                 style={{
-                  padding: '6px 14px',
-                  borderRadius: '7px',
-                  border: playMode === 'game' ? '1px solid #10b981' : '1px solid transparent',
-                  background: playMode === 'game' ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' : 'transparent',
-                  color: playMode === 'game' ? '#ffffff' : '#94a3b8',
-                  fontSize: '0.78rem',
+                  fontSize: '0.76rem',
                   fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: playMode === 'game' ? '0 0 14px rgba(16, 185, 129, 0.4)' : 'none',
-                  transition: 'all 0.15s ease',
+                  color: '#94a3b8',
+                  letterSpacing: '0.03em',
+                  whiteSpace: 'nowrap',
                 }}
-                title="Switch to Interactive Play Mode (Keyboard & Touch Game Controls)"
               >
-                <span style={{ fontSize: '0.95rem' }}>🎮</span>
-                <span>Play Mode</span>
-                {playMode === 'game' && (
-                  <span style={{ fontSize: '0.62rem', background: '#ffffff', color: '#047857', padding: '1px 5px', borderRadius: '4px', fontWeight: 900 }}>
-                    ACTIVE
-                  </span>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPlayMode('video');
-                  setSearchParams({ preset: activePreset, mode: 'video' });
-                  playerRef.current?.play();
-                }}
+                🎮 Simulator:
+              </label>
+              <select
+                id="main-sim-dropdown-selector"
+                value={activePreset}
+                onChange={(e) => handleSelectPreset(e.target.value)}
                 style={{
-                  padding: '6px 14px',
-                  borderRadius: '7px',
-                  border: playMode === 'video' ? '1px solid #0284c7' : '1px solid transparent',
-                  background: playMode === 'video' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'transparent',
-                  color: playMode === 'video' ? '#ffffff' : '#94a3b8',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  background: '#0f172a',
+                  color: '#ffffff',
+                  border: '1.5px solid #0284c7',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: playMode === 'video' ? '0 0 14px rgba(2, 132, 199, 0.4)' : 'none',
-                  transition: 'all 0.15s ease',
+                  outline: 'none',
+                  minWidth: '220px',
+                  maxWidth: '340px',
+                  pointerEvents: 'auto',
+                  userSelect: 'auto',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
                 }}
-                title="Switch to Lesson Video Mode (Automated 60 FPS Animation & Narration)"
+                title="Select Simulation Cartridge"
               >
-                <span style={{ fontSize: '0.95rem' }}>🎬</span>
-                <span>Lesson Video</span>
-                {playMode === 'video' && (
-                  <span style={{ fontSize: '0.62rem', background: '#ffffff', color: '#0369a1', padding: '1px 5px', borderRadius: '4px', fontWeight: 900 }}>
-                    ACTIVE
-                  </span>
+                <optgroup label="📐 Mathematics & Geometry" style={{ background: '#0f172a', color: '#38bdf8' }}>
+                  {cartridges
+                    .filter((c) => c.category === 'Mathematics' || ['pythagoras', 'fractions', 'bodmas', 'times-tables', 'algebra-balance', 'calculus-curves', 'math-fishing', 'mountain-elevation'].includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                        {c.icon} {c.title} ({c.stage})
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="💡 Physics & Chemistry" style={{ background: '#0f172a', color: '#fbbf24' }}>
+                  {cartridges
+                    .filter((c) => c.category === 'Science' || ['kinetic-gas', 'electric-circuits', 'atom', 'velocity'].includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                        {c.icon} {c.title} ({c.stage})
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="🌿 Biology & Earth" style={{ background: '#0f172a', color: '#4ade80' }}>
+                  {cartridges
+                    .filter((c) => ['photosynthesis', 'dna-helix', 'water-cycle', 'solar-system'].includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                        {c.icon} {c.title} ({c.stage})
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="📚 English & Languages" style={{ background: '#0f172a', color: '#a78bfa' }}>
+                  {cartridges
+                    .filter((c) => ['shakespeare', 'languages', 'phonics-lab'].includes(c.id))
+                    .map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                        {c.icon} {c.title} ({c.stage})
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="⛪ Catholic Faith & Life" style={{ background: '#0f172a', color: '#f43f5e' }}>
+                  {cartridges
+                    .filter((c) => c.id === 'church-tour' || c.category === 'Catholic Faith')
+                    .map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                        {c.icon} {c.title} ({c.stage})
+                      </option>
+                    ))}
+                </optgroup>
+                {cartridges.filter((c) => c.source === 'user' || c.source === 'imported' || c.source === 'phet').length > 0 && (
+                  <optgroup label="🧪 Custom & Imported Cartridges" style={{ background: '#0f172a', color: '#34d399' }}>
+                    {cartridges
+                      .filter((c) => c.source === 'user' || c.source === 'imported' || c.source === 'phet')
+                      .map((c) => (
+                        <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                          ★ {c.icon} {c.title} ({c.stage})
+                        </option>
+                      ))}
+                  </optgroup>
                 )}
-              </button>
+              </select>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                playerRef.current?.seek(0);
+              }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: '#1e293b',
+                color: '#f8fafc',
+                border: '1px solid #475569',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Reset simulation physics and variables to initial conditions"
+            >
+              <span>↺</span> Reset Sim
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                playerRef.current?.togglePlay();
+                setIsSimStopped((prev) => !prev);
+              }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: '#1e293b',
+                color: '#f8fafc',
+                border: '1px solid #475569',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 0.15s ease',
+              }}
+              title="Stop or resume continuous physics simulation"
+            >
+              <span>{isSimStopped ? '▶' : '⏹'}</span> {isSimStopped ? 'Resume Sim' : 'Stop Sim'}
+            </button>
 
             <span
               style={{
@@ -362,232 +395,55 @@ export default function MediaPlayerPage(): React.JSX.Element {
                 color: '#38bdf8',
                 background: 'rgba(56, 189, 248, 0.1)',
                 border: '1px solid rgba(56, 189, 248, 0.3)',
-                padding: '4px 10px',
-                borderRadius: '6px',
+                padding: '5px 12px',
+                borderRadius: '8px',
                 fontWeight: 700,
                 letterSpacing: '0.02em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
               }}
             >
-              Zero-Bloat Vector
+              <span>⚡</span> Live Simulator (PhET / Flash Style)
             </span>
           </div>
         </div>
 
-        {/* Real-time Mode State Notice Banner */}
-        {playMode === 'game' ? (
-          <div
-            style={{
-              padding: '9px 18px',
-              background: 'linear-gradient(90deg, #064e3b 0%, #0f172a 100%)',
-              borderBottom: '1px solid #059669',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '10px',
-              color: '#d1fae5',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-              <span style={{ fontSize: '1.2rem' }}>🎮</span>
-              <span>
-                <strong style={{ color: '#ffffff' }}>INTERACTIVE PLAY MODE ENGAGED</strong> &mdash; Direct physics simulation &amp; telemetry active!
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span
-                style={{
-                  fontSize: '0.72rem',
-                  color: '#6ee7b7',
-                  background: 'rgba(5, 150, 105, 0.25)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid #10b981',
-                  fontWeight: 600,
-                }}
-              >
-                ⌨️ Controls: Space / &uarr; Step &bull; S / &darr; Rest &bull; A / 1 Axe &bull; O / 2 Oxygen
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setPlayMode('video');
-                  setSearchParams({ preset: activePreset, mode: 'video' });
-                  playerRef.current?.play();
-                }}
-                style={{
-                  padding: '3px 10px',
-                  borderRadius: '6px',
-                  background: '#1e293b',
-                  color: '#f8fafc',
-                  border: '1px solid #475569',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Switch to Lesson Video &rarr;
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              padding: '9px 18px',
-              background: 'linear-gradient(90deg, #0c4a6e 0%, #0f172a 100%)',
-              borderBottom: '1px solid #0284c7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '10px',
-              color: '#e0f2fe',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-              <span style={{ fontSize: '1.2rem' }}>🎬</span>
-              <span>
-                <strong style={{ color: '#ffffff' }}>LESSON VIDEO MODE</strong> &mdash; Continuous timeline animation &amp; on-device narration.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (activePreset !== 'mountain-elevation') {
-                  handleSelectPreset('mountain-elevation', 'game');
-                } else {
-                  setPlayMode('game');
-                  setSearchParams({ preset: activePreset, mode: 'game' });
-                }
-                playerRef.current?.pause();
-              }}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '6px',
-                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                color: '#ffffff',
-                border: 'none',
-                fontSize: '0.76rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
-              }}
-            >
-              <span>🎮</span> Launch Interactive Play Mode Now
-            </button>
-          </div>
-        )}
-
-        {/* Embedded AST Player (Hidden when in standalone interactive full-stage labs like Languages or Phonics) */}
-        {!((activePreset === 'languages' || activePreset === 'phonics-lab' || activePreset === 'bodmas' || activePreset === 'times-tables') && playMode === 'game') && (
-          <AstVectorMediaPlayer
-            ref={playerRef}
-            preset={activePreset}
-            autoPlay={playMode === 'video'}
-            allowPresetSwitch={true}
-            height="min(520px, 55vh)"
-            onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
-            onPlayModeToggle={() => {
-              const nextMode = playMode === 'game' ? 'video' : 'game';
-              if (nextMode === 'game' && activePreset !== 'mountain-elevation' && activePreset !== 'math-fishing' && activePreset !== 'church-tour' && activePreset !== 'shakespeare' && activePreset !== 'languages' && activePreset !== 'phonics-lab' && activePreset !== 'bodmas' && activePreset !== 'times-tables') {
-                handleSelectPreset('languages', 'game');
-              } else {
-                setPlayMode(nextMode);
-                setSearchParams({ preset: activePreset, mode: nextMode });
-                if (nextMode === 'game') {
-                  playerRef.current?.pause();
-                } else {
-                  playerRef.current?.play();
-                }
-              }
-            }}
-          />
-        )}
-
-        {/* Playable Interactive Game Mode Consoles (Active Player Physics & Telemetry) */}
-        {activePreset === 'mountain-elevation' && playMode === 'game' && (
-          <MountainClimberGame
-            playerRef={playerRef}
-            onCloseGameMode={() => {
-              setPlayMode('video');
-              setSearchParams({ preset: activePreset, mode: 'video' });
-              playerRef.current?.play();
-            }}
-          />
-        )}
-
-        {activePreset === 'math-fishing' && playMode === 'game' && (
-          <MathFishingGame
-            playerRef={playerRef}
-            onCloseGameMode={() => {
-              setPlayMode('video');
-              setSearchParams({ preset: activePreset, mode: 'video' });
-              playerRef.current?.play();
-            }}
-          />
-        )}
-
-        {activePreset === 'fish-tank' && playMode === 'game' && (
-          <AquariumSimulationLab
-            playerRef={playerRef}
-            onCloseGameMode={() => {
-              setPlayMode('video');
-              setSearchParams({ preset: activePreset, mode: 'video' });
-              playerRef.current?.play();
-            }}
-          />
-        )}
-
-        {activePreset === 'shakespeare' && playMode === 'game' && (
+        {/* Embedded AST Player or Dedicated Interactive Lab Stage */}
+        {activePreset === 'mountain-elevation' ? (
+          <MountainClimberGame playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('pythagoras')} />
+        ) : activePreset === 'math-fishing' ? (
+          <MathFishingGame playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('pythagoras')} />
+        ) : activePreset === 'fish-tank' ? (
+          <AquariumSimulationLab playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('pythagoras')} />
+        ) : activePreset === 'shakespeare' ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
-            <ShakespeareGlobeLab
-              onClose={() => {
-                setPlayMode('video');
-                setSearchParams({ preset: activePreset, mode: 'video' });
-                playerRef.current?.play();
-              }}
-            />
+            <ShakespeareGlobeLab onClose={() => handleSelectPreset('pythagoras')} />
           </div>
-        )}
-
-        {activePreset === 'languages' && playMode === 'game' && (
+        ) : activePreset === 'languages' ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
-            <MflLanguageLab
-              onClose={() => {
-                setPlayMode('video');
-                setSearchParams({ preset: activePreset, mode: 'video' });
-                playerRef.current?.play();
-              }}
-            />
+            <MflLanguageLab onClose={() => handleSelectPreset('pythagoras')} />
           </div>
-        )}
-
-        {activePreset === 'phonics-lab' && playMode === 'game' && (
+        ) : activePreset === 'phonics-lab' ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
-            <EarlyPhonicsLab
-              onClose={() => {
-                setPlayMode('video');
-                setSearchParams({ preset: activePreset, mode: 'video' });
-                playerRef.current?.play();
-              }}
-            />
+            <EarlyPhonicsLab onClose={() => handleSelectPreset('pythagoras')} />
           </div>
-        )}
-
-        {(activePreset === 'bodmas' || activePreset === 'times-tables') && playMode === 'game' && (
+        ) : (activePreset === 'bodmas' || activePreset === 'times-tables') ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
             <MathsFundamentalsLab
               initialTab={activePreset === 'times-tables' ? 'times-tables' : 'bodmas'}
-              onClose={() => {
-                setPlayMode('video');
-                setSearchParams({ preset: activePreset, mode: 'video' });
-                playerRef.current?.play();
-              }}
+              onClose={() => handleSelectPreset('pythagoras')}
             />
           </div>
+        ) : (
+          <AstVectorMediaPlayer
+            ref={playerRef}
+            preset={activePreset}
+            autoPlay={true}
+            allowPresetSwitch={true}
+            height="min(540px, 60vh)"
+            onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
+          />
         )}
       </div>
 
@@ -907,158 +763,78 @@ export default function MediaPlayerPage(): React.JSX.Element {
                   </p>
                 </div>
 
-                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
-                  {p.id === 'mountain-elevation' ? (
-                    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPreset(p.id, 'game');
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '6px 8px',
-                          borderRadius: '6px',
-                          background: isSelected && playMode === 'game' ? '#059669' : '#10b981',
-                          color: '#ffffff',
-                          border: 'none',
-                          fontSize: '0.74rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px',
-                          boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)',
-                        }}
-                      >
-                        <span>🎮</span> Play Game {isSelected && playMode === 'game' ? '✔' : ''}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPreset(p.id, 'video');
-                        }}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          background: isSelected && playMode === 'video' ? '#0284c7' : '#f1f5f9',
-                          color: isSelected && playMode === 'video' ? '#ffffff' : '#334155',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.74rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <span>🎬</span> Video
-                      </button>
-                    </div>
-                  ) : p.id === 'fish-tank' ? (
-                    <div style={{ display: 'flex', gap: '6px', width: '100%' }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPreset(p.id, 'game');
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '6px 8px',
-                          borderRadius: '6px',
-                          background: isSelected && playMode === 'game' ? '#059669' : '#10b981',
-                          color: '#ffffff',
-                          border: 'none',
-                          fontSize: '0.74rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px',
-                          boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)',
-                        }}
-                      >
-                        <span>🐠</span> Play Lab {isSelected && playMode === 'game' ? '✔' : ''}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectPreset(p.id, 'video');
-                        }}
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          background: isSelected && playMode === 'video' ? '#0284c7' : '#f1f5f9',
-                          color: isSelected && playMode === 'video' ? '#ffffff' : '#334155',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.74rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <span>🎬</span> Video
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.74rem', color: isSelected ? '#0284c7' : '#64748b', fontWeight: 700 }}>
-                        {isSelected ? '▶ Active in Viewport' : 'Click to Load'}
-                      </span>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            exportSubjectCartridge(p.id);
-                          }}
-                          style={{
-                            background: '#f1f5f9',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '4px',
-                            padding: '3px 7px',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            color: '#334155',
-                            cursor: 'pointer',
-                          }}
-                          title="Download standalone 100% offline HTML cartridge"
-                        >
-                          💾 Single HTML
-                        </button>
-                        {isCustom && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (confirm(`Delete cartridge "${p.title}" from local decentralized storage?`)) {
-                                deleteCustomCartridge(p.id);
-                              }
-                            }}
-                            style={{
-                              background: '#fef2f2',
-                              border: '1px solid #fecaca',
-                              borderRadius: '4px',
-                              padding: '3px 6px',
-                              fontSize: '0.7rem',
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                            }}
-                            title="Delete this custom cartridge"
-                          >
-                            🗑
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectPreset(p.id);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '7px 12px',
+                      borderRadius: '6px',
+                      background: isSelected ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : '#0f172a',
+                      color: '#ffffff',
+                      border: isSelected ? '1px solid #38bdf8' : '1px solid #334155',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <span>⚡</span> {isSelected ? 'Active Simulation' : 'Launch Simulation'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportSubjectCartridge(p.id);
+                    }}
+                    style={{
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      padding: '7px 10px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: '#334155',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Download standalone 100% offline HTML cartridge"
+                  >
+                    💾 Offline
+                  </button>
+
+                  {isCustom && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete cartridge "${p.title}" from local decentralized storage?`)) {
+                          deleteCustomCartridge(p.id);
+                        }
+                      }}
+                      style={{
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: '6px',
+                        padding: '7px 8px',
+                        fontSize: '0.72rem',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                      }}
+                      title="Delete this custom cartridge"
+                    >
+                      🗑️
+                    </button>
                   )}
                 </div>
               </div>

@@ -1013,7 +1013,7 @@
         preset: 'church-tour',
         lang: 'en',
         speed: 1.0,
-        autoplay: false,
+        autoplay: true,
         theme: 'dark',
         voiceEnabled: false,
         container: null,
@@ -2161,26 +2161,50 @@
         ? global.ASTSceneRegistry.normalizeId(presetId)
         : presetId;
       presetId = normalizedId;
-      this.activePresetId = presetId;
-      this.progress = 0.0;
-      this.lastSpokenIndex = -1;
-      this.resetCamera();
 
-      // Clear active collections immediately to prevent race conditions during load
-      this.active3DItems = [];
-      this.active3DNodes = [];
-      this.active3DLines = [];
-      this.active3DRings = [];
-      this.active3DPolygons = [];
-      this.activeBindings = [];
-      this._cachedElements = null;
-      this._mountedSceneId = null;
-
-      if (this.container) {
-        this.container.innerHTML = '';
+      // Deduplication Guard: If this exact preset is already mounted and ready, avoid re-fetching or wiping container
+      if (this.activePresetId === presetId && this._mountedSceneId === presetId && this.scene) {
+        if (shouldPlay && !this.isPlaying) {
+          this.play();
+        } else if (shouldPlay === false && this.isPlaying) {
+          this.pause();
+        }
+        return this.scene;
       }
 
-      let scene = this.sceneCache[presetId];
+      // In-flight Load Guard: If this exact preset is already being fetched, await the existing promise
+      if (this._inFlightLoadPresetId === presetId && this._inFlightLoadPromise) {
+        const existingScene = await this._inFlightLoadPromise;
+        if (shouldPlay && !this.isPlaying) {
+          this.play();
+        } else if (shouldPlay === false && this.isPlaying) {
+          this.pause();
+        }
+        return existingScene;
+      }
+
+      this._inFlightLoadPresetId = presetId;
+      const loadPromise = (async () => {
+        this.activePresetId = presetId;
+        this.progress = 0.0;
+        this.lastSpokenIndex = -1;
+        this.resetCamera();
+
+        // Clear active collections immediately to prevent race conditions during load
+        this.active3DItems = [];
+        this.active3DNodes = [];
+        this.active3DLines = [];
+        this.active3DRings = [];
+        this.active3DPolygons = [];
+        this.activeBindings = [];
+        this._cachedElements = null;
+        this._mountedSceneId = null;
+
+        if (this.container) {
+          this.container.innerHTML = '';
+        }
+
+        let scene = this.sceneCache[presetId];
 
       if (!scene) {
         const registryScene = (global.ASTSceneRegistry && global.ASTSceneRegistry.get(presetId)) || (global.ASTScenes && global.ASTScenes[presetId]) || {};
@@ -2205,48 +2229,65 @@
               : '';
 
             const candidateBases = [
+              './scenes/',
+              './cartridges/',
+              'scenes/',
+              'cartridges/',
+              './',
               base,
               currentDir,
               `${currentDir}scenes/`,
-              `${base}player/`,
-              `${base}player/scenes/`,
-              ghRepoPrefix ? `${ghRepoPrefix}/player/` : '',
-              ghRepoPrefix ? `${ghRepoPrefix}/player/scenes/` : '',
-              './',
-              './scenes/',
-              './player/',
-              './player/scenes/',
-              '../',
-              '../player/',
-              '../player/scenes/',
-              '/player/',
+              `${currentDir}cartridges/`,
               '/player/scenes/',
-              'player/',
-              'player/scenes/',
+              '/player/cartridges/',
+              '/cartridges/',
+              `${base}cartridges/`,
+              `${base}scenes/`,
+              `${base}player/`,
+              `${base}player/cartridges/`,
+              `${base}player/scenes/`,
+              ghRepoPrefix ? `${ghRepoPrefix}/player/scenes/` : '',
+              ghRepoPrefix ? `${ghRepoPrefix}/cartridges/` : '',
+              ghRepoPrefix ? `${ghRepoPrefix}/player/cartridges/` : '',
+              ghRepoPrefix ? `${ghRepoPrefix}/player/` : '',
+              '../scenes/',
+              '../cartridges/',
+              '../player/scenes/',
+              '../player/cartridges/',
               '/'
             ].filter(Boolean);
 
             const fetchAsset = async (ext) => {
               for (const cBase of candidateBases) {
                 const cleanCBase = cBase.endsWith('/') ? cBase : `${cBase}/`;
-                let candidatePath = cleanCBase.includes('scenes/')
-                  ? `${cleanCBase}${presetId}.${ext}${cacheBust}`
-                  : `${cleanCBase}scenes/${presetId}.${ext}${cacheBust}`;
-                candidatePath = candidatePath.replace(/\/+/g, '/').replace(':/', '://');
-                try {
-                  const res = await fetch(candidatePath).catch(() => null);
-                  if (res && res.ok) {
-                    const text = await res.text();
-                    const trimmed = (text || '').trim();
-                    // Guard against SPA HTML 404 fallback (e.g. dist/404.html returning index.html)
-                    if (ext === 'svg' && trimmed.includes('<svg') && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
-                      return text;
+                const searchPaths = [];
+                if (cleanCBase.includes('cartridges/') || cleanCBase.includes('scenes/')) {
+                  searchPaths.push(`${cleanCBase}${presetId}.${ext}`);
+                  searchPaths.push(`${cleanCBase}${presetId}.${ext}${cacheBust}`);
+                } else {
+                  searchPaths.push(`${cleanCBase}scenes/${presetId}.${ext}`);
+                  searchPaths.push(`${cleanCBase}cartridges/${presetId}.${ext}`);
+                  searchPaths.push(`${cleanCBase}scenes/${presetId}.${ext}${cacheBust}`);
+                  searchPaths.push(`${cleanCBase}cartridges/${presetId}.${ext}${cacheBust}`);
+                  searchPaths.push(`${cleanCBase}${presetId}.${ext}`);
+                }
+                for (let candidatePath of searchPaths) {
+                  candidatePath = candidatePath.replace(/\/+/g, '/').replace(':/', '://');
+                  try {
+                    const res = await fetch(candidatePath).catch(() => null);
+                    if (res && res.ok) {
+                      const text = await res.text();
+                      const trimmed = (text || '').trim();
+                      // Guard against SPA HTML 404 fallback (e.g. dist/404.html returning index.html)
+                      if (ext === 'svg' && trimmed.includes('<svg') && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
+                        return text;
+                      }
+                      if (ext === 'ast' && (trimmed.includes(':scene') || trimmed.startsWith('(') || trimmed.startsWith('{')) && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
+                        return text;
+                      }
                     }
-                    if (ext === 'ast' && (trimmed.includes(':scene') || trimmed.startsWith('(') || trimmed.startsWith('{')) && !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html')) {
-                      return text;
-                    }
-                  }
-                } catch (_) {}
+                  } catch (_) {}
+                }
               }
               return '';
             };
@@ -2364,7 +2405,20 @@
       if (shouldPlay) {
         this.play();
       }
+      this._mountedSceneId = presetId;
       return this.scene;
+      })();
+
+      this._inFlightLoadPromise = loadPromise;
+      try {
+        const res = await loadPromise;
+        return res;
+      } finally {
+        if (this._inFlightLoadPresetId === presetId) {
+          this._inFlightLoadPromise = null;
+          this._inFlightLoadPresetId = null;
+        }
+      }
     }
 
     setPreset(presetId, shouldPlay = false) {
@@ -4279,7 +4333,18 @@
           break;
         case 'SET_PRESET':
           if (data.preset) {
-            engine.loadScene(data.preset, data.play !== false);
+            const canonicalPreset = (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.normalizeId === 'function')
+              ? global.ASTSceneRegistry.normalizeId(data.preset)
+              : data.preset;
+            if (engine.activePresetId === canonicalPreset && engine._mountedSceneId === canonicalPreset && engine.scene) {
+              if (data.play === true && !engine.isPlaying) {
+                engine.play();
+              } else if (data.play === false && engine.isPlaying) {
+                engine.pause();
+              }
+            } else {
+              engine.loadScene(canonicalPreset, data.play !== false);
+            }
           }
           break;
         case 'STEP_NEXT_KEYFRAME':
@@ -4662,6 +4727,7 @@
       keyframes: (engine.scene && engine.scene.keyframes) || [],
       interactive: (engine.scene && engine.scene.interactive) || null,
       preset: engine.activePresetId,
+      isPlaying: engine.isPlaying,
       presets: global.ASTSceneRegistry ? global.ASTSceneRegistry.list() : []
     });
   }

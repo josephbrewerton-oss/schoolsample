@@ -63,6 +63,8 @@ export default function App(): React.JSX.Element {
             <Route path="learning-zone" element={<LearningZonePage />} />
             <Route path="player" element={<MediaPlayerPage />} />
             <Route path="media-player" element={<MediaPlayerPage />} />
+            <Route path="simulator" element={<MediaPlayerPage />} />
+            <Route path="cartridges" element={<MediaPlayerPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="curriculum-studio" element={<CurriculumStudioPage />} />
             <Route path="settings" element={<SettingsPage />} />

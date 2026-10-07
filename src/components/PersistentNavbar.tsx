@@ -466,6 +466,40 @@ export default function PersistentNavbar(): React.JSX.Element {
             <span>Catholic Life</span>
           </NavLink>
 
+          {/* 2.5. PhET / Flash Style Simulators */}
+          <NavLink
+            to="/simulator"
+            title="Interactive STEM & Humanities Simulators (PhET / Flash Style)"
+            style={({ isActive }) => ({
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.88rem',
+              fontWeight: isActive ? 700 : 600,
+              color: isActive
+                ? '#0284c7'
+                : colorMode === 'dark'
+                ? '#7dd3fc'
+                : '#0369a1',
+              backgroundColor: isActive
+                ? colorMode === 'dark'
+                  ? 'rgba(2, 132, 199, 0.25)'
+                  : '#f0f9ff'
+                : colorMode === 'dark'
+                ? 'rgba(2, 132, 199, 0.08)'
+                : 'rgba(224, 242, 254, 0.5)',
+              border: `1px solid ${isActive ? '#38bdf8' : colorMode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : '#bae6fd'}`,
+              borderRadius: '6px',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            })}
+          >
+            <span>🎮</span>
+            <span>Simulators</span>
+          </NavLink>
+
           {/* 3. Learning Dropdown */}
           <div
             ref={learningDropdownRef}

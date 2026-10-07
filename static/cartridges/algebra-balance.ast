@@ -1,0 +1,43 @@
+(:scene :id "algebra-balance" :title "⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)" :stage "KS2/KS3 MATHS" :duration 14.0
+  (:vars (
+    (:var :name "xVal" :val 5.0 :min 1.0 :max 10.0 :step 1.0 :label "Unknown Weight (x)")
+  ))
+  (:inputs (
+    (:slider :var "xVal" :label "Unknown Weight (x)" :min 1.0 :max 10.0 :step 1.0)
+  ))
+  (:gestures (
+    (:draggable :target "#balance-beam" :axis "y" :min -30 :max 30)
+    (:draggable :target "#left-pan-weights" :axis "y" :min 200 :max 380)
+    (:draggable :target "#right-pan-weights" :axis "y" :min 200 :max 380)
+  ))
+  (:subtitles (
+    (:start 0.00 :end 3.50 :en "An equation is a physical balance scale! 2 unknown 'x' boxes plus 5 unit weights balance 15 weights." :es "¡Una ecuación es una balanza física! 2 cajas 'x' más 5 unidades equilibran 15 unidades.")
+    (:start 3.50 :end 7.00 :en "To solve for x, whatever you do to one side, you MUST do to the other. Subtract 5 from both pans!" :es "Para despejar x, lo que hagas a un lado, ¡DEBES hacerlo al otro! Resta 5 de ambos lados.")
+    (:start 7.00 :end 14.00 :en "Now 2x balances 10. Divide both pans in half: one single x equals exactly 5 units!" :es "Ahora 2x equilibra 10. Divide ambos lados a la mitad: ¡una sola x vale exactamente 5 unidades!")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "1. Initial Equation" :rule "Left Pan: 2x + 5 blocks. Right Pan: 15 unit weights. Both sides balance equally")
+    (:t 0.35 :title "2. Isolate Variable Terms" :rule "Subtract 5 from BOTH pans simultaneously: (2x + 5 - 5) = (15 - 5) => 2x = 10")
+    (:t 0.70 :title "3. Divide Equally" :rule "Divide both pans by 2: (2x ÷ 2) = (10 ÷ 2) => x = 5")
+    (:t 1.00 :title "4. Equality Verified" :rule "Each x block weighs exactly 5 units! Scale remains in perfect equilibrium")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.34
+      :prompt "Why must we subtract 5 from BOTH sides of the equation simultaneously?"
+      :options ("To keep the balance scale in physical equilibrium" "Because the right side cannot have weights" "Because subtracting only from one side makes it heavier")
+      :answer 0
+      :explanation "An equation states that two expressions have equal value. Performing the exact same operation to both sides preserves equality.")
+    (:checkpoint :t 0.69
+      :prompt "If 2x = 10, how do we find the weight of a single x box?"
+      :options ("Divide both sides by 2 (x = 10 ÷ 2 = 5)" "Subtract 2 from both sides (x = 8)" "Multiply both sides by 2 (x = 20)")
+      :answer 0
+      :explanation "Since x is multiplied by 2, we apply the inverse operation: divide both sides by 2 to isolate a single x.")
+  ))
+  (:bindings (
+    (:target "#balance-beam" :attr "transform" :expr "'rotate(' + Math.max(-14, Math.min(14, (((t < 0.35 ? 15 : 10) - (2 * (vars.xVal !== undefined ? vars.xVal : 5) + (t < 0.35 ? 5 : 0))) * 2.2))).toFixed(1) + ', 400, 240)'")
+    (:target "#eq-display" :attr "textContent" :expr "t < 0.35 ? ('2x + 5 = 15' + (vars.xVal !== undefined && vars.xVal !== 5 ? ' (x=' + vars.xVal + ')' : '')) : (t < 0.70 ? 'Step 1: 2x = 10 (-5 both sides)' : 'Step 2: x = 5 (Divide both by 2)')")
+    (:target "#left-5-units" :attr "opacity" :expr "t < 0.35 ? '1' : '0'")
+    (:target "#right-weight-text" :attr "textContent" :expr "t < 0.35 ? '15' : (t < 0.70 ? '10' : '5')")
+    (:target "#balance-status" :attr "textContent" :expr "((vars.xVal !== undefined ? vars.xVal : 5) === 5) ? '⚖️ Scale in Perfect Equilibrium (2x + 5 = 15)' : (((vars.xVal || 5) < 5) ? '⚠️ Left Pan Too Light (' + (2*(vars.xVal||5) + (t < 0.35 ? 5 : 0)) + ' < ' + (t < 0.35 ? 15 : 10) + ')' : '⚠️ Left Pan Too Heavy (' + (2*(vars.xVal||5) + (t < 0.35 ? 5 : 0)) + ' > ' + (t < 0.35 ? 15 : 10) + ')')")
+  ))
+)

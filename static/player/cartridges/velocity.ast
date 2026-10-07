@@ -1,0 +1,42 @@
+(:scene :id "velocity" :title "Kinematics: Velocity & Distance-Time Vectors" :stage "KS3 PHYSICS" :duration 10.0
+  (:vars (
+    (:var :name "initialV" :val 0 :min 0 :max 20 :step 1 :unit "m/s" :label "Initial Velocity (u)")
+    (:var :name "accel" :val 4.5 :min -10 :max 10 :step 0.5 :unit "m/s²" :label "Acceleration (a)")
+  ))
+  (:inputs (
+    (:slider :var "initialV" :label "Initial Speed (u)" :min 0 :max 20 :step 1)
+    (:slider :var "accel" :label "Linear Acceleration (a)" :min -10 :max 10 :step 0.5)
+  ))
+  (:computed (
+    (:name "finalV" :expr "(vars.initialV + vars.accel * 5).toFixed(1)")
+    (:name "distance" :expr "(vars.initialV * 5 + 0.5 * vars.accel * 25).toFixed(1)")
+  ))
+  (:gestures (
+    (:draggable :target "#vel-particle" :axis "x" :min 120 :max 680)
+  ))
+  (:subtitles (
+    (:start 0.00 :end 0.35 :en "Watch the particle accelerate from rest along the vector track." :es "Observa cómo la partícula acelera desde el reposo en la pista vectorial.")
+    (:start 0.35 :end 0.70 :en "The slope on the distance-time graph represents instant velocity: steep slope = fast speed." :es "La pendiente de la gráfica representa la velocidad instantánea: pendiente empinada = alta velocidad.")
+    (:start 0.70 :end 1.00 :en "Braking applies negative acceleration, flattening the velocity graph to zero." :es "El frenado aplica aceleración negativa, aplanando la gráfica a cero.")
+  ))
+  (:keyframes (
+    (:t 0.00 :title "At Rest" :rule "Position s = 0m, Velocity v = 0 m/s.")
+    (:t 0.35 :title "Constant Acceleration" :rule "Slope of Distance-Time curve steepens (v = u + at).")
+    (:t 0.70 :title "Constant High Velocity" :rule "Straight steep line represents high uniform speed.")
+    (:t 1.00 :title "Deceleration to Stop" :rule "Negative acceleration flattens curve back to zero velocity.")
+  ))
+  (:interactive (
+    (:checkpoint :t 0.45
+      :prompt "On a Distance-Time graph, what mathematical property represents the instantaneous velocity?"
+      :options ("The gradient / slope of the tangent line" "The total area trapped under the curve" "The horizontal x-intercept" "The square of the y-coordinate")
+      :answer 0
+      :explanation "Velocity is defined as the rate of change of displacement with respect to time (v = ds/dt), which is geometrically represented by the gradient/slope.")
+  ))
+  (:bindings (
+    (:target "#vel-particle" :attr "cx" :expr "120 + t * 560")
+    (:target "#vel-arrow-line" :attr "x1" :expr "120 + t * 560")
+    (:target "#vel-arrow-line" :attr "x2" :expr "120 + t * 560 + (Math.sin(t * Math.PI) * 40 + 15)")
+    (:target "#vel-graph-dot" :attr "cx" :expr "240 + t * 340")
+    (:target "#vel-graph-dot" :attr "cy" :expr "380 - Math.pow(t, 1.6) * 120")
+  ))
+)

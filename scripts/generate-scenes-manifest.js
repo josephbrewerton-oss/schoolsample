@@ -147,7 +147,23 @@ export function generateScenesManifest() {
   };
 
   fs.writeFileSync(manifestPath, JSON.stringify(output, null, 2) + '\n', 'utf8');
-  console.log(`[Manifest Generator] Successfully wrote ${manifest.length} scenes to${manifestPath}`);
+  console.log(`[Manifest Generator] Successfully wrote ${manifest.length} scenes to ${manifestPath}`);
+
+  // Also emit scenes-config.json for backward compatibility
+  const legacyConfigPath = path.join(rootDir, 'static', 'player', 'scenes-config.json');
+  fs.writeFileSync(legacyConfigPath, JSON.stringify(output, null, 2) + '\n', 'utf8');
+
+  // Synchronize cartridge folders
+  const cartridgesDir = path.join(rootDir, 'static', 'cartridges');
+  const playerCartridgesDir = path.join(rootDir, 'static', 'player', 'cartridges');
+  [cartridgesDir, playerCartridgesDir].forEach((dir) => {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    for (const f of fs.readdirSync(scenesDir)) {
+      if (f.endsWith('.ast') || f.endsWith('.svg') || f.endsWith('.json')) {
+        fs.copyFileSync(path.join(scenesDir, f), path.join(dir, f));
+      }
+    }
+  });
 
   // 2. Output strongly typed presets for React UI
   const tsDataDir = path.dirname(tsExportPath);

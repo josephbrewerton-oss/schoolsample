@@ -322,6 +322,32 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
     version: '2.6.0',
     invariants: ['Hydrological Mass Conservation', 'Phase Change Thermodynamics'],
   },
+  {
+    id: 'languages',
+    title: 'MFL & Polyglot Studio: Spanish, French & Latin',
+    stage: 'KS2/KS3 MFL',
+    category: 'Modern & Classical Languages',
+    desc: 'Spanish, French & Latin phonics soundboard, regular verb conjugation wheels, and vocabulary recall sprints.',
+    icon: '🌍',
+    source: 'builtin',
+    svgFile: 'scenes/languages.svg',
+    astFile: 'scenes/languages.ast',
+    version: '2.6.0',
+    invariants: ['Grammar Agreement', 'Phoneme Articulation', 'Vocabulary Association'],
+  },
+  {
+    id: 'shakespeare',
+    title: 'The Globe Theatre: Shakespeare & Iambic Pentameter',
+    stage: 'KS3/KS4 ENGLISH LITERATURE',
+    category: 'English Literature',
+    desc: 'Wooden O 3D stage geometry, rhythm meter visualizer for unstressed/stressed beats, and Elizabethan theatrical staging.',
+    icon: '🎭',
+    source: 'builtin',
+    svgFile: 'scenes/shakespeare.svg',
+    astFile: 'scenes/shakespeare.ast',
+    version: '2.6.0',
+    invariants: ['Iambic Pentameter Metre', 'Elizabethan Theatrical Proportions'],
+  },
 ];
 
 // Fallback embedded SVG & AST for core cartridges when running completely air-gapped
@@ -510,6 +536,25 @@ export function getCartridge(idOrAlias: string): CartridgeDefinition | null {
       source: 'builtin',
       svgMarkup: EMBEDDED_CORE_CARTRIDGES[canonicalId].svg,
       astSource: EMBEDDED_CORE_CARTRIDGES[canonicalId].ast,
+    };
+  }
+
+  // Generic fallback for any valid scene/cartridge ID
+  if (canonicalId && /^[a-z0-9_-]+$/i.test(canonicalId)) {
+    const formattedTitle = canonicalId
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return {
+      id: canonicalId,
+      title: formattedTitle,
+      stage: 'CURRICULUM',
+      category: 'STEM',
+      desc: `Interactive curriculum vector laboratory cartridge for ${formattedTitle}.`,
+      icon: '⚡',
+      source: 'builtin',
+      svgFile: `scenes/${canonicalId}.svg`,
+      astFile: `scenes/${canonicalId}.ast`,
+      version: '2.6.0',
     };
   }
 

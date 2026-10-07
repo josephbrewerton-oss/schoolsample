@@ -135,6 +135,27 @@ export default function Home() {
             </Link>
 
             <Link
+              to="/simulator"
+              style={{
+                padding: '0.9rem 2.25rem',
+                fontSize: '1.1rem',
+                borderRadius: '10px',
+                background: '#0284c7',
+                color: '#ffffff',
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span>🎮</span>
+              <span>Interactive Simulators (PhET / Flash Style)</span>
+            </Link>
+
+            <Link
               to="/practice-lab"
               className="button button--primary button--lg"
               style={{
