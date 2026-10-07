@@ -593,9 +593,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     if (onConfigChange) onConfigChange(displayConfig);
   }, [displayConfig, postToPlayer, onConfigChange]);
 
-  const rawBase = import.meta.env.BASE_URL || '/';
-  const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-  const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&v=2.5.0`;
+const rawBase = import.meta.env.BASE_URL || '/';
+const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&base=${encodeURIComponent(cleanBase)}&v=2.5.0`;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&mode=${encodeURIComponent(embedTargetMode)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
@@ -1536,18 +1536,18 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           ) : (
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
               <iframe
-                key={`vector-player-viewport-${currentLang}`}
-                ref={iframeRef}
-                src={playerSrc}
-                title="Lumina Vector Player"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                  display: 'block',
-                }}
-                allow="fullscreen; microphone"
-              />
+  key={`vector-player-viewport-${selectedPreset}-${currentLang}`}
+  ref={iframeRef}
+  src={playerSrc}
+  title="Lumina Vector Player"
+  style={{
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    display: 'block',
+  }}
+  allow="fullscreen; microphone"
+/>
             </div>
           )}
 
