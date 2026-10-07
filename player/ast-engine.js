@@ -2154,9 +2154,7 @@
 
     /**
      * Dynamically ingests [id].svg and [id].ast assets on selection
-     */
-    async loadScene(presetId, shouldPlay = false) {
-      this.cancelSpeech();
+     *    async loadScene(presetId, shouldPlay = false)      this.cancelSpeech();
       const normalizedId = (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.normalizeId === 'function')
         ? global.ASTSceneRegistry.normalizeId(presetId)
         : presetId;
@@ -2265,19 +2263,21 @@ const fetchAsset = async (ext) => {
     const playerDirUrl = new URL('.', baseHref);
 
     // Read optional ?base= query parameter passed from parent React component
-    const urlParams = new URLSearchParams(window.location.search);
+const urlParams = new URLSearchParams(window.location.search);
     const customBase = urlParams.get('base') || '';
 
+    // Calculate current script directory: .../schoolsample/player/
+    const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+
     const candidateUrls = [
-      new URL(`scenes/${sceneId}.${ext}`, playerDirUrl).href,
-      new URL(`cartridges/${sceneId}.${ext}`, playerDirUrl).href,
-      new URL(`../scenes/${sceneId}.${ext}`, playerDirUrl).href,
-      new URL(`../cartridges/${sceneId}.${ext}`, playerDirUrl).href,
+      `${currentDir}scenes/${sceneId}.${ext}`,
+      `${currentDir}cartridges/${sceneId}.${ext}`,
+      `scenes/${sceneId}.${ext}`,
+      `cartridges/${sceneId}.${ext}`,
       ...(customBase ? [
-        new URL(`${customBase.replace(/\/$/, '')}/player/scenes/${sceneId}.${ext}`, window.location.origin).href,
-        new URL(`${customBase.replace(/\/$/, '')}/scenes/${sceneId}.${ext}`, window.location.origin).href,
-      ] : []),
-      new URL(`${sceneId}.${ext}`, playerDirUrl).href
+        `${customBase.replace(/\/$/, '')}/player/scenes/${sceneId}.${ext}`,
+        `${customBase.replace(/\/$/, '')}/scenes/${sceneId}.${ext}`,
+      ] : [])
     ];
 
     for (const url of candidateUrls) {
@@ -2427,9 +2427,7 @@ const fetchAsset = async (ext) => {
         }
       } catch (bindErr) {
         console.warn('[AST Engine] Initial frame bind notice:', bindErr);
-      }
-
-      this.emit('presetchange', {
+      }presetchange', {
         preset: this.activePresetId,
         title: this.scene.title,
         stage: this.scene.stage,
