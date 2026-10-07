@@ -231,25 +231,17 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     const canonical = normalizeCartridgeId(nextPreset);
     setSelectedPreset(canonical);
     selectedPresetRef.current = canonical;
-    lastSentPresetRef.current = canonical;
-    postToPlayer({ type: 'SET_PRESET', preset: canonical, play: true });
-    onPresetChange?.(canonical);
 
-    // If it's a decentralized custom or PhET cartridge, immediately supply the SVG and AST payload
-    const cart = getCartridge(canonical);
-    if (cart && (cart.source === 'phet' || cart.source === 'user' || cart.source === 'imported') && cart.svgMarkup && cart.astSource) {
-      postToPlayer({
-        type: 'LOAD_CARTRIDGE',
-        cartridge: {
-          id: cart.id,
-          title: cart.title,
-          stage: cart.stage,
-          svg: cart.svgMarkup,
-          ast: cart.astSource,
-        },
-      });
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: 'SET_PRESET',
+        preset: canonical,
+        play: true
+      }, '*');
     }
-  }, [postToPlayer, onPresetChange]);
+
+    onPresetChange?.(canonical);
+  }, [onPresetChange]);
 
   // Sync decentralized custom/PhET cartridge on initial ready
   useEffect(() => {
@@ -463,13 +455,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
 
   // Listen for telemetry and events from iframe player
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+ const handleMessage = (event: MessageEvent) => {
+      // 1. Ensure message came from our player iframe
       if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
-      if (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') {
-        if (event.origin && event.origin !== 'null' && event.origin !== window.location.origin) {
-          return;
-        }
-      }
 
       const data = event.data;
       if (!data || data.source !== 'ast-vector-player') return;
@@ -477,24 +465,16 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       switch (data.type) {
         case 'PLAYER_READY':
           setIsPlayerReady(true);
-          if (typeof data.isPlaying === 'boolean') {
-            setIsPlaying(data.isPlaying);
-          } else if (autoPlayRef.current) {
-            setIsPlaying(true);
-          }
-          if (typeof data.has3D === 'boolean') setHas3D(data.has3D);
-          if (typeof data.hasInteractive === 'boolean') setHasInteractive(data.hasInteractive);
-          if (Array.isArray(data.keyframes)) setKeyframes(data.keyframes);
-          // Only send SET_PRESET if the iframe booted with a different preset than selectedPresetRef.current
-          if (data.preset && normalizeCartridgeId(data.preset) !== normalizeCartridgeId(selectedPresetRef.current)) {
-            postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
-          } else if (autoPlayRef.current) {
-            postToPlayer({ type: 'PLAY' });
+          if (data.preset) {
+            setSelectedPreset(data.preset);
+            selectedPresetRef.current = data.preset;
           }
           break;
-        case 'STATECHANGE':
-          if (typeof data.isPlaying === 'boolean') {
-            setIsPlaying(data.isPlaying);
+        case 'PRESETCHANGE':
+          if (data.preset) {
+            setSelectedPreset(data.preset);
+            selectedPresetRef.current = data.preset;
+            onPresetChange?.(data.preset);
           }
           break;
         case 'PRESETCHANGE':
