@@ -54,7 +54,7 @@
 
   <!-- Side a Square (3 x 3 = 9 units) -->
   <g id="pyth-group-a">
-    <rect id="pyth-rect-a" x="360" y="190" width="0" height="90" fill="url(#pyth-grad-a)" stroke="#10b981" stroke-width="2" rx="4" data-draggable="pyth-handle-a" style="cursor:ns-resize;" />
+    <rect id="pyth-rect-a" x="360" y="190" width="90" height="90" fill="url(#pyth-grad-a)" stroke="#10b981" stroke-width="2" rx="4" data-draggable="pyth-handle-a" style="cursor:ns-resize;" />
     <!-- Dynamic internal subgrid -->
     <g id="pyth-grid-a" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
     <text id="pyth-txt-a" x="315" y="240" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" opacity="1" filter="url(#pyth-glow)" pointer-events="none">a² = 9</text>
@@ -62,7 +62,7 @@
 
   <!-- Side b Square (4 x 4 = 16 units) -->
   <g id="pyth-group-b">
-    <rect id="pyth-rect-b" x="360" y="280" width="120" height="0" fill="url(#pyth-grad-b)" stroke="#3b82f6" stroke-width="2" rx="4" data-draggable="pyth-handle-b" style="cursor:ew-resize;" />
+    <rect id="pyth-rect-b" x="360" y="280" width="120" height="90" fill="url(#pyth-grad-b)" stroke="#3b82f6" stroke-width="2" rx="4" data-draggable="pyth-handle-b" style="cursor:ew-resize;" />
     <!-- Dynamic internal subgrid -->
     <g id="pyth-grid-b" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
     <text id="pyth-txt-b" x="420" y="345" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" opacity="1" filter="url(#pyth-glow)" pointer-events="none">b² = 16</text>
