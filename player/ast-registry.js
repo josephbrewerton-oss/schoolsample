@@ -28,7 +28,6 @@
     { id: "mountain-elevation", type: "Sim", title: "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science", stage: "KS2/KS3 MATHS & GEOGRAPHY", duration: 16, svgFile: "scenes/mountain-elevation.svg", astFile: "scenes/mountain-elevation.ast" },
     { id: "phonics-lab", type: "App", title: "Early Phonics: Sound Buttons & Blending Mat", stage: "EYFS/KS1 ENGLISH", duration: 12, svgFile: "scenes/phonics-lab.svg", astFile: "scenes/phonics-lab.ast" },
     { id: "photosynthesis", type: "Slide", title: "Photosynthesis: The Green Solar Engine", stage: "KS3 BIOLOGY", duration: 10, svgFile: "scenes/photosynthesis.svg", astFile: "scenes/photosynthesis.ast" },
-    { id: "pythagoras", type: "Sim", title: "Pythagoras Theorem: Area Conservation", stage: "KS3 GEOMETRY", duration: 11, svgFile: "scenes/pythagoras.svg", astFile: "scenes/pythagoras.ast" },
     { id: "shakespeare", type: "Slide", title: "The Globe Theatre: Shakespeare & Iambic Pentameter", stage: "KS3/KS4 ENGLISH LITERATURE", duration: 15, svgFile: "scenes/shakespeare.svg", astFile: "scenes/shakespeare.ast" },
     { id: "solar-system", type: "Sim", title: "Solar System: Heliocentric Planetary Motion", stage: "KS3 SCIENCE", duration: 14, has3D: true, svgFile: "scenes/solar-system.svg", astFile: "scenes/solar-system.ast" },
     { id: "times-tables", type: "Slide", title: "Times Tables: 2D Array & Distributive Splitter", stage: "KS1/KS2 MATHS", duration: 14, svgFile: "scenes/times-tables.svg", astFile: "scenes/times-tables.ast" },
