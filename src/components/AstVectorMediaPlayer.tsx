@@ -473,13 +473,6 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
           }
           break;
         case 'PRESETCHANGE':
-          if (data.preset) {
-            setSelectedPreset(data.preset);
-            selectedPresetRef.current = data.preset;
-            onPresetChange?.(data.preset);
-          }
-          break;
-        case 'PRESETCHANGE':
           if (data.preset && data.preset !== selectedPresetRef.current) {
             selectedPresetRef.current = data.preset;
             lastSentPresetRef.current = data.preset;

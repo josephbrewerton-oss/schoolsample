@@ -1,5 +1,5 @@
 // src/pages/media-player.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import PageMeta from '../components/PageMeta';
 import AstVectorMediaPlayer, { VectorPresetType, AstVectorMediaPlayerHandle } from '../components/AstVectorMediaPlayer';
@@ -91,13 +91,19 @@ export default function MediaPlayerPage(): React.JSX.Element {
         setActivePreset(target.id);
       }
     }
-  }, [urlPreset, activePreset]);
+  }, [urlPreset]);
 
-  const handleSelectPreset = (id: VectorPresetType) => {
+  const handleSelectPreset = useCallback((id: VectorPresetType) => {
     const canonical = normalizeCartridgeId(id);
+    if (!canonical) return;
     setActivePreset(canonical);
-    setSearchParams({ preset: canonical });
-  };
+    const currentPresetInUrl = searchParams.get('preset');
+    if (currentPresetInUrl !== canonical) {
+      const next = new URLSearchParams(searchParams);
+      next.set('preset', canonical);
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const currentPresetMeta = cartridges.find((p) => p.id === activePreset) || cartridges[0] || {
     id: 'pythagoras',
