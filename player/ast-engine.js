@@ -1095,20 +1095,35 @@
       this.stateMachines = new Map();
       this.emitters = new Map();
       this.activeBindInputs = [];
+// 1. Guard against unpopulated scene registry or invalid preset IDs
+      this.scene = this.getScene(this.activePresetId) || null;
+      this.durationSec = (this.scene && typeof this.scene.duration === 'number') 
+        ? this.scene.duration 
+        : 10.0;
 
-      // Load initial scene
-      this.scene = this.getScene(this.activePresetId);
-      this.durationSec = this.scene.duration || 10.0;
+      // 2. Initialize lifecycle locks and clock state
+      this.currentRafId = null;
+      this.vars = {};
+      this.isLoading = false;
 
-      // Bind methods
+      // 3. Bind methods
       this.tick = this.tick.bind(this);
+      this.handlePointerDown = this.handlePointerDown.bind(this);
 
-      // Eagerly ingest initial scene assets if in browser
+      // 4. Eagerly ingest initial scene assets if in browser
       if (typeof window !== 'undefined') {
-        this.loadScene(this.activePresetId, this.isPlaying);
+        // Cancel any stale animation frame before kicking off load
+        if (this.currentRafId) {
+          cancelAnimationFrame(this.currentRafId);
+          this.currentRafId = null;
+        }
+        
+        // Load safely without unhandled promise/fetch crashes
+        this.loadScene(this.activePresetId, Boolean(this.isPlaying)).catch((err) => {
+          console.error(`[AST Engine Init Error] Failed to mount scene "${this.activePresetId}":`, err);
+        });
       }
     }
-
     get container() {
       return this._container;
     }
