@@ -580,10 +580,11 @@
       const theme = params.get('theme') || 'dark';
 
       // Clear Embedded Mode Check
-      const isEmbedded = params.get('embed') === '1' || params.get('embed') === 'true' || params.get('embedded') === '1' || params.get('embedded') === 'true' || params.get('mode') === 'embedded' || params.get('mode') === 'embed' || (window.self !== window.top && params.get('standalone') !== '1');
+      const isEmbedded = params.get('embed') === '1' || params.get('embed') === 'true' || params.get('embedded') === '1' || params.get('embedded') === 'true' || params.get('mode') === 'embedded' || params.get('mode') === 'embed';
       if (isEmbedded) {
         document.body.classList.add('ast-embedded-mode');
-        if (params.get('presetSelector') !== '1') {
+        // Only hide if caller explicitly requested hiding selector
+        if (params.get('selector') === '0' || params.get('hideSelector') === '1') {
           const sel = document.getElementById('preset-selector');
           if (sel) sel.style.display = 'none';
         }
