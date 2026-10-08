@@ -2325,7 +2325,7 @@ window.addEventListener('message', (e) => {
 
       // Check if current active scene is an interactive simulation apparatus
       const activePreset = this.engine && (this.engine.activePresetId || this.engine.preset);
-      const isInteractiveSimulation = ['solar-system', 'water-cycle', 'pythagoras', 'kinetic-gas', 'calculus-curves', 'electric-circuits', 'math-fishing'].includes(activePreset);
+      const isInteractiveSimulation = ['solar-system', 'water-cycle', 'kinetic-gas', 'calculus-curves', 'electric-circuits', 'math-fishing'].includes(activePreset);
 
       try {
         const raw = localStorage.getItem('stj_player_display_config');

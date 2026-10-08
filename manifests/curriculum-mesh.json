@@ -558,18 +558,6 @@
       "questionsCount": 2
     },
     {
-      "urn": "urn:curriculum:ks3:maths:pythagoras-theorem",
-      "path": "ks3/maths/pythagoras-theorem",
-      "stage": "Key Stage 3",
-      "subject": "Mathematics",
-      "topic": "Pythagoras Theorem",
-      "executionEngine": "curriculum_bank",
-      "axiom": "In any right-angled triangle, the area of the square on the hypotenuse (longest side opposite the right angle) equals the sum of the areas of the squares on the other two sides: a² + b² = c².",
-      "cognitiveTrap": "Applying Pythagoras theorem to non-right-angled triangles, or forgetting to take the square root at the final step.",
-      "lessonsCount": 2,
-      "questionsCount": 1
-    },
-    {
       "urn": "urn:curriculum:ks3:science:atomic-structure",
       "path": "ks3/science/atomic-structure",
       "stage": "Key Stage 3",
