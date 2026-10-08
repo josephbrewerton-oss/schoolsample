@@ -1,49 +1,69 @@
-# St Joseph's Curriculum Portal — Dual-Licensing Charter
+# St Joseph's Curriculum Portal & AST Engine — Dual-Licensing Charter
 
 Copyright (c) 2026 Joseph Brewerton
-Inspired by St Joseph's, Fishponds (Bristol), Canon Gregory, and Father Jerome Ajakaiye.
+Inspired by St Joseph's, Fishponds (Bristol), Canon Gregory, Father Jerome Ajakaiye, and the Diocese of Clifton.
 
 ---
 
 ## 1. Dual-Licensing Architecture
 
-St Joseph's Curriculum Portal and its underlying **AST Vector Player & SlideScript Engine** are distributed under an explicit **Dual-Licensing Model**:
+St Joseph's Curriculum Portal and its underlying core runtimes—including the **AST Vector Player, SlideScript Engine, 3D Vector Math Substrates, and S-Expression Compilers**—are distributed under an enforceable **Dual-Licensing Model**:
 
 1. **Track A: The Humanitarian & Open Educational Commons** (GNU AGPLv3 + OGL v3.0)
-2. **Track B: The Enterprise Commercial License** (Proprietary / Closed-Source Distribution)
+2. **Track B: The Enterprise Commercial & Industrial License** (Proprietary / Closed-Source Commercial Exploitation)
 
 ---
 
 ## Track A: The Humanitarian Commons (Free in Perpetuity)
 
 ### Software & Engine Code: GNU Affero General Public License v3.0 (AGPLv3)
-All software source code, including `ast-engine.js`, `ast-compiler.js`, `obs-controller.js`, S-Expression AST parsers, and the client-side React SPA, is licensed under the **GNU Affero General Public License, Version 3 (AGPLv3)**:
+All core open-source engine code, parsers, and client runtimes (`ast-engine.js`, `ast-compiler.js`, `obs-controller.js`, and associated browser runtime modules) are licensed under the **GNU Affero General Public License, Version 3 (AGPLv3)**:
 
-* **100% Free**: Permitted for free use by all state schools, Catholic dioceses, parishes, educational charities, teachers, pupils, home learners, universities, and schools in emerging economies (OECD DAC list).
-* **Copyleft Reciprocity Clause**: If you modify this software or run a modified version over a computer network (e.g. as a hosted web platform or cloud service), you **must** make the complete corresponding source code freely available to all users under the GNU AGPLv3.
-* **Anti-Enclosure Shield**: Proprietary commercial entities are legally prohibited from taking this code, rebranding it, closing the source code, and selling it back to schools behind private paywalls.
+* **100% Free for Education:** Permitted for free, unencumbered use by all state schools, Catholic dioceses, parishes, educational charities, teachers, pupils, home learners, universities, and schools in emerging economies (OECD DAC list).
+* **Copyleft Reciprocity Clause:** Any individual or entity modifying this software or operating a modified version across a computer network (including web apps, SaaS environments, or dynamic digital sign networks) **must** make the complete corresponding source code available under the GNU AGPLv3.
+* **Anti-Enclosure Shield:** Commercial third parties are legally barred from packaging, embedding, rebranding, or enclosing this codebase behind closed proprietary paywalls without executing a separate Track B Enterprise Commercial License.
 
-### Curriculum Lesson Content: Open Government Licence v3.0 (OGL v3.0)
-All educational lesson sequences, national curriculum objectives, and question manifests are published under the **UK Open Government Licence (OGL v3.0)** in alignment with Oak National Academy curriculum materials.
+### Curriculum Content: Open Government Licence v3.0 (OGL v3.0)
+Curriculum frameworks, syllabi sequences, and objective question mappings incorporate public sector information licensed under the **UK Open Government Licence (OGL v3.0)** in alignment with Oak National Academy materials.
 
-### Religious Education & Catholic Life Materials: Public Educational Trust
-Liturgical walkthroughs, catechetical guides, Sacraments, and Catholic Sanctuary materials are held in public educational trust for parishes and Catholic educational bodies worldwide, free of charge.
+### Religious Formation Materials: Public Educational Trust
+Liturgical walkthroughs, catechetical guides, Sacraments, and Catholic Sanctuary materials are maintained in public educational trust for parishes and Catholic educational bodies worldwide, free of charge.
 
 ---
 
-## Track B: Enterprise Commercial License
+## Track B: Enterprise Commercial & Industrial License
 
-For organizations, commercial learning management system (LMS) providers, proprietary EdTech vendors, and for-profit publishers who wish to:
+Track B is mandatory for commercial enterprises, ad-tech platforms, out-of-home media operators, proprietary learning management systems (LMS), and commercial publishers wishing to:
 
-1. Incorporate the AST Vector Player, SlideScript Compiler, or 3D vector engine into proprietary, closed-source software products; OR
-2. Distribute network services derived from this software without making their own proprietary source code available under the GNU AGPLv3; OR
-3. Obtain guaranteed commercial support, custom integration engineering, and enterprise indemnification.
+1. **Bypass AGPLv3 Copyleft Obligations:** Incorporate the AST Vector Player, S-Expression runtime, or 3D vector engines into closed-source, proprietary software products or SaaS services without open-sourcing their own proprietary backends, schedulers, or business logic; OR
+2. **Deploy on Commercial & Industrial Signage:** Embed or execute the runtime within commercial digital signage hardware, Digital Out-of-Home (DOOH) roadside billboard fleets, retail shelf-edge display networks, transit media systems, or programmatic advertising exchanges; OR
+3. **Secure Commercial SLAs & Custom Engineering:** Obtain guaranteed vendor SLAs, custom hardware transpilers, enterprise indemnification, and direct technical integration support.
 
-### Cross-Subsidisation Mission
-100% of commercial licensing revenues received under Track B are dedicated to the **St Joseph's Educational Trust Fund** to directly finance:
-* Purchasing refurbished, zero-cost Chromebooks and tablets for disadvantaged pupils;
-* Offline solar-powered digital education kits for rural schools in developing nations;
-* Translating curriculum vector slides into regional dialects and languages.
+---
 
-To enquire about Track B Commercial Licensing terms, contact:
-`joseph.brewerton@gmail.com`
+## 2. Commercial Proceeds, Cost Recovery & Charitable Governance
+
+Commercial exploitation under Track B operates on an **Enterprise Cost-Recovery and Mission-Endowment Model** governed directly by the copyright holder (**Joseph Brewerton**):
+
+### A. Priority Developer Cost Recovery & Operational Maintenance
+Prior to any charitable distributions, gross commercial revenues generated under Track B shall first be applied to:
+1. **Full Development Cost Recovery:** Reimbursing and amortising the historical capital investments, development hours, testing infrastructure, and out-of-pocket research and development (R&D) expenditure incurred by the author in architecting and maintaining the engine;
+2. **Fair Remuneration & Engineering Retainers:** Compensating the author and core maintainers with fair commercial fees, director salaries, and professional service retainers for technical support, upgrades, and platform management;
+3. **Operational & Legal Reserves:** Covering direct trading overheads, corporation taxes, intellectual property protection, hosting, and commercial insurance reserves.
+
+### B. Creator-Directed Endowment & Charitable Allocations
+All net surplus profits realised from Track B commercial licensing following operational expenses and developer cost recovery shall be allocated at the direct instruction and sole discretion of the copyright holder (**Joseph Brewerton**) to support:
+
+1. **Parish & Diocesan Support (St Joseph's, Fishponds):** Capital works, parish maintenance, community outreach, and liturgical resources for **St Joseph's Catholic Church, Fishponds (Diocese of Clifton)**;
+2. **Educational Access & Digital Inclusion:** Sponsoring zero-cost refurbished Chromebooks, tablets, and solar-powered edge hardware kits for disadvantaged students and Catholic schools in under-resourced communities and developing nations;
+3. **Curriculum Localisation:** Financing dialect and language translations of interactive vector learning units for emerging economies.
+
+---
+
+## 3. Commercial Enquiries & Contracting
+
+To negotiate enterprise fleet terms, custom DOOH integration licenses, or proprietary closed-source deployment rights under Track B, contact:
+
+**Joseph Brewerton**  
+Bristol, England  
+Email: `joseph.brewerton@gmail.com`
