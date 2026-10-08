@@ -1,4 +1,4 @@
-(:scene :id "water-cycle" :title "Water Cycle: Continuous Earth Cycle" :stage "KS2 GEOGRAPHY" :duration 10.0
+(:scene :id "water-cycle" :type "Slide" :title "Water Cycle: Continuous Earth Cycle" :stage "KS2 GEOGRAPHY" :duration 10.0
   (:vars (
     (:var :name "oceanTemp" :val 24 :min 10 :max 40 :step 1 :unit "°C" :label "Sea Surface Temp")
     (:var :name "cloudCover" :val 70 :min 10 :max 100 :step 5 :unit "%" :label "Cloud Density")
