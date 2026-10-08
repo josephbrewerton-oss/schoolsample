@@ -1,10 +1,21 @@
 {
-  "version": "2.5.0",
-  "generatedAt": "2026-10-07T19:23:55.230Z",
+  "version": "2.6.0",
+  "generatedAt": "2026-10-08T07:36:28.910Z",
   "totalScenes": 21,
+  "inputDirs": [
+    "static/player/scenes",
+    "static/player/cartridges",
+    "static/cartridges"
+  ],
+  "types": [
+    "Sim",
+    "Slide",
+    "App"
+  ],
   "scenes": [
     {
       "id": "church-tour",
+      "type": "Slide",
       "title": "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces",
       "stage": "CATHOLIC LIFE",
       "duration": 16,
@@ -18,6 +29,7 @@
     },
     {
       "id": "calculus-curves",
+      "type": "Sim",
       "title": "Calculus: Tangent Slopes & Definite Integrals",
       "stage": "GCSE & A-LEVEL MATHS",
       "duration": 14,
@@ -31,6 +43,7 @@
     },
     {
       "id": "kinetic-gas",
+      "type": "Sim",
       "title": "Kinetic Gas Theory & Boyle's Law",
       "stage": "KS3/KS4 PHYSICS & CHEMISTRY",
       "duration": 14,
@@ -44,6 +57,7 @@
     },
     {
       "id": "electric-circuits",
+      "type": "Sim",
       "title": "💡 Electrical Circuits & Ohm's Law (V = I × R)",
       "stage": "KS2/KS3 PHYSICS",
       "duration": 12,
@@ -57,6 +71,7 @@
     },
     {
       "id": "bodmas",
+      "type": "Slide",
       "title": "BODMAS / BIDMAS: Forcefield Clamping & Area Physics",
       "stage": "KS2/KS3 MATHS",
       "duration": 14,
@@ -70,6 +85,7 @@
     },
     {
       "id": "times-tables",
+      "type": "Slide",
       "title": "Times Tables: 2D Array & Distributive Splitter",
       "stage": "KS1/KS2 MATHS",
       "duration": 14,
@@ -83,6 +99,7 @@
     },
     {
       "id": "phonics-lab",
+      "type": "App",
       "title": "Early Phonics: Sound Buttons & Blending Mat",
       "stage": "EYFS/KS1 ENGLISH",
       "duration": 12,
@@ -96,6 +113,7 @@
     },
     {
       "id": "math-fishing",
+      "type": "Sim",
       "title": "Math Pond: Number Bonds Fishing Game",
       "stage": "KS1/KS2 MATHS",
       "duration": 14,
@@ -109,6 +127,7 @@
     },
     {
       "id": "mountain-elevation",
+      "type": "Sim",
       "title": "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science",
       "stage": "KS2/KS3 MATHS & GEOGRAPHY",
       "duration": 16,
@@ -122,6 +141,7 @@
     },
     {
       "id": "fish-tank",
+      "type": "App",
       "title": "Aquarium Stress Benchmark: Vector Point & FPS Limiter",
       "stage": "BENCHMARK & STRESS LAB",
       "duration": 12,
@@ -135,6 +155,7 @@
     },
     {
       "id": "fractions",
+      "type": "Slide",
       "title": "Fractions: Why Common Denominators Rule",
       "stage": "KS2 MATHS",
       "duration": 12,
@@ -148,6 +169,7 @@
     },
     {
       "id": "solar-system",
+      "type": "Sim",
       "title": "Solar System: Heliocentric Planetary Motion",
       "stage": "KS3 SCIENCE",
       "duration": 14,
@@ -161,6 +183,7 @@
     },
     {
       "id": "photosynthesis",
+      "type": "Slide",
       "title": "Photosynthesis: The Green Solar Engine",
       "stage": "KS3 BIOLOGY",
       "duration": 10,
@@ -174,6 +197,7 @@
     },
     {
       "id": "pythagoras",
+      "type": "Sim",
       "title": "Pythagoras Theorem: Area Conservation",
       "stage": "KS3 GEOMETRY",
       "duration": 11,
@@ -187,6 +211,7 @@
     },
     {
       "id": "water-cycle",
+      "type": "Slide",
       "title": "Water Cycle: Continuous Earth Cycle",
       "stage": "KS2 GEOGRAPHY",
       "duration": 10,
@@ -200,6 +225,7 @@
     },
     {
       "id": "atom",
+      "type": "Sim",
       "title": "Atomic Structure: Bohr Electron Shells",
       "stage": "KS3 CHEMISTRY",
       "duration": 12,
@@ -213,6 +239,7 @@
     },
     {
       "id": "velocity",
+      "type": "Sim",
       "title": "Kinematics: Velocity & Distance-Time Vectors",
       "stage": "KS3 PHYSICS",
       "duration": 10,
@@ -226,6 +253,7 @@
     },
     {
       "id": "dna-helix",
+      "type": "Slide",
       "title": "Genetics: DNA Base Pairing & Transcription",
       "stage": "KS3 GENETICS",
       "duration": 12,
@@ -239,6 +267,7 @@
     },
     {
       "id": "algebra-balance",
+      "type": "Sim",
       "title": "⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)",
       "stage": "KS2/KS3 MATHS",
       "duration": 14,
@@ -252,6 +281,7 @@
     },
     {
       "id": "languages",
+      "type": "App",
       "title": "MFL & Polyglot Studio: Spanish, French & Latin",
       "stage": "KS2/KS3 MFL",
       "duration": 15,
@@ -265,6 +295,7 @@
     },
     {
       "id": "shakespeare",
+      "type": "Slide",
       "title": "The Globe Theatre: Shakespeare & Iambic Pentameter",
       "stage": "KS3/KS4 ENGLISH LITERATURE",
       "duration": 15,

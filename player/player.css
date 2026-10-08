@@ -2044,6 +2044,22 @@ body.interactive-suite-mode #stage-svg {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
 }
 
+/* First-Class Dedicated Embedded Mode - Suppresses redundant menus when hosted in iframe/portal */
+body.ast-embedded-mode #preset-selector,
+body.ast-embedded-mode #btn-open-file,
+body.ast-embedded-mode #badge-stage,
+body.embedded-mode #preset-selector,
+body.embedded-mode #btn-open-file,
+body.embedded-mode #badge-stage {
+  display: none !important;
+}
+
+body.ast-embedded-mode header,
+body.embedded-mode header {
+  gap: 6px;
+}
+
+
 
 
 

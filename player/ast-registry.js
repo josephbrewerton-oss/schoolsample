@@ -13,27 +13,27 @@
   'use strict';
 
   const BUILTIN_CATALOG = [
-    { id: "algebra-balance", title: "⚖️ Algebraic Balance Scale (2x + 5 = 15)", stage: "KS2/KS3 MATHS", duration: 14, svgFile: "scenes/algebra-balance.svg", astFile: "scenes/algebra-balance.ast" },
-    { id: "atom", title: "Atomic Structure: Bohr Electron Shells", stage: "KS3 CHEMISTRY", duration: 12, has3D: true, svgFile: "scenes/atom.svg", astFile: "scenes/atom.ast" },
-    { id: "bodmas", title: "BODMAS / BIDMAS: Forcefield Clamping & Area Physics", stage: "KS2/KS3 MATHS", duration: 14, svgFile: "scenes/bodmas.svg", astFile: "scenes/bodmas.ast" },
-    { id: "calculus-curves", title: "Calculus: Tangent Slopes & Definite Integrals", stage: "GCSE & A-LEVEL MATHS", duration: 14, svgFile: "scenes/calculus-curves.svg", astFile: "scenes/calculus-curves.ast" },
-    { id: "church-tour", title: "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces", stage: "CATHOLIC LIFE", duration: 16, svgFile: "scenes/church-tour.svg", astFile: "scenes/church-tour.ast" },
-    { id: "dna-helix", title: "Genetics: DNA Base Pairing & Transcription", stage: "KS3 GENETICS", duration: 12, has3D: true, svgFile: "scenes/dna-helix.svg", astFile: "scenes/dna-helix.ast" },
-    { id: "electric-circuits", title: "💡 Electrical Circuits & Ohm's Law (V = I × R)", stage: "KS2/KS3 PHYSICS", duration: 12, svgFile: "scenes/electric-circuits.svg", astFile: "scenes/electric-circuits.ast" },
-    { id: "fish-tank", title: "Aquarium Stress Benchmark: Vector Point & FPS Limiter", stage: "BENCHMARK & STRESS LAB", duration: 12, svgFile: "scenes/fish-tank.svg", astFile: "scenes/fish-tank.ast" },
-    { id: "fractions", title: "Fractions: Why Common Denominators Rule", stage: "KS2 MATHS", duration: 12, svgFile: "scenes/fractions.svg", astFile: "scenes/fractions.ast" },
-    { id: "kinetic-gas", title: "Kinetic Gas Theory & Boyle's Law", stage: "KS3/KS4 PHYSICS & CHEMISTRY", duration: 14, svgFile: "scenes/kinetic-gas.svg", astFile: "scenes/kinetic-gas.ast" },
-    { id: "languages", title: "MFL & Polyglot Studio: Spanish, French & Latin", stage: "KS2/KS3 MFL", duration: 15, svgFile: "scenes/languages.svg", astFile: "scenes/languages.ast" },
-    { id: "math-fishing", title: "Math Pond: Number Bonds Fishing Game", stage: "KS1/KS2 MATHS", duration: 14, svgFile: "scenes/math-fishing.svg", astFile: "scenes/math-fishing.ast" },
-    { id: "mountain-elevation", title: "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science", stage: "KS2/KS3 MATHS & GEOGRAPHY", duration: 16, svgFile: "scenes/mountain-elevation.svg", astFile: "scenes/mountain-elevation.ast" },
-    { id: "phonics-lab", title: "Early Phonics: Sound Buttons & Blending Mat", stage: "EYFS/KS1 ENGLISH", duration: 12, svgFile: "scenes/phonics-lab.svg", astFile: "scenes/phonics-lab.ast" },
-    { id: "photosynthesis", title: "Photosynthesis: The Green Solar Engine", stage: "KS3 BIOLOGY", duration: 10, svgFile: "scenes/photosynthesis.svg", astFile: "scenes/photosynthesis.ast" },
-    { id: "pythagoras", title: "Pythagoras Theorem: Area Conservation", stage: "KS3 GEOMETRY", duration: 11, svgFile: "scenes/pythagoras.svg", astFile: "scenes/pythagoras.ast" },
-    { id: "shakespeare", title: "The Globe Theatre: Shakespeare & Iambic Pentameter", stage: "KS3/KS4 ENGLISH LITERATURE", duration: 15, svgFile: "scenes/shakespeare.svg", astFile: "scenes/shakespeare.ast" },
-    { id: "solar-system", title: "Solar System: Heliocentric Planetary Motion", stage: "KS3 SCIENCE", duration: 14, has3D: true, svgFile: "scenes/solar-system.svg", astFile: "scenes/solar-system.ast" },
-    { id: "times-tables", title: "Times Tables: 2D Array & Distributive Splitter", stage: "KS1/KS2 MATHS", duration: 14, svgFile: "scenes/times-tables.svg", astFile: "scenes/times-tables.ast" },
-    { id: "velocity", title: "Kinematics: Velocity & Distance-Time Vectors", stage: "KS3 PHYSICS", duration: 10, svgFile: "scenes/velocity.svg", astFile: "scenes/velocity.ast" },
-    { id: "water-cycle", title: "Water Cycle: Continuous Earth Cycle", stage: "KS2 GEOGRAPHY", duration: 10, svgFile: "scenes/water-cycle.svg", astFile: "scenes/water-cycle.ast" }
+    { id: "algebra-balance", type: "Sim", title: "⚖️ Algebraic Balance Scale (2x + 5 = 15)", stage: "KS2/KS3 MATHS", duration: 14, svgFile: "scenes/algebra-balance.svg", astFile: "scenes/algebra-balance.ast" },
+    { id: "atom", type: "Sim", title: "Atomic Structure: Bohr Electron Shells", stage: "KS3 CHEMISTRY", duration: 12, has3D: true, svgFile: "scenes/atom.svg", astFile: "scenes/atom.ast" },
+    { id: "bodmas", type: "Slide", title: "BODMAS / BIDMAS: Forcefield Clamping & Area Physics", stage: "KS2/KS3 MATHS", duration: 14, svgFile: "scenes/bodmas.svg", astFile: "scenes/bodmas.ast" },
+    { id: "calculus-curves", type: "Sim", title: "Calculus: Tangent Slopes & Definite Integrals", stage: "GCSE & A-LEVEL MATHS", duration: 14, svgFile: "scenes/calculus-curves.svg", astFile: "scenes/calculus-curves.ast" },
+    { id: "church-tour", type: "Slide", title: "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces", stage: "CATHOLIC LIFE", duration: 16, svgFile: "scenes/church-tour.svg", astFile: "scenes/church-tour.ast" },
+    { id: "dna-helix", type: "Slide", title: "Genetics: DNA Base Pairing & Transcription", stage: "KS3 GENETICS", duration: 12, has3D: true, svgFile: "scenes/dna-helix.svg", astFile: "scenes/dna-helix.ast" },
+    { id: "electric-circuits", type: "Sim", title: "💡 Electrical Circuits & Ohm's Law (V = I × R)", stage: "KS2/KS3 PHYSICS", duration: 12, svgFile: "scenes/electric-circuits.svg", astFile: "scenes/electric-circuits.ast" },
+    { id: "fish-tank", type: "App", title: "Aquarium Stress Benchmark: Vector Point & FPS Limiter", stage: "BENCHMARK & STRESS LAB", duration: 12, svgFile: "scenes/fish-tank.svg", astFile: "scenes/fish-tank.ast" },
+    { id: "fractions", type: "Slide", title: "Fractions: Why Common Denominators Rule", stage: "KS2 MATHS", duration: 12, svgFile: "scenes/fractions.svg", astFile: "scenes/fractions.ast" },
+    { id: "kinetic-gas", type: "Sim", title: "Kinetic Gas Theory & Boyle's Law", stage: "KS3/KS4 PHYSICS & CHEMISTRY", duration: 14, svgFile: "scenes/kinetic-gas.svg", astFile: "scenes/kinetic-gas.ast" },
+    { id: "languages", type: "App", title: "MFL & Polyglot Studio: Spanish, French & Latin", stage: "KS2/KS3 MFL", duration: 15, svgFile: "scenes/languages.svg", astFile: "scenes/languages.ast" },
+    { id: "math-fishing", type: "Sim", title: "Math Pond: Number Bonds Fishing Game", stage: "KS1/KS2 MATHS", duration: 14, svgFile: "scenes/math-fishing.svg", astFile: "scenes/math-fishing.ast" },
+    { id: "mountain-elevation", type: "Sim", title: "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science", stage: "KS2/KS3 MATHS & GEOGRAPHY", duration: 16, svgFile: "scenes/mountain-elevation.svg", astFile: "scenes/mountain-elevation.ast" },
+    { id: "phonics-lab", type: "App", title: "Early Phonics: Sound Buttons & Blending Mat", stage: "EYFS/KS1 ENGLISH", duration: 12, svgFile: "scenes/phonics-lab.svg", astFile: "scenes/phonics-lab.ast" },
+    { id: "photosynthesis", type: "Slide", title: "Photosynthesis: The Green Solar Engine", stage: "KS3 BIOLOGY", duration: 10, svgFile: "scenes/photosynthesis.svg", astFile: "scenes/photosynthesis.ast" },
+    { id: "pythagoras", type: "Sim", title: "Pythagoras Theorem: Area Conservation", stage: "KS3 GEOMETRY", duration: 11, svgFile: "scenes/pythagoras.svg", astFile: "scenes/pythagoras.ast" },
+    { id: "shakespeare", type: "Slide", title: "The Globe Theatre: Shakespeare & Iambic Pentameter", stage: "KS3/KS4 ENGLISH LITERATURE", duration: 15, svgFile: "scenes/shakespeare.svg", astFile: "scenes/shakespeare.ast" },
+    { id: "solar-system", type: "Sim", title: "Solar System: Heliocentric Planetary Motion", stage: "KS3 SCIENCE", duration: 14, has3D: true, svgFile: "scenes/solar-system.svg", astFile: "scenes/solar-system.ast" },
+    { id: "times-tables", type: "Slide", title: "Times Tables: 2D Array & Distributive Splitter", stage: "KS1/KS2 MATHS", duration: 14, svgFile: "scenes/times-tables.svg", astFile: "scenes/times-tables.ast" },
+    { id: "velocity", type: "Sim", title: "Kinematics: Velocity & Distance-Time Vectors", stage: "KS3 PHYSICS", duration: 10, svgFile: "scenes/velocity.svg", astFile: "scenes/velocity.ast" },
+    { id: "water-cycle", type: "Slide", title: "Water Cycle: Continuous Earth Cycle", stage: "KS2 GEOGRAPHY", duration: 10, svgFile: "scenes/water-cycle.svg", astFile: "scenes/water-cycle.ast" }
   ];
 
   const scenes = {};
@@ -262,6 +262,18 @@
 
     parseAstMetadata(content, id) {
       if (!content || typeof content !== 'string') return null;
+      const typeMatch = content.match(/:type\s+("Sim"|"Slide"|"App"|"[^"]+"|[^\s\)]+)/i);
+      let type = 'Sim';
+      if (typeMatch) {
+        const norm = typeMatch[1].replace(/^"|"$/g, '').toLowerCase();
+        if (norm === 'slide') type = 'Slide';
+        else if (norm === 'app') type = 'App';
+        else type = 'Sim';
+      } else {
+        if (['phonics-lab', 'languages', 'fish-tank'].includes(id)) type = 'App';
+        else if (['church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(id)) type = 'Slide';
+        else type = 'Sim';
+      }
       const titleMatch = content.match(/:title\s+"([^"]+)"/i);
       const stageMatch = content.match(/:stage\s+"([^"]+)"/i);
       const durationMatch = content.match(/:duration\s+([\d\.]+)/i);
@@ -271,6 +283,7 @@
 
       return {
         id: id || 'custom-scene',
+        type,
         title: titleMatch ? titleMatch[1] : (id || 'Custom Scene'),
         stage: stageMatch ? stageMatch[1] : 'CURRICULUM',
         duration: durationMatch ? parseFloat(durationMatch[1]) : 14.0,

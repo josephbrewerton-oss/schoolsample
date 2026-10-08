@@ -794,24 +794,51 @@
         this.elements.presetSelector.appendChild(fedGroup);
       }
 
-      // Built-in / Auto-Found Curriculum Group
+      // Built-in / Auto-Found Curriculum Groups categorized by 3 types: Sim, Slide, App
       const builtInItems = list.filter(item => item._source === 'builtin');
-      const curriculumGroup = document.createElement('optgroup');
-      curriculumGroup.label = '📚 Curriculum Simulations (Auto-Discovered)';
-      curriculumGroup.style.background = '#0f172a';
-      curriculumGroup.style.color = '#38bdf8';
-      builtInItems.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.textContent = `${item.title} (${item.stage})`;
-        opt.style.background = '#0f172a';
-        opt.style.color = '#f8fafc';
-        if (item.id === activeId) {
-          opt.selected = true;
-        }
-        curriculumGroup.appendChild(opt);
+      
+      const simItems = builtInItems.filter(item => {
+        const t = (item.type || '').toLowerCase();
+        if (t === 'sim') return true;
+        if (t === 'slide' || t === 'app') return false;
+        return !['phonics-lab', 'languages', 'fish-tank', 'church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(item.id);
       });
-      this.elements.presetSelector.appendChild(curriculumGroup);
+
+      const slideItems = builtInItems.filter(item => {
+        const t = (item.type || '').toLowerCase();
+        if (t === 'slide') return true;
+        if (t === 'sim' || t === 'app') return false;
+        return ['church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(item.id);
+      });
+
+      const appItems = builtInItems.filter(item => {
+        const t = (item.type || '').toLowerCase();
+        if (t === 'app') return true;
+        if (t === 'sim' || t === 'slide') return false;
+        return ['phonics-lab', 'languages', 'fish-tank'].includes(item.id);
+      });
+
+      const appendCategoryGroup = (label, color, items) => {
+        if (!items || items.length === 0) return;
+        const grp = document.createElement('optgroup');
+        grp.label = label;
+        grp.style.background = '#0f172a';
+        grp.style.color = color;
+        items.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.id;
+          opt.textContent = `${item.title} (${item.stage})`;
+          opt.style.background = '#0f172a';
+          opt.style.color = '#f8fafc';
+          if (item.id === activeId) opt.selected = true;
+          grp.appendChild(opt);
+        });
+        this.elements.presetSelector.appendChild(grp);
+      };
+
+      appendCategoryGroup('🎮 Simulations (Sim)', '#38bdf8', simItems);
+      appendCategoryGroup('📑 Interactive Slides (Slide)', '#34d399', slideItems);
+      appendCategoryGroup('💻 Vector Applications (App)', '#fbbf24', appItems);
 
       // Teacher Auto-Find Actions
       const actionGroup = document.createElement('optgroup');
@@ -1367,16 +1394,8 @@
             el.presetSelector.value = this.engine.activePresetId || '';
             return;
           }
-if (val) {
-  this.engine.setPreset(val, true);
-  if (this.engine && typeof this.engine.notifyParent === 'function') {
-    this.engine.notifyParent({
-      type: 'PRESETCHANGE',
-      preset: val,
-      title: el.presetSelector.options[el.presetSelector.selectedIndex]?.textContent || val,
-    });
-  }
-}
+          if (val) {
+            this.engine.setPreset(val, true);
             if (this.engine && typeof this.engine.notifyParent === 'function') {
               this.engine.notifyParent({
                 type: 'PRESETCHANGE',
@@ -2279,9 +2298,15 @@ window.addEventListener('message', (e) => {
       const urlMode = urlParams.get('mode');
 
       // 1. Check for dedicated embed / iframe flags
-      const isEmbed = urlParams.get('embed') === '1' || urlParams.get('embedded') === '1' || urlMode === 'embed' || urlMode === 'embedded' || urlMode === 'minimal';
+      const isEmbed = urlParams.get('embed') === '1' || urlParams.get('embed') === 'true' || urlParams.get('embedded') === '1' || urlParams.get('embedded') === 'true' || urlMode === 'embed' || urlMode === 'embedded' || urlMode === 'minimal' || (typeof window !== 'undefined' && window.self !== window.top && urlParams.get('standalone') !== '1');
       if (isEmbed) {
-        const profile = this.getPresetProfile('embed');
+        if (typeof document !== 'undefined' && document.body) {
+          document.body.classList.add('ast-embedded-mode');
+        }
+        const profile = this.getPresetProfile('embedded');
+        if (urlParams.get('presetSelector') === '1') {
+          profile.showPresetSelector = true;
+        }
         if (urlParams.get('controls') === '0') {
           profile.showPlaybackControls = false;
           profile.showTimelineScrubber = false;
@@ -2291,7 +2316,7 @@ window.addEventListener('message', (e) => {
         return profile;
       }
 
-      if (urlMode && ['suite', 'classroom', 'student', 'broadcast', 'developer', 'embed'].includes(urlMode)) {
+      if (urlMode && ['suite', 'classroom', 'student', 'broadcast', 'developer', 'embed', 'embedded'].includes(urlMode)) {
         return this.getPresetProfile(urlMode);
       }
       if (urlParams.get('clean') === '1' || urlParams.get('suite') === '1') {
@@ -2358,7 +2383,9 @@ window.addEventListener('message', (e) => {
         base.showVoiceCommands = false;
         base.showPhysicsControls = false;
       } else if (mode === 'embed' || mode === 'embedded' || mode === 'minimal') {
-        base.showPresetSelector = true;
+        base.mode = 'embedded';
+        base.showPresetSelector = false; // Hide inner preset selector in embedded mode to eliminate multiple menus
+        base.showStageBadge = false;
         base.showPrintWorksheet = false;
         base.showStandaloneLink = false;
         base.showDevInspect = false;

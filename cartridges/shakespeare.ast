@@ -1,4 +1,4 @@
-(:scene :id "shakespeare" :title "The Globe Theatre: Shakespeare & Iambic Pentameter" :stage "KS3/KS4 ENGLISH LITERATURE" :duration 15.0
+(:scene :id "shakespeare" :type "Slide" :title "The Globe Theatre: Shakespeare & Iambic Pentameter" :stage "KS3/KS4 ENGLISH LITERATURE" :duration 15.0
   (:vars (
     (:var :name "tempo" :val 72 :min 40 :max 140 :step 2 :unit "BPM" :label "Heartbeat Metronome Tempo")
   ))

@@ -1,4 +1,4 @@
-(:scene :id "church-tour" :title "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces" :stage "CATHOLIC LIFE" :duration 16.0
+(:scene :id "church-tour" :type "Slide" :title "Tour of a Catholic Church: Sacred Architecture & Sacred Spaces" :stage "CATHOLIC LIFE" :duration 16.0
   (:vars (
     (:var :name "candleGlow" :val 1.0 :min 0.2 :max 1.5 :step 0.1 :label "Sanctuary Lamp Flame")
     (:var :name "pilgrimSpeed" :val 1.0 :min 0.5 :max 2.0 :step 0.25 :label "Tour Progression Pace")

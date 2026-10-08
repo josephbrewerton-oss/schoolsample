@@ -1,4 +1,4 @@
-(:scene :id "algebra-balance" :title "⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)" :stage "KS2/KS3 MATHS" :duration 14.0
+(:scene :id "algebra-balance" :type "Sim" :title "⚖️ Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)" :stage "KS2/KS3 MATHS" :duration 14.0
   (:vars (
     (:var :name "xVal" :val 5.0 :min 1.0 :max 10.0 :step 1.0 :label "Unknown Weight (x)")
   ))

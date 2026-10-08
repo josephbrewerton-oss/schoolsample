@@ -1,4 +1,4 @@
-(:scene :id "dna-helix" :title "Genetics: DNA Base Pairing & Transcription" :stage "KS3 GENETICS" :duration 12.0
+(:scene :id "dna-helix" :type "Slide" :title "Genetics: DNA Base Pairing & Transcription" :stage "KS3 GENETICS" :duration 12.0
   (:camera :distance 440 :pitch 18 :yaw "t * 180" :fov 60)
   (:vars (
     (:var :name "rotSpeed" :val 1.0 :min 0.2 :max 3.0 :step 0.2 :label "Helix Spin Rate")

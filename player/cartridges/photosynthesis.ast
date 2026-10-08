@@ -1,4 +1,4 @@
-(:scene :id "photosynthesis" :title "Photosynthesis: The Green Solar Engine" :stage "KS3 BIOLOGY" :duration 10.0
+(:scene :id "photosynthesis" :type "Slide" :title "Photosynthesis: The Green Solar Engine" :stage "KS3 BIOLOGY" :duration 10.0
   (:vars (
     (:var :name "sunlight" :val 85 :min 10 :max 100 :step 5 :unit "%" :label "Solar Light Intensity")
     (:var :name "co2Ppm" :val 400 :min 150 :max 1000 :step 25 :unit "ppm" :label "Atmospheric CO2")

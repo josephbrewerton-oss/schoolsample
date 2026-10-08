@@ -107,8 +107,17 @@
           continue;
         }
 
-        // Metadata slots in header: Stage, Duration, ID
+        // Metadata slots in header: Stage, Duration, ID, Type
         if (currentSection === 'header' || !currentStep) {
+          const typeMatch = line.match(/^(?:type|kind):\s*(.+)$/i);
+          if (typeMatch) {
+            const raw = typeMatch[1].trim().toLowerCase();
+            if (raw === 'sim' || raw === 'simulation') parsed.type = 'Sim';
+            else if (raw === 'app' || raw === 'application') parsed.type = 'App';
+            else parsed.type = 'Slide';
+            continue;
+          }
+
           const idMatch = line.match(/^id:\s*(.+)$/i);
           if (idMatch) {
             parsed.id = idMatch[1].trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
@@ -644,7 +653,8 @@
      * Emits pristine Lisp S-Expressions (.ast) conforming to grammar/ast-scene.gbnf
      */
     static _generateAstSexpr(parsed) {
-      let ast = `(:scene :id "${parsed.id || 'slide'}" :title "${this._escapeQuotes(parsed.title || 'Slide')}" :stage "${parsed.stage || 'CURRICULUM'}" :duration ${parsed.duration.toFixed(1)}\n`;
+      const type = parsed.type || 'Slide';
+      let ast = `(:scene :id "${parsed.id || 'slide'}" :type "${type}" :title "${this._escapeQuotes(parsed.title || 'Slide')}" :stage "${parsed.stage || 'CURRICULUM'}" :duration ${parsed.duration.toFixed(1)}\n`;
 
       // Dynamic Actors vs Static Primitives Partitioning
       const dynamicTargets = new Set();

@@ -1,4 +1,4 @@
-(:scene :id "electric-circuits" :title "💡 Electrical Circuits & Ohm's Law (V = I × R)" :stage "KS2/KS3 PHYSICS" :duration 12.0
+(:scene :id "electric-circuits" :type "Sim" :title "💡 Electrical Circuits & Ohm's Law (V = I × R)" :stage "KS2/KS3 PHYSICS" :duration 12.0
   (:vars (
     (:var :name "voltage" :val 12.0 :min 1.5 :max 24.0 :step 0.5 :label "Battery Voltage (V)")
     (:var :name "resistance" :val 4.0 :min 1.0 :max 12.0 :step 0.5 :label "Circuit Resistance (Ω)")

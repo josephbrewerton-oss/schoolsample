@@ -1,4 +1,4 @@
-(:scene :id "atom" :title "Atomic Structure: Bohr Electron Shells" :stage "KS3 CHEMISTRY" :duration 12.0
+(:scene :id "atom" :type "Sim" :title "Atomic Structure: Bohr Electron Shells" :stage "KS3 CHEMISTRY" :duration 12.0
   (:camera :distance 460 :pitch 22 :yaw "t * 120" :fov 60)
   (:vars (
     (:var :name "atomicNumber" :val 6 :min 1 :max 18 :step 1 :unit "protons" :label "Atomic Number (Z)")
