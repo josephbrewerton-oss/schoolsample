@@ -1,4 +1,4 @@
-(:scene :id "kinetic-gas" :title "Kinetic Gas Theory & Boyle's Law" :stage "KS3/KS4 PHYSICS & CHEMISTRY" :duration 14.0
+(:scene :id "kinetic-gas" :type "Sim" :title "Kinetic Gas Theory & Boyle's Law" :stage "KS3/KS4 PHYSICS & CHEMISTRY" :duration 14.0
   (:vars (
     (:var :name "volume" :val 1.0 :min 0.35 :max 1.0 :step 0.01 :unit "m³" :label "Chamber Volume")
     (:var :name "temp" :val 300 :min 90 :max 600 :step 10 :unit "K" :label "Gas Temperature")

@@ -1,4 +1,4 @@
-(:scene :id "calculus-curves" :title "Calculus: Tangent Slopes & Definite Integrals" :stage "GCSE & A-LEVEL MATHS" :duration 14.0
+(:scene :id "calculus-curves" :type "Sim" :title "Calculus: Tangent Slopes & Definite Integrals" :stage "GCSE & A-LEVEL MATHS" :duration 14.0
   (:vars (
     (:var :name "probeX" :val 1.0 :min -3.0 :max 4.0 :step 0.05 :label "Tangent Probe X Coordinate")
   ))

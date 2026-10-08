@@ -2,7 +2,7 @@
 # GGML BNF Grammar for Constraining Local LLMs to Valid AST Vector Scenes
 # Compatible with llama.cpp, Ollama, llama-cpp-python, and vLLM.
 
-root ::= "{" ws "\"id\":" ws string "," ws "\"stage\":" ws string "," ws "\"title\":" ws string "," ws "\"duration\":" ws number "," ws ("\"easing\":" ws easing "," ws)? "\"keyframes\":" ws keyframe-array ("," ws "\"subtitles\":" ws subtitle-array)? ("," ws "\"stateMachines\":" ws state-machine-array)? ("," ws "\"emitters\":" ws emitter-array)? ("," ws "\"bindInputs\":" ws bind-input-array)? ("," ws "\"elements\":" ws element-array)? ws "}"
+root ::= "{" ws "\"id\":" ws string "," ws ("\"type\":" ws ("\"Sim\"" | "\"Slide\"" | "\"App\"") "," ws)? "\"stage\":" ws string "," ws "\"title\":" ws string "," ws "\"duration\":" ws number "," ws ("\"easing\":" ws easing "," ws)? "\"keyframes\":" ws keyframe-array ("," ws "\"subtitles\":" ws subtitle-array)? ("," ws "\"stateMachines\":" ws state-machine-array)? ("," ws "\"emitters\":" ws emitter-array)? ("," ws "\"bindInputs\":" ws bind-input-array)? ("," ws "\"elements\":" ws element-array)? ws "}"
 
 # State Machines Array
 state-machine-array ::= "[" ws (state-machine ("," ws state-machine)*)? ws "]"

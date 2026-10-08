@@ -1,4 +1,4 @@
-(:scene :id "math-fishing" :title "Math Pond: Number Bonds Fishing Game" :stage "KS1/KS2 MATHS" :duration 14.0
+(:scene :id "math-fishing" :type "Sim" :title "Math Pond: Number Bonds Fishing Game" :stage "KS1/KS2 MATHS" :duration 14.0
   (:vars (
     (:var :name "targetSum" :val 10 :min 5 :max 20 :step 1 :label "Target Bond Goal")
     (:var :name "hookX" :val 320 :min 80 :max 740 :step 1 :label "Hook X Position")

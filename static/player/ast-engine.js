@@ -1171,9 +1171,7 @@
      */
     notifyParent(payload) {
       if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-        const origin = (this.targetOrigin && this.targetOrigin !== 'null')
-          ? this.targetOrigin
-          : (window.location && window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*');
+        const origin = (this.options && (this.options.targetOrigin || this.options.hostOrigin)) || '*';
         window.parent.postMessage({ source: 'ast-vector-player', ...payload }, origin);
       }
     }
@@ -1714,6 +1712,18 @@
       };
 
       const id = extractSlot(/:id\s+("[^"]+"|[^\s\)]+)/i);
+      const rawType = extractSlot(/:type\s+("Sim"|"Slide"|"App"|"[^"]+"|[^\s\)]+)/i);
+      let type = 'Sim';
+      if (rawType) {
+        const norm = rawType.toLowerCase();
+        if (norm === 'slide') type = 'Slide';
+        else if (norm === 'app') type = 'App';
+        else type = 'Sim';
+      } else {
+        if (['phonics-lab', 'languages', 'fish-tank'].includes(id)) type = 'App';
+        else if (['church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(id)) type = 'Slide';
+        else type = 'Sim';
+      }
       const title = extractSlot(/:title\s+"([^"]+)"/i);
       const stage = extractSlot(/:stage\s+"([^"]+)"/i) || 'CURRICULUM';
       const durationStr = extractSlot(/:duration\s+([\d\.]+)/i);
@@ -2134,6 +2144,8 @@
         id: id || 'custom-scene',
         title: title || 'AST Vector Scene',
         stage,
+        type,
+        cartridgeType: type,
         duration,
         camera: camMatch ? camera : null,
         has3D,
@@ -2154,7 +2166,9 @@
 
     /**
      * Dynamically ingests [id].svg and [id].ast assets on selection
-     *    async loadScene(presetId, shouldPlay = false)      this.cancelSpeech();
+     */
+    async loadScene(presetId, shouldPlay = false) {
+      this.cancelSpeech();
       const normalizedId = (global.ASTSceneRegistry && typeof global.ASTSceneRegistry.normalizeId === 'function')
         ? global.ASTSceneRegistry.normalizeId(presetId)
         : presetId;
@@ -2255,30 +2269,41 @@
               '/'
             ].filter(Boolean);
 
-const fetchAsset = async (ext) => {
-    // 1. Determine current directory of player/index.html
-    const baseHref = (typeof document !== 'undefined' && document.baseURI) 
-      ? document.baseURI 
-      : window.location.href;
-    const playerDirUrl = new URL('.', baseHref);
+            const sceneId = presetId;
+            const fetchAsset = async (ext) => {
+              // 1. Determine current directory of player/index.html
+              const baseHref = (typeof document !== 'undefined' && document.baseURI) 
+                ? document.baseURI 
+                : (typeof window !== 'undefined' ? window.location.href : '');
+              const urlParams = (typeof window !== 'undefined' && window.location) ? new URLSearchParams(window.location.search) : new URLSearchParams();
+              const customBase = urlParams.get('base') || this.options.basePath || '';
+              const customDirsParam = urlParams.get('dirs') || urlParams.get('inputDirs') || urlParams.get('dir') || '';
+              const customDirs = customDirsParam ? customDirsParam.split(',').map(d => d.trim()).filter(Boolean) : [];
 
-    // Read optional ?base= query parameter passed from parent React component
-const urlParams = new URLSearchParams(window.location.search);
-    const customBase = urlParams.get('base') || '';
+              // Explicit options passed programmatically to ASTVectorPlayerEngine
+              const optDirs = Array.isArray(this.options.inputDirs) ? this.options.inputDirs : (this.options.cartridgeDir ? [this.options.cartridgeDir] : []);
 
-    // Calculate current script directory: .../schoolsample/player/
-    const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+              // Calculate current script directory: .../player/
+              const currentDir = (typeof window !== 'undefined' && window.location)
+                ? window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)
+                : './';
 
-    const candidateUrls = [
-      `${currentDir}scenes/${sceneId}.${ext}`,
-      `${currentDir}cartridges/${sceneId}.${ext}`,
-      `scenes/${sceneId}.${ext}`,
-      `cartridges/${sceneId}.${ext}`,
-      ...(customBase ? [
-        `${customBase.replace(/\/$/, '')}/player/scenes/${sceneId}.${ext}`,
-        `${customBase.replace(/\/$/, '')}/scenes/${sceneId}.${ext}`,
-      ] : [])
-    ];
+              const candidateUrls = [
+                ...optDirs.map(d => `${d.replace(/\/$/, '')}/${sceneId}.${ext}`),
+                ...customDirs.map(d => `${d.replace(/\/$/, '')}/${sceneId}.${ext}`),
+                `${currentDir}scenes/${sceneId}.${ext}`,
+                `${currentDir}cartridges/${sceneId}.${ext}`,
+                `scenes/${sceneId}.${ext}`,
+                `cartridges/${sceneId}.${ext}`,
+                `./scenes/${sceneId}.${ext}`,
+                `./cartridges/${sceneId}.${ext}`,
+                ...(customBase ? [
+                  `${customBase.replace(/\/$/, '')}/player/scenes/${sceneId}.${ext}`,
+                  `${customBase.replace(/\/$/, '')}/player/cartridges/${sceneId}.${ext}`,
+                  `${customBase.replace(/\/$/, '')}/scenes/${sceneId}.${ext}`,
+                  `${customBase.replace(/\/$/, '')}/cartridges/${sceneId}.${ext}`,
+                ] : [])
+              ];
 
     for (const url of candidateUrls) {
       try {
@@ -2309,9 +2334,8 @@ const urlParams = new URLSearchParams(window.location.search);
 
     return null;
   };
-};
 
-            const [foundSvg, foundAst] = await Promise.all([
+  const [foundSvg, foundAst] = await Promise.all([
               fetchAsset('svg'),
               fetchAsset('ast')
             ]);
@@ -2360,6 +2384,8 @@ const urlParams = new URLSearchParams(window.location.search);
 
         scene = {
           id: presetId,
+          type: (parsedAst && (parsedAst.type || parsedAst.cartridgeType)) || registryScene.type || 'Sim',
+          cartridgeType: (parsedAst && (parsedAst.type || parsedAst.cartridgeType)) || registryScene.type || 'Sim',
           title: (parsedAst && parsedAst.title) || registryScene.title || presetId,
           stage: (parsedAst && parsedAst.stage) || registryScene.stage || 'CURRICULUM',
           duration: (parsedAst && parsedAst.duration) || registryScene.duration || 10.0,
@@ -2427,7 +2453,9 @@ const urlParams = new URLSearchParams(window.location.search);
         }
       } catch (bindErr) {
         console.warn('[AST Engine] Initial frame bind notice:', bindErr);
-      }presetchange', {
+      }
+
+      this.emit('presetchange', {
         preset: this.activePresetId,
         title: this.scene.title,
         stage: this.scene.stage,
@@ -2973,7 +3001,7 @@ const urlParams = new URLSearchParams(window.location.search);
           }
         } else if (typeof scene.render === 'function' && typeof scene.mount !== 'function') {
           const rendered = scene.render(this.progress);
-          if (rendered instanceof Node) {
+          if (typeof Node !== 'undefined' && rendered instanceof Node) {
             container.replaceChildren(rendered);
           } else if (typeof rendered === 'string') {
             try {
@@ -3175,9 +3203,7 @@ const urlParams = new URLSearchParams(window.location.search);
             el.style.setProperty('will-change', 'transform, opacity');
           }
         });
-      } catch (domPartitionErr) {
-        console.warn('[AST Engine] Non-fatal DOM partitioning notice:', domPartitionErr);
-      }        }
+
         if (scene.gestures && Array.isArray(scene.gestures)) {
           scene.gestures.forEach(g => {
             const el = container.querySelector(g.target);
@@ -3278,7 +3304,7 @@ const urlParams = new URLSearchParams(window.location.search);
       const totalScale = Math.max(0.2, Math.min(4.0, (this.cameraOrbit ? this.cameraOrbit.distanceScale : 1.0)));
 
       // Apply hardware-accelerated 3D spatial transformation to the scene stage container
-      if (this._container) {
+      if (this._container && this._container.style) {
         if (this.has3D() || (this.cameraOrbit && (this.cameraOrbit.yawOffset !== 0 || this.cameraOrbit.pitchOffset !== 0 || this.cameraOrbit.distanceScale !== 1.0))) {
           this._container.style.transformOrigin = '400px 240px';
           this._container.style.transformBox = 'view-box';

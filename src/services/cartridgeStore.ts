@@ -22,6 +22,7 @@ export interface CartridgeDefinition {
   title: string;
   stage: string;
   category: string;
+  type?: 'Sim' | 'Slide' | 'App';
   desc: string;
   icon: string;
   source: 'builtin' | 'phet' | 'user' | 'imported';
@@ -77,6 +78,7 @@ export const CARTRIDGE_ALIASES: Record<string, string> = {
 export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   {
     id: 'pythagoras',
+    type: 'Sim',
     title: "Pythagoras' Theorem (a² + b² = c²)",
     stage: 'KS3 MATHS & GEOMETRY',
     category: 'Mathematics',
@@ -90,6 +92,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'algebra-balance',
+    type: 'Sim',
     title: 'Algebraic Balance Scale: Preserving Equality (2x + 5 = 15)',
     stage: 'KS2/KS3 MATHS',
     category: 'Mathematics',
@@ -103,6 +106,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'electric-circuits',
+    type: 'Sim',
     title: "Electrical Circuits & Ohm's Law (V = I × R)",
     stage: 'KS2/KS3 PHYSICS',
     category: 'Science',
@@ -116,6 +120,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'kinetic-gas',
+    type: 'Sim',
     title: "Kinetic Gas Theory & Boyle's Law (PV = nRT)",
     stage: 'KS3/KS4 PHYSICS & CHEMISTRY',
     category: 'Science',
@@ -129,6 +134,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'calculus-curves',
+    type: 'Sim',
     title: 'Calculus: Tangent Slopes (dy/dx) & Definite Integrals (∫)',
     stage: 'GCSE & A-LEVEL MATHS',
     category: 'Mathematics',
@@ -142,6 +148,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'bodmas',
+    type: 'Slide',
     title: 'BODMAS / BIDMAS: Forcefield & Magnetic Clamping',
     stage: 'KS2/KS3 MATHS',
     category: 'Mathematics',
@@ -155,6 +162,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'times-tables',
+    type: 'Slide',
     title: 'Times Tables Arrays & Distributive Splitter (12×12)',
     stage: 'KS1/KS2 MATHS',
     category: 'Mathematics',
@@ -168,6 +176,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'fractions',
+    type: 'Slide',
     title: 'Fractions & Proportions',
     stage: 'KS2 MATHS',
     category: 'Mathematics',
@@ -181,6 +190,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'fish-tank',
+    type: 'App',
     title: 'Aquarium Living Ecosystem & Boids Flocking Benchmark',
     stage: 'BENCHMARK & STRESS LAB',
     category: 'Diagnostics & Games',
@@ -194,6 +204,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'solar-system',
+    type: 'Sim',
     title: 'Solar System Planetary Orbits',
     stage: 'KS3 SCIENCE',
     category: 'Science',
@@ -207,6 +218,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'photosynthesis',
+    type: 'Slide',
     title: 'Photosynthesis & Leaf Anatomy',
     stage: 'KS3 BIOLOGY',
     category: 'Science',
@@ -220,6 +232,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'atom',
+    type: 'Sim',
     title: 'Atomic Structure: Bohr Electron Shells',
     stage: 'KS3 CHEMISTRY',
     category: 'Science',
@@ -233,6 +246,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'velocity',
+    type: 'Sim',
     title: 'Velocity Vectors & Kinematics',
     stage: 'KS3 PHYSICS',
     category: 'Science',
@@ -246,6 +260,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'mountain-elevation',
+    type: 'Sim',
     title: 'Mountain Altitude: Climber Game & Trigonometry',
     stage: 'KS2/KS3 MATHS & GEOGRAPHY',
     category: 'Games & Simulations',
@@ -259,6 +274,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'math-fishing',
+    type: 'Sim',
     title: 'Math Pond: Number Bonds Fishing Game',
     stage: 'KS1/KS2 MATHS',
     category: 'Games & Simulations',
@@ -272,6 +288,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'dna-helix',
+    type: 'Slide',
     title: 'DNA Double Helix & Base Pairs',
     stage: 'KS3 GENETICS',
     category: 'Science',
@@ -285,6 +302,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'phonics-lab',
+    type: 'App',
     title: 'Early Phonics: Sound Buttons & Blending Mat',
     stage: 'EYFS/KS1 PHONICS',
     category: 'Early Literacy & Phonics',
@@ -298,6 +316,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'church-tour',
+    type: 'Slide',
     title: 'Catholic Church Sanctuary Tour',
     stage: 'CATHOLIC LIFE',
     category: 'Catholic Faith',
@@ -311,6 +330,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'water-cycle',
+    type: 'Slide',
     title: 'Water Cycle: Continuous Earth Cycle',
     stage: 'KS2 GEOGRAPHY',
     category: 'Geography & Science',
@@ -324,6 +344,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'languages',
+    type: 'App',
     title: 'MFL & Polyglot Studio: Spanish, French & Latin',
     stage: 'KS2/KS3 MFL',
     category: 'Modern & Classical Languages',
@@ -337,6 +358,7 @@ export const BUILTIN_CARTRIDGES: CartridgeDefinition[] = [
   },
   {
     id: 'shakespeare',
+    type: 'Slide',
     title: 'The Globe Theatre: Shakespeare & Iambic Pentameter',
     stage: 'KS3/KS4 ENGLISH LITERATURE',
     category: 'English Literature',

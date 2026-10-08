@@ -1,4 +1,4 @@
-(:scene :id "mountain-elevation" :title "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science" :stage "KS2/KS3 MATHS & GEOGRAPHY" :duration 16.0
+(:scene :id "mountain-elevation" :type "Sim" :title "Mountain Altitude: Elevation, Hypotenuse & Atmospheric Science" :stage "KS2/KS3 MATHS & GEOGRAPHY" :duration 16.0
   (:vars (
     (:var :name "seaLevelTemp" :val 20 :min 0 :max 35 :step 1 :unit "°C" :label "Sea Level Temperature")
     (:var :name "peakHeight" :val 3000 :min 1000 :max 5000 :step 200 :unit "m" :label "Mountain Summit Height")

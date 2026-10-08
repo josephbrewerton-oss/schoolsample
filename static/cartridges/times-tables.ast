@@ -1,4 +1,4 @@
-(:scene :id "times-tables" :title "Times Tables: 2D Array & Distributive Splitter" :stage "KS1/KS2 MATHS" :duration 14.0
+(:scene :id "times-tables" :type "Slide" :title "Times Tables: 2D Array & Distributive Splitter" :stage "KS1/KS2 MATHS" :duration 14.0
   (:vars (
     (:var :name "rows" :val 7 :min 1 :max 12 :step 1 :label "Rows Multiplier")
     (:var :name "cols" :val 8 :min 1 :max 12 :step 1 :label "Columns Multiplicand")

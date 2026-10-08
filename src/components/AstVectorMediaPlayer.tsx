@@ -47,6 +47,7 @@ export type VectorPresetType = string;
 
 export interface AstVectorMediaPlayerProps {
   preset?: VectorPresetType;
+  embedded?: boolean;
   lang?: string;
   autoPlay?: boolean;
   theme?: 'dark' | 'light';
@@ -97,6 +98,7 @@ export interface AstVectorMediaPlayerHandle {
 
 export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVectorMediaPlayerProps>(({
   preset = 'fractions',
+  embedded = true,
   lang,
   autoPlay = false,
   theme,
@@ -575,7 +577,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
 
 const rawBase = import.meta.env.BASE_URL || '/';
 const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
-const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(displayConfig.mode)}&base=${encodeURIComponent(cleanBase)}&v=2.5.0`;
+const effectiveMode = embedded ? 'embedded' : displayConfig.mode;
+const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(effectiveMode)}&embed=${embedded ? '1' : '0'}&base=${encodeURIComponent(cleanBase)}&v=2.6.0`;
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&mode=${encodeURIComponent(embedTargetMode)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;
@@ -736,19 +739,27 @@ const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(sel
                 }}
                 title="Switch Curriculum Scene"
               >
-                {PRESET_OPTIONS.map((opt) => (
-                  <option
-                    key={opt.id}
-                    value={opt.id}
-                    style={{
-                      background: '#0f172a',
-                      color: '#f8fafc',
-                      padding: '4px 8px',
-                    }}
-                  >
-                    {opt.label} ({opt.stage})
-                  </option>
-                ))}
+                <optgroup label="🎮 Simulations (Sim)" style={{ background: '#0f172a', color: '#38bdf8' }}>
+                  {PRESET_OPTIONS.filter((o) => o.type === 'Sim').map((opt) => (
+                    <option key={opt.id} value={opt.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                      {opt.label} ({opt.stage})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="📑 Interactive Slides (Slide)" style={{ background: '#0f172a', color: '#34d399' }}>
+                  {PRESET_OPTIONS.filter((o) => o.type === 'Slide').map((opt) => (
+                    <option key={opt.id} value={opt.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                      {opt.label} ({opt.stage})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="💻 Vector Applications (App)" style={{ background: '#0f172a', color: '#fbbf24' }}>
+                  {PRESET_OPTIONS.filter((o) => o.type === 'App').map((opt) => (
+                    <option key={opt.id} value={opt.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
+                      {opt.label} ({opt.stage})
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             )}
 

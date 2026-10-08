@@ -6,7 +6,7 @@
  * and granular visibility flags for buttons, controls, and dev tools.
  */
 
-export type PlayerDisplayMode = 'suite' | 'classroom' | 'student' | 'broadcast' | 'developer' | 'custom';
+export type PlayerDisplayMode = 'suite' | 'classroom' | 'student' | 'broadcast' | 'developer' | 'embedded' | 'custom';
 
 export interface PlayerDisplayConfig {
   mode: PlayerDisplayMode;
@@ -71,6 +71,12 @@ export const MODE_METADATA: Record<PlayerDisplayMode, { label: string; icon: str
     icon: '🛠️',
     tag: 'FULL TOOLSUITE',
     description: 'Complete authoring environment: SVG element inspector, live AST code studio, standalone SPA compiler, and raw XML copy utilities.',
+  },
+  embedded: {
+    label: 'Dedicated Embedded Mode',
+    icon: '📦',
+    tag: 'SEAMLESS EMBED',
+    description: 'Embedded iframe view optimized for LMS, portal viewports, and host applications. Suppresses duplicate internal selector menus.',
   },
   custom: {
     label: 'Custom Profile',
@@ -225,6 +231,35 @@ export const DEVELOPER_PRESET: PlayerDisplayConfig = {
   showPhysicsControls: true,
 };
 
+export const EMBEDDED_PRESET: PlayerDisplayConfig = {
+  mode: 'embedded',
+  showPresetSelector: false, // Suppress redundant dropdown
+  showStageBadge: false,
+  showInteractiveCheckpoints: true,
+  show3DControls: true,
+  showDevInspect: false,
+  showDevStudio: false,
+  showExportSpa: false,
+  showStandaloneLink: false,
+  showObsLink: false,
+  showLmsEmbed: false,
+  showPrintWorksheet: false,
+  showCopySvg: false,
+  showThemeToggle: true,
+  showFullscreen: true,
+  showPipButton: true,
+  showTimelineScrubber: true,
+  showPlaybackControls: true,
+  showSpeedSelector: false,
+  showVoiceNarration: true,
+  showVoiceControl: false,
+  showLanguageSelector: true,
+  showSubtitles: true,
+  showLoopToggle: true,
+  showVolumeControl: true,
+  showPhysicsControls: false,
+};
+
 export const CONFIG_STORAGE_KEY = 'stj_player_display_config';
 
 export function getPresetConfig(mode: PlayerDisplayMode): PlayerDisplayConfig {
@@ -237,6 +272,8 @@ export function getPresetConfig(mode: PlayerDisplayMode): PlayerDisplayConfig {
       return { ...BROADCAST_PRESET };
     case 'developer':
       return { ...DEVELOPER_PRESET };
+    case 'embedded':
+      return { ...EMBEDDED_PRESET };
     case 'classroom':
     default:
       return { ...CLASSROOM_PRESET };
@@ -247,11 +284,14 @@ export function loadSavedPlayerConfig(): PlayerDisplayConfig {
   if (typeof window === 'undefined') return { ...CLASSROOM_PRESET };
 
   try {
-    // 1. Check URL parameters for explicit override (e.g. ?mode=suite or ?mode=student or ?mode=classroom or ?clean=1)
+    // 1. Check URL parameters for explicit override (e.g. ?mode=suite or ?mode=embedded or ?embed=1)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMode = urlParams.get('mode') as PlayerDisplayMode | null;
-    if (urlMode && ['suite', 'classroom', 'student', 'broadcast', 'developer'].includes(urlMode)) {
+    if (urlMode && ['suite', 'classroom', 'student', 'broadcast', 'developer', 'embedded'].includes(urlMode)) {
       return getPresetConfig(urlMode);
+    }
+    if (urlParams.get('embed') === '1' || urlParams.get('embedded') === '1') {
+      return getPresetConfig('embedded');
     }
     if (urlParams.get('clean') === '1') {
       return getPresetConfig('classroom');

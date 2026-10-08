@@ -1,4 +1,4 @@
-(:scene :id "languages" :title "MFL & Polyglot Studio: Spanish, French & Latin" :stage "KS2/KS3 MFL" :duration 15.0
+(:scene :id "languages" :type "App" :title "MFL & Polyglot Studio: Spanish, French & Latin" :stage "KS2/KS3 MFL" :duration 15.0
   (:vars (
     (:var :name "personIndex" :val 0 :min 0 :max 5 :step 1 :label "Grammatical Person (1st to 3rd)")
   ))

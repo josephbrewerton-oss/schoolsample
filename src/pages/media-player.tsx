@@ -113,6 +113,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
     const matchesCategory =
       filterCategory === 'All'
         ? true
+        : filterCategory === 'Sim' || filterCategory === 'Slide' || filterCategory === 'App'
+        ? (p.type || (['phonics-lab', 'languages', 'fish-tank'].includes(p.id) ? 'App' : ['church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(p.id) ? 'Slide' : 'Sim')) === filterCategory
         : filterCategory === 'PhET Distilled'
         ? p.source === 'phet'
         : filterCategory === 'User Created'
@@ -257,7 +259,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
                   whiteSpace: 'nowrap',
                 }}
               >
-                🎮 Simulator:
+                🎮 Cartridge:
               </label>
               <select
                 id="main-sim-dropdown-selector"
@@ -279,47 +281,29 @@ export default function MediaPlayerPage(): React.JSX.Element {
                   userSelect: 'auto',
                   boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
                 }}
-                title="Select Simulation Cartridge"
+                title="Select Simulation, Slide, or App Cartridge"
               >
-                <optgroup label="📐 Mathematics & Geometry" style={{ background: '#0f172a', color: '#38bdf8' }}>
+                <optgroup label="🎮 Simulations (Sim)" style={{ background: '#0f172a', color: '#38bdf8' }}>
                   {cartridges
-                    .filter((c) => c.category === 'Mathematics' || ['pythagoras', 'fractions', 'bodmas', 'times-tables', 'algebra-balance', 'calculus-curves', 'math-fishing', 'mountain-elevation'].includes(c.id))
+                    .filter((c) => (c.type === 'Sim' || (!c.type && ['pythagoras', 'algebra-balance', 'electric-circuits', 'kinetic-gas', 'calculus-curves', 'solar-system', 'atom', 'velocity', 'mountain-elevation', 'math-fishing'].includes(c.id))) && c.source === 'builtin')
                     .map((c) => (
                       <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
                         {c.icon} {c.title} ({c.stage})
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="💡 Physics & Chemistry" style={{ background: '#0f172a', color: '#fbbf24' }}>
+                <optgroup label="📑 Interactive Slides (Slide)" style={{ background: '#0f172a', color: '#34d399' }}>
                   {cartridges
-                    .filter((c) => c.category === 'Science' || ['kinetic-gas', 'electric-circuits', 'atom', 'velocity'].includes(c.id))
+                    .filter((c) => (c.type === 'Slide' || (!c.type && ['church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(c.id))) && c.source === 'builtin')
                     .map((c) => (
                       <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
                         {c.icon} {c.title} ({c.stage})
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="🌿 Biology & Earth" style={{ background: '#0f172a', color: '#4ade80' }}>
+                <optgroup label="💻 Vector Applications (App)" style={{ background: '#0f172a', color: '#fbbf24' }}>
                   {cartridges
-                    .filter((c) => ['photosynthesis', 'dna-helix', 'water-cycle', 'solar-system'].includes(c.id))
-                    .map((c) => (
-                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
-                        {c.icon} {c.title} ({c.stage})
-                      </option>
-                    ))}
-                </optgroup>
-                <optgroup label="📚 English & Languages" style={{ background: '#0f172a', color: '#a78bfa' }}>
-                  {cartridges
-                    .filter((c) => ['shakespeare', 'languages', 'phonics-lab'].includes(c.id))
-                    .map((c) => (
-                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
-                        {c.icon} {c.title} ({c.stage})
-                      </option>
-                    ))}
-                </optgroup>
-                <optgroup label="⛪ Catholic Faith & Life" style={{ background: '#0f172a', color: '#f43f5e' }}>
-                  {cartridges
-                    .filter((c) => c.id === 'church-tour' || c.category === 'Catholic Faith')
+                    .filter((c) => (c.type === 'App' || (!c.type && ['phonics-lab', 'languages', 'fish-tank'].includes(c.id))) && c.source === 'builtin')
                     .map((c) => (
                       <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
                         {c.icon} {c.title} ({c.stage})
@@ -327,12 +311,12 @@ export default function MediaPlayerPage(): React.JSX.Element {
                     ))}
                 </optgroup>
                 {cartridges.filter((c) => c.source === 'user' || c.source === 'imported' || c.source === 'phet').length > 0 && (
-                  <optgroup label="🧪 Custom & Imported Cartridges" style={{ background: '#0f172a', color: '#34d399' }}>
+                  <optgroup label="🧪 Custom & Imported Cartridges" style={{ background: '#0f172a', color: '#a78bfa' }}>
                     {cartridges
                       .filter((c) => c.source === 'user' || c.source === 'imported' || c.source === 'phet')
                       .map((c) => (
                         <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
-                          ★ {c.icon} {c.title} ({c.stage})
+                          {c.icon} {c.title} ({c.stage}) [{c.type || 'Sim'}]
                         </option>
                       ))}
                   </optgroup>
@@ -440,7 +424,8 @@ export default function MediaPlayerPage(): React.JSX.Element {
             ref={playerRef}
             preset={activePreset}
             autoPlay={true}
-            allowPresetSwitch={true}
+            allowPresetSwitch={false}
+            embedded={true}
             height="min(540px, 60vh)"
             onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
           />
@@ -671,7 +656,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
           </div>
 
           <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '4px', borderRadius: '10px', flexWrap: 'wrap' }}>
-            {['All', 'Mathematics', 'Science', 'PhET Distilled', 'User Created', 'Games & Simulations', 'Languages & MFL', 'Catholic Faith'].map((cat) => (
+            {['All', 'Sim', 'Slide', 'App', 'Mathematics', 'Science', 'PhET Distilled', 'User Created', 'Games & Simulations', 'Languages & MFL', 'Catholic Faith'].map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -689,7 +674,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
                   transition: 'all 0.15s ease',
                 }}
               >
-                {cat === 'Languages & MFL' ? '🌍 Languages & MFL' : cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'PhET Distilled' ? '🧪 PhET Distilled' : cat === 'User Created' ? '✨ User Created' : cat}
+                {cat === 'Sim' ? '🎮 Sims' : cat === 'Slide' ? '📑 Slides' : cat === 'App' ? '💻 Apps' : cat === 'Languages & MFL' ? '🌍 Languages & MFL' : cat === 'Games & Simulations' ? '🎮 Games & Sims' : cat === 'PhET Distilled' ? '🧪 PhET Distilled' : cat === 'User Created' ? '✨ User Created' : cat}
               </button>
             ))}
           </div>
@@ -706,6 +691,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
           {filteredPresets.map((p) => {
             const isSelected = p.id === activePreset;
             const isCustom = p.source === 'user' || p.source === 'imported' || p.source === 'phet';
+            const cardType = p.type || (['phonics-lab', 'languages', 'fish-tank'].includes(p.id) ? 'App' : ['church-tour', 'photosynthesis', 'water-cycle', 'dna-helix', 'shakespeare', 'fractions', 'times-tables', 'bodmas'].includes(p.id) ? 'Slide' : 'Sim');
             return (
               <div
                 key={p.id}
@@ -727,6 +713,19 @@ export default function MediaPlayerPage(): React.JSX.Element {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                     <span style={{ fontSize: '1.6rem' }}>{p.icon}</span>
                     <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: cardType === 'Sim' ? '#e0f2fe' : cardType === 'Slide' ? '#dcfce7' : '#fef3c7',
+                          color: cardType === 'Sim' ? '#0369a1' : cardType === 'Slide' ? '#15803d' : '#b45309',
+                          border: `1px solid ${cardType === 'Sim' ? '#bae6fd' : cardType === 'Slide' ? '#bbf7d0' : '#fde68a'}`,
+                        }}
+                      >
+                        {cardType === 'Sim' ? '🎮 Sim' : cardType === 'Slide' ? '📑 Slide' : '💻 App'}
+                      </span>
                       <span
                         style={{
                           fontSize: '0.65rem',
