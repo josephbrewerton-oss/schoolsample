@@ -40,35 +40,33 @@
     </pattern>
   </defs>
 
-  <!-- Ambient Backdrop &amp; Geometry Grid -->
+  <!-- Ambient Backdrop & Geometry Grid -->
   <rect width="800" height="480" fill="url(#pyth-bg-glow)" />
   <rect width="800" height="480" fill="url(#pyth-grid)" />
 
   <!-- Top Glassmorphic Equation Banner -->
   <g transform="translate(180, 20)">
     <rect width="440" height="44" rx="10" fill="#0f172a" fill-opacity="0.9" stroke="#38bdf8" stroke-width="1.5" />
-    <text x="220" y="28" fill="#f8fafc" font-size="16" font-weight="800" text-anchor="middle" font-family="sans-serif">
+    <text id="pyth-banner-text" x="220" y="28" fill="#f8fafc" font-size="16" font-weight="800" text-anchor="middle" font-family="sans-serif">
       <tspan fill="#34d399">a² (9)</tspan> + <tspan fill="#60a5fa">b² (16)</tspan> = <tspan fill="#fbbf24">c² (25)</tspan> ➔ 3² + 4² = 5²
     </text>
   </g>
 
-  <!-- Side a Square (3 x 3 = 9 units) -->
+  <!-- Side a Square (3 x 3 = 9 units: 90px x 90px) -->
   <g id="pyth-group-a">
-    <rect id="pyth-rect-a" x="360" y="190" width="0" height="90" fill="url(#pyth-grad-a)" stroke="#10b981" stroke-width="2" rx="4" data-draggable="pyth-handle-a" style="cursor:ns-resize;" />
-    <!-- Dynamic internal subgrid -->
+    <rect id="pyth-rect-a" x="270" y="190" width="90" height="90" fill="url(#pyth-grad-a)" stroke="#10b981" stroke-width="2" rx="4" />
     <g id="pyth-grid-a" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
     <text id="pyth-txt-a" x="315" y="240" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" opacity="1" filter="url(#pyth-glow)" pointer-events="none">a² = 9</text>
   </g>
 
-  <!-- Side b Square (4 x 4 = 16 units) -->
+  <!-- Side b Square (4 x 4 = 16 units: 120px x 120px) -->
   <g id="pyth-group-b">
-    <rect id="pyth-rect-b" x="360" y="280" width="120" height="0" fill="url(#pyth-grad-b)" stroke="#3b82f6" stroke-width="2" rx="4" data-draggable="pyth-handle-b" style="cursor:ew-resize;" />
-    <!-- Dynamic internal subgrid -->
+    <rect id="pyth-rect-b" x="360" y="280" width="120" height="120" fill="url(#pyth-grad-b)" stroke="#3b82f6" stroke-width="2" rx="4" />
     <g id="pyth-grid-b" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
     <text id="pyth-txt-b" x="420" y="345" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" opacity="1" filter="url(#pyth-glow)" pointer-events="none">b² = 16</text>
   </g>
 
-  <!-- Hypotenuse c Square (5 x 5 = 25 units, tilted across hypotenuse) -->
+  <!-- Hypotenuse c Square (5 x 5 = 25 units: 150px x 150px) -->
   <g id="pyth-group-c" transform="translate(360, 190) rotate(-36.87)">
     <rect id="pyth-rect-c" x="0" y="-150" width="150" height="150" fill="url(#pyth-grad-c)" stroke="#f59e0b" stroke-width="2" rx="4" opacity="1" />
     <g id="pyth-grid-c" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
@@ -83,11 +81,11 @@
   <circle cx="369" cy="271" r="2.5" fill="#38bdf8" />
 
   <!-- Side Dimension Callout Labels -->
-  <text x="345" y="238" fill="#34d399" font-size="14" font-weight="700" text-anchor="end">a = 3</text>
-  <text x="420" y="302" fill="#60a5fa" font-size="14" font-weight="700" text-anchor="middle">b = 4</text>
-  <text x="435" y="225" fill="#fbbf24" font-size="15" font-weight="800">c = 5</text>
+  <text id="pyth-lbl-a" x="345" y="238" fill="#34d399" font-size="14" font-weight="700" text-anchor="end">a = 3</text>
+  <text id="pyth-lbl-b" x="420" y="302" fill="#60a5fa" font-size="14" font-weight="700" text-anchor="middle">b = 4</text>
+  <text id="pyth-lbl-c" x="435" y="225" fill="#fbbf24" font-size="15" font-weight="800">c = 5</text>
 
-  <!-- Triangle Vertices &amp; Draggable Handles -->
+  <!-- Triangle Vertices & Draggable Handles -->
   <circle cx="360" cy="280" r="4.5" fill="#38bdf8" />
   <g id="pyth-handle-a" data-draggable="pyth-handle-a" data-pedagogical="pyth-handle-a" transform="translate(360, 190)" style="cursor:ns-resize;">
     <circle r="34" fill="transparent" pointer-events="all" />
