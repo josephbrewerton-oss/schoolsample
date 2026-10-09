@@ -92,7 +92,7 @@ export const PRESET_OPTIONS: ScenePresetOption[] = [
   {
     "id": "pythagoras",
     "type": "Sim",
-    "label": "Pythagoras Theorem: Area Conservation",
+    "label": "Pythagoras' Theorem (a² + b² = c²)",
     "stage": "KS3 GEOMETRY"
   },
   {

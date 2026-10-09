@@ -44,14 +44,14 @@ export default function MediaPlayerPage(): React.JSX.Element {
     };
   }, []);
 
-  // Fault-tolerant preset resolution with alias mapping (e.g. pythagorus -> pythagoras, or user/phet cartridge)
+  // Fault-tolerant preset resolution with alias mapping (e.g. pythagorus -> kinetic-gas, or user/phet cartridge)
   const resolvedPreset = urlPreset ? getCartridge(urlPreset) : null;
   const initialPreset: VectorPresetType =
     resolvedPreset
       ? resolvedPreset.id
       : urlTopic || urlSubject
       ? resolvePresetForTopic(urlSubject || '', urlTopic || '')
-      : 'pythagoras';
+      : 'kinetic-gas';
 
   const [activePreset, setActivePreset] = useState<VectorPresetType>(initialPreset);
   const [filterCategory, setFilterCategory] = useState<string>('All');
@@ -72,14 +72,14 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
   // Create Cartridge State
   const [createTitle, setCreateTitle] = useState('');
-  const [createCategory, setCreateCategory] = useState('Mathematics');
-  const [createStage, setCreateStage] = useState('KS3 MATHS');
+  const [createCategory, setCreateCategory] = useState('Science');
+  const [createStage, setCreateStage] = useState('KS3/KS4 PHYSICS');
   const [createDesc, setCreateDesc] = useState('');
   const [createSvg, setCreateSvg] = useState('');
   const [createAst, setCreateAst] = useState('');
 
   // Pack Builder State
-  const [selectedPackIds, setSelectedPackIds] = useState<string[]>(['pythagoras', 'algebra-balance', 'electric-circuits']);
+  const [selectedPackIds, setSelectedPackIds] = useState<string[]>(['kinetic-gas', 'algebra-balance', 'electric-circuits']);
   const [packTitle, setPackTitle] = useState('Classroom Custom STEM Pack');
   const [packDesc, setPackDesc] = useState('Offline interactive laboratory cartridge bundle.');
 
@@ -106,12 +106,12 @@ export default function MediaPlayerPage(): React.JSX.Element {
   }, [searchParams, setSearchParams]);
 
   const currentPresetMeta = cartridges.find((p) => p.id === activePreset) || cartridges[0] || {
-    id: 'pythagoras',
-    title: "Pythagoras' Theorem",
-    stage: 'KS3 GEOMETRY',
-    category: 'Mathematics',
-    desc: 'Area conservation proof',
-    icon: '📐',
+    id: 'kinetic-gas',
+    title: "Kinetic Gas Theory & Boyle's Law",
+    stage: 'KS3/KS4 PHYSICS & CHEMISTRY',
+    category: 'Science',
+    desc: 'Real-time particle kinematics in a compression cylinder',
+    icon: '🌡️',
     source: 'builtin'
   };
 
@@ -291,7 +291,7 @@ export default function MediaPlayerPage(): React.JSX.Element {
               >
                 <optgroup label="🎮 Simulations (Sim)" style={{ background: '#0f172a', color: '#38bdf8' }}>
                   {cartridges
-                    .filter((c) => (c.type === 'Sim' || (!c.type && ['pythagoras', 'algebra-balance', 'electric-circuits', 'kinetic-gas', 'calculus-curves', 'solar-system', 'atom', 'velocity', 'mountain-elevation', 'math-fishing'].includes(c.id))) && c.source === 'builtin')
+                    .filter((c) => (c.type === 'Sim' || (!c.type && ['algebra-balance', 'electric-circuits', 'kinetic-gas', 'calculus-curves', 'solar-system', 'atom', 'velocity', 'mountain-elevation', 'math-fishing'].includes(c.id))) && c.source === 'builtin')
                     .map((c) => (
                       <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#f8fafc' }}>
                         {c.icon} {c.title} ({c.stage})
@@ -401,28 +401,28 @@ export default function MediaPlayerPage(): React.JSX.Element {
 
         {/* Embedded AST Player or Dedicated Interactive Lab Stage */}
         {activePreset === 'mountain-elevation' ? (
-          <MountainClimberGame playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('pythagoras')} />
+          <MountainClimberGame playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('kinetic-gas')} />
         ) : activePreset === 'math-fishing' ? (
-          <MathFishingGame playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('pythagoras')} />
+          <MathFishingGame playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('kinetic-gas')} />
         ) : activePreset === 'fish-tank' ? (
-          <AquariumSimulationLab playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('pythagoras')} />
+          <AquariumSimulationLab playerRef={playerRef} onCloseGameMode={() => handleSelectPreset('kinetic-gas')} />
         ) : activePreset === 'shakespeare' ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
-            <ShakespeareGlobeLab onClose={() => handleSelectPreset('pythagoras')} />
+            <ShakespeareGlobeLab onClose={() => handleSelectPreset('kinetic-gas')} />
           </div>
         ) : activePreset === 'languages' ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
-            <MflLanguageLab onClose={() => handleSelectPreset('pythagoras')} />
+            <MflLanguageLab onClose={() => handleSelectPreset('kinetic-gas')} />
           </div>
         ) : activePreset === 'phonics-lab' ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
-            <EarlyPhonicsLab onClose={() => handleSelectPreset('pythagoras')} />
+            <EarlyPhonicsLab onClose={() => handleSelectPreset('kinetic-gas')} />
           </div>
         ) : (activePreset === 'bodmas' || activePreset === 'times-tables') ? (
           <div style={{ padding: '16px', background: '#090d16', borderTop: '1px solid #1e293b' }}>
             <MathsFundamentalsLab
               initialTab={activePreset === 'times-tables' ? 'times-tables' : 'bodmas'}
-              onClose={() => handleSelectPreset('pythagoras')}
+              onClose={() => handleSelectPreset('kinetic-gas')}
             />
           </div>
         ) : (

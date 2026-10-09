@@ -13,7 +13,7 @@
  * - Split-Off Ready: Modular code package in /player/ ready for standalone npm/CDN distribution.
  */
 
-import React, { useEffect, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import { type SwfTranspileResult } from '../utils/swfAstParser';
 import {
@@ -97,10 +97,10 @@ export interface AstVectorMediaPlayerHandle {
 }
 
 export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVectorMediaPlayerProps>(({
-  preset = 'fractions',
+  preset = 'kinetic-gas',
   embedded = true,
   lang,
-  autoPlay = false,
+  autoPlay = true,
   theme,
   height = '520px',
   className = '',
@@ -115,7 +115,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   initialCheckpoint,
 }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const normalizedInitialPreset = normalizeCartridgeId(preset) || 'fractions';
+  const normalizedInitialPreset = normalizeCartridgeId(preset) || 'kinetic-gas';
+  const initialPlayerPresetRef = useRef(normalizedInitialPreset);
   const [selectedPreset, setSelectedPreset] = useState<VectorPresetType>(normalizedInitialPreset);
   const selectedPresetRef = useRef(normalizedInitialPreset);
   const lastSentPresetRef = useRef(normalizedInitialPreset);
@@ -467,7 +468,23 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
       switch (data.type) {
         case 'PLAYER_READY':
           setIsPlayerReady(true);
-          if (data.preset) {
+          // If parent preset differs from initial preset booted in the iframe URL, smoothly sync it
+          if (selectedPresetRef.current && selectedPresetRef.current !== initialPlayerPresetRef.current) {
+            postToPlayer({ type: 'SET_PRESET', preset: selectedPresetRef.current, play: autoPlayRef.current });
+            const cart = getCartridge(selectedPresetRef.current);
+            if (cart && typeof cart.svgMarkup === 'string' && cart.svgMarkup.includes('<svg') && cart.astSource) {
+              postToPlayer({
+                type: 'LOAD_CARTRIDGE',
+                cartridge: {
+                  id: cart.id,
+                  title: cart.title,
+                  stage: cart.stage,
+                  svg: cart.svgMarkup,
+                  ast: cart.astSource,
+                },
+              });
+            }
+          } else if (data.preset && data.preset !== selectedPresetRef.current) {
             setSelectedPreset(data.preset);
             selectedPresetRef.current = data.preset;
           }
@@ -571,7 +588,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
 const rawBase = import.meta.env.BASE_URL || '/';
 const cleanBase = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 const effectiveMode = embedded ? 'embedded' : displayConfig.mode;
-const playerSrc = `${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(effectiveMode)}&embed=${embedded ? '1' : '0'}&base=${encodeURIComponent(cleanBase)}&v=2.6.0`;
+const playerSrc = useMemo(() => {
+  return `${cleanBase}player/index.html?preset=${encodeURIComponent(initialPlayerPresetRef.current)}&lang=${encodeURIComponent(currentLang)}&autoplay=${autoPlay ? '1' : '0'}&theme=${encodeURIComponent(activeTheme)}&mode=${encodeURIComponent(effectiveMode)}&embed=${embedded ? '1' : '0'}&base=${encodeURIComponent(cleanBase)}&v=2.6.0`;
+}, [cleanBase, currentLang, autoPlay, activeTheme, effectiveMode, embedded]);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const embedCode = `<iframe src="${origin}${cleanBase}player/index.html?preset=${encodeURIComponent(selectedPreset)}&lang=${encodeURIComponent(currentLang)}&mode=${encodeURIComponent(embedTargetMode)}" width="100%" height="480" frameborder="0" allow="fullscreen" loading="lazy" style="border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);border:1px solid #1e293b;"></iframe>`;

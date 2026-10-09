@@ -1,6 +1,6 @@
 {
   "version": "2.6.0",
-  "generatedAt": "2026-10-08T09:04:42.698Z",
+  "generatedAt": "2026-10-09T07:19:10.690Z",
   "totalScenes": 21,
   "inputDirs": [
     "static/player/scenes",
@@ -194,6 +194,20 @@
       "keyframeCount": 4,
       "subtitleCount": 3,
       "bindingsCount": 6
+    },
+    {
+      "id": "pythagoras",
+      "type": "Sim",
+      "title": "Pythagoras' Theorem (a² + b² = c²)",
+      "stage": "KS3 GEOMETRY",
+      "duration": 11,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/pythagoras.svg",
+      "astFile": "scenes/pythagoras.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 3
     },
     {
       "id": "water-cycle",

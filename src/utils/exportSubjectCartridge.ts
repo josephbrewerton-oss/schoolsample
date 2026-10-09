@@ -24,7 +24,7 @@ export const DEFAULT_CARTRIDGE_PACKAGES: CartridgePackage[] = [
     scenes: [
       { id: 'algebra-balance', title: '⚖️ Algebraic Balance Scale (2x + 5 = 15)', category: 'Maths' },
       { id: 'electric-circuits', title: "💡 Circuits & Ohm's Law (V = I × R)", category: 'Physics' },
-      { id: 'pythagoras', title: '📐 Pythagoras Area Conservation', category: 'Maths' },
+      { id: 'mountain-elevation', title: '🧗 Mountain Altitude & Trigonometry', category: 'Maths' },
       { id: 'bodmas', title: '🧮 BODMAS Forcefield Clamps', category: 'Maths' },
       { id: 'times-tables', title: '📐 2D Arrays & Distributive Splitter', category: 'Maths' },
       { id: 'fractions', title: '🥧 Fractions & Common Denominators', category: 'Maths' },
@@ -37,13 +37,13 @@ export const DEFAULT_CARTRIDGE_PACKAGES: CartridgePackage[] = [
   {
     id: 'maths-invariants',
     title: 'Pure Mathematics Foundations Cartridge (6-in-1)',
-    description: 'Algebra, BODMAS, Times Tables, Fractions, Pythagoras proofs, and Calculus curves.',
+    description: 'Algebra, BODMAS, Times Tables, Fractions, Mountain trigonometry, and Calculus curves.',
     scenes: [
       { id: 'algebra-balance', title: '⚖️ Algebraic Balance Scale', category: 'Algebra' },
       { id: 'bodmas', title: '🧮 BODMAS Order of Operations', category: 'Arithmetic' },
       { id: 'times-tables', title: '📐 Times Tables (12×12)', category: 'Arithmetic' },
       { id: 'fractions', title: '🥧 Fraction Equivalence', category: 'Proportions' },
-      { id: 'pythagoras', title: '📐 Pythagoras Geometric Proof', category: 'Geometry' },
+      { id: 'mountain-elevation', title: '🧗 Mountain Altitude & Hypotenuse', category: 'Geometry' },
       { id: 'calculus-curves', title: '📐 Calculus Tangents & Integrals', category: 'Calculus' },
     ],
   },
