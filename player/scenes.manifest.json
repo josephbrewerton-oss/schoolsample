@@ -1,7 +1,7 @@
 {
   "version": "2.6.0",
-  "generatedAt": "2026-10-08T18:27:09.063Z",
-  "totalScenes": 20,
+  "generatedAt": "2026-10-09T07:22:29.489Z",
+  "totalScenes": 21,
   "scenes": [
     {
       "id": "algebra-balance",
@@ -212,6 +212,20 @@
       "keyframeCount": 4,
       "subtitleCount": 3,
       "bindingsCount": 6
+    },
+    {
+      "id": "pythagoras",
+      "type": "Sim",
+      "title": "Pythagoras' Theorem (a² + b² = c²)",
+      "stage": "KS3 GEOMETRY",
+      "duration": 11,
+      "has3D": false,
+      "nodes3DCount": 0,
+      "svgFile": "scenes/pythagoras.svg",
+      "astFile": "scenes/pythagoras.ast",
+      "keyframeCount": 4,
+      "subtitleCount": 3,
+      "bindingsCount": 3
     },
     {
       "id": "shakespeare",

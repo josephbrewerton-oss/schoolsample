@@ -1,0 +1,62 @@
+<svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="pyth-bg-glow" cx="50%" cy="55%" r="70%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+    <linearGradient id="pyth-grad-a" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#059669" stop-opacity="0.7" />
+    </linearGradient>
+    <linearGradient id="pyth-grad-b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.7" />
+    </linearGradient>
+    <linearGradient id="pyth-grad-c" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0.7" />
+    </linearGradient>
+    <filter id="pyth-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="800" height="480" fill="url(#pyth-bg-glow)" />
+  <g transform="translate(180, 20)">
+    <rect width="440" height="44" rx="10" fill="#0f172a" fill-opacity="0.9" stroke="#38bdf8" stroke-width="1.5" />
+    <text x="220" y="28" fill="#f8fafc" font-size="16" font-weight="800" text-anchor="middle">
+      <tspan fill="#34d399">a² (9)</tspan> + <tspan fill="#60a5fa">b² (16)</tspan> = <tspan fill="#fbbf24">c² (25)</tspan> ➔ 3² + 4² = 5²
+    </text>
+  </g>
+  <g id="pyth-group-a">
+    <rect id="pyth-rect-a" x="276" y="196" width="84" height="84" fill="url(#pyth-grad-a)" stroke="#10b981" stroke-width="2" rx="4" data-draggable="pyth-handle-a" style="cursor:ns-resize;" />
+    <g id="pyth-grid-a" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
+    <text id="pyth-txt-a" x="318" y="243" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" opacity="1" filter="url(#pyth-glow)" pointer-events="none">a² = 9</text>
+  </g>
+  <g id="pyth-group-b">
+    <rect id="pyth-rect-b" x="360" y="280" width="112" height="112" fill="url(#pyth-grad-b)" stroke="#3b82f6" stroke-width="2" rx="4" data-draggable="pyth-handle-b" style="cursor:ew-resize;" />
+    <g id="pyth-grid-b" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
+    <text id="pyth-txt-b" x="416" y="341" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle" opacity="1" filter="url(#pyth-glow)" pointer-events="none">b² = 16</text>
+  </g>
+  <g id="pyth-group-c">
+    <g id="pyth-rot-c" transform="translate(360, 196) rotate(-36.87)">
+      <rect id="pyth-rect-c" x="0" y="-140" width="140" height="140" fill="url(#pyth-grad-c)" stroke="#f59e0b" stroke-width="2" rx="4" />
+      <g id="pyth-grid-c" opacity="0.4" stroke="#ffffff" stroke-width="0.8" pointer-events="none"></g>
+      <text id="pyth-txt-c" x="70" y="-64" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle" filter="url(#pyth-glow)" pointer-events="none">c² = 25 (c = 5)</text>
+    </g>
+  </g>
+  <polygon id="pyth-triangle" points="360,280 472,280 360,196" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />
+  <rect id="pyth-right-angle" x="360" y="262" width="18" height="18" fill="none" stroke="#94a3b8" stroke-width="2" />
+  <g id="pyth-handle-a" transform="translate(360, 196)" data-draggable="pyth-handle-a" style="cursor:ns-resize;">
+    <circle cx="0" cy="0" r="14" fill="#10b981" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
+    <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">a</text>
+  </g>
+  <g id="pyth-handle-b" transform="translate(472, 280)" data-draggable="pyth-handle-b" style="cursor:ew-resize;">
+    <circle cx="0" cy="0" r="14" fill="#3b82f6" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
+    <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">b</text>
+  </g>
+</svg>
