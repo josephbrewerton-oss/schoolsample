@@ -426,6 +426,12 @@
       this.radius = Number(config.radius) || 4;
       this.fill = config.fill || '#38bdf8';
       this.wrapMode = config.wrapMode || 'bounce';
+      this.obstacles = [];
+      this.cachedSegments = [];
+      this.lastAudioImpactTime = 0;
+      if (config.obstacles) {
+        this.setObstacles(config.obstacles);
+      }
       this.initPool();
     }
 
@@ -559,6 +565,194 @@
       if (maxY !== undefined) this.bounds.maxY = maxY;
     }
 
+    /**
+     * Obstacle Configuration & Dynamic 2D Collision Pipeline
+     */
+    addObstacle(obstacle) {
+      if (!obstacle) return;
+      const normalized = typeof obstacle === 'string'
+        ? { target: obstacle, bounce: 1.0, refract: 0, friction: 0 }
+        : Object.assign({ bounce: 1.0, refract: 0, friction: 0 }, obstacle);
+      this.obstacles.push(normalized);
+      this.cachedSegments = [];
+    }
+
+    setObstacles(list) {
+      this.obstacles = [];
+      this.cachedSegments = [];
+      if (Array.isArray(list)) {
+        list.forEach(o => this.addObstacle(o));
+      }
+    }
+
+    clearObstacles() {
+      this.obstacles = [];
+      this.cachedSegments = [];
+    }
+
+    /**
+     * Extracts discrete 2D line segments from arbitrary SVG elements
+     * (<line>, <polygon>, <polyline>, <rect>, or assemblies via getBBox)
+     * projected into the emitter group's local coordinate space.
+     */
+    extractSegmentsFromElement(el, opt = {}, xform = null) {
+      if (!el || typeof el.getAttribute !== 'function') return [];
+      const tag = (el.tagName || '').toLowerCase();
+      const segments = [];
+      const bounce = opt.bounce !== undefined ? Number(opt.bounce) : 1.0;
+      const refract = opt.refract !== undefined ? Number(opt.refract) : 0;
+      const friction = opt.friction !== undefined ? Number(opt.friction) : 0;
+
+      const addSeg = (p1, p2) => {
+        const ax = xform ? (p1.x * xform.a + p1.y * xform.c + xform.e) : p1.x;
+        const ay = xform ? (p1.x * xform.b + p1.y * xform.d + xform.f) : p1.y;
+        const bx = xform ? (p2.x * xform.a + p2.y * xform.c + xform.e) : p2.x;
+        const by = xform ? (p2.x * xform.b + p2.y * xform.d + xform.f) : p2.y;
+        const sx = bx - ax;
+        const sy = by - ay;
+        const len = Math.hypot(sx, sy);
+        if (len > 0.5) {
+          segments.push({
+            ax, ay, bx, by,
+            sx, sy, len,
+            nx: -sy / len,
+            ny: sx / len,
+            bounce,
+            refract,
+            friction,
+            el
+          });
+        }
+      };
+
+      if (tag === 'line') {
+        const x1 = parseFloat(el.getAttribute('x1') || '0');
+        const y1 = parseFloat(el.getAttribute('y1') || '0');
+        const x2 = parseFloat(el.getAttribute('x2') || '0');
+        const y2 = parseFloat(el.getAttribute('y2') || '0');
+        addSeg({ x: x1, y: y1 }, { x: x2, y: y2 });
+      } else if (tag === 'polygon' || tag === 'polyline') {
+        const rawPts = (el.getAttribute('points') || '').trim().split(/[\s,]+/);
+        const pts = [];
+        for (let i = 0; i < rawPts.length - 1; i += 2) {
+          const px = parseFloat(rawPts[i]);
+          const py = parseFloat(rawPts[i + 1]);
+          if (!isNaN(px) && !isNaN(py)) pts.push({ x: px, y: py });
+        }
+        for (let i = 0; i < pts.length - 1; i++) {
+          addSeg(pts[i], pts[i + 1]);
+        }
+        if (tag === 'polygon' && pts.length > 2) {
+          addSeg(pts[pts.length - 1], pts[0]);
+        }
+      } else if (tag === 'rect') {
+        const rx = parseFloat(el.getAttribute('x') || '0');
+        const ry = parseFloat(el.getAttribute('y') || '0');
+        const rw = parseFloat(el.getAttribute('width') || '0');
+        const rh = parseFloat(el.getAttribute('height') || '0');
+        const p0 = { x: rx, y: ry };
+        const p1 = { x: rx + rw, y: ry };
+        const p2 = { x: rx + rw, y: ry + rh };
+        const p3 = { x: rx, y: ry + rh };
+        addSeg(p0, p1);
+        addSeg(p1, p2);
+        addSeg(p2, p3);
+        addSeg(p3, p0);
+      } else {
+        const children = el.querySelectorAll ? el.querySelectorAll('line, polygon, polyline, rect') : null;
+        if (children && children.length > 0) {
+          for (let i = 0; i < children.length; i++) {
+            const childSegs = this.extractSegmentsFromElement(children[i], opt, xform);
+            for (let c = 0; c < childSegs.length; c++) segments.push(childSegs[c]);
+          }
+        } else if (typeof el.getBBox === 'function') {
+          try {
+            const bbox = el.getBBox();
+            if (bbox.width > 0 && bbox.height > 0) {
+              const p0 = { x: bbox.x, y: bbox.y };
+              const p1 = { x: bbox.x + bbox.width, y: bbox.y };
+              const p2 = { x: bbox.x + bbox.width, y: bbox.y + bbox.height };
+              const p3 = { x: bbox.x, y: bbox.y + bbox.height };
+              addSeg(p0, p1);
+              addSeg(p1, p2);
+              addSeg(p2, p3);
+              addSeg(p3, p0);
+            }
+          } catch (e) {}
+        }
+      }
+      return segments;
+    }
+
+    /**
+     * Refreshes active obstacle segments across live SVG DOM and tracks moving obstacle velocities
+     */
+    refreshObstacleSegments(dt = 0.016) {
+      if (!this.obstacles || this.obstacles.length === 0) {
+        this.cachedSegments = [];
+        return;
+      }
+      const root = (this.engine && this.engine.container) || (typeof document !== 'undefined' ? document : null);
+      if (!root) return;
+
+      const grpCTM = this.group && typeof this.group.getScreenCTM === 'function' ? this.group.getScreenCTM() : null;
+      const invGrp = grpCTM ? grpCTM.inverse() : null;
+      const newSegments = [];
+
+      for (let i = 0; i < this.obstacles.length; i++) {
+        const obs = this.obstacles[i];
+        if (obs.x1 !== undefined && obs.y1 !== undefined && obs.x2 !== undefined && obs.y2 !== undefined) {
+          const sx = obs.x2 - obs.x1;
+          const sy = obs.y2 - obs.y1;
+          const len = Math.hypot(sx, sy);
+          if (len > 0.5) {
+            newSegments.push({
+              ax: obs.x1, ay: obs.y1, bx: obs.x2, by: obs.y2,
+              sx, sy, len,
+              nx: -sy / len, ny: sx / len,
+              bounce: obs.bounce !== undefined ? obs.bounce : 1.0,
+              refract: obs.refract || 0,
+              friction: obs.friction || 0,
+              vx: 0, vy: 0,
+              el: null
+            });
+          }
+          continue;
+        }
+
+        const selector = obs.target || obs.selector;
+        if (!selector) continue;
+        const el = typeof selector === 'string' ? root.querySelector(selector) : selector;
+        if (!el) continue;
+
+        let xform = null;
+        if (invGrp && typeof el.getScreenCTM === 'function') {
+          try {
+            const elCTM = el.getScreenCTM();
+            if (elCTM) xform = invGrp.multiply(elCTM);
+          } catch (e) {}
+        }
+
+        const segs = this.extractSegmentsFromElement(el, obs, xform);
+        for (let s = 0; s < segs.length; s++) {
+          const seg = segs[s];
+          const prevKey = `obs_${i}_${s}`;
+          if (!this._prevSegMap) this._prevSegMap = new Map();
+          const prev = this._prevSegMap.get(prevKey);
+          if (prev && dt > 0.001) {
+            seg.vx = Math.max(-1200, Math.min(1200, (seg.ax - prev.ax) / dt));
+            seg.vy = Math.max(-1200, Math.min(1200, (seg.ay - prev.ay) / dt));
+          } else {
+            seg.vx = 0;
+            seg.vy = 0;
+          }
+          this._prevSegMap.set(prevKey, { ax: seg.ax, ay: seg.ay });
+          newSegments.push(seg);
+        }
+      }
+      this.cachedSegments = newSegments;
+    }
+
     update(dt) {
       const bounds = this.getEffectiveBounds();
       const minX = bounds.minX;
@@ -566,33 +760,139 @@
       const minY = bounds.minY;
       const maxY = bounds.maxY;
 
+      // Refresh dynamic obstacle line segments
+      this.refreshObstacleSegments(dt);
+      const segments = this.cachedSegments;
+      const hasSegments = segments && segments.length > 0;
+
       for (let i = 0; i < this.pool.length; i++) {
         const p = this.pool[i];
+        const x0 = p.x;
+        const y0 = p.y;
         p.vy += this.gravity * dt;
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
+        let x1 = x0 + p.vx * dt;
+        let y1 = y0 + p.vy * dt;
+
+        // Discrete 2D Ray/Segment & Proximity Collision Pipeline
+        if (hasSegments) {
+          for (let s = 0; s < segments.length; s++) {
+            const seg = segments[s];
+            const sx = seg.sx;
+            const sy = seg.sy;
+            const segLenSq = seg.len * seg.len;
+            if (segLenSq < 0.25) continue;
+
+            // 1. Segment-Circle Proximity Projection
+            const proj = Math.max(0, Math.min(1, ((x1 - seg.ax) * sx + (y1 - seg.ay) * sy) / segLenSq));
+            const cx = seg.ax + proj * sx;
+            const cy = seg.ay + proj * sy;
+            const distSq = (x1 - cx) * (x1 - cx) + (y1 - cy) * (y1 - cy);
+
+            // 2. Continuous 2D Ray-Segment Intersection (prevents high-speed tunneling)
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const denom = dx * sy - dy * sx;
+            let hit = false;
+
+            if (Math.abs(denom) > 1e-6) {
+              const t = ((seg.ax - x0) * sy - (seg.ay - y0) * sx) / denom;
+              const u = ((seg.ax - x0) * dy - (seg.ay - y0) * dx) / denom;
+              if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                hit = true;
+              }
+            }
+
+            if (!hit && distSq <= (p.radius * p.radius)) {
+              hit = true;
+            }
+
+            if (hit) {
+              // Ensure normal vector points against incoming relative particle velocity
+              let nx = seg.nx;
+              let ny = seg.ny;
+              const vObsX = seg.vx || 0;
+              const vObsY = seg.vy || 0;
+              let vRelX = p.vx - vObsX;
+              let vRelY = p.vy - vObsY;
+
+              if (vRelX * nx + vRelY * ny > 0) {
+                nx = -nx;
+                ny = -ny;
+              }
+
+              // A. Optics: Snell's Law Refraction & Total Internal Reflection
+              if (seg.refract && seg.refract > 1.0) {
+                const spd = Math.hypot(vRelX, vRelY) || 1e-4;
+                const dirX = vRelX / spd;
+                const dirY = vRelY / spd;
+                const cosI = -(dirX * nx + dirY * ny);
+                const eta = 1.0 / seg.refract;
+                const sin2T = eta * eta * (1.0 - cosI * cosI);
+
+                if (sin2T > 1.0) {
+                  // Total Internal Reflection (TIR)
+                  const dot = dirX * nx + dirY * ny;
+                  p.vx = (dirX - 2 * dot * nx) * spd + vObsX;
+                  p.vy = (dirY - 2 * dot * ny) * spd + vObsY;
+                  x1 = cx + nx * (p.radius + 1.2);
+                  y1 = cy + ny * (p.radius + 1.2);
+                } else {
+                  // Snell's Law Refraction
+                  const cosT = Math.sqrt(1.0 - sin2T);
+                  const refrX = eta * dirX + (eta * cosI - cosT) * nx;
+                  const refrY = eta * dirY + (eta * cosI - cosT) * ny;
+                  p.vx = refrX * spd + vObsX;
+                  p.vy = refrY * spd + vObsY;
+                  x1 = cx + refrX * (p.radius + 1.5);
+                  y1 = cy + refrY * (p.radius + 1.5);
+                }
+              } else {
+                // B. Classical Mechanics: Elastic/Inelastic Momentum Transfer
+                const bounce = seg.bounce !== undefined ? seg.bounce : 1.0;
+                const vn = vRelX * nx + vRelY * ny;
+                if (vn < 0) {
+                  vRelX -= (1 + bounce) * vn * nx;
+                  vRelY -= (1 + bounce) * vn * ny;
+                  if (seg.friction) {
+                    const tx = -ny, ty = nx;
+                    const vt = vRelX * tx + vRelY * ty;
+                    vRelX -= vt * seg.friction * tx;
+                    vRelY -= vt * seg.friction * ty;
+                  }
+                  p.vx = vRelX + vObsX;
+                  p.vy = vRelY + vObsY;
+                  x1 = cx + nx * (p.radius + 0.6);
+                  y1 = cy + ny * (p.radius + 0.6);
+                }
+              }
+            }
+          }
+        }
 
         if (this.wrapMode === 'bounce') {
-          if (p.x < minX + p.radius) {
-            p.x = minX + p.radius;
+          if (x1 < minX + p.radius) {
+            x1 = minX + p.radius;
             p.vx = Math.abs(p.vx);
-          } else if (p.x > maxX - p.radius) {
-            p.x = maxX - p.radius;
+          } else if (x1 > maxX - p.radius) {
+            x1 = maxX - p.radius;
             p.vx = -Math.abs(p.vx);
           }
-          if (p.y < minY + p.radius) {
-            p.y = minY + p.radius;
+          if (y1 < minY + p.radius) {
+            y1 = minY + p.radius;
             p.vy = Math.abs(p.vy);
-          } else if (p.y > maxY - p.radius) {
-            p.y = maxY - p.radius;
+          } else if (y1 > maxY - p.radius) {
+            y1 = maxY - p.radius;
             p.vy = -Math.abs(p.vy);
           }
         } else if (this.wrapMode === 'wrap') {
-          if (p.x < minX) p.x = maxX;
-          if (p.x > maxX) p.x = minX;
-          if (p.y < minY) p.y = maxY;
-          if (p.y > maxY) p.y = minY;
+          if (x1 < minX) x1 = maxX;
+          if (x1 > maxX) x1 = minX;
+          if (y1 < minY) y1 = maxY;
+          if (y1 > maxY) y1 = minY;
         }
+
+        p.x = x1;
+        p.y = y1;
 
         if (p.node) {
           p.node.setAttribute('cx', p.x.toFixed(1));
@@ -609,6 +909,7 @@
       if (props.gravity !== undefined) this.gravity = Number(props.gravity);
       if (props.boundsElement !== undefined) this.boundsElement = props.boundsElement;
       if (props.wrapMode !== undefined) this.wrapMode = props.wrapMode;
+      if (props.obstacles !== undefined) this.setObstacles(props.obstacles);
       if (props.fill !== undefined) {
         this.fill = props.fill;
         for (const p of this.pool) {
@@ -1074,6 +1375,31 @@
       // Speech synthesis debounce queue timer
       this._speakDebounceTimer = null;
 
+      // Gemini Nano Co-Pilot RPC & Interruption Subsystem (betaplans.md)
+      this.isAiDemonstrating = false;
+      this._aiPreempted = false;
+      this._activeAiTweenId = null;
+      this._activeAiViewBoxTweenId = null;
+      this._aiHighlightedNodes = new Set();
+      this._aiHighlightTimer = null;
+      this._defaultViewBox = null;
+
+      if (typeof window !== 'undefined') {
+        const handlePreempt = () => {
+          if (this.isAiDemonstrating) {
+            this.preemptAiDemonstration('USER_INPUT');
+          }
+        };
+        window.addEventListener('pointerdown', handlePreempt, { passive: true });
+        window.addEventListener('touchstart', handlePreempt, { passive: true });
+        window.addEventListener('wheel', handlePreempt, { passive: true });
+        window.addEventListener('keydown', (e) => {
+          if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyP', 'KeyR'].includes(e.code)) {
+            handlePreempt();
+          }
+        }, { passive: true });
+      }
+
       // Reactive State Variables & User Interaction
       this.vars = {};
 
@@ -1095,6 +1421,17 @@
       this.stateMachines = new Map();
       this.emitters = new Map();
       this.activeBindInputs = [];
+
+      // Gemini Nano AI Co-Pilot State (betaplans.md)
+      this.isAiDemonstrating = false;
+      this.activeAiTween = null;
+      this.activeAiViewBoxTween = null;
+      this.originalViewBox = null;
+      this.activeAiSpotlightTimers = [];
+      this.activeAiActionQueue = [];
+      this.currentKeyframeIndex = 0;
+      this.isThrottledForAi = false;
+      this._preemptionListenersSetup = false;
 
       // Load initial scene
       this.scene = this.getScene(this.activePresetId);
@@ -1238,6 +1575,363 @@
       return sm ? sm.currentState : null;
     }
 
+    // =========================================================================
+    // GEMINI NANO × AST VECTOR PLAYER CO-PILOT RPC PROTOCOL (betaplans.md)
+    // =========================================================================
+
+    getStageSvg() {
+      if (this.stageSvg && this.stageSvg.ownerDocument) return this.stageSvg;
+      if (this.container) {
+        if (this.container.tagName && this.container.tagName.toLowerCase() === 'svg') return this.container;
+        if (this.container.ownerSVGElement) return this.container.ownerSVGElement;
+        const innerSvg = this.container.querySelector && this.container.querySelector('svg');
+        if (innerSvg) return innerSvg;
+        const parentSvg = this.container.closest && this.container.closest('svg');
+        if (parentSvg) return parentSvg;
+      }
+      return typeof document !== 'undefined' ? document.getElementById('stage-svg') : null;
+    }
+
+    emitTelemetrySnapshot(lastUserAction = 'IDLE', lastErrorKey = null) {
+      const sceneId = this.activePresetId || (this.scene && this.scene.id) || 'scene';
+      const telemetry = {
+        type: 'PLAYER_TELEMETRY',
+        sceneId,
+        progress: Number((this.progress || 0).toFixed(4)),
+        activeKeyframe: this.activeKeyframeIndex || 0,
+        variables: { ...(this.vars || {}) },
+        lastUserAction,
+        lastErrorKey,
+        timestamp: Date.now()
+      };
+      this.notifyParent(telemetry);
+      return telemetry;
+    }
+
+    ensureAiSpotlightStyles() {
+      if (typeof document === 'undefined' || document.getElementById('ai-spotlight-styles')) return;
+      try {
+        const st = document.createElement('style');
+        st.id = 'ai-spotlight-styles';
+        st.textContent = `
+          @keyframes aiSpotlightPulse {
+            0% { filter: drop-shadow(0 0 4px var(--ai-pulse-color, #38bdf8)); }
+            50% { filter: drop-shadow(0 0 16px var(--ai-pulse-color, #38bdf8)) drop-shadow(0 0 28px rgba(56, 189, 248, 0.65)); stroke: var(--ai-pulse-color, #38bdf8) !important; }
+            100% { filter: drop-shadow(0 0 4px var(--ai-pulse-color, #38bdf8)); }
+          }
+          .ai-spotlight-pulse {
+            animation: aiSpotlightPulse 1.25s ease-in-out infinite alternate !important;
+            vector-effect: non-scaling-stroke;
+          }
+        `;
+        document.head.appendChild(st);
+      } catch (_) {}
+    }
+
+    async executeAiVisualCommand(packet) {
+      if (!packet || !Array.isArray(packet.actions)) return;
+      this.isAiDemonstrating = true;
+      this._aiPreempted = false;
+      this.notifyParent({
+        type: 'AI_DEMO_START',
+        transactionId: packet.transactionId,
+        pedagogicalIntent: packet.pedagogicalIntent,
+        actions: packet.actions
+      });
+
+      try {
+        for (const action of packet.actions) {
+          if (this._aiPreempted) break;
+          await this._runSingleAiAction(action);
+        }
+      } catch (err) {
+        console.warn('[AST Engine] Error during AI demonstration:', err);
+      } finally {
+        if (!this._aiPreempted) {
+          this.isAiDemonstrating = false;
+          this.notifyParent({
+            type: 'AI_DEMO_COMPLETE',
+            transactionId: packet.transactionId
+          });
+        }
+      }
+    }
+
+    async _runSingleAiAction(action) {
+      if (!action || this._aiPreempted) return;
+
+      switch (action.type) {
+        case 'SEEK': {
+          const target = typeof action.targetProgress === 'number' ? action.targetProgress : 0.5;
+          const duration = action.durationMs || 800;
+          await this.tweenProgress(target, duration);
+          break;
+        }
+
+        case 'HIGHLIGHT': {
+          if (action.selector) {
+            this.applyAiHighlight(action.selector, action.pulseColor || '#38bdf8', action.durationMs || 4500);
+          }
+          break;
+        }
+
+        case 'ZOOM_ELEMENT': {
+          if (action.selector) {
+            await this.zoomToElement(action.selector, action.durationMs || 700);
+          }
+          break;
+        }
+
+        case 'RESET_VIEW': {
+          await this.resetViewBox(action.durationMs || 600);
+          break;
+        }
+
+        case 'SET_VARIABLE': {
+          if (action.variable !== undefined) {
+            this.setVar(action.variable, action.value, true);
+          }
+          break;
+        }
+
+        case 'STEP': {
+          if (typeof action.stepIndex === 'number' && this.uiController && typeof this.uiController.stepToKeyframe === 'function') {
+            this.uiController.stepToKeyframe(action.stepIndex);
+          } else {
+            this.step(0.1);
+          }
+          break;
+        }
+
+        case 'NARRATE': {
+          if (action.text) {
+            this.narrateText(action.text, action.language);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    }
+
+    tweenProgress(targetProgress, durationMs = 800) {
+      return new Promise((resolve) => {
+        if (this._activeAiTweenId) {
+          cancelAnimationFrame(this._activeAiTweenId);
+          this._activeAiTweenId = null;
+        }
+
+        const startP = this.progress;
+        const endP = Math.max(0.0, Math.min(1.0, targetProgress));
+        if (Math.abs(startP - endP) < 0.002 || durationMs <= 20) {
+          this.seek(endP, true);
+          return resolve();
+        }
+
+        const startTime = performance.now();
+        const duration = Math.max(100, durationMs);
+
+        const step = (now) => {
+          if (this._aiPreempted) {
+            this._activeAiTweenId = null;
+            return resolve();
+          }
+
+          const elapsed = now - startTime;
+          const t = Math.min(1.0, elapsed / duration);
+          // Ease in-out cubic
+          const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+          const currentP = startP + (endP - startP) * ease;
+          this.seek(currentP, true);
+
+          if (t < 1.0) {
+            this._activeAiTweenId = requestAnimationFrame(step);
+          } else {
+            this._activeAiTweenId = null;
+            resolve();
+          }
+        };
+
+        this._activeAiTweenId = requestAnimationFrame(step);
+      });
+    }
+
+    applyAiHighlight(selector, pulseColor = '#38bdf8', durationMs = 4500) {
+      this.ensureAiSpotlightStyles();
+      const stage = this.getStageSvg();
+      if (!stage) return;
+
+      const nodes = Array.from(stage.querySelectorAll(selector));
+      if (!nodes.length) return;
+
+      if (!this._aiHighlightedNodes) this._aiHighlightedNodes = new Set();
+
+      nodes.forEach((node) => {
+        node.classList.add('ai-spotlight-pulse');
+        node.style.setProperty('--ai-pulse-color', pulseColor);
+        this._aiHighlightedNodes.add(node);
+      });
+
+      if (this._aiHighlightTimer) clearTimeout(this._aiHighlightTimer);
+      this._aiHighlightTimer = setTimeout(() => {
+        this.clearAiSpotlights();
+      }, durationMs);
+    }
+
+    clearAiSpotlights() {
+      if (this._aiHighlightTimer) {
+        clearTimeout(this._aiHighlightTimer);
+        this._aiHighlightTimer = null;
+      }
+      if (this._aiHighlightedNodes) {
+        this._aiHighlightedNodes.forEach((node) => {
+          if (node && node.classList) {
+            node.classList.remove('ai-spotlight-pulse');
+            node.style.removeProperty('--ai-pulse-color');
+          }
+        });
+        this._aiHighlightedNodes.clear();
+      }
+    }
+
+    zoomToElement(selector, durationMs = 700) {
+      return new Promise((resolve) => {
+        const stage = this.getStageSvg();
+        if (!stage) return resolve();
+
+        if (!this._defaultViewBox) {
+          this._defaultViewBox = stage.getAttribute('viewBox') || '0 0 800 480';
+        }
+
+        const el = stage.querySelector(selector);
+        if (!el || typeof el.getBBox !== 'function') return resolve();
+
+        try {
+          const bbox = el.getBBox();
+          if (!bbox || bbox.width <= 0 || bbox.height <= 0) return resolve();
+
+          // Calculate padded framing around target element
+          const pad = Math.max(bbox.width, bbox.height) * 0.45 + 30;
+          const targetX = Math.max(0, bbox.x - pad);
+          const targetY = Math.max(0, bbox.y - pad);
+          const targetW = bbox.width + pad * 2;
+          const targetH = bbox.height + pad * 2;
+
+          this.tweenViewBox(targetX, targetY, targetW, targetH, durationMs).then(resolve);
+        } catch (_) {
+          resolve();
+        }
+      });
+    }
+
+    resetViewBox(durationMs = 600) {
+      return new Promise((resolve) => {
+        const stage = this.getStageSvg();
+        if (!stage || !this._defaultViewBox) return resolve();
+        const parts = this._defaultViewBox.split(/\s+/).map(Number);
+        if (parts.length === 4) {
+          this.tweenViewBox(parts[0], parts[1], parts[2], parts[3], durationMs).then(resolve);
+        } else {
+          stage.setAttribute('viewBox', this._defaultViewBox);
+          resolve();
+        }
+      });
+    }
+
+    tweenViewBox(targetX, targetY, targetW, targetH, durationMs = 600) {
+      return new Promise((resolve) => {
+        const stage = this.getStageSvg();
+        if (!stage) return resolve();
+
+        if (this._activeAiViewBoxTweenId) {
+          cancelAnimationFrame(this._activeAiViewBoxTweenId);
+          this._activeAiViewBoxTweenId = null;
+        }
+
+        const currentVb = (stage.getAttribute('viewBox') || this._defaultViewBox || '0 0 800 480').split(/\s+/).map(Number);
+        const [startX, startY, startW, startH] = currentVb.length === 4 ? currentVb : [0, 0, 800, 480];
+
+        const startTime = performance.now();
+        const duration = Math.max(50, durationMs);
+
+        const step = (now) => {
+          if (this._aiPreempted) {
+            this._activeAiViewBoxTweenId = null;
+            return resolve();
+          }
+
+          const elapsed = now - startTime;
+          const t = Math.min(1.0, elapsed / duration);
+          const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+          const cx = startX + (targetX - startX) * ease;
+          const cy = startY + (targetY - startY) * ease;
+          const cw = startW + (targetW - startW) * ease;
+          const ch = startH + (targetH - startH) * ease;
+
+          stage.setAttribute('viewBox', `${cx.toFixed(1)} ${cy.toFixed(1)} ${cw.toFixed(1)} ${ch.toFixed(1)}`);
+
+          if (t < 1.0) {
+            this._activeAiViewBoxTweenId = requestAnimationFrame(step);
+          } else {
+            this._activeAiViewBoxTweenId = null;
+            resolve();
+          }
+        };
+
+        this._activeAiViewBoxTweenId = requestAnimationFrame(step);
+      });
+    }
+
+    narrateText(text, language) {
+      if (!text) return;
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = language || this.currentLang || 'en';
+          utter.rate = this.speechRate || 0.95;
+          window.speechSynthesis.speak(utter);
+        } catch (_) {}
+      }
+      if (this.uiController && typeof this.uiController.showToast === 'function') {
+        this.uiController.showToast(`✨ Nano Co-Pilot: "${text}"`, 4500);
+      }
+    }
+
+    preemptAiDemonstration(reason = 'USER_INPUT') {
+      if (!this.isAiDemonstrating && !this._activeAiTweenId && !this._activeAiViewBoxTweenId) return;
+      this.isAiDemonstrating = false;
+      this._aiPreempted = true;
+
+      if (this._activeAiTweenId) {
+        cancelAnimationFrame(this._activeAiTweenId);
+        this._activeAiTweenId = null;
+      }
+      if (this._activeAiViewBoxTweenId) {
+        cancelAnimationFrame(this._activeAiViewBoxTweenId);
+        this._activeAiViewBoxTweenId = null;
+      }
+
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (_) {}
+      }
+
+      this.clearAiSpotlights();
+      this.resetViewBox(300);
+
+      this.notifyParent({
+        type: 'PUPIL_PREEMPTION',
+        reason,
+        timestamp: Date.now()
+      });
+
+      if (this.uiController && typeof this.uiController.showToast === 'function') {
+        this.uiController.showToast('✋ Pupil in manual control', 1500);
+      }
+    }
+
     /**
      * Multi-Entity Vector Emitter API
      */
@@ -1299,7 +1993,7 @@
       return this.isPlaying;
     }
 
-    seek(newProgress) {
+    seek(newProgress, skipTelemetry = false) {
       this.progress = Math.max(0, Math.min(1, newProgress));
       this.updateActiveKeyframeAndSpeech(true);
       this.applyBindings(this.progress);
@@ -1308,10 +2002,14 @@
         currentTime: this.progress * this.durationSec,
         duration: this.durationSec
       });
+      if (!skipTelemetry) {
+        this.emitTelemetrySnapshot('SEEK');
+      }
     }
 
     step(delta) {
-      this.seek(this.progress + delta);
+      this.seek(this.progress + delta, false);
+      this.emitTelemetrySnapshot('STEP');
     }
 
     setSpeed(newSpeed) {
@@ -1398,13 +2096,16 @@
     /**
      * Sets a reactive state variable and recalculates derived outputs at 60 FPS
      */
-    setVar(name, val) {
+    setVar(name, val, isAi = false) {
       if (!this.vars) this.vars = {};
       this.vars[name] = val;
       this.updateComputedVars();
       this.syncBindInputs(name, val);
       this.applyBindings(this.progress);
       this.emit('varchange', { name, value: val, vars: { ...this.vars } });
+      if (!isAi) {
+        this.emitTelemetrySnapshot('VAR_CHANGE');
+      }
     }
 
     getVar(name) {
@@ -2138,6 +2839,59 @@
         });
       }
 
+      // Multi-Entity Particle Emitters & Obstacle Collision Pipelines
+      const emitters = [];
+      const emitterContainerBlocks = extractSexprBlocks(astContent, ':emitters');
+      const emitterBlocks = emitterContainerBlocks.length > 0
+        ? extractSexprBlocks(emitterContainerBlocks[0], ':emitter')
+        : extractSexprBlocks(astContent, ':emitter');
+
+      emitterBlocks.forEach(emText => {
+        const emId = extractSlot.call(null, emText, /:id\s+"([^"]+)"/i) || extractSlot.call(null, emText, /:id\s+([^\s\)]+)/i) || `emitter_${emitters.length + 1}`;
+        const count = parseInt(extractSlot.call(null, emText, /:count\s+(\d+)/i) || '80', 10);
+        const speed = parseFloat(extractSlot.call(null, emText, /:speed\s+([\d\.\-]+)/i) || '120');
+        const radius = parseFloat(extractSlot.call(null, emText, /:radius\s+([\d\.]+)/i) || '4');
+        const gravity = parseFloat(extractSlot.call(null, emText, /:gravity\s+([\d\.\-]+)/i) || '0');
+        const fill = extractSlot.call(null, emText, /:fill\s+"([^"]+)"/i) || '#38bdf8';
+        const wrapMode = extractSlot.call(null, emText, /:wrapMode\s+"([^"]+)"/i) || 'bounce';
+        const boundsEl = extractSlot.call(null, emText, /:boundsElement\s+"([^"]+)"/i) || extractSlot.call(null, emText, /:boundsElement\s+([^\s\)]+)/i);
+
+        // Explicit Bounds
+        const minX = parseFloat(extractSlot.call(null, emText, /:minX\s+([\d\.\-]+)/i) || '40');
+        const maxX = parseFloat(extractSlot.call(null, emText, /:maxX\s+([\d\.\-]+)/i) || '760');
+        const minY = parseFloat(extractSlot.call(null, emText, /:minY\s+([\d\.\-]+)/i) || '40');
+        const maxY = parseFloat(extractSlot.call(null, emText, /:maxY\s+([\d\.\-]+)/i) || '440');
+
+        // Obstacles (:obstacles ((:obstacle :target "#piston-assembly" :bounce 1.0) ...))
+        const obstacles = [];
+        const obsContainerBlocks = extractSexprBlocks(emText, ':obstacles');
+        if (obsContainerBlocks.length > 0) {
+          const obsEntries = extractSexprBlocks(obsContainerBlocks[0], ':obstacle');
+          obsEntries.forEach(obText => {
+            const target = extractSlot.call(null, obText, /:target\s+"([^"]+)"/i) || extractSlot.call(null, obText, /:target\s+([^\s\)]+)/i);
+            const bounce = parseFloat(extractSlot.call(null, obText, /:bounce\s+([\d\.]+)/i) || '1.0');
+            const refract = parseFloat(extractSlot.call(null, obText, /:refract\s+([\d\.]+)/i) || '0');
+            const friction = parseFloat(extractSlot.call(null, obText, /:friction\s+([\d\.]+)/i) || '0');
+            if (target) {
+              obstacles.push({ target, bounce, refract, friction });
+            }
+          });
+        }
+
+        emitters.push({
+          id: emId,
+          count,
+          speed,
+          radius,
+          gravity,
+          fill,
+          wrapMode,
+          bounds: { minX, maxX, minY, maxY },
+          boundsElement: boundsEl,
+          obstacles
+        });
+      });
+
       const has3D = Boolean(camMatch || bindings.some(b => b.type && b.type.startsWith('3d-')));
 
       return {
@@ -2154,6 +2908,7 @@
         bindings,
         checkpoints,
         physics,
+        emitters: emitters.length > 0 ? emitters : null,
         vars,
         inputs,
         computed,
@@ -3246,7 +4001,13 @@
         console.warn('[AST Engine] DOM optimization notice:', domOptErr);
       }
 
-      // Mount any registered Multi-Entity Vector Emitters
+      // Mount any registered Multi-Entity Vector Emitters with obstacle collision pipelines
+      this.emitters.clear();
+      if (scene.emitters && Array.isArray(scene.emitters)) {
+        scene.emitters.forEach(emConfig => {
+          this.addEmitter(emConfig);
+        });
+      }
       if (this.emitters && this.emitters.size > 0) {
         for (const em of this.emitters.values()) {
           em.mount(container);
@@ -4745,6 +5506,25 @@
           }
           break;
         }
+        case 'AI_VISUAL_COMMAND':
+          if (data.packet || data.actions) {
+            const packet = data.packet || {
+              transactionId: data.transactionId || `nano_${Date.now()}`,
+              actions: data.actions || [],
+              pedagogicalIntent: data.pedagogicalIntent || 'STEP_BY_STEP_DEMO',
+              rawSExpr: data.rawSExpr,
+              sayText: data.sayText
+            };
+            engine.executeAiVisualCommand(packet);
+          }
+          break;
+        case 'PUPIL_INTERRUPT':
+        case 'CANCEL_AI_DEMO':
+          engine.preemptAiDemonstration('PARENT_REQUEST');
+          break;
+        case 'GET_TELEMETRY':
+          engine.emitTelemetrySnapshot('REQUESTED');
+          break;
         case 'PING':
           engine.notifyParent({
             type: 'PONG',

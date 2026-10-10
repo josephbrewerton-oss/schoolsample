@@ -97,15 +97,15 @@
       <text id="pyth-txt-c" x="75" y="-70" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle" filter="url(#pyth-glow)" pointer-events="none">c² = 25</text>
     </g>
   </g>
-  <polygon id="pyth-triangle" points="360,280 480,280 360,190" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />
+  <polygon id="pyth-triangle" points="360,280 472,280 360,196" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />
   <rect id="pyth-right-angle" x="360" y="262" width="18" height="18" fill="none" stroke="#94a3b8" stroke-width="2" />
-  <g id="pyth-handle-a" data-draggable="pyth-handle-a" style="cursor:ns-resize;">
-    <circle cx="360" cy="190" r="14" fill="#10b981" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
-    <text x="360" y="195" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">a</text>
+  <g id="pyth-handle-a" transform="translate(360, 196)" data-draggable="pyth-handle-a" style="cursor:ns-resize;">
+    <circle cx="0" cy="0" r="14" fill="#10b981" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
+    <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">a</text>
   </g>
-  <g id="pyth-handle-b" data-draggable="pyth-handle-b" style="cursor:ew-resize;">
-    <circle cx="480" cy="280" r="14" fill="#3b82f6" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
-    <text x="480" y="285" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">b</text>
+  <g id="pyth-handle-b" transform="translate(472, 280)" data-draggable="pyth-handle-b" style="cursor:ew-resize;">
+    <circle cx="0" cy="0" r="14" fill="#3b82f6" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
+    <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">b</text>
   </g>
 </svg>`,
       astSource: `(:scene :id "pythagoras" :title "Pythagoras Theorem: Area Conservation" :stage "KS3 GEOMETRY" :duration 11.0
@@ -161,8 +161,13 @@
     get(id) {
       if (!id) return null;
       const norm = this.normalizeId(id);
-      if (scenes[norm]) return scenes[norm];
-      if (scenes[id]) return scenes[id];
+      
+      // If found in catalog but missing embedded markup, check fallback
+      if (scenes[norm] && !scenes[norm].svgMarkup && !scenes[norm].svgText && EMBEDDED_FALLBACKS[norm]) {
+        Object.assign(scenes[norm], EMBEDDED_FALLBACKS[norm]);
+      }
+      if (scenes[norm] && (scenes[norm].svgMarkup || scenes[norm].svgText)) return scenes[norm];
+      if (scenes[id] && (scenes[id].svgMarkup || scenes[id].svgText)) return scenes[id];
 
       // Check decentralized localStorage for custom or imported PhET cartridges
       if (typeof localStorage !== 'undefined') {

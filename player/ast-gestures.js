@@ -283,6 +283,10 @@
      * Primary PointerDown Handler
      */
     handlePointerDown(e) {
+      if (this.engine && this.engine.isAiDemonstrating) {
+        this.engine.preemptAiDemonstration('USER_CANVAS_TOUCH');
+      }
+
       if (e.target.closest('#stage-glass-hud-ui') || e.target.closest('.interactive-card')) {
         return;
       }
