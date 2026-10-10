@@ -427,15 +427,15 @@ export const EMBEDDED_CORE_CARTRIDGES: Record<string, { svg: string; ast: string
       <text id="pyth-txt-c" x="75" y="-70" fill="#ffffff" font-size="18" font-weight="900" text-anchor="middle" filter="url(#pyth-glow)" pointer-events="none">c² = 25</text>
     </g>
   </g>
-  <polygon id="pyth-triangle" points="360,280 480,280 360,190" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />
+  <polygon id="pyth-triangle" points="360,280 472,280 360,196" fill="#0f172a" fill-opacity="0.85" stroke="#38bdf8" stroke-width="3.5" stroke-linejoin="round" />
   <rect id="pyth-right-angle" x="360" y="262" width="18" height="18" fill="none" stroke="#94a3b8" stroke-width="2" />
-  <g id="pyth-handle-a" data-draggable="pyth-handle-a" style="cursor:ns-resize;">
-    <circle cx="360" cy="190" r="14" fill="#10b981" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
-    <text x="360" y="195" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">a</text>
+  <g id="pyth-handle-a" transform="translate(360, 196)" data-draggable="pyth-handle-a" style="cursor:ns-resize;">
+    <circle cx="0" cy="0" r="14" fill="#10b981" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
+    <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">a</text>
   </g>
-  <g id="pyth-handle-b" data-draggable="pyth-handle-b" style="cursor:ew-resize;">
-    <circle cx="480" cy="280" r="14" fill="#3b82f6" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
-    <text x="480" y="285" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">b</text>
+  <g id="pyth-handle-b" transform="translate(472, 280)" data-draggable="pyth-handle-b" style="cursor:ew-resize;">
+    <circle cx="0" cy="0" r="14" fill="#3b82f6" stroke="#ffffff" stroke-width="3" filter="url(#pyth-glow)" />
+    <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle" pointer-events="none">b</text>
   </g>
 </svg>`,
     ast: `(:scene :id "pythagoras" :title "Pythagoras Theorem: Area Conservation" :stage "KS3 GEOMETRY" :duration 11.0
@@ -545,7 +545,13 @@ export function getCartridge(idOrAlias: string): CartridgeDefinition | null {
   const canonicalId = normalizeCartridgeId(idOrAlias);
   const all = getAllCartridges();
   const found = all.find((c) => c.id === canonicalId || c.id === idOrAlias);
-  if (found) return found;
+  if (found) {
+    if (!found.svgMarkup && EMBEDDED_CORE_CARTRIDGES[canonicalId]) {
+      found.svgMarkup = EMBEDDED_CORE_CARTRIDGES[canonicalId].svg;
+      found.astSource = EMBEDDED_CORE_CARTRIDGES[canonicalId].ast;
+    }
+    return found;
+  }
 
   // Fallback check against embedded core
   if (EMBEDDED_CORE_CARTRIDGES[canonicalId]) {

@@ -13,6 +13,14 @@
   (:gestures (
     (:draggable :target "#piston-assembly" :axis "x" :min 200 :max 450)
   ))
+  (:emitters (
+    (:emitter :id "gas-molecules" :count 75 :speed 160 :radius 4.5 :fill "#38bdf8"
+      :minX 46 :maxX 494 :minY 86 :maxY 374 :wrapMode "bounce"
+      :obstacles (
+        (:obstacle :target "#piston-assembly" :bounce 1.0)
+      )
+    )
+  ))
   (:subtitles (
     (:start 0.00 :end 3.50 :en "Kinetic Molecular Theory explains that gas pressure arises from billions of elastic collisions against the container walls." :es "La teoría cinética explica que la presión de un gas surge de millones de colisiones elásticas contra las paredes.")
     (:start 3.50 :end 7.20 :en "Boyle's Law states that at constant temperature, halving the volume doubles collision frequency, doubling pressure." :es "La ley de Boyle establece que a temperatura constante, reducir el volumen a la mitad duplica las colisiones y la presión.")

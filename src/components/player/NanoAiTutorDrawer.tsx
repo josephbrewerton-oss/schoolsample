@@ -7,7 +7,14 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { aiCaller, hasUserGrantedAiConsent, setUserAiConsent } from '../../engine/aicaller';
+import {
+  aiCaller,
+  hasUserGrantedAiConsent,
+  setUserAiConsent,
+  promptAiCoPilotDemonstration,
+  type PlayerTelemetryEvent,
+  type AiVisualCommandPacket,
+} from '../../engine/aicaller';
 
 export interface NanoAiTutorDrawerProps {
   isOpen: boolean;
@@ -16,6 +23,9 @@ export interface NanoAiTutorDrawerProps {
   postToPlayer: (payload: Record<string, any>) => void;
   currentProgress?: number;
   activeKeyframe?: { title: string; rule: string } | null;
+  latestTelemetry?: PlayerTelemetryEvent | null;
+  isAiDemonstrating?: boolean;
+  onCancelDemonstration?: () => void;
 }
 
 export interface ContextSnapshot {
@@ -29,6 +39,14 @@ export interface ContextSnapshot {
   computed: Record<string, any>;
 }
 
+export interface ChatLogItem {
+  sender: 'user' | 'nano';
+  text: string;
+  action?: { name: string; val: any };
+  packet?: AiVisualCommandPacket;
+  rawSExpr?: string;
+}
+
 export const NanoAiTutorDrawer: React.FC<NanoAiTutorDrawerProps> = ({
   isOpen,
   onClose,
@@ -36,6 +54,9 @@ export const NanoAiTutorDrawer: React.FC<NanoAiTutorDrawerProps> = ({
   postToPlayer,
   currentProgress = 0,
   activeKeyframe,
+  latestTelemetry,
+  isAiDemonstrating = false,
+  onCancelDemonstration,
 }) => {
   const [activeTab, setActiveTab] = useState<'copilot' | 'generator' | 'grader'>('copilot');
   const [hasConsent, setHasConsent] = useState(() => hasUserGrantedAiConsent());
@@ -45,10 +66,10 @@ export const NanoAiTutorDrawer: React.FC<NanoAiTutorDrawerProps> = ({
 
   // Tab 1: Co-Pilot state
   const [userQuery, setUserQuery] = useState('');
-  const [chatLog, setChatLog] = useState<{ sender: 'user' | 'nano'; text: string; action?: { name: string; val: any } }[]>([
+  const [chatLog, setChatLog] = useState<ChatLogItem[]>([
     {
       sender: 'nano',
-      text: `Hello! I am your on-device Gemini Nano tutor for this vector lab. Ask me anything about the active simulation, or request a variable adjustment!`,
+      text: `Hello! I am your on-device Gemini Nano tutor for this vector lab. Ask me anything, or click "✨ Show Me How" to watch me physically demonstrate on the simulation stage!`,
     },
   ]);
 
@@ -137,8 +158,8 @@ export const NanoAiTutorDrawer: React.FC<NanoAiTutorDrawerProps> = ({
     }
   }, [preset]);
 
-  // Handle Asking Nano a Co-Pilot Question
-  const handleAskQuestion = async (queryText?: string) => {
+  // Handle Asking Nano a Co-Pilot Question with Stage Demonstration
+  const handleAskQuestion = async (queryText?: string, isDemonstrate: boolean = true) => {
     const promptToRun = (queryText || userQuery).trim();
     if (!promptToRun || isInferring) return;
 
@@ -152,50 +173,42 @@ export const NanoAiTutorDrawer: React.FC<NanoAiTutorDrawerProps> = ({
     setIsInferring(true);
 
     try {
-      const varsSummary = contextSnapshot ? JSON.stringify(contextSnapshot.vars) : '{}';
-      const keyframeSummary = activeKeyframe ? `Active rule: "${activeKeyframe.title} - ${activeKeyframe.rule}"` : '';
+      const telemetryForPrompt: Partial<PlayerTelemetryEvent> = latestTelemetry || {
+        sceneId: preset,
+        progress: currentProgress,
+        activeKeyframe: 0,
+        variables: contextSnapshot?.vars || {},
+        lastUserAction: 'QUESTION',
+        timestamp: Date.now()
+      };
 
-      const systemPrompt = `You are a supportive, high-calibre UK National Curriculum Socratic STEM tutor embedded inside the St Joseph's AST Vector Player.
-Current Lab: ${preset} (${contextSnapshot?.title || preset}).
-Stage: ${contextSnapshot?.stage || 'KS2/KS3'}.
-Timeline Progress: ${(currentProgress * 100).toFixed(0)}%.
-${keyframeSummary}
-Active Simulation Variables: ${varsSummary}.
-
-Instructions:
-1. Explain clearly in 2-3 engaging, age-appropriate sentences.
-2. Ground your explanation in the current visual simulation.
-3. If relevant, suggest a single variable to experiment with in this format: [SET: varName=value].
-4. Strictly zero hallucination. No preamble.`;
-
-      const response = await aiCaller.promptText({
-        prompt: promptToRun,
-        systemPrompt,
-        temperature: 0.3,
-        timeoutMs: 15000,
+      const packet = await promptAiCoPilotDemonstration(telemetryForPrompt, promptToRun, {
+        targetScene: preset
       });
 
-      // Parse optional action directive e.g. [SET: temp=450]
-      let action: { name: string; val: any } | undefined;
-      const match = response.match(/\[SET:\s*([a-zA-Z0-9_]+)\s*=\s*([0-9.-]+)\]/);
-      if (match) {
-        action = { name: match[1], val: parseFloat(match[2]) };
+      if (isDemonstrate && packet.actions && packet.actions.length > 0) {
+        postToPlayer({
+          type: 'AI_VISUAL_COMMAND',
+          packet
+        });
       }
 
       setChatLog((prev) => [
         ...prev,
         {
           sender: 'nano',
-          text: response.replace(/\[SET:[^\]]+\]/g, '').trim(),
-          action,
+          text: packet.sayText || 'Observe the visual demonstration on the simulation stage.',
+          packet,
+          rawSExpr: packet.rawSExpr
         },
       ]);
     } catch (err: any) {
+      console.warn('[NanoAiTutorDrawer] Co-Pilot inference notice:', err);
       setChatLog((prev) => [
         ...prev,
         {
           sender: 'nano',
-          text: `[Offline Local Response] In this ${preset} simulation, adjustments to the input variables directly update the SVG equations and animated vector properties. Notice how the keyframe timeline coordinates with the visual state. (${err?.message || 'Local rule engine active'})`,
+          text: `[Offline Local Response] In this ${preset} simulation, adjustments to the input variables directly update the SVG equations and animated vector properties. Notice how the keyframe timeline coordinates with the visual state.`,
         },
       ]);
     } finally {
@@ -444,6 +457,56 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
       {/* Tab 1: Co-Pilot */}
       {activeTab === 'copilot' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Active Demonstration & Pupil Instant Preemption Banner */}
+          {isAiDemonstrating && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                background: 'linear-gradient(90deg, rgba(2, 132, 199, 0.25) 0%, rgba(14, 165, 233, 0.1) 100%)',
+                border: '1px solid #38bdf8',
+                borderRadius: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#38bdf8',
+                    boxShadow: '0 0 8px #38bdf8',
+                  }}
+                />
+                <span style={{ fontSize: '0.76rem', color: '#f8fafc', fontWeight: 700 }}>
+                  ✨ Gemini Nano is demonstrating on stage... (Touch canvas to take back control)
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  postToPlayer({ type: 'PUPIL_INTERRUPT' });
+                  onCancelDemonstration?.();
+                }}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 800,
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ✋ Take Control
+              </button>
+            </div>
+          )}
+
           {/* Quick Prompts Bar */}
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
             <span style={{ fontSize: '0.72rem', color: '#94a3b8', alignSelf: 'center', whiteSpace: 'nowrap' }}>
@@ -453,7 +516,7 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleAskQuestion(q)}
+                onClick={() => handleAskQuestion(q, true)}
                 disabled={isInferring}
                 style={{
                   whiteSpace: 'nowrap',
@@ -478,7 +541,7 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
               borderRadius: '10px',
               border: '1px solid #1e293b',
               padding: '12px',
-              maxHeight: '180px',
+              maxHeight: '200px',
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
@@ -490,7 +553,7 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
                 key={i}
                 style={{
                   alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                  maxWidth: '85%',
+                  maxWidth: '88%',
                   background: msg.sender === 'user' ? '#0284c7' : '#1e293b',
                   color: '#ffffff',
                   padding: '8px 12px',
@@ -500,9 +563,46 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
                 }}
               >
                 <div style={{ fontWeight: 800, fontSize: '0.68rem', marginBottom: '2px', color: msg.sender === 'user' ? '#bae6fd' : '#38bdf8' }}>
-                  {msg.sender === 'user' ? 'You' : '✨ Gemini Nano'}
+                  {msg.sender === 'user' ? 'You' : '✨ Gemini Nano Co-Pilot'}
                 </div>
                 <div>{msg.text}</div>
+                {msg.rawSExpr && (
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      padding: '6px 10px',
+                      background: '#090d16',
+                      borderRadius: '6px',
+                      border: '1px solid #334155',
+                      fontFamily: 'monospace',
+                      fontSize: '0.72rem',
+                      color: '#38bdf8',
+                      overflowX: 'auto',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                      <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 800 }}>⚡ ACTION TUPLE:</span>
+                      {msg.packet && (
+                        <button
+                          type="button"
+                          onClick={() => postToPlayer({ type: 'AI_VISUAL_COMMAND', packet: msg.packet })}
+                          style={{
+                            padding: '2px 6px',
+                            fontSize: '0.65rem',
+                            borderRadius: '4px',
+                            background: '#0284c7',
+                            color: '#fff',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ▶ Replay Demo
+                        </button>
+                      )}
+                    </div>
+                    <code>{msg.rawSExpr}</code>
+                  </div>
+                )}
                 {msg.action && (
                   <button
                     type="button"
@@ -535,7 +635,7 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
             ))}
             {isInferring && (
               <div style={{ alignSelf: 'flex-start', color: '#38bdf8', fontSize: '0.75rem', fontStyle: 'italic' }}>
-                ✨ Nano is thinking on-device...
+                ✨ Nano is synthesizing action tuples on-device...
               </div>
             )}
           </div>
@@ -547,7 +647,7 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
               value={userQuery}
               onChange={(e) => setUserQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAskQuestion();
+                if (e.key === 'Enter') handleAskQuestion(undefined, true);
               }}
               placeholder={`Ask Nano about ${preset} (e.g. why does this curve peak?)...`}
               disabled={isInferring}
@@ -563,10 +663,10 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
             />
             <button
               type="button"
-              onClick={() => handleAskQuestion()}
+              onClick={() => handleAskQuestion(undefined, true)}
               disabled={isInferring || !userQuery.trim()}
               style={{
-                padding: '8px 16px',
+                padding: '8px 14px',
                 borderRadius: '8px',
                 background: isInferring ? '#334155' : '#0284c7',
                 color: '#ffffff',
@@ -574,9 +674,12 @@ Feedback: 2 sentences identifying conceptual strengths and one area for mastery 
                 fontWeight: 700,
                 fontSize: '0.8rem',
                 cursor: isInferring ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
               }}
             >
-              Ask Nano
+              <span>✨ Show Me How</span>
             </button>
           </div>
         </div>

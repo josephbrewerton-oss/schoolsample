@@ -11,6 +11,7 @@ import EarlyPhonicsLab from '../components/EarlyPhonicsLab';
 import MathsFundamentalsLab from '../components/MathsFundamentalsLab';
 import AquariumSimulationLab from '../components/AquariumSimulationLab';
 import { resolvePresetForTopic } from '../services/playerLauncher';
+import { promptAiCoPilotDemonstration, type PlayerTelemetryEvent } from '../engine/aicaller';
 import {
   getAllCartridges,
   getCartridge,
@@ -57,7 +58,38 @@ export default function MediaPlayerPage(): React.JSX.Element {
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSimStopped, setIsSimStopped] = useState(false);
+  const [latestTelemetry, setLatestTelemetry] = useState<PlayerTelemetryEvent | null>(null);
+  const [isAiDemonstrating, setIsAiDemonstrating] = useState(false);
+  const [isNanoLoadingDemo, setIsNanoLoadingDemo] = useState(false);
   const playerRef = useRef<AstVectorMediaPlayerHandle>(null);
+
+  const handleShowMeHow = useCallback(async () => {
+    if (isNanoLoadingDemo) return;
+    setIsNanoLoadingDemo(true);
+    try {
+      const telemetryForPrompt: Partial<PlayerTelemetryEvent> = latestTelemetry || {
+        sceneId: activePreset,
+        progress: 0.5,
+        activeKeyframe: 0,
+        variables: {},
+        lastUserAction: 'SHOW_ME_HOW',
+        timestamp: Date.now()
+      };
+      const packet = await promptAiCoPilotDemonstration(
+        telemetryForPrompt,
+        `Demonstrate key curriculum concepts for ${activePreset}`,
+        { targetScene: activePreset }
+      );
+      if (packet && packet.actions && packet.actions.length > 0) {
+        playerRef.current?.sendAiVisualCommand(packet);
+        setIsAiDemonstrating(true);
+      }
+    } catch (err) {
+      console.warn('[MediaPlayerPage] Show me how error:', err);
+    } finally {
+      setIsNanoLoadingDemo(false);
+    }
+  }, [activePreset, latestTelemetry, isNanoLoadingDemo]);
 
   // Modals for Decentralized Cartridge Management
   const [showImportModal, setShowImportModal] = useState(false);
@@ -379,6 +411,58 @@ export default function MediaPlayerPage(): React.JSX.Element {
               <span>{isSimStopped ? '▶' : '⏹'}</span> {isSimStopped ? 'Resume Sim' : 'Stop Sim'}
             </button>
 
+            <button
+              type="button"
+              onClick={handleShowMeHow}
+              disabled={isNanoLoadingDemo}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                background: isAiDemonstrating ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : '#0f172a',
+                color: '#ffffff',
+                border: '1.5px solid #38bdf8',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: isNanoLoadingDemo ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: isAiDemonstrating ? '0 0 12px rgba(56, 189, 248, 0.5)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+              title="Ask Gemini Nano to visually demonstrate key concepts on stage"
+            >
+              <span>{isNanoLoadingDemo ? '⏳' : '✨'}</span>
+              <span>{isNanoLoadingDemo ? 'Synthesizing...' : isAiDemonstrating ? 'Nano Demonstrating' : 'Show Me How'}</span>
+            </button>
+
+            {isAiDemonstrating && (
+              <button
+                type="button"
+                onClick={() => {
+                  playerRef.current?.preemptAiDemo();
+                  setIsAiDemonstrating(false);
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)',
+                }}
+                title="Interrupt Nano and return complete control immediately"
+              >
+                <span>✋</span> Take Control
+              </button>
+            )}
+
             <span
               style={{
                 fontSize: '0.72rem',
@@ -434,6 +518,10 @@ export default function MediaPlayerPage(): React.JSX.Element {
             embedded={true}
             height="min(540px, 60vh)"
             onPresetChange={(newPreset) => handleSelectPreset(newPreset)}
+            onTelemetry={(t) => setLatestTelemetry(t)}
+            onAiDemoStart={() => setIsAiDemonstrating(true)}
+            onAiDemoComplete={() => setIsAiDemonstrating(false)}
+            onPupilPreemption={() => setIsAiDemonstrating(false)}
           />
         )}
       </div>

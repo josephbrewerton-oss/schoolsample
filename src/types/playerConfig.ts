@@ -39,6 +39,9 @@ export interface PlayerDisplayConfig {
   showLoopToggle?: boolean;          // 🔁 Auto-repeat loop toggle
   showVolumeControl?: boolean;       // 🔊 Master volume & mute controls
   showPhysicsControls?: boolean;     // 🪐 Micro-physics & gravity controls
+
+  // Gemini Nano Co-Pilot Beta Integration
+  ai_copilot_beta?: boolean;         // ✨ Gemini Nano On-Device Co-Pilot (Bidirectional RPC Beta)
 }
 
 export const MODE_METADATA: Record<PlayerDisplayMode, { label: string; icon: string; tag: string; description: string }> = {

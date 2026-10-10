@@ -210,6 +210,7 @@ export const PlayerSettingsModal: React.FC<PlayerSettingsModalProps> = ({
                   { key: 'showLoopToggle', label: '🔁 Auto-Repeat Loop Toggle' },
                   { key: 'showVolumeControl', label: '🔊 Master Volume & Mute Controls' },
                   { key: 'showPhysicsControls', label: '🪐 Micro-Physics & Gravity Subsystem' },
+                  { key: 'ai_copilot_beta', label: '✨ Gemini Nano On-Device Co-Pilot [Beta] (:act bidirectional RPC)' },
                 ].map(({ key, label }) => (
                   <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', cursor: 'pointer' }}>
                     <input

@@ -94,15 +94,34 @@
           <feGaussianBlur stdDeviation="3" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
+        <!-- Gemini Nano Co-Pilot Focus Halo Glow Filter -->
+        <filter id="ai-spotlight-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+          <feComponentTransfer in="blur" result="glow">
+            <feFuncA type="linear" slope="1.5"/>
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
       <!-- Dynamic Vector Layer is generated here -->
       <g id="scene-root"></g>
+      <!-- Gemini Nano AI Co-Pilot Spotlight & Focus Halo Layer -->
+      <g id="ai-spotlight-layer" pointer-events="none"></g>
       <!-- Interactive SVG Developer Overlay Layer -->
       <g id="dev-overlay-root">
         <rect id="dev-hover-box" class="dev-overlay-box hover hidden" x="0" y="0" width="0" height="0" />
         <rect id="dev-select-box" class="dev-overlay-box select hidden" x="0" y="0" width="0" height="0" />
       </g>
     </svg>
+
+    <!-- Gemini Nano Co-Pilot Live Demonstration Banner -->
+    <div id="ai-copilot-banner" style="display:none;" title="Click anywhere or move canvas to interrupt and regain full manual control">
+      <span class="ai-dot-pulse"></span>
+      <span id="ai-copilot-banner-text">✨ Gemini Nano is demonstrating (touch canvas to take back control)</span>
+    </div>
 
     <!-- Floating Element Inspector Tooltip -->
     <div id="dev-hover-tooltip" class="dev-hover-tooltip hidden"></div>

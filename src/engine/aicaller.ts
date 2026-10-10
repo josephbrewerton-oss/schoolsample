@@ -455,3 +455,218 @@ class AiRuntimeCaller {
 }
 
 export const aiCaller = new AiRuntimeCaller();
+
+// ============================================================================
+// GEMINI NANO × AST VECTOR PLAYER CO-PILOT RPC PROTOCOL (betaplans.md)
+// ============================================================================
+
+export interface PlayerTelemetryEvent {
+  type: 'PLAYER_TELEMETRY';
+  sceneId: string;
+  progress: number;
+  activeKeyframe: number;
+  variables: Record<string, any>;
+  lastUserAction: string;
+  lastErrorKey?: string;
+  timestamp: number;
+}
+
+export type AiVisualAction =
+  | { type: 'SEEK'; targetProgress: number; durationMs?: number }
+  | { type: 'HIGHLIGHT'; selector: string; pulseColor?: string; durationMs?: number }
+  | { type: 'SET_VARIABLE'; variable: string; value: number | string }
+  | { type: 'STEP'; stepIndex: number }
+  | { type: 'ANNOTATE'; targetSelector: string; labelText: string; arrowDirection?: 'up' | 'down' | 'left' | 'right' }
+  | { type: 'NARRATE'; text: string; language?: string }
+  | { type: 'ZOOM_ELEMENT'; selector: string; durationMs?: number }
+  | { type: 'RESET_VIEW'; durationMs?: number };
+
+export interface AiVisualCommandPacket {
+  type: 'AI_VISUAL_COMMAND';
+  transactionId: string;
+  actions: AiVisualAction[];
+  pedagogicalIntent: 'EXPLAIN_MISCONCEPTION' | 'STEP_BY_STEP_DEMO' | 'ENCOURAGE';
+  rawSExpr?: string;
+  sayText?: string;
+}
+
+/**
+ * Sanitizes an SVG CSS selector to guarantee zero script injection
+ */
+function sanitizeSvgSelector(rawSelector: string): string | null {
+  if (!rawSelector || typeof rawSelector !== 'string') return null;
+  const clean = rawSelector.trim().replace(/^['"]|['"]$/g, '');
+  // Disallow javascript protocol, script tags, or dangerous syntax
+  if (/[<>'"`;(){}]/.test(clean) || clean.toLowerCase().includes('script')) {
+    return null;
+  }
+  // Must look like an ID (#...), class (....), or attribute ([...])
+  if (/^[#\.]?[a-zA-Z0-9_\-\:]+$/.test(clean) || /^\[[a-zA-Z0-9_\-]+(=['"]?[a-zA-Z0-9_\-]+['"]?)?\]$/.test(clean)) {
+    return clean.startsWith('#') || clean.startsWith('.') || clean.startsWith('[') ? clean : `#${clean}`;
+  }
+  return null;
+}
+
+/**
+ * Parses Gemini Nano's concise Lisp-style S-Expression grammar:
+ * (:act :seek <0.0-1.0> [:highlight "<svg-id>"] [:var "<name>" <val>] [:say "<text>"] [:zoom "<svg-id>"])
+ */
+export function parseAiActionTuples(nanoOutput: string): {
+  actions: AiVisualAction[];
+  sayText: string;
+  rawSExpr: string;
+} {
+  const actions: AiVisualAction[] = [];
+  let sayText = '';
+  const sExprList: string[] = [];
+
+  // 1. Match all (:act ...) blocks
+  const actRegex = /\(:act\s+([^)]+)\)/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = actRegex.exec(nanoOutput)) !== null) {
+    const rawTuple = match[0];
+    const body = match[1];
+    sExprList.push(rawTuple);
+
+    // Parse :seek <float>
+    const seekMatch = body.match(/:seek\s+([0-9.]+)/i);
+    if (seekMatch) {
+      const p = Math.max(0.0, Math.min(1.0, parseFloat(seekMatch[1])));
+      if (!isNaN(p)) {
+        actions.push({ type: 'SEEK', targetProgress: p, durationMs: 800 });
+      }
+    }
+
+    // Parse :highlight / :spotlight "<selector>"
+    const highlightMatch = body.match(/:(highlight|spotlight)\s+("([^"]+)"|'([^']+)'|([#a-zA-Z0-9_\-:]+))/i);
+    if (highlightMatch) {
+      const rawSel = highlightMatch[3] || highlightMatch[4] || highlightMatch[5];
+      const validSel = sanitizeSvgSelector(rawSel);
+      if (validSel) {
+        actions.push({ type: 'HIGHLIGHT', selector: validSel, pulseColor: '#38bdf8', durationMs: 4500 });
+      }
+    }
+
+    // Parse :zoom "<selector>"
+    const zoomMatch = body.match(/:zoom\s+("([^"]+)"|'([^']+)'|([#a-zA-Z0-9_\-:]+))/i);
+    if (zoomMatch) {
+      const rawSel = zoomMatch[2] || zoomMatch[3] || zoomMatch[4];
+      const validSel = sanitizeSvgSelector(rawSel);
+      if (validSel) {
+        actions.push({ type: 'ZOOM_ELEMENT', selector: validSel, durationMs: 700 });
+      }
+    }
+
+    // Parse :var "<name>" <val>
+    const varMatch = body.match(/:var\s+("?([a-zA-Z0-9_]+)"?)\s+([0-9.-]+|"[^"]+"|'[^']+')/i);
+    if (varMatch) {
+      const varName = varMatch[2];
+      const rawVal = varMatch[3].replace(/^['"]|['"]$/g, '');
+      const numVal = parseFloat(rawVal);
+      const finalVal = isNaN(numVal) ? rawVal : numVal;
+      actions.push({ type: 'SET_VARIABLE', variable: varName, value: finalVal });
+    }
+
+    // Parse :step <int>
+    const stepMatch = body.match(/:step\s+([0-9]+)/i);
+    if (stepMatch) {
+      actions.push({ type: 'STEP', stepIndex: parseInt(stepMatch[1], 10) });
+    }
+
+    // Parse :reset
+    if (/:reset/i.test(body)) {
+      actions.push({ type: 'RESET_VIEW' });
+    }
+
+    // Parse :say / :narrate "<text>"
+    const sayMatch = body.match(/:(say|narrate)\s+("([^"]*)"|'([^']*)')/i);
+    if (sayMatch) {
+      const text = (sayMatch[3] !== undefined ? sayMatch[3] : sayMatch[4] || '').trim();
+      if (text) {
+        if (!sayText) sayText = text;
+        actions.push({ type: 'NARRATE', text });
+      }
+    }
+  }
+
+  // 2. If no :say was found inside (:act ...), extract spoken explanation from text outside the S-Expr
+  if (!sayText) {
+    const textWithoutSExpr = nanoOutput.replace(/\(:act\s+[^)]+\)/gi, '').replace(/```[a-z]*|```/gi, '').trim();
+    sayText = textWithoutSExpr || 'Let us observe the visual demonstration on the simulation stage.';
+    if (actions.length > 0) {
+      actions.push({ type: 'NARRATE', text: sayText });
+    }
+  }
+
+  // 3. Fallback: If no (:act) S-Expression was emitted at all, generate an informative visual seek
+  if (actions.length === 0) {
+    // If output discusses a step or conclusion, seek to end; otherwise halfway
+    const lower = nanoOutput.toLowerCase();
+    const targetP = lower.includes('finish') || lower.includes('result') || lower.includes('conclu') ? 0.9 : 0.5;
+    actions.push({ type: 'SEEK', targetProgress: targetP, durationMs: 800 });
+    actions.push({ type: 'NARRATE', text: sayText });
+    sExprList.push(`(:act :seek ${targetP} :say "${sayText.slice(0, 80).replace(/"/g, "'")}...")`);
+  }
+
+  return {
+    actions,
+    sayText,
+    rawSExpr: sExprList.join('\n') || `(:act :seek 0.5 :say "${sayText.slice(0, 60)}")`,
+  };
+}
+
+/**
+ * Prompts Gemini Nano on-device to generate visual demonstration action tuples (:act)
+ * conforming to the Co-Pilot specification in betaplans.md
+ */
+export async function promptAiCoPilotDemonstration(
+  telemetry: Partial<PlayerTelemetryEvent>,
+  pupilQuestion: string,
+  opts?: { targetScene?: string; availableSelectors?: string[] }
+): Promise<AiVisualCommandPacket> {
+  const sceneId = telemetry?.sceneId || opts?.targetScene || 'simulation';
+  const progressPercent = Math.round((telemetry?.progress ?? 0) * 100);
+  const varsObj = telemetry?.variables || {};
+  const varsStr = JSON.stringify(varsObj);
+  const keyframeIdx = telemetry?.activeKeyframe ?? 0;
+
+  // Compact, high-instruction-density system prompt constrained by betaplans.md grammar
+  const systemPrompt = `You are Gemini Nano, an on-device AI Co-Pilot embedded in the St Joseph's Vector Classroom Whiteboard.
+CURRENT SCENE: "${sceneId}" | PROGRESS: ${progressPercent}% (Step #${keyframeIdx}) | VARIABLES: ${varsStr}.
+
+YOUR MISSION: Answer the pupil's question by PHYSICALLY DEMONSTRATING on the vector stage using Action Tuples.
+Output strictly an (:act ...) S-Expression tuple in your response:
+(:act :seek <0.0 to 1.0> [:highlight "<svg-id>"] [:var "<name>" <val>] [:zoom "<svg-id>"] [:say "<1-2 sentence spoken explanation>"])
+
+EXAMPLES:
+- Fraction addition: (:act :seek 0.50 :highlight "#pie-slice-split" :say "Notice how one half is physically identical to two quarters.")
+- Pythagoras: (:act :seek 0.85 :highlight "#pyth-rect-a" :var "sideA" 3 :say "The square of leg a has an area of 9 square units.")
+- Boyle's Gas Law: (:act :seek 0.30 :highlight "#piston" :var "pressure" 2.5 :say "Compressing the piston cylinder doubles particle collisions.")
+
+RULES:
+1. Always include :seek and :say in your (:act ...) tuple.
+2. Explanations must be engaging, UK Curriculum aligned, and under 30 words.
+3. No preamble. Output the (:act ...) S-Expression directly.`;
+
+  const userPrompt = `Pupil asks: "${pupilQuestion.trim()}". Show and explain on the simulation stage.`;
+
+  // Execute on-device inference (Chrome Prompt API with WebLLM fallback)
+  const rawOutput = await aiCaller.promptText({
+    prompt: userPrompt,
+    systemPrompt,
+    temperature: 0.2,
+    timeoutMs: 16000,
+  });
+
+  const parsed = parseAiActionTuples(rawOutput);
+
+  return {
+    type: 'AI_VISUAL_COMMAND',
+    transactionId: `nano_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    actions: parsed.actions,
+    pedagogicalIntent: 'STEP_BY_STEP_DEMO',
+    rawSExpr: parsed.rawSExpr,
+    sayText: parsed.sayText,
+  };
+}

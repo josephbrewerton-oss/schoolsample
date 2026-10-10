@@ -16,6 +16,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { getSavedLanguage, listenToLanguageChange } from '../engine/operational-language';
 import { type SwfTranspileResult } from '../utils/swfAstParser';
+import { type PlayerTelemetryEvent, type AiVisualCommandPacket } from '../engine/aicaller';
 import {
   PlayerDisplayMode,
   PlayerDisplayConfig,
@@ -61,6 +62,10 @@ export interface AstVectorMediaPlayerProps {
   onKeyframeReached?: (keyframe: { title: string; rule: string; progress: number }) => void;
   onTimeUpdate?: (progress: number) => void;
   onConfigChange?: (config: PlayerDisplayConfig) => void;
+  onTelemetry?: (telemetry: PlayerTelemetryEvent) => void;
+  onAiDemoStart?: (data: { transactionId: string; actions: any[] }) => void;
+  onAiDemoComplete?: (data: { transactionId: string }) => void;
+  onPupilPreemption?: (reason: string) => void;
   initialCheckpoint?: {
     prompt: string;
     options: string[];
@@ -82,6 +87,9 @@ export interface AstVectorMediaPlayerHandle {
   stopVoiceCommands: () => void;
   executeVoiceCommand: (command: string) => void;
   togglePictureInPicture: () => void;
+  sendAiVisualCommand: (packet: AiVisualCommandPacket) => void;
+  preemptAiDemo: () => void;
+  getTelemetrySnapshot: () => PlayerTelemetryEvent | null;
   injectCheckpoint: (checkpoint: {
     prompt: string;
     options: string[];
@@ -112,6 +120,10 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   onKeyframeReached,
   onTimeUpdate,
   onConfigChange,
+  onTelemetry,
+  onAiDemoStart,
+  onAiDemoComplete,
+  onPupilPreemption,
   initialCheckpoint,
 }, ref) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -171,6 +183,8 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [pipType, setPipType] = useState<'document' | 'docked' | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const latestTelemetryRef = useRef<PlayerTelemetryEvent | null>(null);
+  const [isAiDemonstrating, setIsAiDemonstrating] = useState(false);
 
   // Post message helper with strict targetOrigin
   const getVerifiedTargetOrigin = useCallback(() => {
@@ -380,6 +394,9 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
     stopVoiceCommands: () => postToPlayer({ type: 'STOP_VOICE_COMMANDS' }),
     executeVoiceCommand: (command: string) => postToPlayer({ type: 'VOICE_COMMAND', command }),
     togglePictureInPicture: () => togglePictureInPicture(),
+    sendAiVisualCommand: (packet: AiVisualCommandPacket) => postToPlayer({ type: 'AI_VISUAL_COMMAND', packet }),
+    preemptAiDemo: () => postToPlayer({ type: 'PUPIL_INTERRUPT' }),
+    getTelemetrySnapshot: () => latestTelemetryRef.current,
     nextSlide: () => postToPlayer({ type: 'STEP_NEXT_KEYFRAME' }),
     prevSlide: () => postToPlayer({ type: 'STEP_PREV_KEYFRAME' }),
     goToSlide: (progress: number) => postToPlayer({ type: 'STEP_TO_KEYFRAME', progress }),
@@ -570,13 +587,29 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
         case 'REQUEST_PIP':
           togglePictureInPicture();
           break;
+        case 'PLAYER_TELEMETRY':
+          latestTelemetryRef.current = data;
+          onTelemetry?.(data);
+          break;
+        case 'AI_DEMO_START':
+          setIsAiDemonstrating(true);
+          onAiDemoStart?.(data);
+          break;
+        case 'AI_DEMO_COMPLETE':
+          setIsAiDemonstrating(false);
+          onAiDemoComplete?.(data);
+          break;
+        case 'PUPIL_PREEMPTION':
+          setIsAiDemonstrating(false);
+          onPupilPreemption?.(data.reason);
+          break;
         default:
           break;
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange, togglePictureInPicture, onPresetChange, onPlayModeToggle]);
+  }, [onKeyframeReached, onTimeUpdate, postToPlayer, onConfigChange, togglePictureInPicture, onPresetChange, onPlayModeToggle, onTelemetry, onAiDemoStart, onAiDemoComplete, onPupilPreemption]);
 
   // Sync display config changes to player iframe
   useEffect(() => {
@@ -1575,6 +1608,12 @@ const playerSrc = useMemo(() => {
             postToPlayer={postToPlayer}
             currentProgress={currentProgress}
             activeKeyframe={activeKeyframe}
+            latestTelemetry={latestTelemetryRef.current}
+            isAiDemonstrating={isAiDemonstrating}
+            onCancelDemonstration={() => {
+              postToPlayer({ type: 'PUPIL_INTERRUPT' });
+              setIsAiDemonstrating(false);
+            }}
           />
         </div>
 
