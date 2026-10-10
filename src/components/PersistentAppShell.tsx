@@ -96,6 +96,18 @@ export default function PersistentAppShell(): React.JSX.Element {
           playSuccessChime();
           triggerHapticSuccess();
           navigate(`/player?preset=${encodeURIComponent(command.preset)}`);
+        } else if (command.type === 'BROADCAST_WHITEBOARD_INK') {
+          playSuccessChime();
+          triggerHapticSuccess();
+          // Dispatch to player iframe and app components
+          window.postMessage({
+            type: 'IMPORT_WHITEBOARD_INK',
+            data: command.inkData || command.inkAst,
+            preset: command.preset,
+          }, '*');
+          if (command.preset && !location.pathname.includes('/player')) {
+            navigate(`/player?preset=${encodeURIComponent(command.preset)}`);
+          }
         } else if (command.type === 'ATTENTION') {
           playIncorrectTone();
           triggerHapticError();

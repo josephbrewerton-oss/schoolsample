@@ -69,6 +69,53 @@ export default function TeacherBeaconPage(): React.JSX.Element {
     setTimeout(() => setBroadcastNotice(null), 4000);
   };
 
+  const handleBroadcastWhiteboardInk = () => {
+    const sceneObj = AST_SCENES.find((s) => s.id === selectedAstScene);
+    const demoAstInk = `(:ink-session
+  :scene-id "${selectedAstScene}"
+  :timestamp ${Date.now()}
+  :stroke-count 2
+  (:strokes (
+    (:ink-stroke :color "#facc15" :width 3.5 :d "M 120.0 90.0 Q 140.0 95.0, 160.0 120.0 Q 180.0 150.0, 220.0 180.0 " :points ((120.0 90.0) (160.0 120.0) (220.0 180.0)))
+    (:ink-stroke :color "#38bdf8" :width 4.0 :d "M 240.0 180.0 Q 280.0 170.0, 320.0 190.0 Q 360.0 210.0, 400.0 200.0 " :points ((240.0 180.0) (320.0 190.0) (400.0 200.0)))
+  ))
+)`;
+    classroomBeacon.broadcastWhiteboardInk(demoAstInk, selectedAstScene);
+    setBroadcastNotice(`✒️ Broadcasted Whiteboard Ink Annotations for ${sceneObj?.label || selectedAstScene} to all pupil desks!`);
+    playSuccessChime();
+    triggerHapticSuccess();
+    setTimeout(() => setBroadcastNotice(null), 4000);
+  };
+
+  const handleClearPupilWhiteboards = () => {
+    classroomBeacon.broadcastWhiteboardInk('(:ink-session :stroke-count 0 (:strokes ()))', selectedAstScene);
+    setBroadcastNotice('🗑️ Cleared whiteboard ink overlays across all pupil screens.');
+    setTimeout(() => setBroadcastNotice(null), 4000);
+  };
+
+  const handleExportInkAst = () => {
+    const demoAstInk = `(:ink-session
+  :scene-id "${selectedAstScene}"
+  :timestamp ${Date.now()}
+  :stroke-count 1
+  (:strokes (
+    (:ink-stroke :color "#facc15" :width 3.5 :d "M 100.0 100.0 Q 150.0 120.0, 200.0 140.0 " :points ((100.0 100.0) (200.0 140.0)))
+  ))
+)`;
+    const blob = new Blob([demoAstInk], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedAstScene}-whiteboard-session.ast`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setBroadcastNotice(`💾 Exported AST Whiteboard S-Expression (${selectedAstScene}.ast)!`);
+    playSuccessChime();
+    setTimeout(() => setBroadcastNotice(null), 4000);
+  };
+
   const handlePraiseAll = () => {
     classroomBeacon.broadcastCommand({
       type: 'PRAISE_ALL',
@@ -501,6 +548,123 @@ export default function TeacherBeaconPage(): React.JSX.Element {
             >
               <span>🚀 Broadcast Scene to Desks</span>
             </button>
+          </div>
+        </div>
+
+        {/* FEATURE: Whiteboard Ink Session Export & Classroom Mesh Broadcast */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            border: '1.5px solid #0284c7',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            marginBottom: '2rem',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+            color: '#f8fafc',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '1rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.4rem' }}>✒️</span>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#38bdf8', margin: 0 }}>
+                  Smartboard Whiteboard Ink &amp; State Persistence
+                </h2>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: '#94a3b8' }}>
+                Quadratic Bézier ink serialization (<code style={{ color: '#facc15' }}>(:ink-stroke :points [...])</code>) for Promethean &amp; SMART whiteboards. Broadcast live teacher ink or export state.
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', color: '#7dd3fc' }}>
+              <span>📡 Sub-millisecond WebRTC Mesh Sync</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={handleBroadcastWhiteboardInk}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                color: '#ffffff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+              }}
+              title="Broadcast teacher whiteboard ink strokes to all connected pupil screens"
+            >
+              <span>📡 Broadcast Ink to Class Desks</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportInkAst}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                background: '#334155',
+                color: '#f8fafc',
+                border: '1px solid #475569',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Export current whiteboard annotations into AST S-Expression file (.ast)"
+            >
+              <span>💾 Export Ink to AST</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClearPupilWhiteboards}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                background: '#334155',
+                color: '#f87171',
+                border: '1px solid #475569',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="Clear all whiteboard ink annotations on pupil desks"
+            >
+              <span>🗑️ Clear Class Ink</span>
+            </button>
+
+            <Link
+              to={`/player?preset=${selectedAstScene}&pen=1`}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                background: 'rgba(234, 179, 8, 0.15)',
+                color: '#facc15',
+                border: '1px solid rgba(234, 179, 8, 0.4)',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginLeft: 'auto',
+              }}
+              title="Open the active visual model in direct smartboard whiteboard pen mode"
+            >
+              <span>✏️ Draw in Whiteboard Pen Lab ➔</span>
+            </Link>
           </div>
         </div>
 

@@ -41,6 +41,7 @@ export interface TeacherBroadcastCommand {
     | 'ATTENTION'
     | 'BROADCAST_AST_SCENE'
     | 'SEEK_AST_SCENE'
+    | 'BROADCAST_WHITEBOARD_INK'
     | 'PING';
   cohortCode?: string;
   targetKeyStage?: string;
@@ -51,6 +52,8 @@ export interface TeacherBroadcastCommand {
   seekProgress?: number;
   message?: string;
   timestamp: number;
+  inkData?: string;
+  inkAst?: string;
 }
 
 const BEACON_CHANNEL_NAME = 'st_josephs_classroom_beacon';
@@ -82,7 +85,7 @@ class ClassroomBeaconManager {
   private measuredLatencyMs: number = 4;
 
   constructor() {
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    if (typeof BroadcastChannel !== 'undefined') {
       try {
         this.channel = new BroadcastChannel(BEACON_CHANNEL_NAME);
         this.channel.onmessage = (event) => this.handleLocalMessage(event.data);
@@ -373,6 +376,20 @@ class ClassroomBeaconManager {
       preset,
       message: `Teacher loaded interactive scene: ${preset}`,
       timestamp: Date.now(),
+    });
+  }
+
+  /**
+   * Broadcast Whiteboard Ink Session directly across local WebRTC Mesh to all pupil screens!
+   */
+  public broadcastWhiteboardInk(inkData: string, preset?: string) {
+    this.broadcastCommand({
+      type: 'BROADCAST_WHITEBOARD_INK',
+      preset,
+      message: 'Teacher shared live whiteboard annotations',
+      timestamp: Date.now(),
+      inkData,
+      inkAst: inkData,
     });
   }
 

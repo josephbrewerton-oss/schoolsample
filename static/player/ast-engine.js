@@ -5468,8 +5468,38 @@
           }
           break;
         case 'CLEAR_INK':
+        case 'CLEAR_WHITEBOARD_INK':
           if (global.__astGestures) {
             global.__astGestures.clearWhiteboardInk();
+          }
+          break;
+        case 'UNDO_WHITEBOARD_INK':
+          if (global.__astGestures) {
+            global.__astGestures.undoLastStroke();
+          }
+          break;
+        case 'IMPORT_WHITEBOARD_INK':
+        case 'LOAD_WHITEBOARD_INK':
+          if (global.__astGestures) {
+            const raw = data.data || data.ast || data.json;
+            if (typeof raw === 'string') {
+              if (raw.trim().startsWith('(')) {
+                global.__astGestures.importInkFromAST(raw);
+              } else {
+                try {
+                  global.__astGestures.importInkFromJSON(JSON.parse(raw));
+                } catch {
+                  global.__astGestures.importInkFromAST(raw);
+                }
+              }
+            } else if (typeof raw === 'object') {
+              global.__astGestures.importInkFromJSON(raw);
+            }
+          }
+          break;
+        case 'EXPORT_WHITEBOARD_INK':
+          if (global.__astGestures) {
+            global.__astGestures.broadcastInkSession();
           }
           break;
         case 'TOGGLE_XRAY':

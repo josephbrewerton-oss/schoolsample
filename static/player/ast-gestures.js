@@ -115,6 +115,37 @@
 
       // Prevent default pinch-zoom or scrolling when dragging on interactive elements
       this.stageSvg.style.touchAction = 'none';
+
+      // Whiteboard Ink message listener from parent window / WebRTC classroom mesh
+      window.addEventListener('message', (ev) => {
+        if (!ev.data) return;
+        if (ev.data.type === 'IMPORT_WHITEBOARD_INK' || ev.data.type === 'LOAD_WHITEBOARD_INK') {
+          const raw = ev.data.data || ev.data.ast || ev.data.json;
+          if (typeof raw === 'string') {
+            if (raw.trim().startsWith('(')) {
+              this.importInkFromAST(raw);
+            } else {
+              try {
+                this.importInkFromJSON(JSON.parse(raw));
+              } catch {
+                this.importInkFromAST(raw);
+              }
+            }
+          } else if (typeof raw === 'object') {
+            this.importInkFromJSON(raw);
+          }
+          this.showFloatingNotice('📥 Whiteboard ink loaded!');
+        } else if (ev.data.type === 'CLEAR_WHITEBOARD_INK') {
+          this.clearWhiteboardInk();
+        } else if (ev.data.type === 'UNDO_WHITEBOARD_INK') {
+          this.undoLastStroke();
+        } else if (ev.data.type === 'EXPORT_WHITEBOARD_INK') {
+          this.broadcastInkSession();
+        } else if (ev.data.type === 'TOGGLE_PEN') {
+          this.isPenActive = Boolean(ev.data.enabled);
+          if (this.stageSvg) this.stageSvg.style.cursor = this.isPenActive ? 'crosshair' : 'default';
+        }
+      });
     }
 
     /**
@@ -136,6 +167,9 @@
      */
     enhanceSceneInteractivity() {
       if (!this.stageSvg) return;
+
+      // Restore any persisted annotations for this scene
+      this.restoreInkFromSession();
 
       // 1. Kinetic Gas Piston Handle
       const piston = this.stageSvg.querySelector('#kg-piston') || this.stageSvg.querySelector('#piston-assembly');
@@ -448,7 +482,7 @@
     handlePointerUp(e) {
       if (this.isDrawing) {
         this.isDrawing = false;
-        this.currentStroke = null;
+        this.endInkStroke();
       }
 
       if (this.isDragging && this.dragTarget) {
@@ -1099,40 +1133,405 @@
     // =========================================================================
     startInkStroke(pt) {
       if (!this.inkRoot) return;
+      const x = Number(pt.x.toFixed(1));
+      const y = Number(pt.y.toFixed(1));
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke', this.currentInkColor);
       path.setAttribute('stroke-width', this.currentInkWidth.toString());
       path.setAttribute('stroke-linecap', 'round');
       path.setAttribute('stroke-linejoin', 'round');
-      path.setAttribute('d', `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)} `);
+      path.setAttribute('d', `M ${x} ${y} `);
 
       this.inkRoot.appendChild(path);
-      this.currentStroke = {
+      const strokeObj = {
+        id: `stroke_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         element: path,
-        d: `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)} `,
+        color: this.currentInkColor,
+        width: this.currentInkWidth,
+        d: `M ${x} ${y} `,
+        points: [{ x, y }],
         lastX: pt.x,
         lastY: pt.y
       };
-      this.strokes.push(path);
+      this.currentStroke = strokeObj;
+      this.strokes.push(strokeObj);
     }
 
     continueInkStroke(pt) {
       if (!this.currentStroke) return;
+      const x = Number(pt.x.toFixed(1));
+      const y = Number(pt.y.toFixed(1));
       // Midpoint quadratic bézier smoothing for silky pen ink
       const midX = (this.currentStroke.lastX + pt.x) / 2;
       const midY = (this.currentStroke.lastY + pt.y) / 2;
       this.currentStroke.d += `Q ${this.currentStroke.lastX.toFixed(1)} ${this.currentStroke.lastY.toFixed(1)}, ${midX.toFixed(1)} ${midY.toFixed(1)} `;
       this.currentStroke.element.setAttribute('d', this.currentStroke.d);
+      this.currentStroke.points.push({ x, y });
       this.currentStroke.lastX = pt.x;
       this.currentStroke.lastY = pt.y;
+    }
+
+    endInkStroke() {
+      if (!this.currentStroke) return;
+      this.currentStroke = null;
+      this.persistInkToSession();
+    }
+
+    undoLastStroke() {
+      if (!this.inkRoot || this.strokes.length === 0) return;
+      const last = this.strokes.pop();
+      if (last) {
+        const el = last.element || (last instanceof Element ? last : null);
+        if (el && el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      }
+      this.persistInkToSession();
+      this.playAudioTone(330, 'sine', 0.05);
     }
 
     clearWhiteboardInk() {
       if (!this.inkRoot) return;
       this.inkRoot.innerHTML = '';
       this.strokes = [];
+      this.persistInkToSession();
       this.playAudioTone(440, 'triangle', 0.1);
+    }
+
+    /**
+     * Serializes active whiteboard ink strokes into formal AST S-Expressions
+     * Format:
+     * (:ink-session
+     *   :scene-id "fractions"
+     *   :timestamp 1733849200
+     *   :stroke-count 2
+     *   (:strokes (
+     *     (:ink-stroke :color "#facc15" :width 3.5 :d "M ... Q ..." :points ((120.0 80.0) ...))
+     *   ))
+     * )
+     */
+    exportInkToAST(options = {}) {
+      const sceneId = (this.engine && this.engine.activePresetId) || 'whiteboard-session';
+      const timestamp = Date.now();
+      const strokeLines = [];
+
+      for (let i = 0; i < this.strokes.length; i++) {
+        const s = this.strokes[i];
+        const color = s.color || (s.element && s.element.getAttribute('stroke')) || this.currentInkColor;
+        const width = s.width || (s.element && parseFloat(s.element.getAttribute('stroke-width'))) || this.currentInkWidth;
+        const d = (s.d || (s.element && s.element.getAttribute('d')) || '').trim();
+        const pts = s.points || [];
+        const ptsStr = pts.map(p => `(${p.x.toFixed(1)} ${p.y.toFixed(1)})`).join(' ');
+
+        strokeLines.push(`    (:ink-stroke :color "${color}" :width ${width} :d "${d}" :points (${ptsStr}))`);
+      }
+
+      if (options.bareStrokes) {
+        return strokeLines.join('\n');
+      }
+
+      return `(:ink-session
+  :scene-id "${sceneId}"
+  :timestamp ${timestamp}
+  :stroke-count ${this.strokes.length}
+  (:strokes (
+${strokeLines.join('\n')}
+  ))
+)`;
+    }
+
+    /**
+     * Imports AST S-Expression or AST vector nodes (:ink-session / :ink-stroke)
+     * and renders smoothed SVG paths into the in-stage whiteboard ink layer.
+     */
+    importInkFromAST(astString, options = {}) {
+      if (!astString || typeof astString !== 'string') return 0;
+      if (!this.inkRoot) this.setupDomLayers();
+      if (!this.inkRoot) return 0;
+
+      if (options.clearExisting !== false) {
+        this.inkRoot.innerHTML = '';
+        this.strokes = [];
+      }
+
+      let importedCount = 0;
+      // Extract balanced (:ink-stroke ...) S-Expression blocks
+      const strokeBlocks = [];
+      let pos = 0;
+      while ((pos = astString.indexOf('(:ink-stroke', pos)) !== -1) {
+        let depth = 0;
+        let inQuote = false;
+        let escape = false;
+        let end = pos;
+        for (let i = pos; i < astString.length; i++) {
+          const ch = astString[i];
+          if (escape) { escape = false; continue; }
+          if (ch === '\\') { escape = true; continue; }
+          if (ch === '"') { inQuote = !inQuote; continue; }
+          if (!inQuote) {
+            if (ch === '(') depth++;
+            else if (ch === ')') {
+              depth--;
+              if (depth === 0) {
+                end = i + 1;
+                break;
+              }
+            }
+          }
+        }
+        if (end > pos) {
+          strokeBlocks.push(astString.slice(pos, end));
+          pos = end;
+        } else {
+          pos += 12;
+        }
+      }
+
+      for (let b = 0; b < strokeBlocks.length; b++) {
+        const body = strokeBlocks[b];
+
+        // 1. Extract :color
+        const colorMatch = body.match(/:color\s+"([^"]+)"/);
+        const color = colorMatch ? colorMatch[1] : '#facc15';
+
+        // 2. Extract :width
+        const widthMatch = body.match(/:width\s+([0-9.]+)/);
+        const width = widthMatch ? parseFloat(widthMatch[1]) : 3.5;
+
+        // 3. Extract :d
+        const dMatch = body.match(/:d\s+"([^"]+)"/);
+        let d = dMatch ? dMatch[1] : '';
+
+        // 4. Extract :points ((x y) (x y) ...) with balanced nested parens
+        const pointsIdx = body.indexOf(':points');
+        const points = [];
+        if (pointsIdx !== -1) {
+          const afterPoints = body.slice(pointsIdx + 7).trim();
+          if (afterPoints.startsWith('(')) {
+            let depth = 0;
+            let pointsContent = '';
+            for (let i = 0; i < afterPoints.length; i++) {
+              if (afterPoints[i] === '(') depth++;
+              else if (afterPoints[i] === ')') depth--;
+              pointsContent += afterPoints[i];
+              if (depth === 0) break;
+            }
+            const ptRegex = /\(\s*([0-9.-]+)\s+([0-9.-]+)\s*\)/g;
+            let ptMatch;
+            while ((ptMatch = ptRegex.exec(pointsContent)) !== null) {
+              points.push({ x: parseFloat(ptMatch[1]), y: parseFloat(ptMatch[2]) });
+            }
+          }
+        }
+
+        // Reconstruct d from points if :d attribute was empty
+        if (!d && points.length > 0) {
+          d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} `;
+          for (let p = 1; p < points.length; p++) {
+            const prev = points[p - 1];
+            const cur = points[p];
+            const midX = (prev.x + cur.x) / 2;
+            const midY = (prev.y + cur.y) / 2;
+            d += `Q ${prev.x.toFixed(1)} ${prev.y.toFixed(1)}, ${midX.toFixed(1)} ${midY.toFixed(1)} `;
+          }
+        }
+
+        if (d) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', color);
+          path.setAttribute('stroke-width', width.toString());
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+          path.setAttribute('d', d);
+
+          this.inkRoot.appendChild(path);
+
+          const strokeObj = {
+            id: `stroke_imported_${Date.now()}_${importedCount}`,
+            element: path,
+            color,
+            width,
+            d,
+            points: points.length > 0 ? points : [],
+            lastX: points.length > 0 ? points[points.length - 1].x : 0,
+            lastY: points.length > 0 ? points[points.length - 1].y : 0
+          };
+          this.strokes.push(strokeObj);
+          importedCount++;
+        }
+      }
+
+      this.persistInkToSession();
+      if (importedCount > 0) {
+        this.playAudioTone(784, 'sine', 0.08);
+      }
+      return importedCount;
+    }
+
+    exportInkToJSON() {
+      const sceneId = (this.engine && this.engine.activePresetId) || 'whiteboard-session';
+      return {
+        type: 'AST_INK_SESSION',
+        sceneId,
+        timestamp: Date.now(),
+        strokeCount: this.strokes.length,
+        strokes: this.strokes.map(s => ({
+          color: s.color || '#facc15',
+          width: s.width || 3.5,
+          d: s.d || '',
+          points: s.points || []
+        }))
+      };
+    }
+
+    importInkFromJSON(data, options = {}) {
+      if (!data || !data.strokes || !Array.isArray(data.strokes)) return 0;
+      if (!this.inkRoot) this.setupDomLayers();
+      if (!this.inkRoot) return 0;
+
+      if (options.clearExisting !== false) {
+        this.inkRoot.innerHTML = '';
+        this.strokes = [];
+      }
+
+      let count = 0;
+      data.strokes.forEach(s => {
+        let d = s.d || '';
+        const pts = s.points || [];
+        if (!d && pts.length > 0) {
+          d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)} `;
+          for (let p = 1; p < pts.length; p++) {
+            const prev = pts[p - 1];
+            const cur = pts[p];
+            const midX = (prev.x + cur.x) / 2;
+            const midY = (prev.y + cur.y) / 2;
+            d += `Q ${prev.x.toFixed(1)} ${prev.y.toFixed(1)}, ${midX.toFixed(1)} ${midY.toFixed(1)} `;
+          }
+        }
+
+        if (d) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', s.color || '#facc15');
+          path.setAttribute('stroke-width', (s.width || 3.5).toString());
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+          path.setAttribute('d', d);
+
+          this.inkRoot.appendChild(path);
+          this.strokes.push({
+            id: `stroke_json_${Date.now()}_${count}`,
+            element: path,
+            color: s.color || '#facc15',
+            width: s.width || 3.5,
+            d,
+            points: pts,
+            lastX: pts.length > 0 ? pts[pts.length - 1].x : 0,
+            lastY: pts.length > 0 ? pts[pts.length - 1].y : 0
+          });
+          count++;
+        }
+      });
+
+      this.persistInkToSession();
+      if (count > 0) {
+        this.playAudioTone(784, 'sine', 0.08);
+      }
+      return count;
+    }
+
+    /**
+     * Broadcasts active whiteboard ink session to parent window / WebRTC classroom mesh
+     */
+    broadcastInkSession() {
+      const ast = this.exportInkToAST();
+      const json = this.exportInkToJSON();
+      const sceneId = (this.engine && this.engine.activePresetId) || 'whiteboard-session';
+
+      const payload = {
+        type: 'AST_WHITEBOARD_INK_BROADCAST',
+        sceneId,
+        inkAst: ast,
+        inkJson: json,
+        timestamp: Date.now()
+      };
+
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(payload, '*');
+        }
+      } catch {}
+
+      window.dispatchEvent(new CustomEvent('ast-ink-broadcast', { detail: payload }));
+      this.showFloatingNotice(`📡 Broadcasted ${this.strokes.length} strokes to Class Mesh!`);
+      this.playAudioTone(880, 'sine', 0.1);
+    }
+
+    persistInkToSession() {
+      if (typeof window === 'undefined' || !window.sessionStorage) return;
+      try {
+        const sceneId = (this.engine && this.engine.activePresetId) || 'whiteboard';
+        const key = `stj_whiteboard_ink_${sceneId}`;
+        if (this.strokes.length === 0) {
+          sessionStorage.removeItem(key);
+        } else {
+          sessionStorage.setItem(key, JSON.stringify(this.exportInkToJSON()));
+        }
+      } catch {}
+    }
+
+    restoreInkFromSession() {
+      if (typeof window === 'undefined' || !window.sessionStorage) return;
+      try {
+        const sceneId = (this.engine && this.engine.activePresetId) || 'whiteboard';
+        const key = `stj_whiteboard_ink_${sceneId}`;
+        const stored = sessionStorage.getItem(key);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          this.importInkFromJSON(parsed, { clearExisting: true });
+        }
+      } catch {}
+    }
+
+    showFloatingNotice(message) {
+      const container = (this.stageSvg && this.stageSvg.parentNode) || document.body;
+      let toast = container.querySelector('#stage-ink-notice');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'stage-ink-notice';
+        toast.style.cssText = `
+          position: absolute;
+          top: 18px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(15, 23, 42, 0.92);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          color: #f8fafc;
+          padding: 6px 16px;
+          border-radius: 9999px;
+          font-size: 12px;
+          font-weight: 700;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+          z-index: 50;
+          pointer-events: none;
+          transition: opacity 0.25s ease, transform 0.25s ease;
+        `;
+        container.appendChild(toast);
+      }
+      toast.textContent = message;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+
+      clearTimeout(this._inkNoticeTimer);
+      this._inkNoticeTimer = setTimeout(() => {
+        if (toast) {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(-8px)';
+        }
+      }, 2500);
     }
 
     // =========================================================================
@@ -1168,6 +1567,7 @@
         penBtn.style.color = this.isPenActive ? '#090d16' : '#ffffff';
         this.stageSvg.style.cursor = this.isPenActive ? 'crosshair' : 'default';
         penPalette.style.display = this.isPenActive ? 'flex' : 'none';
+        inkExtraActions.style.display = this.isPenActive ? 'flex' : 'none';
         this.playAudioTone(this.isPenActive ? 660 : 440, 'sine', 0.06);
       });
 
@@ -1185,6 +1585,27 @@
         };
         penPalette.appendChild(dot);
       });
+
+      // Extra Ink Actions (Undo, Export AST, Broadcast)
+      const inkExtraActions = document.createElement('div');
+      inkExtraActions.style.cssText = 'display:none; align-items:center; gap:4px; margin-right:4px;';
+
+      const undoBtn = this.createHudButton('↩️', 'Undo Last Stroke', () => this.undoLastStroke());
+      const exportBtn = this.createHudButton('📋', 'Export Ink to AST (Copy S-Expression)', () => {
+        const ast = this.exportInkToAST();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(ast);
+          this.showFloatingNotice('📋 Copied Ink AST S-Expression to Clipboard!');
+          this.playAudioTone(659, 'sine', 0.06);
+        }
+      });
+      const broadcastBtn = this.createHudButton('📡', 'Broadcast Whiteboard Ink to Pupils (WebRTC)', () => {
+        this.broadcastInkSession();
+      });
+
+      inkExtraActions.appendChild(undoBtn);
+      inkExtraActions.appendChild(exportBtn);
+      inkExtraActions.appendChild(broadcastBtn);
 
       // Clear Ink Button
       const clearBtn = this.createHudButton('🗑️', 'Clear Whiteboard Ink', () => this.clearWhiteboardInk());
@@ -1206,6 +1627,7 @@
       });
 
       hud.appendChild(penPalette);
+      hud.appendChild(inkExtraActions);
       hud.appendChild(penBtn);
       hud.appendChild(clearBtn);
       hud.appendChild(xrayBtn);

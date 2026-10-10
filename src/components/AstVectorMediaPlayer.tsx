@@ -39,6 +39,7 @@ import { exportAirgapHtmlBundle } from '../utils/exportAirgapHtmlBundle';
 import { exportSubjectCartridge, AVAILABLE_CARTRIDGES } from '../utils/exportSubjectCartridge';
 import { getRelatedConcepts } from '../data/player/astConceptGraph';
 import { getCartridge, normalizeCartridgeId } from '../services/cartridgeStore';
+import { classroomBeacon } from '../services/classroomBeacon';
 
 // 1. Single Source of Truth: Import presets compiled from static/player/scenes/
 import { PRESET_OPTIONS, type ScenePresetOption } from '../data/player/generatedScenes';
@@ -167,7 +168,13 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const [showConceptTrail, setShowConceptTrail] = useState(true);
   const [comparisonPreset, setComparisonPreset] = useState<string | null>(null);
   const [showChalkboard, setShowChalkboard] = useState(false);
-  const [inStagePenActive, setInStagePenActive] = useState(false);
+  const [inStagePenActive, setInStagePenActive] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      return sp.get('pen') === '1' || sp.get('pen') === 'true';
+    }
+    return false;
+  });
   const [inStageXRayActive, setInStageXRayActive] = useState(false);
   const [showLabDrawer, setShowLabDrawer] = useState(false);
   const [showNanoAi, setShowNanoAi] = useState(false);
@@ -185,6 +192,7 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const latestTelemetryRef = useRef<PlayerTelemetryEvent | null>(null);
   const [isAiDemonstrating, setIsAiDemonstrating] = useState(false);
+  const [inkNotice, setInkNotice] = useState<string | null>(null);
 
   // Post message helper with strict targetOrigin
   const getVerifiedTargetOrigin = useCallback(() => {
@@ -602,6 +610,22 @@ export const AstVectorMediaPlayer = forwardRef<AstVectorMediaPlayerHandle, AstVe
         case 'PUPIL_PREEMPTION':
           setIsAiDemonstrating(false);
           onPupilPreemption?.(data.reason);
+          break;
+        case 'AST_WHITEBOARD_INK_BROADCAST':
+        case 'AST_WHITEBOARD_INK_EXPORT_RESPONSE':
+          if (data.inkAst || data.ast) {
+            classroomBeacon.broadcastWhiteboardInk(data.inkAst || data.ast, selectedPresetRef.current);
+            setInkNotice('📡 Whiteboard annotations broadcasted across classroom mesh!');
+            setTimeout(() => setInkNotice(null), 3500);
+          }
+          break;
+        case 'IMPORT_WHITEBOARD_INK':
+          postToPlayer({
+            type: 'IMPORT_WHITEBOARD_INK',
+            data: data.data || data.ast || data.json,
+          });
+          setInkNotice('📥 Teacher whiteboard ink synchronized');
+          setTimeout(() => setInkNotice(null), 3000);
           break;
         default:
           break;
@@ -1064,6 +1088,45 @@ const playerSrc = useMemo(() => {
             >
               <span>✒️ Smartboard Pen {inStagePenActive ? 'ON' : ''}</span>
             </button>
+
+            {/* Quick In-Stage Whiteboard Ink Actions */}
+            {inStagePenActive && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'UNDO_WHITEBOARD_INK' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ padding: '4px 8px', minHeight: '32px', fontSize: '0.72rem', fontWeight: 700 }}
+                  title="Undo Last Pen Stroke"
+                >
+                  <span>↩️ Undo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'CLEAR_WHITEBOARD_INK' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ padding: '4px 8px', minHeight: '32px', fontSize: '0.72rem', fontWeight: 700 }}
+                  title="Clear Whiteboard Ink"
+                >
+                  <span>🗑️ Clear</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => postToPlayer({ type: 'EXPORT_WHITEBOARD_INK' })}
+                  className="stj-btn stj-btn-secondary stj-btn-sm"
+                  style={{ padding: '4px 9px', minHeight: '32px', fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', borderColor: '#38bdf8' }}
+                  title="Broadcast Whiteboard Annotations to Pupils over Local WebRTC Mesh"
+                >
+                  <span>📡 Broadcast Ink</span>
+                </button>
+              </div>
+            )}
+
+            {inkNotice && (
+              <span style={{ fontSize: '0.72rem', background: '#0284c7', color: '#ffffff', padding: '3px 8px', borderRadius: '8px', fontWeight: 700 }}>
+                {inkNotice}
+              </span>
+            )}
 
             {/* Pedagogical X-Ray Inspection Toggle */}
             <button
