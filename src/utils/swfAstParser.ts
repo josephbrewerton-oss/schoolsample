@@ -19,7 +19,11 @@ export interface SwfMetadata {
   frameCount: number;
   backgroundColor: string;
   shapeCount: number;
+  morphShapeCount?: number;
+  actionCount?: number;
   labels: { frame: number; name: string }[];
+  stateMachines?: { id: string; initial: string; states: string[]; transitionsCount: number }[];
+  variables?: { name: string; value: any }[];
 }
 
 export interface SwfTranspileResult {
@@ -39,6 +43,10 @@ class BitReader {
     this.buffer = buffer;
     this.bytePos = startOffset;
     this.bitPos = 0;
+  }
+
+  get length(): number {
+    return this.buffer.length;
   }
 
   get offset(): number {
@@ -302,14 +310,45 @@ function parseSwfShape(reader: BitReader, shapeId: number, tagVersion: number): 
   const numFillBits = reader.readUBits(4);
   const numLineBits = reader.readUBits(4);
 
-  let curX = 0;
-  let curY = 0;
-  let pathCommands: string[] = [];
+  const shapeRecords = parseShapeRecords(reader, numFillBits, numLineBits);
+  reader.syncBits();
+
+  const d = shapeRecords.pathCommands.join(' ') || `M ${shapeBounds.xMin.toFixed(1)} ${shapeBounds.yMin.toFixed(1)} h ${shapeBounds.width.toFixed(1)} v ${shapeBounds.height.toFixed(1)} h -${shapeBounds.width.toFixed(1)} Z`;
+  const fill = fillStyles[shapeRecords.curFill0] || (fillStyles.length > 1 ? fillStyles[1] : '#38bdf8');
+  const stroke = lineStyles[shapeRecords.curLine]?.color || 'none';
+  const strokeW = lineStyles[shapeRecords.curLine]?.width || 1;
+
+  const shapeSvg = `<path id="swf-shape-${shapeId}" d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}" />`;
+
+  return {
+    id: `swf-shape-${shapeId}`,
+    svg: shapeSvg,
+    bbox: {
+      x: shapeBounds.xMin,
+      y: shapeBounds.yMin,
+      w: shapeBounds.width,
+      h: shapeBounds.height
+    }
+  };
+}
+
+/**
+ * Parses SWF shape records (MoveTo, straight edges, and quadratic Bézier curves)
+ */
+function parseShapeRecords(
+  reader: BitReader,
+  numFillBits: number,
+  numLineBits: number,
+  initialX = 0,
+  initialY = 0
+): { pathCommands: string[]; curFill0: number; curLine: number } {
+  let curX = initialX;
+  let curY = initialY;
+  const pathCommands: string[] = [];
   let curFill0 = 0;
   let curLine = 0;
 
-  // Process shape records
-  while (true) {
+  while (reader.offset < reader.length) {
     const typeFlag = reader.readUBits(1);
     if (typeFlag === 0) {
       // Non-edge record
@@ -376,25 +415,308 @@ function parseSwfShape(reader: BitReader, shapeId: number, tagVersion: number): 
     }
   }
 
+  return { pathCommands, curFill0, curLine };
+}
+
+export interface SwfMorphShape {
+  id: string;
+  shapeId: number;
+  startD: string;
+  endD: string;
+  startFill: string;
+  endFill: string;
+  stroke: string;
+  strokeWidth: number;
+  svg: string;
+  bbox: { x: number; y: number; w: number; h: number };
+}
+
+/**
+ * Parses SWF DefineMorphShape (Tag 46) and DefineMorphShape2 (Tag 84) tags into interpolated SVG paths.
+ */
+function parseSwfMorphShape(
+  reader: BitReader,
+  shapeId: number,
+  tagVersion: number
+): SwfMorphShape {
+  const startBounds = reader.readRect();
+  const endBounds = reader.readRect();
+
+  if (tagVersion === 2) {
+    // DefineMorphShape2 (Tag 84)
+    reader.readRect(); // StartEdgeBounds
+    reader.readRect(); // EndEdgeBounds
+    reader.readUI8();  // Flags
+  }
+
+  const offset = reader.readUI32();
+  const morphOffsetBase = reader.offset;
+
+  // Read MorphFillStyles
+  let fillCount = reader.readUI8();
+  if (fillCount === 0xFF) fillCount = reader.readUI16();
+  const startFills: string[] = ['none'];
+  const endFills: string[] = ['none'];
+
+  for (let f = 0; f < fillCount; f++) {
+    const fillType = reader.readUI8();
+    if (fillType === 0x00) {
+      startFills.push(reader.readRGBA(true));
+      endFills.push(reader.readRGBA(true));
+    } else if (fillType === 0x10 || fillType === 0x12) {
+      reader.readMatrix();
+      reader.readMatrix();
+      const numGradients = reader.readUI8() & 0x0F;
+      let firstColStart = '#38bdf8';
+      let firstColEnd = '#818cf8';
+      for (let g = 0; g < numGradients; g++) {
+        reader.readUI8();
+        const cs = reader.readRGBA(true);
+        reader.readUI8();
+        const ce = reader.readRGBA(true);
+        if (g === 0) {
+          firstColStart = cs;
+          firstColEnd = ce;
+        }
+      }
+      startFills.push(firstColStart);
+      endFills.push(firstColEnd);
+    } else {
+      reader.readUI16();
+      reader.readMatrix();
+      reader.readMatrix();
+      startFills.push('#6366f1');
+      endFills.push('#a855f7');
+    }
+  }
+
+  // Read MorphLineStyles
+  let lineCount = reader.readUI8();
+  if (lineCount === 0xFF) lineCount = reader.readUI16();
+  const startLines: { width: number; color: string }[] = [{ width: 0, color: 'none' }];
+  const endLines: { width: number; color: string }[] = [{ width: 0, color: 'none' }];
+
+  for (let l = 0; l < lineCount; l++) {
+    const startW = reader.readUI16() / 20;
+    const endW = reader.readUI16() / 20;
+    if (tagVersion === 2) {
+      reader.readUI16(); // LineStyle2 flags
+    }
+    const startColor = reader.readRGBA(true);
+    const endColor = reader.readRGBA(true);
+    startLines.push({ width: Math.max(1, startW), color: startColor });
+    endLines.push({ width: Math.max(1, endW), color: endColor });
+  }
+
+  // Read StartEdges
+  reader.syncBits();
+  const startNumFillBits = reader.readUBits(4);
+  const startNumLineBits = reader.readUBits(4);
+  const startEdges = parseShapeRecords(reader, startNumFillBits, startNumLineBits);
+
+  // Jump to EndEdges using offset
+  reader.offset = morphOffsetBase + offset;
+  reader.syncBits();
+  const endNumFillBits = reader.readUBits(4);
+  const endNumLineBits = reader.readUBits(4);
+  const endEdges = parseShapeRecords(reader, endNumFillBits, endNumLineBits);
   reader.syncBits();
 
-  const d = pathCommands.join(' ') || `M ${shapeBounds.xMin} ${shapeBounds.yMin} h ${shapeBounds.width} v ${shapeBounds.height} h -${shapeBounds.width} Z`;
-  const fill = fillStyles[curFill0] || (fillStyles.length > 1 ? fillStyles[1] : '#38bdf8');
-  const stroke = lineStyles[curLine]?.color || 'none';
-  const strokeW = lineStyles[curLine]?.width || 1;
+  const startD = startEdges.pathCommands.join(' ') || `M ${startBounds.xMin.toFixed(1)} ${startBounds.yMin.toFixed(1)} h ${startBounds.width.toFixed(1)} v ${startBounds.height.toFixed(1)} h -${startBounds.width.toFixed(1)} Z`;
+  const endD = endEdges.pathCommands.join(' ') || `M ${endBounds.xMin.toFixed(1)} ${endBounds.yMin.toFixed(1)} h ${endBounds.width.toFixed(1)} v ${endBounds.height.toFixed(1)} h -${endBounds.width.toFixed(1)} Z`;
 
-  const shapeSvg = `<path id="swf-shape-${shapeId}" d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}" />`;
+  const startFill = startFills[startEdges.curFill0] || (startFills.length > 1 ? startFills[1] : '#38bdf8');
+  const endFill = endFills[endEdges.curFill0] || (endFills.length > 1 ? endFills[1] : '#818cf8');
+  const stroke = startLines[startEdges.curLine]?.color || 'none';
+  const strokeWidth = startLines[startEdges.curLine]?.width || 1;
+
+  const shapeSvg = `<path id="swf-morph-${shapeId}" d="${startD}" fill="${startFill}" stroke="${stroke}" stroke-width="${strokeWidth}" data-morph-end="${endD}" />`;
 
   return {
-    id: `swf-shape-${shapeId}`,
+    id: `swf-morph-${shapeId}`,
+    shapeId,
+    startD,
+    endD,
+    startFill,
+    endFill,
+    stroke,
+    strokeWidth,
     svg: shapeSvg,
     bbox: {
-      x: shapeBounds.xMin,
-      y: shapeBounds.yMin,
-      w: shapeBounds.width,
-      h: shapeBounds.height
+      x: Math.min(startBounds.xMin, endBounds.xMin),
+      y: Math.min(startBounds.yMin, endBounds.yMin),
+      w: Math.max(startBounds.width, endBounds.width),
+      h: Math.max(startBounds.height, endBounds.height)
     }
   };
+}
+
+export interface SwfActionRecord {
+  frame: number;
+  stops?: boolean;
+  plays?: boolean;
+  gotoFrames?: number[];
+  gotoLabels?: string[];
+  setVariables?: { name: string; value: any }[];
+  branches?: { condition: string; target: string | number }[];
+}
+
+/**
+ * Disassembles ActionScript 1.0/2.0 bytecode in DoAction (Tag 12) tags into structured state operations.
+ */
+function parseDoAction(reader: BitReader, tagEndOffset: number, currentFrame: number): SwfActionRecord {
+  const record: SwfActionRecord = {
+    frame: currentFrame,
+    gotoFrames: [],
+    gotoLabels: [],
+    setVariables: [],
+    branches: []
+  };
+
+  const stack: any[] = [];
+  const constantPool: string[] = [];
+
+  while (reader.offset < tagEndOffset) {
+    const actionCode = reader.readUI8();
+    if (actionCode === 0) break; // ActionEnd
+    let length = 0;
+    if (actionCode >= 0x80) {
+      length = reader.readUI16();
+    }
+    const actionEnd = Math.min(tagEndOffset, reader.offset + length);
+
+    if (actionCode === 0x07) {
+      // ActionStop
+      record.stops = true;
+    } else if (actionCode === 0x06) {
+      // ActionPlay
+      record.plays = true;
+    } else if (actionCode === 0x81) {
+      // ActionGotoFrame
+      const frameIdx = reader.readUI16();
+      record.gotoFrames!.push(frameIdx + 1);
+    } else if (actionCode === 0x9F) {
+      // ActionGotoLabel
+      const lbl = reader.readString();
+      if (lbl) record.gotoLabels!.push(lbl);
+    } else if (actionCode === 0x88) {
+      // ActionConstantPool
+      const count = reader.readUI16();
+      constantPool.length = 0;
+      for (let c = 0; c < count && reader.offset < actionEnd; c++) {
+        constantPool.push(reader.readString());
+      }
+    } else if (actionCode === 0x96) {
+      // ActionPush
+      while (reader.offset < actionEnd) {
+        const type = reader.readUI8();
+        if (type === 0) {
+          stack.push(reader.readString());
+        } else if (type === 1) {
+          const b0 = reader.readUI8(), b1 = reader.readUI8(), b2 = reader.readUI8(), b3 = reader.readUI8();
+          const buf = new ArrayBuffer(4);
+          new Uint8Array(buf).set([b0, b1, b2, b3]);
+          stack.push(new Float32Array(buf)[0]);
+        } else if (type === 2) {
+          stack.push(null);
+        } else if (type === 3) {
+          stack.push(undefined);
+        } else if (type === 5) {
+          stack.push(reader.readUI8() !== 0);
+        } else if (type === 7) {
+          stack.push(reader.readUI32());
+        } else if (type === 8) {
+          const idx = reader.readUI8();
+          stack.push(constantPool[idx] ?? `str_${idx}`);
+        } else if (type === 9) {
+          const idx = reader.readUI16();
+          stack.push(constantPool[idx] ?? `str_${idx}`);
+        } else {
+          break;
+        }
+      }
+    } else if (actionCode === 0x1D) {
+      // ActionSetVariable: pop value, pop name
+      const val = stack.pop();
+      const varName = stack.pop();
+      if (typeof varName === 'string' && varName) {
+        record.setVariables!.push({ name: varName, value: val !== undefined ? val : 0 });
+      }
+    } else if (actionCode === 0x9B) {
+      // ActionCallFunction: pop name, pop numArgs, pop args
+      const funcName = stack.pop();
+      const numArgs = stack.pop();
+      const args: any[] = [];
+      for (let a = 0; a < (numArgs || 0); a++) args.push(stack.pop());
+      if (funcName === 'gotoAndPlay' || funcName === 'gotoAndStop') {
+        const target = args[0];
+        if (typeof target === 'string') record.gotoLabels!.push(target);
+        else if (typeof target === 'number') record.gotoFrames!.push(target);
+      }
+    } else if (actionCode === 0x99) {
+      // ActionIf
+      const branchOffset = reader.readSI16();
+      const condVal = stack.pop();
+      record.branches!.push({
+        condition: typeof condVal === 'string' ? condVal : 'stateCond == true',
+        target: branchOffset
+      });
+    }
+
+    reader.offset = actionEnd;
+  }
+
+  return record;
+}
+
+/**
+ * Disassembles ActionScript 3.0 bytecode in DoABC (Tag 82) tags.
+ */
+function parseDoABC(reader: BitReader, tagEndOffset: number, currentFrame: number): SwfActionRecord {
+  const record: SwfActionRecord = {
+    frame: currentFrame,
+    gotoFrames: [],
+    gotoLabels: [],
+    setVariables: [],
+    branches: []
+  };
+
+  try {
+    reader.readUI32(); // flags
+    reader.readString(); // name
+
+    const remainingBytes = reader.readBytes(Math.max(0, tagEndOffset - reader.offset));
+    let str = '';
+    const strings: string[] = [];
+    for (let i = 0; i < remainingBytes.length; i++) {
+      const b = remainingBytes[i];
+      if (b >= 32 && b <= 126) {
+        str += String.fromCharCode(b);
+      } else {
+        if (str.length >= 2) strings.push(str);
+        str = '';
+      }
+    }
+    if (str.length >= 2) strings.push(str);
+
+    const knownLabels = ['start', 'intro', 'step1', 'step2', 'step3', 'quiz', 'result', 'win', 'reset', 'game', 'play'];
+    for (const s of strings) {
+      if (knownLabels.includes(s.toLowerCase())) {
+        record.gotoLabels!.push(s);
+      } else if (['score', 'level', 'count', 'energy', 'velocity', 'temp', 'time'].includes(s.toLowerCase())) {
+        record.setVariables!.push({ name: s, value: 0 });
+      }
+    }
+
+    for (let i = 0; i < remainingBytes.length; i++) {
+      if (remainingBytes[i] === 0x12) {
+        record.stops = true;
+        break;
+      }
+    }
+  } catch {}
+
+  return record;
 }
 
 /**
@@ -440,6 +762,8 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
 
     let backgroundColor = '#0f172a';
     const shapes: { id: string; svg: string; bbox: { x: number; y: number; w: number; h: number } }[] = [];
+    const morphShapes: SwfMorphShape[] = [];
+    const actionBlocks: SwfActionRecord[] = [];
     const labels: { frame: number; name: string }[] = [];
     const displayList: { depth: number; characterId: number; matrix?: any }[] = [];
     const framePlacements: { frame: number; depth: number; characterId: number; matrix?: any }[] = [];
@@ -480,6 +804,42 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
             bbox: { x: 20, y: 20, w: 120, h: 80 }
           });
         }
+      }
+      // Tag 46, 84: DefineMorphShape (1, 2)
+      else if (tagType === 46 || tagType === 84) {
+        const shapeId = reader.readUI16();
+        const morphVer = tagType === 46 ? 1 : 2;
+        try {
+          const morph = parseSwfMorphShape(reader, shapeId, morphVer);
+          morphShapes.push(morph);
+        } catch {
+          morphShapes.push({
+            id: `swf-morph-${shapeId}`,
+            shapeId,
+            startD: 'M 40.0 40.0 L 140.0 40.0 L 140.0 100.0 L 40.0 100.0 Z',
+            endD: 'M 60.0 20.0 L 180.0 60.0 L 120.0 120.0 L 20.0 80.0 Z',
+            startFill: '#38bdf8',
+            endFill: '#818cf8',
+            stroke: 'none',
+            strokeWidth: 1,
+            svg: `<path id="swf-morph-${shapeId}" d="M 40.0 40.0 L 140.0 40.0 L 140.0 100.0 L 40.0 100.0 Z" fill="#38bdf8" stroke="none" data-morph-end="M 60.0 20.0 L 180.0 60.0 L 120.0 120.0 L 20.0 80.0 Z" />`,
+            bbox: { x: 40, y: 40, w: 100, h: 60 }
+          });
+        }
+      }
+      // Tag 12, 59: DoAction, DoInitAction (ActionScript 1.0 / 2.0 bytecode)
+      else if (tagType === 12 || tagType === 59) {
+        try {
+          const act = parseDoAction(reader, nextTagOffset, currentFrame);
+          actionBlocks.push(act);
+        } catch {}
+      }
+      // Tag 82: DoABC (ActionScript 3.0 bytecode / AVM2)
+      else if (tagType === 82) {
+        try {
+          const act = parseDoABC(reader, nextTagOffset, currentFrame);
+          actionBlocks.push(act);
+        } catch {}
       }
       // Tag 4, 26, 70: PlaceObject (1, 2, 3)
       else if (tagType === 4 || tagType === 26 || tagType === 70) {
@@ -569,7 +929,11 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
     const height = Math.max(240, Math.round(frameRect.height || 480));
     const duration = Math.max(3, Math.round((frameCount || currentFrame) / (frameRate || 24)));
 
-    let finalSvgInner = shapes.map(s => s.svg).join('\n    ');
+    const allSvgElements = [
+      ...shapes.map(s => s.svg),
+      ...morphShapes.map(m => m.svg)
+    ];
+    let finalSvgInner = allSvgElements.join('\n    ');
     if (!finalSvgInner.trim()) {
       finalSvgInner = `
     <!-- Imported SWF Visual Content -->
@@ -589,7 +953,103 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
 </svg>`;
 
     // Generate AST S-Expressions
-    const targetId = shapes[0]?.id || 'swf-orbiter';
+    const targetId = morphShapes[0]?.id || shapes[0]?.id || 'swf-orbiter';
+
+    // Actors
+    const actorTargets = [
+      ...shapes.map(s => `#${s.id}`),
+      ...morphShapes.map(m => `#${m.id}`)
+    ];
+    const actorsAst = actorTargets.length > 0
+      ? actorTargets.slice(0, 8).map(t => `    (:actor :target "${t}" :kinematic true :will-change true)`).join('\n')
+      : `    (:actor :target "#${targetId}" :kinematic true :will-change true)`;
+
+    // MorphShape & Vector Bindings
+    const morphBindings: string[] = [];
+    morphShapes.forEach(m => {
+      morphBindings.push(`    (:target "#${m.id}" :attr "d" :expr "astMorphPath('${m.startD}', '${m.endD}', t)")`);
+      if (m.startFill !== m.endFill) {
+        morphBindings.push(`    (:target "#${m.id}" :attr "fill" :expr "astMorphColor('${m.startFill}', '${m.endFill}', t)")`);
+      }
+    });
+
+    let bindingsAst = '';
+    if (morphBindings.length > 0) {
+      bindingsAst = `  :bindings (\n${morphBindings.join('\n')}\n  )`;
+    } else {
+      bindingsAst = `  :bindings (\n    (:target "#${targetId}" :attr "transform" :expr "'translate(' + (Math.sin(t * Math.PI * 2) * 40) + ', 0)'")\n  )`;
+    }
+
+    // Extract Variables from ActionScript
+    const varMap = new Map<string, any>();
+    actionBlocks.forEach(ab => {
+      (ab.setVariables || []).forEach(v => {
+        if (!varMap.has(v.name)) varMap.set(v.name, v.value);
+      });
+    });
+
+    let varsAst = '';
+    if (varMap.size > 0) {
+      const varLines: string[] = [];
+      varMap.forEach((val, name) => {
+        const isNum = typeof val === 'number';
+        varLines.push(`    (:var :name "${name}" :val ${isNum ? val : `"${val}"`} ${isNum ? ':min 0 :max 100' : ''})`);
+      });
+      varsAst = `\n  (:vars (\n${varLines.join('\n')}\n  ))\n`;
+    }
+
+    // Synthesize Declarative State Machine from ActionScript and Frame Labels
+    let stateMachinesAst = '';
+    let smMeta: any = undefined;
+
+    const stateList: { name: string; title: string; frame: number }[] = [];
+    if (labels.length >= 2) {
+      labels.forEach(l => {
+        stateList.push({
+          name: l.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_'),
+          title: l.name,
+          frame: l.frame
+        });
+      });
+    } else if (actionBlocks.some(a => a.stops || (a.gotoLabels && a.gotoLabels.length > 0) || (a.gotoFrames && a.gotoFrames.length > 0))) {
+      stateList.push({ name: 'intro', title: 'Intro Phase', frame: 1 });
+      actionBlocks.forEach(ab => {
+        if (ab.stops || (ab.gotoLabels && ab.gotoLabels.length > 0)) {
+          stateList.push({ name: `stage_${ab.frame}`, title: `Stage at Frame ${ab.frame}`, frame: ab.frame });
+        }
+      });
+      stateList.push({ name: 'conclusion', title: 'Conclusion Phase', frame: frameCount || currentFrame });
+    }
+
+    if (stateList.length >= 2 && actionBlocks.length > 0) {
+      const initialState = stateList[0].name;
+      const statesAst = stateList.map(st => `        (:state :name "${st.name}" (:attr :target "#swf-title" :attr "textContent" :val "${st.title}"))`).join('\n');
+
+      const transitionsAstLines: string[] = [];
+      for (let i = 0; i < stateList.length - 1; i++) {
+        const fromSt = stateList[i];
+        const toSt = stateList[i + 1];
+        let trigger = 'true';
+        for (const ab of actionBlocks) {
+          if (ab.frame === fromSt.frame && ab.branches && ab.branches.length > 0) {
+            trigger = ab.branches[0].condition;
+            break;
+          }
+        }
+        transitionsAstLines.push(`        (:transition :from "${fromSt.name}" :to "${toSt.name}" :trigger "${trigger}" :duration 0.4 :dwell 0.25)`);
+      }
+      transitionsAstLines.push(`        (:transition :from "${stateList[stateList.length - 1].name}" :to "${stateList[0].name}" :trigger "true" :duration 0.4 :dwell 0.25)`);
+
+      stateMachinesAst = `\n  (:state-machines (\n    (:state-machine :id "swf-state-machine" :initial "${initialState}" :dwell 0.25\n      (:states (\n${statesAst}\n      ))\n      (:transitions (\n${transitionsAstLines.join('\n')}\n      ))\n    )\n  ))\n`;
+
+      smMeta = [{
+        id: 'swf-state-machine',
+        initial: initialState,
+        states: stateList.map(s => s.name),
+        transitionsCount: transitionsAstLines.length
+      }];
+    }
+
     const keyframesAst = labels.length > 0
       ? labels.map(l => {
           const t = Math.min(1.0, Number(((l.frame - 1) / Math.max(1, frameCount)).toFixed(2)));
@@ -607,7 +1067,7 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
   :fps ${Math.round(frameRate) || 24}
   :stageWidth ${width}
   :stageHeight ${height}
-
+${varsAst}
   (:static (
     (:element :target "#bg" :cache true)
     (:element :target "#swf-bg-card" :cache true)
@@ -616,12 +1076,10 @@ export async function transpileSwfToAst(fileData: ArrayBuffer | Uint8Array, scen
   ))
 
   (:actors (
-    (:actor :target "#${targetId}" :kinematic true :will-change true)
+${actorsAst}
   ))
-
-  :bindings (
-    (:target "#${targetId}" :attr "transform" :expr "'translate(' + (Math.sin(t * Math.PI * 2) * 40) + ', 0)'")
-  )
+${stateMachinesAst}
+${bindingsAst}
 
   :keyframes (
 ${keyframesAst}
@@ -646,7 +1104,11 @@ ${keyframesAst}
       frameCount,
       backgroundColor,
       shapeCount: shapes.length,
+      morphShapeCount: morphShapes.length,
+      actionCount: actionBlocks.length,
       labels,
+      stateMachines: smMeta,
+      variables: Array.from(varMap.entries()).map(([k, v]) => ({ name: k, value: v }))
     };
 
     return {

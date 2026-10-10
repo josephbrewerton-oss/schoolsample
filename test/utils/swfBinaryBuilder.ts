@@ -12,10 +12,14 @@ export const SwfTagCode = {
   SHOW_FRAME: 1,
   DEFINE_SHAPE: 2,
   SET_BACKGROUND_COLOR: 9,
+  DO_ACTION: 12,
   DEFINE_SHAPE2: 22,
   DEFINE_SHAPE3: 32,
   FRAME_LABEL: 43,
+  DEFINE_MORPH_SHAPE: 46,
+  DO_ABC: 82,
   DEFINE_SHAPE4: 83,
+  DEFINE_MORPH_SHAPE2: 84,
 } as const;
 
 /**
@@ -345,5 +349,168 @@ export function buildCurvedShapeTag(shapeId: number): Uint8Array {
   wtr.writeUBits(0, 1);
   wtr.writeUBits(0, 5);
 
+  return wtr.toByteArray();
+}
+
+/**
+ * Helper to construct a DefineMorphShape (Tag 46 or Tag 84) with start and end edge records
+ */
+export function buildMorphShapeTag(
+  shapeId: number,
+  startX: number,
+  startY: number,
+  startW: number,
+  startH: number,
+  endX: number,
+  endY: number,
+  endW: number,
+  endH: number,
+  startFill = [56, 189, 248, 255],
+  endFill = [129, 140, 248, 255],
+  tagVersion = 46
+): Uint8Array {
+  const wtr = new BitWriter();
+  wtr.writeUI16(shapeId);
+  // StartBounds
+  wtr.writeRect(startX * 20, (startX + startW) * 20, startY * 20, (startY + startH) * 20);
+  // EndBounds
+  wtr.writeRect(endX * 20, (endX + endW) * 20, endY * 20, (endY + endH) * 20);
+
+  if (tagVersion === 84) {
+    // DefineMorphShape2
+    wtr.writeRect(startX * 20, (startX + startW) * 20, startY * 20, (startY + startH) * 20);
+    wtr.writeRect(endX * 20, (endX + endW) * 20, endY * 20, (endY + endH) * 20);
+    wtr.writeUI8(0); // Flags
+  }
+
+  // Pre-generate StartEdges and EndEdges in separate writers so we know the offset!
+  const startEdgesWtr = new BitWriter();
+  startEdgesWtr.writeUBits(1, 4);
+  startEdgesWtr.writeUBits(1, 4);
+  // MoveTo (startX, startY)
+  startEdgesWtr.writeUBits(0, 1);
+  startEdgesWtr.writeUBits(0x01 | 0x02 | 0x08, 5);
+  startEdgesWtr.writeUBits(14, 5);
+  startEdgesWtr.writeSBits(startX * 20, 14);
+  startEdgesWtr.writeSBits(startY * 20, 14);
+  startEdgesWtr.writeUBits(1, 1);
+  startEdgesWtr.writeUBits(1, 1);
+  // 4 Straight edges (start rect)
+  const edgeBits = 14;
+  startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(edgeBits - 2, 4);
+  startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeSBits(startW * 20, edgeBits);
+  startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(edgeBits - 2, 4);
+  startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeSBits(startH * 20, edgeBits);
+  startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(edgeBits - 2, 4);
+  startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeSBits(-startW * 20, edgeBits);
+  startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeUBits(edgeBits - 2, 4);
+  startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeUBits(1, 1); startEdgesWtr.writeSBits(-startH * 20, edgeBits);
+  startEdgesWtr.writeUBits(0, 1); startEdgesWtr.writeUBits(0, 5);
+  const startEdgesBytes = startEdgesWtr.toByteArray();
+
+  const endEdgesWtr = new BitWriter();
+  endEdgesWtr.writeUBits(1, 4);
+  endEdgesWtr.writeUBits(1, 4);
+  // MoveTo (endX, endY)
+  endEdgesWtr.writeUBits(0, 1);
+  endEdgesWtr.writeUBits(0x01 | 0x02 | 0x08, 5);
+  endEdgesWtr.writeUBits(14, 5);
+  endEdgesWtr.writeSBits(endX * 20, 14);
+  endEdgesWtr.writeSBits(endY * 20, 14);
+  endEdgesWtr.writeUBits(1, 1);
+  endEdgesWtr.writeUBits(1, 1);
+  // 4 Straight edges (end rect)
+  endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(edgeBits - 2, 4);
+  endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeSBits(endW * 20, edgeBits);
+  endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(edgeBits - 2, 4);
+  endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeSBits(endH * 20, edgeBits);
+  endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(edgeBits - 2, 4);
+  endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeSBits(-endW * 20, edgeBits);
+  endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeUBits(edgeBits - 2, 4);
+  endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeUBits(1, 1); endEdgesWtr.writeSBits(-endH * 20, edgeBits);
+  endEdgesWtr.writeUBits(0, 1); endEdgesWtr.writeUBits(0, 5);
+  const endEdgesBytes = endEdgesWtr.toByteArray();
+
+  // MorphOffset is the length of StartEdges in bytes
+  wtr.writeUI32(startEdgesBytes.length);
+
+  // MorphFillStyles: 1 solid color
+  wtr.writeUI8(1);
+  wtr.writeUI8(0); // solid
+  wtr.writeUI8(startFill[0]); wtr.writeUI8(startFill[1]); wtr.writeUI8(startFill[2]); wtr.writeUI8(startFill[3]);
+  wtr.writeUI8(endFill[0]); wtr.writeUI8(endFill[1]); wtr.writeUI8(endFill[2]); wtr.writeUI8(endFill[3]);
+
+  // MorphLineStyles: 1 line style
+  wtr.writeUI8(1);
+  wtr.writeUI16(2 * 20); // startWidth 2px
+  wtr.writeUI16(4 * 20); // endWidth 4px
+  if (tagVersion === 84) {
+    wtr.writeUI16(0); // flags
+  }
+  wtr.writeUI8(255); wtr.writeUI8(255); wtr.writeUI8(255); wtr.writeUI8(255);
+  wtr.writeUI8(200); wtr.writeUI8(200); wtr.writeUI8(255); wtr.writeUI8(255);
+
+  const headerBytes = wtr.toByteArray();
+  const total = new Uint8Array(headerBytes.length + startEdgesBytes.length + endEdgesBytes.length);
+  total.set(headerBytes, 0);
+  total.set(startEdgesBytes, headerBytes.length);
+  total.set(endEdgesBytes, headerBytes.length + startEdgesBytes.length);
+
+  return total;
+}
+
+/**
+ * Helper to construct an ActionScript 1/2 DoAction (Tag 12) binary payload
+ */
+export function buildDoActionTag(actions: {
+  stop?: boolean;
+  gotoFrame?: number;
+  gotoLabel?: string;
+  setVariable?: { name: string; value: any };
+}): Uint8Array {
+  const wtr = new BitWriter();
+
+  if (actions.setVariable) {
+    // ActionPush varName, varValue
+    const pushWtr = new BitWriter();
+    pushWtr.writeUI8(0); // type string
+    pushWtr.writeString(actions.setVariable.name);
+
+    if (typeof actions.setVariable.value === 'number') {
+      pushWtr.writeUI8(7); // integer
+      pushWtr.writeUI32(actions.setVariable.value);
+    } else {
+      pushWtr.writeUI8(0); // string
+      pushWtr.writeString(String(actions.setVariable.value));
+    }
+    const pushBytes = pushWtr.toByteArray();
+    wtr.writeUI8(0x96); // ActionPush
+    wtr.writeUI16(pushBytes.length);
+    for (let i = 0; i < pushBytes.length; i++) wtr.writeUI8(pushBytes[i]);
+
+    // ActionSetVariable (0x1D)
+    wtr.writeUI8(0x1D);
+  }
+
+  if (actions.gotoFrame !== undefined) {
+    wtr.writeUI8(0x81); // ActionGotoFrame
+    wtr.writeUI16(2); // length
+    wtr.writeUI16(actions.gotoFrame - 1); // 0-based
+  }
+
+  if (actions.gotoLabel !== undefined) {
+    const lblBytes: number[] = [];
+    for (let i = 0; i < actions.gotoLabel.length; i++) lblBytes.push(actions.gotoLabel.charCodeAt(i));
+    lblBytes.push(0);
+    wtr.writeUI8(0x9F); // ActionGotoLabel
+    wtr.writeUI16(lblBytes.length);
+    for (let i = 0; i < lblBytes.length; i++) wtr.writeUI8(lblBytes[i]);
+  }
+
+  if (actions.stop) {
+    wtr.writeUI8(0x07); // ActionStop
+  }
+
+  wtr.writeUI8(0x00); // ActionEnd
   return wtr.toByteArray();
 }

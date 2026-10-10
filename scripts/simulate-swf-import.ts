@@ -17,6 +17,8 @@ import {
   writeTag,
   buildRectShapeTag,
   buildCurvedShapeTag,
+  buildMorphShapeTag,
+  buildDoActionTag,
   SwfTagCode,
 } from '../test/utils/swfBinaryBuilder';
 
@@ -286,6 +288,117 @@ async function runSimulations() {
   }
 
   // --------------------------------------------------------------------------
+  // SIMULATION 6: MorphShape Records (Tag 46 / Tag 84) Shape Tweens & SVG Path Morphing
+  // --------------------------------------------------------------------------
+  {
+    const start = performance.now();
+    const tagWriter = new BitWriter();
+
+    // Tag 9: SetBackgroundColor
+    writeTag(tagWriter, 9, new Uint8Array([0x0f, 0x17, 0x2a]));
+
+    // Tag 46: DefineMorphShape (id: 1)
+    // Start rect: (60, 60, 120, 80) in cyan (#38bdf8), End rect: (100, 40, 200, 140) in indigo (#818cf8)
+    const morphTag = buildMorphShapeTag(1, 60, 60, 120, 80, 100, 40, 200, 140, [56, 189, 248, 255], [129, 140, 248, 255], 46);
+    writeTag(tagWriter, 46, morphTag);
+
+    // Frame 1
+    writeTag(tagWriter, 1, new Uint8Array(0));
+    // Frame 2
+    writeTag(tagWriter, 1, new Uint8Array(0));
+    // Tag 0: End
+    writeTag(tagWriter, 0, new Uint8Array(0));
+
+    const swfBinary = assembleFwsSwf(800, 480, 24, 24, tagWriter.toByteArray(), 8);
+    const result = await transpileSwfToAst(swfBinary, 'sim-morph-shape');
+    const duration = performance.now() - start;
+
+    const errors: string[] = [];
+    if (!result.success) errors.push(`MorphShape transpilation failed: ${result.error}`);
+    if (result.metadata?.morphShapeCount !== 1) errors.push(`Expected 1 morph shape, got ${result.metadata?.morphShapeCount}`);
+    if (!result.svgMarkup.includes('id="swf-morph-1"')) errors.push('SVG markup missing morph shape element #swf-morph-1');
+    if (!result.svgMarkup.includes('data-morph-end="')) errors.push('SVG markup missing data-morph-end attribute');
+    if (!result.astSource.includes('astMorphPath')) errors.push('AST source missing astMorphPath binding expression');
+    if (!result.astSource.includes('astMorphColor')) errors.push('AST source missing astMorphColor binding expression');
+
+    const ast = parseSExpr(result.astSource);
+    if (!ast) errors.push('Generated MorphShape AST failed S-Expression validation');
+
+    reports.push({
+      name: 'Sim 6: MorphShape Tag 46 Shape Tween (Vector Path Morphing & Color Lerp)',
+      passed: errors.length === 0,
+      durationMs: duration,
+      details: `Transpiled Flash MorphShape into responsive SVG with declarative 60 FPS astMorphPath and astMorphColor bindings.`,
+      errors
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // SIMULATION 7: ActionScript Bytecode (AVM1 / DoAction Tag 12) to Declarative State Machine
+  // --------------------------------------------------------------------------
+  {
+    const start = performance.now();
+    const tagWriter = new BitWriter();
+
+    // Set lab background
+    writeTag(tagWriter, 9, new Uint8Array([0x0b, 0x11, 0x20]));
+
+    // Frame 1: Start phase with variable initialization (score = 0, level = 1)
+    const act1 = buildDoActionTag({ setVariable: { name: 'score', value: 0 } });
+    writeTag(tagWriter, 12, act1);
+    const lbl1 = new BitWriter();
+    lbl1.writeString('Start');
+    writeTag(tagWriter, 43, lbl1.toByteArray());
+    writeTag(tagWriter, 1, new Uint8Array(0));
+
+    // Frame 2: Simulation active phase
+    const act2 = buildDoActionTag({ setVariable: { name: 'score', value: 10 } });
+    writeTag(tagWriter, 12, act2);
+    const lbl2 = new BitWriter();
+    lbl2.writeString('Experiment');
+    writeTag(tagWriter, 43, lbl2.toByteArray());
+    writeTag(tagWriter, 1, new Uint8Array(0));
+
+    // Frame 3: Completion phase with stop() and goto
+    const act3 = buildDoActionTag({ stop: true, gotoLabel: 'Start' });
+    writeTag(tagWriter, 12, act3);
+    const lbl3 = new BitWriter();
+    lbl3.writeString('Conclusion');
+    writeTag(tagWriter, 43, lbl3.toByteArray());
+    writeTag(tagWriter, 1, new Uint8Array(0));
+
+    writeTag(tagWriter, 0, new Uint8Array(0));
+
+    const swfBinary = assembleFwsSwf(800, 480, 24, 3, tagWriter.toByteArray(), 8);
+    const result = await transpileSwfToAst(swfBinary, 'sim-actionscript-statemachine');
+    const duration = performance.now() - start;
+
+    const errors: string[] = [];
+    if (!result.success) errors.push(`ActionScript transpilation failed: ${result.error}`);
+    if ((result.metadata?.actionCount || 0) < 3) errors.push(`Expected 3 action blocks, got ${result.metadata?.actionCount}`);
+    if (!result.metadata?.variables || result.metadata.variables.length === 0) errors.push('Expected variables in metadata');
+    if (!result.astSource.includes(':vars (')) errors.push('AST source missing (:vars block');
+    if (!result.astSource.includes(':var :name "score"')) errors.push('AST source missing score variable');
+    if (!result.astSource.includes(':state-machines (')) errors.push('AST source missing (:state-machines block');
+    if (!result.astSource.includes(':state-machine :id "swf-state-machine"')) errors.push('AST source missing swf-state-machine');
+    if (!result.astSource.includes(':state :name "start"')) errors.push('AST missing state "start"');
+    if (!result.astSource.includes(':state :name "experiment"')) errors.push('AST missing state "experiment"');
+    if (!result.astSource.includes(':state :name "conclusion"')) errors.push('AST missing state "conclusion"');
+    if (!result.astSource.includes(':transition :from "start" :to "experiment"')) errors.push('AST missing transition from start to experiment');
+
+    const ast = parseSExpr(result.astSource);
+    if (!ast) errors.push('Generated ActionScript State Machine AST failed S-Expression validation');
+
+    reports.push({
+      name: 'Sim 7: ActionScript Bytecode (AVM1 DoAction) to Declarative State Machine',
+      passed: errors.length === 0,
+      durationMs: duration,
+      details: `Transpiled Flash bytecode into declarative AST state machine with ${result.metadata?.variables?.length} reactive vars and ${result.metadata?.stateMachines?.[0]?.states.length} states.`,
+      errors
+    });
+  }
+
+  // --------------------------------------------------------------------------
   // Summary Presentation
   // --------------------------------------------------------------------------
   console.log('RESULTS BREAKDOWN:\n');
@@ -304,7 +417,7 @@ async function runSimulations() {
 
   console.log('\n=============================================================');
   if (allPassed) {
-    console.log('🎉 ALL 5 SIMULATIONS PASSED! No SWF import issues detected.');
+    console.log(`🎉 ALL ${reports.length} SIMULATIONS PASSED! No SWF import issues detected.`);
   } else {
     console.log('⚠️ SIMULATION ENCOUNTERED ISSUES. Please review logs above.');
     process.exit(1);
