@@ -226,6 +226,66 @@
   }
 
   /**
+   * Fast 60 FPS SVG Path Interpolator / Morphing Lathe (< 0.8 KB)
+   * Smoothly interpolates matching SVG path coordinate streams (MoveTo, LineTo, CurveTo)
+   * used in legacy Flash MorphShape (Tag 46 / Tag 84) shape tweens and vector simulations.
+   */
+  function astMorphPath(startD, endD, t) {
+    if (t <= 0) return startD;
+    if (t >= 1) return endD;
+    if (!startD || !endD) return startD || endD || '';
+
+    const numRegex = /[-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]?\d+)?/g;
+    const nums1 = startD.match(numRegex);
+    const nums2 = endD.match(numRegex);
+    if (!nums1 || !nums2 || nums1.length !== nums2.length) {
+      return t < 0.5 ? startD : endD;
+    }
+
+    let idx = 0;
+    return startD.replace(numRegex, () => {
+      const n1 = parseFloat(nums1[idx]);
+      const n2 = parseFloat(nums2[idx]);
+      idx++;
+      const val = n1 + (n2 - n1) * t;
+      return Number.isInteger(val) ? String(val) : val.toFixed(1);
+    });
+  }
+
+  function astMorphColor(c1, c2, t) {
+    if (t <= 0) return c1;
+    if (t >= 1) return c2;
+    const parseCol = (c) => {
+      if (!c || typeof c !== 'string') return [56, 189, 248, 1];
+      if (c.startsWith('#')) {
+        let hex = c.slice(1);
+        if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+        const num = parseInt(hex, 16);
+        return [(num >> 16) & 255, (num >> 8) & 255, num & 255, 1];
+      }
+      const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d\.]+))?\)/);
+      if (m) return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), m[4] !== undefined ? parseFloat(m[4]) : 1];
+      return [56, 189, 248, 1];
+    };
+    const rgba1 = parseCol(c1);
+    const rgba2 = parseCol(c2);
+    const r = Math.round(rgba1[0] + (rgba2[0] - rgba1[0]) * t);
+    const g = Math.round(rgba1[1] + (rgba2[1] - rgba1[1]) * t);
+    const b = Math.round(rgba1[2] + (rgba2[2] - rgba1[2]) * t);
+    const a = (rgba1[3] + (rgba2[3] - rgba1[3]) * t).toFixed(2);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    globalThis.astMorphPath = astMorphPath;
+    globalThis.astMorphColor = astMorphColor;
+  }
+  if (typeof window !== 'undefined') {
+    window.astMorphPath = astMorphPath;
+    window.astMorphColor = astMorphColor;
+  }
+
+  /**
    * ASTStateMachine (< 1.8 KB Zero-Bloat Declarative State Transitions)
    * Manages discrete physical & pedagogical state transitions (e.g. solid/liquid/gas,
    * open/closed circuit, charged/discharged capacitor, equilibrium/stretched spring)
@@ -247,9 +307,19 @@
       // Hysteresis & Refractory Dwell Lock (Anti-Thrashing)
       // dwellTime: Minimum seconds the machine MUST settle in a newly entered state
       // before re-evaluating any reverse or forward transition triggers.
-      this.dwellTime = Math.max(0.05, Number(config.dwellTime || config.cooldown) || 0.25);
+      this.dwellTime = Math.max(0.05, Number(config.dwellTime || config.cooldown || config.dwell) || 0.25);
       this.refractoryTimer = 0;
       this.hysteresis = Math.max(0, Number(config.hysteresis) || 0);
+
+      // Auto-load declarative states & transitions if configured
+      if (Array.isArray(config.states)) {
+        config.states.forEach(st => this.addState(st.name || st.id, st));
+      } else if (config.states && typeof config.states === 'object') {
+        Object.entries(config.states).forEach(([k, v]) => this.addState(k, v));
+      }
+      if (Array.isArray(config.transitions)) {
+        config.transitions.forEach(tr => this.addTransition(tr));
+      }
     }
 
     addState(name, configOrAttrs = {}) {
@@ -2892,6 +2962,82 @@
         });
       });
 
+      // Declarative State Transition Machines (:state-machines)
+      const stateMachines = [];
+      const smContainerBlocks = extractSexprBlocks(astContent, ':state-machines');
+      const smBlocks = smContainerBlocks.length > 0
+        ? extractSexprBlocks(smContainerBlocks[0], ':state-machine')
+        : extractSexprBlocks(astContent, ':state-machine');
+
+      smBlocks.forEach(smText => {
+        const smId = extractSlot.call(null, smText, /:id\s+"([^"]+)"/i) || extractSlot.call(null, smText, /:id\s+([^\s\)]+)/i) || `sm_${stateMachines.length + 1}`;
+        const initial = extractSlot.call(null, smText, /:initial\s+"([^"]+)"/i) || extractSlot.call(null, smText, /:initial\s+([^\s\)]+)/i) || 'default';
+        const dwell = parseFloat(extractSlot.call(null, smText, /:dwell\s+([\d\.]+)/i) || '0.25');
+
+        // States
+        const states = [];
+        const stateContainer = extractSexprBlocks(smText, ':states');
+        const stateBlocks = stateContainer.length > 0
+          ? extractSexprBlocks(stateContainer[0], ':state')
+          : extractSexprBlocks(smText, ':state');
+
+        stateBlocks.forEach(stText => {
+          const stName = extractSlot.call(null, stText, /:name\s+"([^"]+)"/i) || extractSlot.call(null, stText, /:name\s+([^\s\)]+)/i) || 'state';
+          const attrs = {};
+          const attrBlocks = extractSexprBlocks(stText, ':attr');
+          attrBlocks.forEach(atText => {
+            const target = extractSlot.call(null, atText, /:target\s+"([^"]+)"/i) || extractSlot.call(null, atText, /:target\s+([^\s\)]+)/i);
+            const attr = extractSlot.call(null, atText, /:attr\s+"([^"]+)"/i) || extractSlot.call(null, atText, /:attr\s+([^\s\)]+)/i) || 'fill';
+            const val = extractSlot.call(null, atText, /:val\s+"([^"]+)"/i) || extractSlot.call(null, atText, /:val\s+([^\s\)]+)/i);
+            if (target && attr) {
+              if (!attrs[target]) attrs[target] = {};
+              attrs[target][attr] = val !== null ? val : '#38bdf8';
+            }
+          });
+
+          // Emitter sets
+          const emitterSets = [];
+          const esBlocks = extractSexprBlocks(stText, ':emitter-set');
+          esBlocks.forEach(esText => {
+            const target = extractSlot.call(null, esText, /:target\s+"([^"]+)"/i) || extractSlot.call(null, esText, /:target\s+([^\s\)]+)/i);
+            const speed = parseFloat(extractSlot.call(null, esText, /:speed\s+([\d\.\-]+)/i) || '120');
+            const count = parseInt(extractSlot.call(null, esText, /:count\s+(\d+)/i) || '80', 10);
+            const gravity = parseFloat(extractSlot.call(null, esText, /:gravity\s+([\d\.\-]+)/i) || '0');
+            if (target) {
+              emitterSets.push({ target, speed, count, gravity });
+            }
+          });
+
+          states.push({ name: stName, attrs, emitterSets });
+        });
+
+        // Transitions
+        const transitions = [];
+        const transContainer = extractSexprBlocks(smText, ':transitions');
+        const transBlocks = transContainer.length > 0
+          ? extractSexprBlocks(transContainer[0], ':transition')
+          : extractSexprBlocks(smText, ':transition');
+
+        transBlocks.forEach(trText => {
+          const from = extractSlot.call(null, trText, /:from\s+"([^"]+)"/i) || extractSlot.call(null, trText, /:from\s+([^\s\)]+)/i) || '*';
+          const to = extractSlot.call(null, trText, /:to\s+"([^"]+)"/i) || extractSlot.call(null, trText, /:to\s+([^\s\)]+)/i);
+          const trigger = extractSlot.call(null, trText, /:trigger\s+"([^"]+)"/i) || extractSlot.call(null, trText, /:trigger\s+([^\s\)]+)/i) || 'true';
+          const duration = parseFloat(extractSlot.call(null, trText, /:duration\s+([\d\.]+)/i) || '0.5');
+          const dwellTime = parseFloat(extractSlot.call(null, trText, /:dwell\s+([\d\.]+)/i) || '0.3');
+          if (to) {
+            transitions.push({ from, to, trigger, duration, dwellTime });
+          }
+        });
+
+        stateMachines.push({
+          id: smId,
+          initial,
+          dwellTime: dwell,
+          states,
+          transitions
+        });
+      });
+
       const has3D = Boolean(camMatch || bindings.some(b => b.type && b.type.startsWith('3d-')));
 
       return {
@@ -2908,6 +3054,7 @@
         bindings,
         checkpoints,
         physics,
+        stateMachines: stateMachines.length > 0 ? stateMachines : null,
         emitters: emitters.length > 0 ? emitters : null,
         vars,
         inputs,
@@ -3283,6 +3430,11 @@
         keyframes: sceneData.keyframes || [],
         subtitles: sceneData.subtitles || [],
         rawBindings: sceneData.bindings || sceneData.rawBindings || [],
+        stateMachines: sceneData.stateMachines || null,
+        emitters: sceneData.emitters || null,
+        bindInputs: sceneData.bindInputs || null,
+        vars: sceneData.vars || null,
+        gestures: sceneData.gestures || null,
         svgText: sceneData.svgText || '',
         mount: sceneData.mount,
         update: sceneData.update,
@@ -3883,7 +4035,7 @@
             if (node) {
               let evalFn = () => 0;
               try {
-                evalFn = new Function('t', 'vars', 'Math', 'computed', `"use strict"; return (${b.expr});`);
+                evalFn = new Function('t', 'vars', 'Math', 'computed', 'astMorphPath', 'astMorphColor', `"use strict"; return (${b.expr});`);
               } catch (e) {
                 console.warn('[AST Engine] Failed compiling expr:', b.expr, e);
               }
@@ -4017,6 +4169,14 @@
       // Mount any declarative :bind-input items
       if (scene.bindInputs && Array.isArray(scene.bindInputs)) {
         scene.bindInputs.forEach(bi => this.registerBindInput(bi));
+      }
+
+      // Mount declarative state transition machines
+      this.stateMachines.clear();
+      if (scene.stateMachines && Array.isArray(scene.stateMachines)) {
+        scene.stateMachines.forEach(smConfig => {
+          this.addStateMachine(smConfig);
+        });
       }
 
       this.applyBindings(this.progress);
@@ -4260,7 +4420,7 @@
           const b = this.activeBindings[i];
           if (b.node) {
             try {
-              const val = b.evalFn(t, v, Math, v);
+              const val = b.evalFn(t, v, Math, v, astMorphPath, astMorphColor);
               if (b.lastVal !== val) {
                 b.lastVal = val;
                 if (b.attr === 'textContent') {
